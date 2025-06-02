@@ -1,0 +1,54 @@
+Perfetto Mirko, ti preparo un documento completo, strutturato e dettagliato che puoi usare per istruire un’intelligenza artificiale (come ChatGPT o Claude) e farle da “guida” per aiutarti nel tuo progetto Wolfinder.
+
+⸻
+
+📌 Scheda Tecnica Progetto Wolfinder – Istruzioni per AI
+
+⸻
+
+🧠 Nome del progetto
+
+Wolfinder
+Nome ispirato al concetto di “cercatore” (Finder) con un richiamo al lupo (Wolf), animale simbolo di istinto, selezione, fiuto, quindi perfetto per una piattaforma meritocratica.
+
+⸻
+
+🎯 Obiettivo del progetto
+
+Creare una piattaforma web di recensioni e valutazioni per professionisti, pensata per risolvere il problema dell’affidabilità nel mondo dei servizi.
+Un utente deve poter trovare in modo rapido, semplice e sicuro professionisti validi, evitando esperienze negative.
+
+⸻
+
+🧩 Problema che voglio risolvere
+	•	Non esiste una piattaforma centralizzata e affidabile dove recensire professionisti (non aziende o locali, come su Google o TripAdvisor).
+	•	Spesso chi cerca un avvocato, elettricista, muratore, medico, ecc. si affida al passaparola, ma questo è limitato, soggettivo e non strutturato.
+	•	Le recensioni oggi sono manipolabili: voglio costruire un sistema più credibile, con un filtro reale contro il falso.
+
+⸻
+
+💡 Soluzione proposta
+
+Wolfinder sarà una piattaforma in cui:
+	1.	Gli utenti possono cercare professionisti affidabili, filtrando per zona, categoria, punteggio.
+	2.	Possono lasciare recensioni tracciabili, eventualmente con verifica dell’identità o del servizio effettivamente ricevuto.
+	3.	I professionisti possono gestire il proprio profilo, rispondere alle recensioni, promuoversi (versione freemium/premium).
+	4.	Il sistema prevede moderazione automatica e possibilità future di usare AI per riconoscere recensioni sospette.
+
+⸻
+
+🧱 Tecnologia utilizzata
+	•	Frontend: Next.js (React framework moderno e SEO friendly)
+	•	Backend: Node.js (su Next.js API routes)
+	•	Database: MongoDB (database NoSQL flessibile e scalabile)
+	•	Librerie principali:
+	•	mongoose per la gestione del DB
+	•	axios per chiamate API
+	•	next-auth per login e autenticazione (previsione futura)
+	•	tailwindcss per lo styling veloce
+	•	Hosting previsto: Vercel per il frontend, MongoDB Atlas per il database
+	•	Supporto AI: Claude per il supporto codice, ChatGPT per suggerimenti e debug
+
+⸻
+
+🔨 Struttura dei file (base iniziale)
