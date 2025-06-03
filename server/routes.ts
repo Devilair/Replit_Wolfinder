@@ -440,11 +440,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const reviews = await storage.getReviewsByProfessional(professional.id);
       const stats = {
-        views: professional.views || 0,
+        views: professional.profileViews || 0,
         reviews: reviews.length,
-        rating: professional.rating || "N/A",
-        contacts: professional.contactCount || 0,
-        ranking: professional.ranking || "N/A"
+        rating: professional.rating ? Number(professional.rating).toFixed(1) : "0.0",
+        contacts: 0, // Real contact tracking not implemented yet
+        ranking: "N/A" // Real ranking calculation not implemented yet
       };
       res.json(stats);
     } catch (error) {

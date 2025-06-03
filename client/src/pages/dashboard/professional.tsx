@@ -114,7 +114,7 @@ export default function ProfessionalDashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{stats?.views || 0}</div>
               <p className="text-xs text-muted-foreground">
-                +20% rispetto al mese scorso
+                Visualizzazioni totali profilo
               </p>
             </CardContent>
           </Card>
