@@ -178,7 +178,6 @@ export class DatabaseStorage implements IStorage {
     // Parsing intelligente della ricerca per categoria e città
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase().trim();
-      console.log('Search term:', searchTerm, 'Combined search:', combinedSearch);
       
       // Mapping per categorie
       let foundCategoryId = null;
@@ -202,25 +201,19 @@ export class DatabaseStorage implements IStorage {
         foundCity = 'Livorno';
       }
       
-      console.log('Found category ID:', foundCategoryId, 'Found city:', foundCity);
-      
       // Applica filtri basati sui risultati del parsing
       if (foundCategoryId && foundCity) {
         // Ricerca specifica: categoria + città
-        console.log('Applying both category and city filters');
         conditions.push(eq(professionals.categoryId, foundCategoryId));
         conditions.push(eq(professionals.city, foundCity));
       } else if (foundCategoryId) {
         // Solo categoria
-        console.log('Applying only category filter');
         conditions.push(eq(professionals.categoryId, foundCategoryId));
       } else if (foundCity) {
         // Solo città
-        console.log('Applying only city filter');
         conditions.push(eq(professionals.city, foundCity));
       } else {
         // Ricerca generica nel testo
-        console.log('Applying generic text search');
         conditions.push(
           or(
             ilike(professionals.businessName, `%${searchTerm}%`),
