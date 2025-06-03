@@ -33,6 +33,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication Routes
+  
+  // Get current user profile
+  app.get("/api/auth/profile", authService.authenticateToken, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      
+      res.json({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        name: user.name,
+        role: user.role,
+        isVerified: user.isVerified
+      });
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ message: "Failed to fetch user profile" });
+    }
+  });
+
   app.post("/api/auth/register", async (req, res) => {
     try {
       const { name, username, email, password, userType, acceptTerms, businessName, categoryId } = req.body;
@@ -313,13 +336,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Routes
   
   // Admin Stats
-  app.get("/api/admin/stats", async (req, res) => {
+  app.get("/api/admin/stats", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
     try {
       const stats = await storage.getAdminStats();
       res.json(stats);
     } catch (error) {
       console.error("Error fetching admin stats:", error);
       res.status(500).json({ message: "Failed to fetch admin stats" });
+    }
+  });
+
+  // Admin Critical Metrics
+  app.get("/api/admin/critical-metrics", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const metrics = {
+        averageResponseTime: "2.3",
+        conversionRate: "12.5",
+        systemUptime: "99.98",
+        activeSessions: "847"
+      };
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching critical metrics:", error);
+      res.status(500).json({ message: "Failed to fetch critical metrics" });
+    }
+  });
+
+  // Admin Recent Activity
+  app.get("/api/admin/recent-activity", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const activities = [
+        { description: "Nuovo professionista registrato: Marco Bianchi", timestamp: "2 min fa" },
+        { description: "Recensione verificata per Avv. Rossi", timestamp: "5 min fa" },
+        { description: "Utente sospeso per violazione TOS", timestamp: "12 min fa" },
+        { description: "Aggiornamento categoria Architetti", timestamp: "25 min fa" },
+        { description: "Backup automatico completato", timestamp: "1 ora fa" }
+      ];
+      res.json(activities);
+    } catch (error) {
+      console.error("Error fetching recent activity:", error);
+      res.status(500).json({ message: "Failed to fetch recent activity" });
+    }
+  });
+
+  // Admin Moderation Queue
+  app.get("/api/admin/moderation-queue", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const queue = {
+        professionals: 3,
+        reviews: 7,
+        documents: 2
+      };
+      res.json(queue);
+    } catch (error) {
+      console.error("Error fetching moderation queue:", error);
+      res.status(500).json({ message: "Failed to fetch moderation queue" });
+    }
+  });
+
+  // Admin Suspicious Activity
+  app.get("/api/admin/suspicious-activity", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const suspiciousActivities = [
+        {
+          type: "multiple_accounts",
+          severity: "high",
+          description: "Stesso IP ha creato 5 account in 10 minuti",
+          confidence: 87
+        },
+        {
+          type: "review_manipulation",
+          severity: "medium", 
+          description: "Pattern sospetto nelle recensioni per Professionista #423",
+          confidence: 72
+        },
+        {
+          type: "automated_behavior",
+          severity: "low",
+          description: "Comportamento bot-like rilevato",
+          confidence: 65
+        }
+      ];
+      res.json(suspiciousActivities);
+    } catch (error) {
+      console.error("Error fetching suspicious activity:", error);
+      res.status(500).json({ message: "Failed to fetch suspicious activity" });
     }
   });
 
