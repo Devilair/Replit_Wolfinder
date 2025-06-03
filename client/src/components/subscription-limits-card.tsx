@@ -180,7 +180,7 @@ export default function SubscriptionLimitsCard({
         )}
 
         {/* Avviso limiti raggiunti */}
-        {(!contactsStatus.canUse || !photosStatus.canUse || !servicesStatus.canUse) && (
+        {(!photosStatus.canUse || !servicesStatus.canUse) && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3">
             <div className="flex items-start space-x-2">
               <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5" />

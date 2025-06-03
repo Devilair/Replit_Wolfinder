@@ -65,7 +65,6 @@ const DEMO_SUBSCRIPTIONS = {
 export default function ProfessionalSubscriptionDemo() {
   const [selectedPlan, setSelectedPlan] = useState<'gratuito' | 'professional' | 'enterprise'>('gratuito');
   const [currentUsage, setCurrentUsage] = useState({
-    contactsThisMonth: 3,
     photosUploaded: 2,
     servicesListed: 2
   });
@@ -73,15 +72,10 @@ export default function ProfessionalSubscriptionDemo() {
   const subscription = DEMO_SUBSCRIPTIONS[selectedPlan];
   const features = getProfessionalFeatures(subscription);
 
-  const simulateAction = (action: 'contact' | 'photo' | 'service') => {
+  const simulateAction = (action: 'photo' | 'service') => {
     const newUsage = { ...currentUsage };
     
-    if (action === 'contact') {
-      const limit = getFeatureLimit(subscription, 'maxContactsPerMonth');
-      if (limit === -1 || newUsage.contactsThisMonth < limit) {
-        newUsage.contactsThisMonth += 1;
-      }
-    } else if (action === 'photo') {
+    if (action === 'photo') {
       const limit = getFeatureLimit(subscription, 'maxPhotos');
       if (limit === -1 || newUsage.photosUploaded < limit) {
         newUsage.photosUploaded += 1;
@@ -97,7 +91,7 @@ export default function ProfessionalSubscriptionDemo() {
   };
 
   const resetUsage = () => {
-    setCurrentUsage({ contactsThisMonth: 0, photosUploaded: 0, servicesListed: 0 });
+    setCurrentUsage({ photosUploaded: 0, servicesListed: 0 });
   };
 
   const canAddPhoto = () => {
@@ -194,22 +188,7 @@ export default function ProfessionalSubscriptionDemo() {
                     <CardTitle>Simula Azioni del Professionista</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {/* Contatti ricevuti */}
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <MessageSquare className="h-5 w-5 text-blue-500" />
-                        <div>
-                          <h4 className="font-medium">Ricevi Contatto</h4>
-                          <p className="text-sm text-gray-500">Simula la ricezione di un nuovo contatto</p>
-                        </div>
-                      </div>
-                      <Button 
-                        onClick={() => simulateAction('contact')}
-                        size="sm"
-                      >
-                        +1 Contatto
-                      </Button>
-                    </div>
+
 
                     {/* Carica foto */}
                     <div className="flex items-center justify-between p-4 border rounded-lg">
