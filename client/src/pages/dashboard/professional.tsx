@@ -4,14 +4,27 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Star, Eye, MessageSquare, Calendar, Settings, Edit, TrendingUp, CheckCircle, AlertCircle, Camera, FileText, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [editingBasicInfo, setEditingBasicInfo] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [basicInfoForm, setBasicInfoForm] = useState({
+    businessName: "",
+    phone: "",
+    address: ""
+  });
+  const [descriptionForm, setDescriptionForm] = useState("");
 
   const { data: professionalData, isLoading } = useQuery({
     queryKey: ["/api/professional/profile"],
@@ -26,6 +39,49 @@ export default function ProfessionalDashboard() {
   const { data: reviews } = useQuery({
     queryKey: ["/api/professional/reviews"],
     enabled: !!user && user.role === "professional",
+  });
+
+  // Update profile mutations
+  const updateBasicInfo = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("PUT", "/api/professional/profile", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Informazioni aggiornate",
+        description: "Le tue informazioni di base sono state salvate",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/profile"] });
+      setEditingBasicInfo(false);
+    },
+    onError: () => {
+      toast({
+        title: "Errore nell'aggiornamento",
+        description: "Riprova più tardi",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateDescription = useMutation({
+    mutationFn: async (description: string) => {
+      return await apiRequest("PUT", "/api/professional/profile", { description });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Descrizione aggiornata",
+        description: "La tua descrizione professionale è stata salvata",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/profile"] });
+      setEditingDescription(false);
+    },
+    onError: () => {
+      toast({
+        title: "Errore nell'aggiornamento",
+        description: "Riprova più tardi",
+        variant: "destructive",
+      });
+    },
   });
 
   // Upgrade subscription mutation
@@ -189,10 +245,62 @@ export default function ProfessionalDashboard() {
                         Completato
                       </Badge>
                     ) : (
-                      <Button variant="outline" size="sm" onClick={() => window.location.href = '#profile'}>
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        Completa
-                      </Button>
+                      <Dialog open={editingBasicInfo} onOpenChange={setEditingBasicInfo}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            Completa
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Completa Informazioni di Base</DialogTitle>
+                            <DialogDescription>
+                              Inserisci le informazioni principali del tuo profilo professionale
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="businessName">Nome Attività</Label>
+                              <Input
+                                id="businessName"
+                                value={basicInfoForm.businessName}
+                                onChange={(e) => setBasicInfoForm({...basicInfoForm, businessName: e.target.value})}
+                                placeholder="es. Studio Rossi & Associati"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="phone">Telefono</Label>
+                              <Input
+                                id="phone"
+                                value={basicInfoForm.phone}
+                                onChange={(e) => setBasicInfoForm({...basicInfoForm, phone: e.target.value})}
+                                placeholder="es. +39 333 123 4567"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="address">Indirizzo</Label>
+                              <Input
+                                id="address"
+                                value={basicInfoForm.address}
+                                onChange={(e) => setBasicInfoForm({...basicInfoForm, address: e.target.value})}
+                                placeholder="es. Via Roma 123, Ferrara"
+                              />
+                            </div>
+                            <div className="flex justify-end space-x-2">
+                              <Button variant="outline" onClick={() => setEditingBasicInfo(false)}>
+                                Annulla
+                              </Button>
+                              <Button 
+                                onClick={() => updateBasicInfo.mutate(basicInfoForm)}
+                                disabled={updateBasicInfo.isPending}
+                              >
+                                {updateBasicInfo.isPending ? "Salvando..." : "Salva"}
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     )}
                   </div>
                   
@@ -207,10 +315,48 @@ export default function ProfessionalDashboard() {
                         Completato
                       </Badge>
                     ) : (
-                      <Button variant="outline" size="sm">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        Completa
-                      </Button>
+                      <Dialog open={editingDescription} onOpenChange={setEditingDescription}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            Completa
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Descrizione Professionale</DialogTitle>
+                            <DialogDescription>
+                              Descrivi i tuoi servizi professionali per attirare più clienti
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="description">Descrizione</Label>
+                              <Textarea
+                                id="description"
+                                value={descriptionForm}
+                                onChange={(e) => setDescriptionForm(e.target.value)}
+                                placeholder="Descrivi la tua esperienza, specializzazioni e servizi offerti..."
+                                rows={6}
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Minimo 50 caratteri per completare il profilo
+                              </p>
+                            </div>
+                            <div className="flex justify-end space-x-2">
+                              <Button variant="outline" onClick={() => setEditingDescription(false)}>
+                                Annulla
+                              </Button>
+                              <Button 
+                                onClick={() => updateDescription.mutate(descriptionForm)}
+                                disabled={updateDescription.isPending || descriptionForm.length < 50}
+                              >
+                                {updateDescription.isPending ? "Salvando..." : "Salva"}
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     )}
                   </div>
 
@@ -225,7 +371,16 @@ export default function ProfessionalDashboard() {
                         Completato
                       </Badge>
                     ) : (
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          toast({
+                            title: "Funzionalità in sviluppo",
+                            description: "Il caricamento delle foto profilo sarà disponibile a breve",
+                          });
+                        }}
+                      >
                         <AlertCircle className="h-3 w-3 mr-1" />
                         Aggiungi
                       </Button>
@@ -243,7 +398,16 @@ export default function ProfessionalDashboard() {
                         Verificato
                       </Badge>
                     ) : (
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          toast({
+                            title: "Processo di verifica",
+                            description: "Contatta l'amministrazione per avviare il processo di verifica",
+                          });
+                        }}
+                      >
                         <AlertCircle className="h-3 w-3 mr-1" />
                         Verifica
                       </Button>

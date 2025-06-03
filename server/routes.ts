@@ -453,6 +453,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/professional/profile", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      if (!professional) {
+        return res.status(404).json({ message: "Professional not found" });
+      }
+
+      const updateData = req.body;
+      await storage.updateProfessional(professional.id, updateData);
+      
+      // Return updated profile
+      const updatedProfessional = await storage.getProfessional(professional.id);
+      res.json(updatedProfessional);
+    } catch (error) {
+      console.error("Error updating professional profile:", error);
+      res.status(500).json({ message: "Failed to update professional profile" });
+    }
+  });
+
   app.get("/api/professional/reviews", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
     try {
       const user = req.user as any;
