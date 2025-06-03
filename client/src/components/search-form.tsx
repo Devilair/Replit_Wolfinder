@@ -17,6 +17,7 @@ export default function SearchForm() {
     if (city) params.append('city', city);
     
     const queryString = params.toString();
+    console.log('SearchForm redirect params:', queryString);
     setLocation(`/professionals${queryString ? `?${queryString}` : ''}`);
   };
 
