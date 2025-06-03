@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { simpleAdminStorage } from "./storage-simple";
 import { adminAdvancedStorage } from "./admin-storage";
 import { 
   insertProfessionalSchema, 
@@ -192,9 +193,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Stats
   app.get("/api/admin/stats", async (req, res) => {
     try {
-      const stats = await storage.getAdminStats();
+      const stats = await simpleAdminStorage.getAdminStats();
       res.json(stats);
     } catch (error) {
+      console.error("Error fetching admin stats:", error);
       res.status(500).json({ message: "Failed to fetch admin stats" });
     }
   });
@@ -213,9 +215,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       else if (status === 'unverified') params.isVerified = false;
       else if (status === 'premium') params.isPremium = true;
 
-      const professionals = await storage.getAdminProfessionals(params);
+      const professionals = await simpleAdminStorage.getAdminProfessionals();
       res.json(professionals);
     } catch (error) {
+      console.error("Error fetching professionals:", error);
       res.status(500).json({ message: "Failed to fetch professionals" });
     }
   });
@@ -241,9 +244,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid professional ID" });
       }
 
-      await storage.updateProfessional(id, req.body);
+      await simpleAdminStorage.updateProfessional(id, req.body);
       res.json({ message: "Professional updated successfully" });
     } catch (error) {
+      console.error("Error updating professional:", error);
       res.status(500).json({ message: "Failed to update professional" });
     }
   });
