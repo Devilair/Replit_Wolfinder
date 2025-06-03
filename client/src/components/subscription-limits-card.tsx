@@ -173,6 +173,70 @@ export default function SubscriptionLimitsCard({
               )}
             </div>
 
+            {/* Funzionalità Expert e Enterprise */}
+            {(planName === 'Expert' || planName === 'Enterprise') && (
+              <>
+                <div className="flex items-center justify-between">
+                  <span>Accesso API</span>
+                  {features.apiAccess ? (
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-gray-400" />
+                  )}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span>Operazioni in Massa</span>
+                  {features.bulkOperations ? (
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-gray-400" />
+                  )}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span>Report Avanzati</span>
+                  {features.advancedReporting ? (
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-gray-400" />
+                  )}
+                </div>
+              </>
+            )}
+            
+            {/* Funzionalità esclusive Enterprise */}
+            {planName === 'Enterprise' && (
+              <>
+                <div className="flex items-center justify-between">
+                  <span>White-label Branding</span>
+                  {features.whitelabelBranding ? (
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-gray-400" />
+                  )}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span>Integrazioni Custom</span>
+                  {features.customIntegrations ? (
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-gray-400" />
+                  )}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span>Account Manager Dedicato</span>
+                  {features.dedicatedAccountManager ? (
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-gray-400" />
+                  )}
+                </div>
+              </>
+            )}
+
             <div className="flex items-center justify-between">
               <span>Badge Identità Verificata</span>
               {features.verifiedBadge ? (
