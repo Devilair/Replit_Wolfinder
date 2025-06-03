@@ -10,6 +10,10 @@ import Professionals from "@/pages/professionals";
 import ProfessionalProfile from "@/pages/professional-profile";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminProfessionals from "@/pages/admin/professionals";
+import AdminReviews from "@/pages/admin/reviews";
+import AdminCategories from "@/pages/admin/categories";
+import AdminUsers from "@/pages/admin/users";
+import AdminSettings from "@/pages/admin/settings";
 
 function Router() {
   return (
@@ -32,6 +36,26 @@ function Router() {
       <Route path="/admin/professionals" component={() => (
         <AdminLayout>
           <AdminProfessionals />
+        </AdminLayout>
+      )} />
+      <Route path="/admin/reviews" component={() => (
+        <AdminLayout>
+          <AdminReviews />
+        </AdminLayout>
+      )} />
+      <Route path="/admin/categories" component={() => (
+        <AdminLayout>
+          <AdminCategories />
+        </AdminLayout>
+      )} />
+      <Route path="/admin/users" component={() => (
+        <AdminLayout>
+          <AdminUsers />
+        </AdminLayout>
+      )} />
+      <Route path="/admin/settings" component={() => (
+        <AdminLayout>
+          <AdminSettings />
         </AdminLayout>
       )} />
       
