@@ -1,14 +1,17 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Star, Eye, MessageSquare, Calendar, Settings, Edit, TrendingUp } from "lucide-react";
+import { Star, Eye, MessageSquare, Calendar, Settings, Edit, TrendingUp, CheckCircle, AlertCircle, Camera, FileText, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const { data: professionalData, isLoading } = useQuery({
     queryKey: ["/api/professional/profile"],
@@ -24,6 +27,42 @@ export default function ProfessionalDashboard() {
     queryKey: ["/api/professional/reviews"],
     enabled: !!user && user.role === "professional",
   });
+
+  // Upgrade subscription mutation
+  const upgradeSubscription = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/professional/upgrade-subscription");
+    },
+    onSuccess: () => {
+      toast({
+        title: "Abbonamento Premium Attivato!",
+        description: "Il tuo profilo ora ha maggiore visibilità",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/stats"] });
+    },
+    onError: () => {
+      toast({
+        title: "Errore nell'upgrade",
+        description: "Riprova più tardi",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Profile completion status based on real data
+  const getProfileCompletionStatus = () => {
+    if (!professionalData) return {};
+    
+    return {
+      basicInfo: professionalData.businessName && professionalData.email,
+      description: professionalData.description && professionalData.description.length > 50,
+      profilePhoto: professionalData.profileImageUrl,
+      verification: user?.isVerified,
+    };
+  };
+
+  const profileStatus = getProfileCompletionStatus();
 
   if (isLoading) {
     return (
@@ -141,53 +180,114 @@ export default function ProfessionalDashboard() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Informazioni di base</span>
-                    <Badge variant="default">Completato</Badge>
+                    <div className="flex items-center space-x-2">
+                      <FileText className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">Informazioni di base</span>
+                    </div>
+                    {profileStatus.basicInfo ? (
+                      <Badge variant="default" className="bg-green-100 text-green-800">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Completato
+                      </Badge>
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => window.location.href = '#profile'}>
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Completa
+                      </Button>
+                    )}
                   </div>
+                  
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Descrizione servizi</span>
-                    <Badge variant="secondary">Da completare</Badge>
+                    <div className="flex items-center space-x-2">
+                      <FileText className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">Descrizione servizi</span>
+                    </div>
+                    {profileStatus.description ? (
+                      <Badge variant="default" className="bg-green-100 text-green-800">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Completato
+                      </Badge>
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => window.location.href = '#profile'}>
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Aggiungi
+                      </Button>
+                    )}
                   </div>
+                  
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Foto profilo</span>
-                    <Badge variant="secondary">Da aggiungere</Badge>
+                    <div className="flex items-center space-x-2">
+                      <Camera className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">Foto profilo</span>
+                    </div>
+                    {profileStatus.profilePhoto ? (
+                      <Badge variant="default" className="bg-green-100 text-green-800">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Caricata
+                      </Badge>
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => window.location.href = '#profile'}>
+                        <Camera className="h-3 w-3 mr-1" />
+                        Carica
+                      </Button>
+                    )}
                   </div>
+                  
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Verifica identità</span>
-                    <Badge variant="outline">In attesa</Badge>
+                    <div className="flex items-center space-x-2">
+                      <Shield className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">Verifica identità</span>
+                    </div>
+                    {profileStatus.verification ? (
+                      <Badge variant="default" className="bg-green-100 text-green-800">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Verificato
+                      </Badge>
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => window.location.href = '#verification'}>
+                        <Shield className="h-3 w-3 mr-1" />
+                        Verifica
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Recent Activity */}
-              <Card>
+              {/* Subscription Upgrade */}
+              <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
                 <CardHeader>
-                  <CardTitle>Attività Recente</CardTitle>
-                  <CardDescription>
-                    Le tue ultime interazioni sulla piattaforma
+                  <CardTitle className="text-blue-900">Potenzia la tua Visibilità</CardTitle>
+                  <CardDescription className="text-blue-700">
+                    Passa al piano Premium per ottenere più clienti
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm">Profilo visualizzato da Mario R.</p>
-                      <p className="text-xs text-gray-500">2 ore fa</p>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <span className="text-sm text-blue-800">Profilo in evidenza nelle ricerche</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <span className="text-sm text-blue-800">Badge "Professionista Verificato"</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <span className="text-sm text-blue-800">Analytics dettagliate sui clienti</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <span className="text-sm text-blue-800">Contatti diretti illimitati</span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm">Nuova recensione ricevuta</p>
-                      <p className="text-xs text-gray-500">1 giorno fa</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm">Profilo aggiornato</p>
-                      <p className="text-xs text-gray-500">3 giorni fa</p>
-                    </div>
+                  <div className="pt-2">
+                    <Button 
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      onClick={() => upgradeSubscription.mutate()}
+                      disabled={upgradeSubscription.isPending}
+                    >
+                      {upgradeSubscription.isPending ? "Elaborazione..." : "Upgrade a Premium - €29/mese"}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

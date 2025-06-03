@@ -362,16 +362,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin Recent Activity
+  // Admin Recent Activity (with real-time subscription notifications)
   app.get("/api/admin/recent-activity", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
     try {
-      const activities = [
-        { description: "Nuovo professionista registrato: Marco Bianchi", timestamp: "2 min fa" },
-        { description: "Recensione verificata per Avv. Rossi", timestamp: "5 min fa" },
-        { description: "Utente sospeso per violazione TOS", timestamp: "12 min fa" },
-        { description: "Aggiornamento categoria Architetti", timestamp: "25 min fa" },
-        { description: "Backup automatico completato", timestamp: "1 ora fa" }
-      ];
+      const activities = await storage.getRecentActivity();
       res.json(activities);
     } catch (error) {
       console.error("Error fetching recent activity:", error);
@@ -421,6 +415,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching suspicious activity:", error);
       res.status(500).json({ message: "Failed to fetch suspicious activity" });
+    }
+  });
+
+  // Professional dashboard endpoints
+  app.get("/api/professional/profile", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessional(user.id);
+      res.json(professional);
+    } catch (error) {
+      console.error("Error fetching professional profile:", error);
+      res.status(500).json({ message: "Failed to fetch professional profile" });
+    }
+  });
+
+  app.get("/api/professional/stats", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      if (!professional) {
+        return res.status(404).json({ message: "Professional not found" });
+      }
+
+      const reviews = await storage.getReviewsByProfessional(professional.id);
+      const stats = {
+        views: professional.views || 0,
+        reviews: reviews.length,
+        rating: professional.rating || "N/A",
+        contacts: professional.contactCount || 0,
+        ranking: professional.ranking || "N/A"
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching professional stats:", error);
+      res.status(500).json({ message: "Failed to fetch professional stats" });
+    }
+  });
+
+  app.get("/api/professional/reviews", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      if (!professional) {
+        return res.status(404).json({ message: "Professional not found" });
+      }
+
+      const reviews = await storage.getReviewsByProfessional(professional.id);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching professional reviews:", error);
+      res.status(500).json({ message: "Failed to fetch professional reviews" });
+    }
+  });
+
+  app.post("/api/professional/upgrade-subscription", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      if (!professional) {
+        return res.status(404).json({ message: "Professional not found" });
+      }
+
+      // Update professional to premium
+      await storage.updateProfessional(professional.id, {
+        subscriptionType: 'premium',
+        subscriptionStartDate: new Date(),
+        subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        isPremium: true
+      });
+
+      // Add real-time notification to admin dashboard
+      await storage.logActivity({
+        type: 'subscription_upgrade',
+        description: `${user.name} ha effettuato l'upgrade a Premium`,
+        userId: user.id,
+        metadata: {
+          professionalId: professional.id,
+          subscriptionType: 'premium',
+          amount: 29
+        }
+      });
+
+      res.json({ success: true, message: "Upgrade completato con successo" });
+    } catch (error) {
+      console.error("Error upgrading subscription:", error);
+      res.status(500).json({ message: "Failed to upgrade subscription" });
     }
   });
 

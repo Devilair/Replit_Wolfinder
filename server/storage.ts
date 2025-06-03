@@ -51,10 +51,12 @@ export interface IStorage {
     sortOrder?: 'asc' | 'desc';
   }): Promise<ProfessionalSummary[]>;
   getProfessional(id: number): Promise<ProfessionalWithDetails | undefined>;
+  getProfessionalByUserId(userId: number): Promise<Professional | undefined>;
   getProfessionalsByCategory(categoryId: number): Promise<ProfessionalSummary[]>;
   getFeaturedProfessionals(): Promise<ProfessionalSummary[]>;
   createProfessional(professional: InsertProfessional): Promise<Professional>;
   updateProfessionalRating(id: number): Promise<void>;
+  logActivity(activity: { type: string; description: string; userId: number; metadata?: any }): Promise<void>;
 
   // Reviews
   getReviewsByProfessional(professionalId: number): Promise<(Review & { user: User })[]>;
