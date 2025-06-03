@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AdminLayout from "@/components/admin-layout";
 import NotFound from "@/pages/not-found";
+import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import Professionals from "@/pages/professionals";
 import ProfessionalProfile from "@/pages/professional-profile";
@@ -20,7 +21,7 @@ import ProfessionalSubscriptionDemo from "@/pages/professional-subscription-demo
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/" component={Landing} />
       <Route path="/professionals" component={Professionals} />
       <Route path="/professionals/:id" component={ProfessionalProfile} />
       <Route path="/demo/subscription-limits" component={ProfessionalSubscriptionDemo} />

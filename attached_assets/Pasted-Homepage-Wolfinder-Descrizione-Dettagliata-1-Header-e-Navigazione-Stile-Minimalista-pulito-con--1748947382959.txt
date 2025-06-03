@@ -1,0 +1,289 @@
+Homepage Wolfinder: Descrizione Dettagliata
+1. Header e Navigazione
+Stile: Minimalista, pulito, con spazio bianco abbondante.
+Elementi:
+
+Logo Wolfinder a sinistra - logo che integra un elemento lupesco stilizzato (occhio ambrato o silhouette minimal)
+Navigazione principale al centro con:
+
+Chi Siamo
+Come Funziona
+Categorie Professionisti
+Per i Professionisti
+Blog (opzionale per fase iniziale)
+
+
+CTA principali a destra:
+
+Pulsante "Accedi" (secondario, outline)
+Pulsante "Registrati" (primario, pieno, ambrato)
+
+
+
+Comportamento: Header sticky che si compatta quando si scorre verso il basso, mantenendo sempre accessibili login e registrazione.
+2. Hero Section
+Stile: Impattante, con equilibrio tra testo e visual, sfondo con gradiente sottile da bianco a grigio chiarissimo.
+Contenuto:
+
+Headline principale (font grande, bold):
+"Trova professionisti affidabili, basandoti su esperienze reali"
+Sottotitolo (font medio, light):
+"Wolfinder trasforma il modo in cui scegli avvocati, commercialisti e altri professionisti grazie a recensioni verificate e un sistema 100% meritocratico"
+Visual principale: Illustrazione moderna che mostra utenti che valutano professionisti con un sistema di stelle e badge "verificato", con elementi grafici che rappresentano la trasparenza (elementi in vetro/cristallo)
+Barra di ricerca prominente:
+
+Campo dropdown "Categoria professionale" (pre-popolato con le categorie principali)
+Campo "Città o CAP" con geolocalizzazione
+Pulsante di ricerca ambrato "Trova Professionisti"
+
+
+Social proof sottostante:
+
+"X.XXX professionisti verificati"
+"XX.XXX recensioni autentiche"
+"Attivo in XXX città italiane"
+
+
+
+3. Come Funziona Wolfinder
+Stile: Sezione a sfondo bianco con 3 colonne, processo intuitivo step-by-step.
+Titolo sezione: "Trovare il professionista giusto in tre semplici passi"
+Contenuto:
+
+CERCA:
+
+Icona: Lente d'ingrandimento stilizzata
+Titolo: "Cerca nella tua zona"
+Descrizione: "Filtra per categoria, specializzazione e località per trovare esattamente ciò di cui hai bisogno"
+Visual: Screenshot minimalista dell'interfaccia di ricerca
+
+
+CONFRONTA:
+
+Icona: Bilancia o grafico comparativo
+Titolo: "Confronta recensioni verificate"
+Descrizione: "Leggi esperienze autentiche di altri clienti, con prove di acquisto verificate dal nostro team"
+Visual: Card di recensione con badge "Verificata" in evidenza
+
+
+SCEGLI:
+
+Icona: Spunta di conferma
+Titolo: "Scegli con fiducia"
+Descrizione: "Seleziona il professionista più adatto a te, basandoti su dati reali e trasparenti"
+Visual: Profilo professionista con indicatori di rating e badge
+
+
+
+CTA: Pulsante centrale "Inizia la tua ricerca" che scorre alla barra di ricerca o alle categorie.
+4. Perché Wolfinder è Diverso
+Stile: Sfondo grigio chiarissimo, layout a due colonne con testo a sinistra e visual a destra.
+Titolo: "Un nuovo standard di trasparenza professionale"
+Contenuto Testuale:
+
+Intro: "Wolfinder nasce per risolvere un problema reale: come distinguere tra recensioni autentiche e quelle manipolate o false. Ecco cosa ci rende diversi:"
+Punti chiave (con icone distintive):
+
+Verificazione rigorosa: "Ogni recensione può essere supportata da prove di acquisto verificate dal nostro team"
+Algoritmo meritocratico: "I professionisti emergono per la qualità del loro servizio, non per quanto spendono in pubblicità"
+Trasparenza totale: "I criteri di valutazione e ranking sono pubblici e consultabili da tutti"
+Zero manipolazione: "Nessuna possibilità di nascondere recensioni negative o promuovere quelle positive"
+
+
+
+Visual: Illustrazione che mostra in modo concettuale il processo di verifica delle recensioni, con elementi grafici che rappresentano l'autenticità (sigilli, badge, documenti) in contrasto con elementi "falsi" barrati.
+5. Categorie di Professionisti
+Stile: Griglia pulita di card cliccabili, con ampio spazio bianco.
+Titolo: "Esplora per categoria professionale"
+Layout: Grid di 6-8 categorie principali, ciascuna con:
+
+Icona distintiva della professione
+Nome categoria (es. "Avvocati", "Commercialisti", "Notai")
+Numero di professionisti verificati nella categoria
+Rating medio della categoria
+
+Visual: Ogni card ha un colore di accento sottile diverso ma coordinato con la palette generale.
+CTA: "Vedi tutte le categorie" in fondo alla griglia.
+6. Testimonianze di Utilizzo
+Stile: Slider/carosello elegante con controlli minimal.
+Titolo: "Esperienze di chi ha scelto con Wolfinder"
+Contenuto: Alternanza tra testimonianze di:
+
+Utenti che hanno trovato professionisti:
+
+Foto persona (opzionale/stock)
+Nome e città
+Breve testimonianza sull'esperienza di utilizzo di Wolfinder
+Quale professionista hanno trovato
+
+
+Professionisti sulla piattaforma:
+
+Foto professionale
+Nome, professione e città
+Testimonianza su come Wolfinder ha valorizzato il loro impegno per la qualità
+
+
+
+Visual: Card testimonianze con elementi grafici sottili che rimandano alle recensioni (stelle, virgolette).
+7. Per i Professionisti
+Stile: Split screen con gradiente ambrato a sinistra e contenuto a destra.
+Titolo: "Sei un professionista? Emergere per merito è possibile"
+Contenuto:
+
+Sottotitolo: "Su Wolfinder, la qualità del tuo servizio parla più forte di qualsiasi pubblicità"
+Punti di valore:
+
+"Profilo verificato che ispira fiducia"
+"Visibilità basata sul merito e sulle recensioni autentiche"
+"Strumenti di analisi per comprendere e migliorare la tua reputazione"
+"Differenziati dalla concorrenza grazie alla trasparenza"
+
+
+CTA principale: Pulsante "Registra la tua attività" (grande, chiaro)
+CTA secondario: Link "Scopri i nostri piani" (più piccolo, sottostante)
+
+Visual: Illustrazione di un professionista che riceve una stella o badge di merito, con elementi grafici che rappresentano crescita e visibilità.
+8. Come Garantiamo l'Autenticità
+Stile: Infografica a step con numerazione chiara.
+Titolo: "Il nostro processo di verifica in 4 passaggi"
+Contenuto:
+
+Registrazione utente verificata:
+"Ogni utente deve verificare la propria identità con email e numero di telefono"
+Prova di servizio ricevuto:
+"Gli utenti possono caricare fatture o altri documenti che attestano il servizio"
+Verifica da parte del team:
+"Il nostro team controlla l'autenticità dei documenti e la corrispondenza con il professionista"
+Badge di verifica:
+"Le recensioni verificate ricevono un badge speciale visibile a tutti"
+
+Visual: Processo illustrato con icone semplici e frecce di collegamento, con particolare enfasi sul badge finale.
+Nota informativa: Box informativo che spiega "Le recensioni non verificate sono comunque visibili ma chiaramente etichettate e hanno un peso minore nel rating complessivo."
+9. FAQ Essenziali
+Stile: Accordion minimalista con indicatori + / - chiari.
+Titolo: "Domande frequenti"
+FAQ suggerite:
+
+"Come vengono verificate le recensioni su Wolfinder?"
+"Chi può iscriversi come professionista?"
+"È completamente gratuito utilizzare Wolfinder come utente?"
+"Cosa succede se ricevo una recensione negativa?"
+"Come funziona l'algoritmo di ranking dei professionisti?"
+
+CTA: Link "Vedi tutte le FAQ" o "Contattaci per saperne di più"
+10. Call to Action Finale
+Stile: Banner a larghezza piena con sfondo a gradiente ambrato-arancio.
+Contenuto:
+
+Headline: "Pronto a trovare il professionista perfetto per le tue esigenze?"
+Sottotitolo: "Unisciti alla comunità di Wolfinder e trasforma il modo in cui scegli e valuti i servizi professionali"
+CTA duplici:
+
+Pulsante primario: "Cerca professionisti" (per utenti)
+Pulsante secondario: "Registra la tua attività" (per professionisti)
+
+
+
+11. Footer
+Stile: Ampio, ben organizzato, con divisione chiara in sezioni.
+Contenuto:
+
+Logo e tagline in alto
+Colonne informative:
+
+Navigazione principale:
+
+Home
+Chi Siamo
+Come Funziona
+Categorie
+Per i Professionisti
+Blog
+
+
+Categorie principali:
+
+Avvocati
+Commercialisti
+Notai
+Ingegneri
+Architetti
+Altre categorie
+
+
+Informazioni:
+
+Termini e Condizioni
+Privacy Policy
+Cookie Policy
+Linee guida recensioni
+Centro assistenza
+
+
+Contatti:
+
+Email di contatto
+Form di contatto
+Social media icons
+Indirizzo (se applicabile)
+
+
+
+
+Sezione finale:
+
+Copyright
+Menzione località server (es. "Ospitato su server in Italia")
+Eventuali certificazioni o compliance (es. GDPR)
+
+
+
+Elementi di UX/UI Distintivi
+
+Sistema di colori:
+
+Primario: Ambra/arancione (energia, affidabilità)
+Secondario: Blu scuro/grigio ardesia (professionalità)
+Accenti: Verde (per elementi verificati/positivi)
+Background: Principalmente bianco con aree grigio chiarissimo per separazione visiva
+
+
+Tipografia:
+
+Headline: Font sans-serif moderno, pulito ma con personalità
+Body text: Font altamente leggibile con buon contrasto
+Dimensioni generose per tutti i testi, con gerarchia chiara
+
+
+Micro-interazioni:
+
+Hover states distintivi sui pulsanti
+Animazioni sottili di entrata degli elementi durante lo scroll
+Tooltip informativi su elementi tecnici (es. badge di verifica)
+
+
+Iconografia:
+
+Set coerente di icone lineari con accenti di colore
+Badge di verifica distintivo con elementi che suggeriscono sicurezza
+Stelle di rating con design proprietario riconoscibile
+
+
+Immagini e illustrazioni:
+
+Mix di illustrazioni moderne (stile flat o isometrico) e foto reali
+Rappresentazione diversificata dei professionisti
+Elementi grafici ricorrenti che suggeriscono verifica e meritocrazia
+
+
+
+Messaggi Chiave da Comunicare
+
+Trasparenza totale: Wolfinder non nasconde nulla, ogni aspetto del sistema è visibile e comprensibile.
+Meritocrazia autentica: I migliori professionisti emergono per la qualità del loro servizio, non per budget marketing.
+Verificabilità concreta: Non ci fidiamo ciecamente delle recensioni, le verifichiamo.
+Empowerment dell'utente: Diamo agli utenti gli strumenti per fare scelte informate.
+Valorizzazione del merito professionale: Premiamo chi offre davvero un servizio eccellente.
+
+Questa homepage comunica chiaramente la proposta di valore unica di Wolfinder, distinguendola dalle piattaforme di recensioni tradizionali e dalle directory professionali attraverso l'enfasi sulla verifica, trasparenza e meritocrazia.Add to Conversation
