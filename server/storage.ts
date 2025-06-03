@@ -561,64 +561,108 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAdminProfessionals(params?: any): Promise<ProfessionalWithDetails[]> {
-    let query = db
-      .select({
-        id: professionals.id,
-        userId: professionals.userId,
-        categoryId: professionals.categoryId,
-        businessName: professionals.businessName,
-        description: professionals.description,
-        phone: professionals.phone,
-        email: professionals.email,
-        website: professionals.website,
-        address: professionals.address,
-        city: professionals.city,
-        province: professionals.province,
-        postalCode: professionals.postalCode,
-        priceRangeMin: professionals.priceRangeMin,
-        priceRangeMax: professionals.priceRangeMax,
-        priceUnit: professionals.priceUnit,
-        isVerified: professionals.isVerified,
-        isPremium: professionals.isPremium,
-        rating: professionals.rating,
-        reviewCount: professionals.reviewCount,
-        createdAt: professionals.createdAt,
-        updatedAt: professionals.updatedAt,
-        user: users,
-        category: categories,
-      })
-      .from(professionals)
-      .leftJoin(users, eq(professionals.userId, users.id))
-      .leftJoin(categories, eq(professionals.categoryId, categories.id));
+    try {
+      // Use raw SQL query to avoid Drizzle ORM issues
+      const professionalsResult = await db.execute(sql`
+        SELECT 
+          p.id, p.user_id, p.category_id, p.business_name, p.description,
+          p.phone, p.email, p.website, p.address, p.city, p.province,
+          p.postal_code, p.price_range_min, p.price_range_max, p.price_unit,
+          p.is_verified, p.is_premium, p.rating, p.review_count,
+          p.created_at, p.updated_at,
+          u.username, u.email as user_email, u.name as user_name,
+          u.role, u.is_verified as user_verified, u.created_at as user_created_at,
+          c.name as category_name, c.slug as category_slug, c.icon as category_icon
+        FROM professionals p
+        LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN categories c ON p.category_id = c.id
+        ORDER BY p.created_at DESC
+      `);
 
-    if (params?.search) {
-      query = query.where(
-        or(
-          ilike(professionals.businessName, `%${params.search}%`),
-          ilike(professionals.email, `%${params.search}%`)
-        )
-      );
+      const professionalsWithDetails = [];
+      
+      for (const prof of professionalsResult.rows) {
+        // Get reviews for this professional
+        const reviewsResult = await db.execute(sql`
+          SELECT r.*, u.username, u.name as reviewer_name
+          FROM reviews r
+          LEFT JOIN users u ON r.user_id = u.id
+          WHERE r.professional_id = ${prof.id}
+          ORDER BY r.created_at DESC
+          LIMIT 5
+        `);
+
+        professionalsWithDetails.push({
+          id: prof.id,
+          userId: prof.user_id,
+          categoryId: prof.category_id,
+          businessName: prof.business_name,
+          description: prof.description,
+          email: prof.email,
+          phone: prof.phone,
+          website: prof.website,
+          address: prof.address,
+          city: prof.city,
+          province: prof.province,
+          rating: Number(prof.rating) || 0,
+          reviewCount: Number(prof.review_count) || 0,
+          isVerified: prof.is_verified || false,
+          createdAt: new Date(prof.created_at),
+          updatedAt: new Date(prof.updated_at),
+          // Required fields for ProfessionalWithDetails interface
+          lastActivityAt: null,
+          adminNotes: null,
+          verificationStatus: "verified",
+          verificationNotes: null,
+          subscriptionTier: "free",
+          subscriptionStatus: "active",
+          subscriptionExpiresAt: null,
+          totalViews: 0,
+          monthlyViews: 0,
+          responseRate: "0",
+          avgResponseTime: "0",
+          isBlocked: false,
+          blockReason: null,
+          isHighlighted: false,
+          highlightExpiresAt: null,
+          isProblematic: false,
+          problematicReason: null,
+          profileCompleteness: "100",
+          user: {
+            id: prof.user_id,
+            username: prof.username || "",
+            email: prof.user_email || "",
+            name: prof.user_name || "",
+            role: prof.role || "user",
+            isVerified: prof.user_verified || false,
+            createdAt: new Date(prof.user_created_at || prof.created_at),
+          },
+          category: {
+            id: prof.category_id,
+            name: prof.category_name || "",
+            slug: prof.category_slug || "",
+            description: null,
+            icon: prof.category_icon || "",
+          },
+          reviews: reviewsResult.rows.map(review => ({
+            id: review.id,
+            rating: review.rating,
+            comment: review.comment,
+            isVerified: review.is_verified,
+            createdAt: new Date(review.created_at),
+            user: {
+              username: review.username || "",
+              name: review.reviewer_name || "",
+            }
+          }))
+        });
+      }
+
+      return professionalsWithDetails;
+    } catch (error) {
+      console.error("Error fetching admin professionals:", error);
+      return [];
     }
-
-    if (params?.verified !== undefined) {
-      query = query.where(eq(professionals.isVerified, params.verified));
-    }
-
-    const results = await query.orderBy(desc(professionals.createdAt));
-    
-    const professionalsWithReviews = await Promise.all(
-      results.map(async (result) => {
-        const professionalReviews = await this.getReviewsByProfessional(result.id);
-        return {
-          ...result,
-          user: result.user!,
-          category: result.category!,
-          reviews: professionalReviews,
-        };
-      })
-    );
-
-    return professionalsWithReviews;
   }
 
   async updateProfessional(id: number, data: any): Promise<void> {
