@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 
-import { adminAdvancedStorage } from "./admin-storage";
+
 import { authService } from "./auth";
 import multer from "multer";
 import { 
@@ -315,7 +315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Stats
   app.get("/api/admin/stats", async (req, res) => {
     try {
-      const stats = await simpleAdminStorage.getAdminStats();
+      const stats = await storage.getAdminStats();
       res.json(stats);
     } catch (error) {
       console.error("Error fetching admin stats:", error);
@@ -337,7 +337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       else if (status === 'unverified') params.isVerified = false;
       else if (status === 'premium') params.isPremium = true;
 
-      const professionals = await simpleAdminStorage.getAdminProfessionals();
+      const professionals = await storage.getAdminProfessionals();
       res.json(professionals);
     } catch (error) {
       console.error("Error fetching professionals:", error);
@@ -366,7 +366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid professional ID" });
       }
 
-      await simpleAdminStorage.updateProfessional(id, req.body);
+      await storage.updateProfessional(id, req.body);
       res.json({ message: "Professional updated successfully" });
     } catch (error) {
       console.error("Error updating professional:", error);
@@ -383,7 +383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid professional ID" });
       }
 
-      await simpleAdminStorage.updateProfessional(id, { isVerified: verified });
+      await storage.updateProfessional(id, { isVerified: verified });
       res.json({ message: verified ? "Professional verified" : "Verification removed" });
     } catch (error) {
       console.error("Error updating professional verification:", error);
@@ -398,7 +398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid professional ID" });
       }
 
-      await simpleAdminStorage.deleteProfessional(id);
+      await storage.deleteProfessional(id);
       res.json({ message: "Professional deleted successfully" });
     } catch (error) {
       console.error("Error deleting professional:", error);
@@ -410,7 +410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/analytics/reviews", async (req, res) => {
     try {
-      const analytics = await simpleAdminStorage.getReviewAnalytics();
+      const analytics = await storage.getReviewAnalytics();
       res.json(analytics);
     } catch (error) {
       console.error("Error fetching review analytics:", error);
@@ -420,7 +420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/analytics/professionals-by-category", async (req, res) => {
     try {
-      const analytics = await simpleAdminStorage.getProfessionalsByCategory();
+      const analytics = await storage.getProfessionalsByCategory();
       res.json(analytics);
     } catch (error) {
       console.error("Error fetching professionals by category:", error);
@@ -430,7 +430,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/analytics/advanced-metrics", async (req, res) => {
     try {
-      const metrics = await simpleAdminStorage.getAdvancedMetrics();
+      const metrics = await storage.getAdvancedMetrics();
       res.json(metrics);
     } catch (error) {
       console.error("Error fetching advanced metrics:", error);
@@ -440,7 +440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/security/suspicious-activity", async (req, res) => {
     try {
-      const activity = await simpleAdminStorage.getSuspiciousActivity();
+      const activity = await storage.getSuspiciousActivity();
       res.json(activity);
     } catch (error) {
       console.error("Error fetching suspicious activity:", error);
@@ -450,7 +450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/analytics/geographic-distribution", async (req, res) => {
     try {
-      const distribution = await simpleAdminStorage.getGeographicDistribution();
+      const distribution = await storage.getGeographicDistribution();
       res.json(distribution);
     } catch (error) {
       console.error("Error fetching geographic distribution:", error);
@@ -466,7 +466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { status, adminNotes } = req.body;
-      await simpleAdminStorage.updateReviewStatus(id, status, adminNotes);
+      await storage.updateReviewStatus(id, status, adminNotes);
       res.json({ message: "Review status updated successfully" });
     } catch (error) {
       console.error("Error updating review status:", error);
@@ -477,7 +477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Users Management
   app.get("/api/admin/users", async (req, res) => {
     try {
-      const users = await simpleAdminStorage.getAllUsers();
+      const users = await storage.getAllUsers();
       res.json(users);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -489,7 +489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/reviews", async (req, res) => {
     try {
       const { status } = req.query;
-      const reviews = await simpleAdminStorage.getAdminReviews(status as string);
+      const reviews = await storage.getAdminReviews(status as string);
       res.json(reviews);
     } catch (error) {
       console.error("Error fetching reviews:", error);
@@ -506,7 +506,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid review ID" });
       }
 
-      await simpleAdminStorage.updateReview(id, { status: verified ? 'verified' : 'pending' });
+      await storage.updateReview(id, { status: verified ? 'verified' : 'pending' });
       res.json({ message: verified ? "Review verified" : "Verification removed" });
     } catch (error) {
       console.error("Error updating review verification:", error);
@@ -521,7 +521,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid review ID" });
       }
 
-      await simpleAdminStorage.deleteReview(id);
+      await storage.deleteReview(id);
       res.json({ message: "Review deleted successfully" });
     } catch (error) {
       console.error("Error deleting review:", error);
