@@ -1,0 +1,321 @@
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import SubscriptionLimitsCard from "@/components/subscription-limits-card";
+import { Crown, Camera, MessageSquare, Building, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { getProfessionalFeatures, canAccessFeature, getFeatureLimit } from "@shared/subscription-features";
+import type { Subscription, SubscriptionPlan } from "@shared/schema";
+
+// Dati demo per i tre piani
+const DEMO_SUBSCRIPTIONS = {
+  gratuito: undefined,
+  professional: {
+    id: 1,
+    professionalId: 1,
+    planId: 1,
+    status: 'active' as const,
+    stripeSubscriptionId: 'sub_demo',
+    currentPeriodStart: new Date('2024-01-01'),
+    currentPeriodEnd: new Date('2024-02-01'),
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+    plan: {
+      id: 1,
+      name: 'Professional',
+      price: 29.99,
+      currency: 'EUR',
+      interval: 'month' as const,
+      features: JSON.stringify([]),
+      stripeProductId: 'prod_demo',
+      stripePriceId: 'price_demo',
+      isActive: true,
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+    }
+  },
+  enterprise: {
+    id: 2,
+    professionalId: 1,
+    planId: 2,
+    status: 'active' as const,
+    stripeSubscriptionId: 'sub_demo2',
+    currentPeriodStart: new Date('2024-01-01'),
+    currentPeriodEnd: new Date('2024-02-01'),
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+    plan: {
+      id: 2,
+      name: 'Enterprise',
+      price: 99.99,
+      currency: 'EUR',
+      interval: 'month' as const,
+      features: JSON.stringify([]),
+      stripeProductId: 'prod_demo2',
+      stripePriceId: 'price_demo2',
+      isActive: true,
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+    }
+  }
+};
+
+export default function ProfessionalSubscriptionDemo() {
+  const [selectedPlan, setSelectedPlan] = useState<'gratuito' | 'professional' | 'enterprise'>('gratuito');
+  const [currentUsage, setCurrentUsage] = useState({
+    contactsThisMonth: 3,
+    photosUploaded: 2,
+    servicesListed: 2
+  });
+
+  const subscription = DEMO_SUBSCRIPTIONS[selectedPlan];
+  const features = getProfessionalFeatures(subscription);
+
+  const simulateAction = (action: 'contact' | 'photo' | 'service') => {
+    const newUsage = { ...currentUsage };
+    
+    if (action === 'contact') {
+      const limit = getFeatureLimit(subscription, 'maxContactsPerMonth');
+      if (limit === -1 || newUsage.contactsThisMonth < limit) {
+        newUsage.contactsThisMonth += 1;
+      }
+    } else if (action === 'photo') {
+      const limit = getFeatureLimit(subscription, 'maxPhotos');
+      if (limit === -1 || newUsage.photosUploaded < limit) {
+        newUsage.photosUploaded += 1;
+      }
+    } else if (action === 'service') {
+      const limit = getFeatureLimit(subscription, 'maxServices');
+      if (limit === -1 || newUsage.servicesListed < limit) {
+        newUsage.servicesListed += 1;
+      }
+    }
+    
+    setCurrentUsage(newUsage);
+  };
+
+  const resetUsage = () => {
+    setCurrentUsage({ contactsThisMonth: 0, photosUploaded: 0, servicesListed: 0 });
+  };
+
+  const canAddPhoto = () => {
+    const limit = getFeatureLimit(subscription, 'maxPhotos');
+    return limit === -1 || currentUsage.photosUploaded < limit;
+  };
+
+  const canAddService = () => {
+    const limit = getFeatureLimit(subscription, 'maxServices');
+    return limit === -1 || currentUsage.servicesListed < limit;
+  };
+
+  return (
+    <div className="container mx-auto py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold mb-4">Demo Limitazioni Piano Abbonamento</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Questa demo mostra come le funzionalità cambiano in base al piano di abbonamento attivo del professionista.
+            Prova a selezionare diversi piani e testare le azioni disponibili.
+          </p>
+        </div>
+
+        {/* Selettore Piano */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Seleziona Piano da Testare</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Button
+                variant={selectedPlan === 'gratuito' ? 'default' : 'outline'}
+                onClick={() => setSelectedPlan('gratuito')}
+                className="h-20 flex flex-col items-center justify-center"
+              >
+                <span className="font-semibold">Piano Gratuito</span>
+                <span className="text-sm text-gray-500">Funzionalità limitate</span>
+              </Button>
+              
+              <Button
+                variant={selectedPlan === 'professional' ? 'default' : 'outline'}
+                onClick={() => setSelectedPlan('professional')}
+                className="h-20 flex flex-col items-center justify-center"
+              >
+                <div className="flex items-center space-x-1 mb-1">
+                  <Crown className="h-4 w-4" />
+                  <span className="font-semibold">Professional</span>
+                </div>
+                <span className="text-sm text-gray-500">€29.99/mese</span>
+              </Button>
+              
+              <Button
+                variant={selectedPlan === 'enterprise' ? 'default' : 'outline'}
+                onClick={() => setSelectedPlan('enterprise')}
+                className="h-20 flex flex-col items-center justify-center"
+              >
+                <div className="flex items-center space-x-1 mb-1">
+                  <Crown className="h-4 w-4" />
+                  <span className="font-semibold">Enterprise</span>
+                </div>
+                <span className="text-sm text-gray-500">€99.99/mese</span>
+              </Button>
+            </div>
+            
+            <div className="mt-4 flex justify-center">
+              <Button onClick={resetUsage} variant="outline" size="sm">
+                Reset Utilizzo
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Card Limitazioni */}
+          <div className="lg:col-span-1">
+            <SubscriptionLimitsCard 
+              subscription={subscription}
+              currentUsage={currentUsage}
+              onUpgrade={() => alert('Redirect alla pagina di upgrade')}
+            />
+          </div>
+
+          {/* Simulazione Funzionalità */}
+          <div className="lg:col-span-2">
+            <Tabs defaultValue="actions" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="actions">Azioni Simulate</TabsTrigger>
+                <TabsTrigger value="features">Confronto Funzionalità</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="actions" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Simula Azioni del Professionista</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Contatti ricevuti */}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <MessageSquare className="h-5 w-5 text-blue-500" />
+                        <div>
+                          <h4 className="font-medium">Ricevi Contatto</h4>
+                          <p className="text-sm text-gray-500">Simula la ricezione di un nuovo contatto</p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => simulateAction('contact')}
+                        size="sm"
+                      >
+                        +1 Contatto
+                      </Button>
+                    </div>
+
+                    {/* Carica foto */}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <Camera className="h-5 w-5 text-green-500" />
+                        <div>
+                          <h4 className="font-medium">Carica Foto</h4>
+                          <p className="text-sm text-gray-500">Aggiungi una foto al profilo</p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => simulateAction('photo')}
+                        disabled={!canAddPhoto()}
+                        size="sm"
+                      >
+                        {canAddPhoto() ? '+1 Foto' : 'Limite Raggiunto'}
+                      </Button>
+                    </div>
+
+                    {/* Aggiungi servizio */}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <Building className="h-5 w-5 text-purple-500" />
+                        <div>
+                          <h4 className="font-medium">Aggiungi Servizio</h4>
+                          <p className="text-sm text-gray-500">Elenca un nuovo servizio offerto</p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => simulateAction('service')}
+                        disabled={!canAddService()}
+                        size="sm"
+                      >
+                        {canAddService() ? '+1 Servizio' : 'Limite Raggiunto'}
+                      </Button>
+                    </div>
+
+                    {/* Messaggi diretti */}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <MessageSquare className="h-5 w-5 text-indigo-500" />
+                        <div>
+                          <h4 className="font-medium">Messaggi Diretti</h4>
+                          <p className="text-sm text-gray-500">Comunica direttamente con i clienti</p>
+                        </div>
+                      </div>
+                      <Button 
+                        disabled={!features.directMessaging}
+                        size="sm"
+                        variant={features.directMessaging ? "default" : "secondary"}
+                      >
+                        {features.directMessaging ? 'Disponibile' : 'Non Disponibile'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="features">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Confronto Funzionalità</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {[
+                        { key: 'enhancedVisibility', label: 'Visibilità Potenziata' },
+                        { key: 'priorityInSearch', label: 'Priorità nella Ricerca' },
+                        { key: 'featuredListing', label: 'Listing in Evidenza' },
+                        { key: 'directMessaging', label: 'Messaggi Diretti' },
+                        { key: 'phoneNumberDisplay', label: 'Mostra Numero Telefono' },
+                        { key: 'portfolioSection', label: 'Sezione Portfolio' },
+                        { key: 'certificationsSection', label: 'Sezione Certificazioni' },
+                        { key: 'reviewResponseEnabled', label: 'Risposta alle Recensioni' },
+                        { key: 'analyticsAccess', label: 'Accesso Analytics' },
+                        { key: 'detailedStats', label: 'Statistiche Dettagliate' },
+                        { key: 'verifiedBadge', label: 'Badge Verificato' },
+                        { key: 'premiumBadge', label: 'Badge Premium' },
+                      ].map((feature) => (
+                        <div key={feature.key} className="flex items-center justify-between p-3 border rounded">
+                          <span className="font-medium">{feature.label}</span>
+                          {canAccessFeature(subscription, feature.key as any) ? (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-gray-400" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+
+        {/* Alert informativo */}
+        <Alert className="mt-8">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Nota:</strong> Questa è una demo che mostra come le limitazioni dei piani vengono applicate nella realtà. 
+            I professionisti con piano gratuito hanno limitazioni su contatti, foto e servizi, mentre i piani a pagamento 
+            sbloccano funzionalità avanzate e aumentano o rimuovono i limiti.
+          </AlertDescription>
+        </Alert>
+      </div>
+    </div>
+  );
+}
