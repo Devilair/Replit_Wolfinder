@@ -3,6 +3,9 @@ import {
   categories, 
   professionals, 
   reviews,
+  subscriptionPlans,
+  subscriptions,
+  transactions,
   type User, 
   type InsertUser,
   type Category,
@@ -11,8 +14,15 @@ import {
   type InsertProfessional,
   type Review,
   type InsertReview,
+  type SubscriptionPlan,
+  type InsertSubscriptionPlan,
+  type Subscription,
+  type InsertSubscription,
+  type Transaction,
+  type InsertTransaction,
   type ProfessionalWithDetails,
-  type ProfessionalSummary
+  type ProfessionalSummary,
+  type SubscriptionWithDetails
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, and, or, ilike, sql } from "drizzle-orm";
@@ -80,6 +90,48 @@ export interface IStorage {
   getRecentActivity(): Promise<any[]>;
   getPendingReviews(): Promise<(Review & { user: User; professional: Professional })[]>;
   getUnverifiedProfessionals(): Promise<ProfessionalSummary[]>;
+
+  // Subscription Plans
+  getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined>;
+  createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
+  updateSubscriptionPlan(id: number, data: Partial<InsertSubscriptionPlan>): Promise<void>;
+  deleteSubscriptionPlan(id: number): Promise<void>;
+
+  // Subscriptions
+  getSubscriptions(params?: {
+    status?: string;
+    planId?: number;
+    professionalId?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<SubscriptionWithDetails[]>;
+  getSubscription(id: number): Promise<SubscriptionWithDetails | undefined>;
+  getSubscriptionByProfessional(professionalId: number): Promise<Subscription | undefined>;
+  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  updateSubscription(id: number, data: Partial<InsertSubscription>): Promise<void>;
+  cancelSubscription(id: number): Promise<void>;
+
+  // Transactions
+  getTransactions(params?: {
+    status?: string;
+    subscriptionId?: number;
+    professionalId?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<Transaction[]>;
+  createTransaction(transaction: InsertTransaction): Promise<Transaction>;
+  updateTransaction(id: number, data: Partial<InsertTransaction>): Promise<void>;
+
+  // Subscription Analytics
+  getSubscriptionStats(): Promise<{
+    totalMRR: number;
+    totalARR: number;
+    totalSubscribers: number;
+    conversionRate: number;
+    churnRate: number;
+    averageLTV: number;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -721,6 +773,273 @@ export class DatabaseStorage implements IStorage {
       ...result,
       category: result.category!,
     }));
+  }
+
+  // Subscription Plans methods
+  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    return await db.select().from(subscriptionPlans).orderBy(asc(subscriptionPlans.priceMonthly));
+  }
+
+  async getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined> {
+    const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+    return plan || undefined;
+  }
+
+  async createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    const [created] = await db.insert(subscriptionPlans).values(plan).returning();
+    return created;
+  }
+
+  async updateSubscriptionPlan(id: number, data: Partial<InsertSubscriptionPlan>): Promise<void> {
+    await db
+      .update(subscriptionPlans)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(subscriptionPlans.id, id));
+  }
+
+  async deleteSubscriptionPlan(id: number): Promise<void> {
+    await db.delete(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+  }
+
+  // Subscriptions methods
+  async getSubscriptions(params?: {
+    status?: string;
+    planId?: number;
+    professionalId?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<SubscriptionWithDetails[]> {
+    let query = db
+      .select({
+        id: subscriptions.id,
+        professionalId: subscriptions.professionalId,
+        planId: subscriptions.planId,
+        status: subscriptions.status,
+        currentPeriodStart: subscriptions.currentPeriodStart,
+        currentPeriodEnd: subscriptions.currentPeriodEnd,
+        cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
+        stripeSubscriptionId: subscriptions.stripeSubscriptionId,
+        stripeCustomerId: subscriptions.stripeCustomerId,
+        createdAt: subscriptions.createdAt,
+        updatedAt: subscriptions.updatedAt,
+        plan: subscriptionPlans,
+        professional: professionals,
+        user: users,
+      })
+      .from(subscriptions)
+      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
+      .leftJoin(professionals, eq(subscriptions.professionalId, professionals.id))
+      .leftJoin(users, eq(professionals.userId, users.id));
+
+    if (params?.status) {
+      query = query.where(eq(subscriptions.status, params.status));
+    }
+    if (params?.planId) {
+      query = query.where(eq(subscriptions.planId, params.planId));
+    }
+    if (params?.professionalId) {
+      query = query.where(eq(subscriptions.professionalId, params.professionalId));
+    }
+
+    query = query.orderBy(desc(subscriptions.createdAt));
+
+    if (params?.limit) {
+      query = query.limit(params.limit);
+    }
+    if (params?.offset) {
+      query = query.offset(params.offset);
+    }
+
+    const results = await query;
+
+    return await Promise.all(
+      results.map(async (result) => {
+        const subTransactions = await this.getTransactions({
+          subscriptionId: result.id,
+        });
+        return {
+          ...result,
+          plan: result.plan!,
+          professional: {
+            ...result.professional!,
+            user: result.user!,
+          },
+          transactions: subTransactions,
+        };
+      })
+    );
+  }
+
+  async getSubscription(id: number): Promise<SubscriptionWithDetails | undefined> {
+    const [result] = await db
+      .select({
+        id: subscriptions.id,
+        professionalId: subscriptions.professionalId,
+        planId: subscriptions.planId,
+        status: subscriptions.status,
+        currentPeriodStart: subscriptions.currentPeriodStart,
+        currentPeriodEnd: subscriptions.currentPeriodEnd,
+        cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
+        stripeSubscriptionId: subscriptions.stripeSubscriptionId,
+        stripeCustomerId: subscriptions.stripeCustomerId,
+        createdAt: subscriptions.createdAt,
+        updatedAt: subscriptions.updatedAt,
+        plan: subscriptionPlans,
+        professional: professionals,
+        user: users,
+      })
+      .from(subscriptions)
+      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
+      .leftJoin(professionals, eq(subscriptions.professionalId, professionals.id))
+      .leftJoin(users, eq(professionals.userId, users.id))
+      .where(eq(subscriptions.id, id));
+
+    if (!result) return undefined;
+
+    const subTransactions = await this.getTransactions({
+      subscriptionId: result.id,
+    });
+
+    return {
+      ...result,
+      plan: result.plan!,
+      professional: {
+        ...result.professional!,
+        user: result.user!,
+      },
+      transactions: subTransactions,
+    };
+  }
+
+  async getSubscriptionByProfessional(professionalId: number): Promise<Subscription | undefined> {
+    const [subscription] = await db
+      .select()
+      .from(subscriptions)
+      .where(and(
+        eq(subscriptions.professionalId, professionalId),
+        eq(subscriptions.status, 'active')
+      ));
+    return subscription || undefined;
+  }
+
+  async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    const [created] = await db.insert(subscriptions).values(subscription).returning();
+    return created;
+  }
+
+  async updateSubscription(id: number, data: Partial<InsertSubscription>): Promise<void> {
+    await db
+      .update(subscriptions)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(subscriptions.id, id));
+  }
+
+  async cancelSubscription(id: number): Promise<void> {
+    await db
+      .update(subscriptions)
+      .set({ 
+        status: 'canceled',
+        cancelAtPeriodEnd: true,
+        updatedAt: new Date() 
+      })
+      .where(eq(subscriptions.id, id));
+  }
+
+  // Transactions methods
+  async getTransactions(params?: {
+    status?: string;
+    subscriptionId?: number;
+    professionalId?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<Transaction[]> {
+    let query = db.select().from(transactions);
+
+    const conditions = [];
+    if (params?.status) {
+      conditions.push(eq(transactions.status, params.status));
+    }
+    if (params?.subscriptionId) {
+      conditions.push(eq(transactions.subscriptionId, params.subscriptionId));
+    }
+    if (params?.professionalId) {
+      conditions.push(eq(transactions.professionalId, params.professionalId));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    query = query.orderBy(desc(transactions.createdAt));
+
+    if (params?.limit) {
+      query = query.limit(params.limit);
+    }
+    if (params?.offset) {
+      query = query.offset(params.offset);
+    }
+
+    return await query;
+  }
+
+  async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
+    const [created] = await db.insert(transactions).values(transaction).returning();
+    return created;
+  }
+
+  async updateTransaction(id: number, data: Partial<InsertTransaction>): Promise<void> {
+    await db
+      .update(transactions)
+      .set(data)
+      .where(eq(transactions.id, id));
+  }
+
+  // Subscription Analytics
+  async getSubscriptionStats(): Promise<{
+    totalMRR: number;
+    totalARR: number;
+    totalSubscribers: number;
+    conversionRate: number;
+    churnRate: number;
+    averageLTV: number;
+  }> {
+    // Calcola MRR (Monthly Recurring Revenue)
+    const activeSubscriptions = await db
+      .select({
+        planId: subscriptions.planId,
+        priceMonthly: subscriptionPlans.priceMonthly,
+      })
+      .from(subscriptions)
+      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
+      .where(eq(subscriptions.status, 'active'));
+
+    const totalMRR = activeSubscriptions.reduce((sum, sub) => {
+      return sum + (parseFloat(sub.priceMonthly?.toString() || '0'));
+    }, 0);
+
+    const totalARR = totalMRR * 12;
+
+    // Conta abbonati totali attivi
+    const [subscribersResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(subscriptions)
+      .where(eq(subscriptions.status, 'active'));
+
+    const totalSubscribers = subscribersResult?.count || 0;
+
+    // Mock data per altre metriche (in produzione calcolare da dati reali)
+    const conversionRate = 23.5;
+    const churnRate = 3.2;
+    const averageLTV = 486;
+
+    return {
+      totalMRR,
+      totalARR,
+      totalSubscribers,
+      conversionRate,
+      churnRate,
+      averageLTV,
+    };
   }
 }
 

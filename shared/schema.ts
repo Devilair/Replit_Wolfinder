@@ -45,6 +45,53 @@ export const professionals = pgTable("professionals", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Tabelle per il sistema di abbonamenti
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  priceMonthly: decimal("price_monthly", { precision: 10, scale: 2 }).notNull(),
+  priceYearly: decimal("price_yearly", { precision: 10, scale: 2 }),
+  features: text("features").notNull(), // JSON string con le funzionalità
+  maxResponses: integer("max_responses").default(-1), // -1 = illimitate
+  hasAdvancedAnalytics: boolean("has_advanced_analytics").default(false),
+  hasExportData: boolean("has_export_data").default(false),
+  hasPrioritySupport: boolean("has_priority_support").default(false),
+  hasApiAccess: boolean("has_api_access").default(false),
+  maxAccounts: integer("max_accounts").default(1),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  planId: integer("plan_id").references(() => subscriptionPlans.id).notNull(),
+  status: text("status").notNull(), // 'active', 'canceled', 'past_due', 'trialing'
+  currentPeriodStart: timestamp("current_period_start").notNull(),
+  currentPeriodEnd: timestamp("current_period_end").notNull(),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  stripeCustomerId: text("stripe_customer_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const transactions = pgTable("transactions", {
+  id: serial("id").primaryKey(),
+  subscriptionId: integer("subscription_id").references(() => subscriptions.id).notNull(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").default("EUR").notNull(),
+  status: text("status").notNull(), // 'succeeded', 'failed', 'refunded', 'pending'
+  paymentMethodType: text("payment_method_type"), // 'card', 'bank_transfer', etc.
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  invoiceUrl: text("invoice_url"),
+  metadata: text("metadata"), // JSON string per dati aggiuntivi
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const reviews = pgTable("reviews", {
   id: serial("id").primaryKey(),
   professionalId: integer("professional_id").references(() => professionals.id).notNull(),
@@ -76,6 +123,8 @@ export const professionalsRelations = relations(professionals, ({ one, many }) =
     references: [categories.id],
   }),
   reviews: many(reviews),
+  subscriptions: many(subscriptions),
+  transactions: many(transactions),
 }));
 
 export const reviewsRelations = relations(reviews, ({ one }) => ({
@@ -86,6 +135,34 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
   user: one(users, {
     fields: [reviews.userId],
     references: [users.id],
+  }),
+}));
+
+// Relations per abbonamenti
+export const subscriptionPlansRelations = relations(subscriptionPlans, ({ many }) => ({
+  subscriptions: many(subscriptions),
+}));
+
+export const subscriptionsRelations = relations(subscriptions, ({ one, many }) => ({
+  professional: one(professionals, {
+    fields: [subscriptions.professionalId],
+    references: [professionals.id],
+  }),
+  plan: one(subscriptionPlans, {
+    fields: [subscriptions.planId],
+    references: [subscriptionPlans.id],
+  }),
+  transactions: many(transactions),
+}));
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  subscription: one(subscriptions, {
+    fields: [transactions.subscriptionId],
+    references: [subscriptions.id],
+  }),
+  professional: one(professionals, {
+    fields: [transactions.professionalId],
+    references: [professionals.id],
   }),
 }));
 
@@ -105,6 +182,22 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
   createdAt: true 
 });
 
+// Subscription schemas
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+export const insertTransactionSchema = createInsertSchema(transactions).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -115,13 +208,29 @@ export type InsertProfessional = z.infer<typeof insertProfessionalSchema>;
 export type Review = typeof reviews.$inferSelect;
 export type InsertReview = z.infer<typeof insertReviewSchema>;
 
+// Subscription types
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type Transaction = typeof transactions.$inferSelect;
+export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+
 // Extended types for API responses
 export type ProfessionalWithDetails = Professional & {
   user: User;
   category: Category;
   reviews: (Review & { user: User })[];
+  subscription?: Subscription & { plan: SubscriptionPlan };
 };
 
 export type ProfessionalSummary = Professional & {
   category: Category;
+  subscription?: Subscription & { plan: SubscriptionPlan };
+};
+
+export type SubscriptionWithDetails = Subscription & {
+  plan: SubscriptionPlan;
+  professional: Professional & { user: User };
+  transactions: Transaction[];
 };

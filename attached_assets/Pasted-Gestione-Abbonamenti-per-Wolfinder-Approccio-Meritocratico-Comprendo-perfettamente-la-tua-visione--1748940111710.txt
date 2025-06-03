@@ -1,0 +1,181 @@
+Gestione Abbonamenti per Wolfinder - Approccio Meritocratico
+Comprendo perfettamente la tua visione: su Wolfinder, chi paga non deve automaticamente apparire in cima ai risultati. Questo è un principio fondamentale che distingue la piattaforma dalla concorrenza e garantisce la vera meritocrazia.
+1. Gestione Abbonamenti nel Pannello Amministrativo
+A. Sezione "Gestione Piani"
+Questa sezione dovrebbe includere:
+Copy📋 Pannello Gestione Piani
+├── Lista piani attivi
+│   ├── Nome piano
+│   ├── Prezzo mensile/annuale
+│   ├── Funzionalità incluse
+│   ├── Numero di abbonati attivi
+│   └── Toggle attivazione/disattivazione
+├── Editor piano
+│   ├── Nome e descrizione
+│   ├── Prezzi (mensile/annuale/con sconti)
+│   ├── Funzionalità (checklist)
+│   ├── Limiti (es. numero di risposte alle recensioni)
+│   └── Impostazioni avanzate
+└── Analytics piani
+    ├── Conversione per piano
+    ├── Tasso di retention
+    ├── Valore medio abbonamento
+    └── Previsione ricavi
+Funzionalità premium che NON influenzano il ranking:
+
+Risposte illimitate alle recensioni
+Dashboard analytics avanzate
+Esportazione dati e report
+Notifiche personalizzate
+Badge "Abbonato verificato" (non "In evidenza")
+Personalizzazione profilo avanzata
+
+B. Sezione "Pagamenti"
+Copy💳 Pannello Pagamenti
+├── Transazioni recenti
+│   ├── Filtri (piano, stato, periodo)
+│   ├── ID transazione
+│   ├── Professionista
+│   ├── Piano acquistato
+│   ├── Importo
+│   ├── Data
+│   └── Stato (completato, fallito, rimborso)
+├── Report finanziari
+│   ├── MRR (Monthly Recurring Revenue)
+│   ├── ARR (Annual Recurring Revenue)
+│   ├── Churn rate
+│   └── Esportazione per contabilità
+└── Gestione manuale
+    ├── Creazione abbonamento manuale
+    ├── Modifica scadenza
+    ├── Emissione rimborsi
+    └── Assegnazione crediti/promo
+2. Dashboard e Interfaccia Abbonamenti
+A. Interfaccia di confronto piani (per professionisti)
+Copy✨ Pagina Abbonamenti
+├── Riepilogo stato abbonamento attuale
+│   ├── Piano attivo
+│   ├── Data rinnovo
+│   ├── Costo prossimo rinnovo
+│   └── Utilizzo funzionalità (barre progresso)
+├── Confronto piani
+│   ├── Base (gratuito)
+│   ├── Pro
+│   ├── Business
+│   └── Enterprise
+└── FAQ abbonamenti
+Design dei piani:
+FunzionalitàBase (Free)ProBusinessEnterpriseProfilo verificato✓✓✓✓Risposta alle recensioniLimitate (3/mese)IllimitateIllimitateIllimitateAnalyticsBaseAvanzateCompletePersonalizzateBadge profiloStandardProBusinessEnterprisePersonalizzazioneMinimaStandardAvanzataCompletaSupporto prioritario✗✓✓✓API access✗✗✓✓Account multipli✗✗Fino a 3Illimitati
+B. Gestione abbonamento professionista
+Copy📊 Gestione Abbonamento
+├── Dettagli piano attuale
+├── Cronologia pagamenti
+├── Fatturazione
+│   ├── Metodi di pagamento
+│   ├── Indirizzi di fatturazione
+│   └── Download fatture
+├── Upgrade/Downgrade piano
+└── Cancellazione abbonamento
+3. Principi Meritocratici nel Design
+Il punto fondamentale è separare chiaramente il sistema di ranking dal sistema di abbonamenti:
+Come mantenere l'integrità del ranking:
+
+Separazione esplicita: L'algoritmo di ranking deve ignorare completamente lo stato dell'abbonamento.
+Trasparenza algoritmica: Documentazione pubblica su come funziona l'algoritmo di ranking.
+Badge distintivi:
+
+"Verificato" (gratuito, basato su verifica identità)
+"Abbonato Pro/Business/Enterprise" (indicano solo il supporto alla piattaforma)
+"Top Rated" (basato SOLO su recensioni e metriche qualitative)
+
+
+Vantaggi Premium orientati all'esperienza:
+
+Strumenti per gestire meglio la propria presenza
+Analytics per migliorare il proprio servizio
+Funzionalità di risposta e comunicazione
+Mai posizionamento privilegiato
+
+
+
+4. Implementazione Tecnica
+Per l'area amministrativa:
+typescriptCopy// models/SubscriptionPlan.ts
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description: string;
+  priceMonthly: number;
+  priceYearly: number;
+  features: {
+    name: string;
+    description: string;
+    included: boolean;
+    limit?: number;
+  }[];
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// models/Subscription.ts
+interface Subscription {
+  id: string;
+  professionalId: string;
+  planId: string;
+  status: 'active' | 'canceled' | 'past_due' | 'trialing';
+  currentPeriodStart: Date;
+  currentPeriodEnd: Date;
+  cancelAtPeriodEnd: boolean;
+  paymentMethodId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// models/Transaction.ts
+interface Transaction {
+  id: string;
+  subscriptionId: string;
+  professionalId: string;
+  amount: number;
+  currency: string;
+  status: 'succeeded' | 'failed' | 'refunded';
+  paymentMethodType: string;
+  invoiceUrl?: string;
+  metadata?: Record<string, any>;
+  createdAt: Date;
+}
+Separazione del ranking dall'abbonamento:
+typescriptCopy// Esempio di come il ranking dovrebbe funzionare
+function calculateProfessionalRanking(professionalId: string): number {
+  // Recupera recensioni
+  const reviews = getReviewsForProfessional(professionalId);
+  
+  // Calcola punteggio medio ponderato
+  const weightedScore = calculateWeightedScore(reviews);
+  
+  // Fattori di ranking
+  const responseRate = calculateResponseRate(professionalId);
+  const verificationScore = getVerificationScore(professionalId);
+  const activityScore = getActivityScore(professionalId);
+  
+  // IMPORTANTE: Nessun riferimento allo stato dell'abbonamento!
+  // L'abbonamento non influisce MAI sul ranking
+  
+  // Formula finale di ranking
+  return (weightedScore * 0.6) + 
+         (responseRate * 0.15) + 
+         (verificationScore * 0.15) + 
+         (activityScore * 0.1);
+}
+5. Dashboard Analytics per Admin
+La dashboard dovrebbe evidenziare metriche che mostrano la meritocrazia in azione:
+
+Correlazione tra rating e conversioni (non tra abbonamento e conversioni)
+Distribuzione dei professionisti top-rated per tipo di abbonamento
+Metriche di soddisfazione utente
+Tasso di conversione in base alla qualità dei professionisti, non ai loro abbonamenti
+
+Conclusione
+Questo approccio mantiene l'integrità del sistema meritocratico pur monetizzando efficacemente la piattaforma. I professionisti pagano per strumenti che li aiutano a gestire meglio la loro presenza e il loro business, non per "saltare la fila".
+È un modello che si allinea perfettamente con la vision di Wolfinder: un sistema trasparente e meritocratico dove la qualità effettiva, non il budget marketing, determina il successo.
