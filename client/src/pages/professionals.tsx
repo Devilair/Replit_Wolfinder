@@ -41,6 +41,9 @@ export default function Professionals() {
       if (city) params.append('city', city);
       if (categoryId && categoryId !== 'all') params.append('categoryId', categoryId);
 
+      console.log('Query params:', { search, city, categoryId, sortBy, page });
+      console.log('URL params:', params.toString());
+
       const response = await fetch(`/api/professionals?${params}`);
       if (!response.ok) throw new Error('Failed to fetch professionals');
       return response.json();
