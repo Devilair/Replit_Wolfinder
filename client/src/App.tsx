@@ -10,6 +10,7 @@ import Home from "@/pages/home";
 import Professionals from "@/pages/professionals";
 import ProfessionalProfile from "@/pages/professional-profile";
 import AdminDashboard from "@/pages/admin/dashboard";
+import AdvancedDashboard from "@/pages/admin/advanced-dashboard";
 import AdminProfessionals from "@/pages/admin/professionals-advanced";
 import AdminReviews from "@/pages/admin/reviews-advanced";
 import AdminCategories from "@/pages/admin/categories";
