@@ -16,6 +16,7 @@ import AdminCategories from "@/pages/admin/categories";
 import AdminSubscriptions from "@/pages/admin/subscriptions";
 import AdminUsers from "@/pages/admin/users";
 import AdminSettings from "@/pages/admin/settings";
+import AdminLogin from "@/pages/admin-login";
 import ProfessionalSubscriptionDemo from "@/pages/professional-subscription-demo";
 
 function Router() {
@@ -26,6 +27,9 @@ function Router() {
       <Route path="/professionals/:id" component={ProfessionalProfile} />
       <Route path="/demo/subscription-limits" component={ProfessionalSubscriptionDemo} />
       <Route path="/professional-subscription-demo" component={ProfessionalSubscriptionDemo} />
+      
+      {/* Admin Login */}
+      <Route path="/admin-login" component={AdminLogin} />
       
       {/* Admin Routes */}
       <Route path="/admin" component={() => (

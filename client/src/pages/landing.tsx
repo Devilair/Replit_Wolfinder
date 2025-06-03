@@ -97,6 +97,12 @@ export default function Landing() {
             <div className="flex items-center gap-3">
               <Button variant="ghost">Accedi</Button>
               <Button className="bg-amber-600 hover:bg-amber-700">Registrati</Button>
+              <Link href="/admin-login">
+                <Button variant="outline" size="sm" className="text-xs">
+                  <Shield className="w-3 h-3 mr-1" />
+                  Admin
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
