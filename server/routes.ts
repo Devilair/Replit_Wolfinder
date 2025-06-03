@@ -77,81 +77,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/verify-email", authService.authenticateToken, async (req, res) => {
+  app.get("/api/auth/profile", simpleAuthService.authenticateToken, async (req, res) => {
     try {
-      const userId = req.user?.id;
-      if (!userId) {
+      const user = req.user;
+      if (!user) {
         return res.status(401).json({ error: "Utente non autenticato" });
       }
 
-      const result = await authService.verifyEmail(userId);
-      
-      if (!result.success) {
-        return res.status(400).json({ error: result.error });
-      }
-
-      res.json({ message: "Email verificata con successo" });
-    } catch (error) {
-      console.error('Email verification error:', error);
-      res.status(500).json({ error: "Errore interno del server" });
-    }
-  });
-
-  app.post("/api/auth/forgot-password", async (req, res) => {
-    try {
-      const { email } = req.body;
-      
-      if (!email) {
-        return res.status(400).json({ error: "Email richiesta" });
-      }
-
-      const result = await authService.requestPasswordReset(email);
-      
-      res.json({ 
-        message: "Se l'email esiste, riceverai le istruzioni per il reset della password",
-        resetToken: result.token // In development only
-      });
-    } catch (error) {
-      console.error('Password reset request error:', error);
-      res.status(500).json({ error: "Errore interno del server" });
-    }
-  });
-
-  app.post("/api/auth/reset-password", async (req, res) => {
-    try {
-      const { email, newPassword } = req.body;
-      
-      if (!email || !newPassword) {
-        return res.status(400).json({ error: "Email e nuova password richieste" });
-      }
-
-      const result = await authService.resetPassword(email, newPassword);
-      
-      if (!result.success) {
-        return res.status(400).json({ error: result.error });
-      }
-
-      res.json({ message: "Password reimpostata con successo" });
-    } catch (error) {
-      console.error('Password reset error:', error);
-      res.status(500).json({ error: "Errore interno del server" });
-    }
-  });
-
-  app.get("/api/auth/profile", authService.authenticateToken, async (req, res) => {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: "Utente non autenticato" });
-      }
-
-      const profile = await authService.getUserProfile(userId);
-      
-      if (!profile) {
-        return res.status(404).json({ error: "Profilo non trovato" });
-      }
-
-      res.json(profile);
+      res.json(user);
     } catch (error) {
       console.error('Get profile error:', error);
       res.status(500).json({ error: "Errore interno del server" });
@@ -160,8 +93,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Professional verification routes
   app.post("/api/auth/professionals/upload-document", 
-    authService.authenticateToken,
-    authService.requireRole(['professional']),
+    simpleAuthService.authenticateToken,
+    simpleAuthService.requireRole(['professional']),
     upload.single('document'),
     async (req, res) => {
       try {
