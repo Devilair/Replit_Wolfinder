@@ -261,9 +261,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid professional ID" });
       }
 
-      await storage.updateProfessional(id, { isVerified: verified });
+      await simpleAdminStorage.updateProfessional(id, { isVerified: verified });
       res.json({ message: verified ? "Professional verified" : "Verification removed" });
     } catch (error) {
+      console.error("Error updating professional verification:", error);
       res.status(500).json({ message: "Failed to update verification" });
     }
   });
@@ -275,9 +276,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid professional ID" });
       }
 
-      await storage.deleteProfessional(id);
+      await simpleAdminStorage.deleteProfessional(id);
       res.json({ message: "Professional deleted successfully" });
     } catch (error) {
+      console.error("Error deleting professional:", error);
       res.status(500).json({ message: "Failed to delete professional" });
     }
   });
@@ -285,9 +287,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Users Management
   app.get("/api/admin/users", async (req, res) => {
     try {
-      const users = await storage.getAllUsers();
+      const users = await simpleAdminStorage.getAllUsers();
       res.json(users);
     } catch (error) {
+      console.error("Error fetching users:", error);
       res.status(500).json({ message: "Failed to fetch users" });
     }
   });
@@ -296,9 +299,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/reviews", async (req, res) => {
     try {
       const { status } = req.query;
-      const reviews = await storage.getAdminReviews(status as string);
+      const reviews = await simpleAdminStorage.getAdminReviews(status as string);
       res.json(reviews);
     } catch (error) {
+      console.error("Error fetching reviews:", error);
       res.status(500).json({ message: "Failed to fetch reviews" });
     }
   });
@@ -312,9 +316,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid review ID" });
       }
 
-      await storage.updateReview(id, { isVerified: verified });
+      await simpleAdminStorage.updateReview(id, { status: verified ? 'verified' : 'pending' });
       res.json({ message: verified ? "Review verified" : "Verification removed" });
     } catch (error) {
+      console.error("Error updating review verification:", error);
       res.status(500).json({ message: "Failed to update review verification" });
     }
   });
@@ -326,9 +331,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid review ID" });
       }
 
-      await storage.deleteReview(id);
+      await simpleAdminStorage.deleteReview(id);
       res.json({ message: "Review deleted successfully" });
     } catch (error) {
+      console.error("Error deleting review:", error);
       res.status(500).json({ message: "Failed to delete review" });
     }
   });
