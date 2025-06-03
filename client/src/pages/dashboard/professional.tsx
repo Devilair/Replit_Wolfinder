@@ -104,7 +104,7 @@ export default function ProfessionalDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Stats Overview */}
+        {/* Stats Overview - Only Real Data */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -141,7 +141,7 @@ export default function ProfessionalDashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{stats?.contacts || 0}</div>
               <p className="text-xs text-muted-foreground">
-                Questo mese
+                Contatti ricevuti
               </p>
             </CardContent>
           </Card>
@@ -165,7 +165,6 @@ export default function ProfessionalDashboard() {
             <TabsTrigger value="overview">Panoramica</TabsTrigger>
             <TabsTrigger value="reviews">Recensioni</TabsTrigger>
             <TabsTrigger value="profile">Profilo</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -208,13 +207,13 @@ export default function ProfessionalDashboard() {
                         Completato
                       </Badge>
                     ) : (
-                      <Button variant="outline" size="sm" onClick={() => window.location.href = '#profile'}>
+                      <Button variant="outline" size="sm">
                         <AlertCircle className="h-3 w-3 mr-1" />
-                        Aggiungi
+                        Completa
                       </Button>
                     )}
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <Camera className="h-4 w-4 text-gray-500" />
@@ -223,16 +222,16 @@ export default function ProfessionalDashboard() {
                     {profileStatus.profilePhoto ? (
                       <Badge variant="default" className="bg-green-100 text-green-800">
                         <CheckCircle className="h-3 w-3 mr-1" />
-                        Caricata
+                        Completato
                       </Badge>
                     ) : (
-                      <Button variant="outline" size="sm" onClick={() => window.location.href = '#profile'}>
-                        <Camera className="h-3 w-3 mr-1" />
-                        Carica
+                      <Button variant="outline" size="sm">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Aggiungi
                       </Button>
                     )}
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <Shield className="h-4 w-4 text-gray-500" />
@@ -244,8 +243,8 @@ export default function ProfessionalDashboard() {
                         Verificato
                       </Badge>
                     ) : (
-                      <Button variant="outline" size="sm" onClick={() => window.location.href = '#verification'}>
-                        <Shield className="h-3 w-3 mr-1" />
+                      <Button variant="outline" size="sm">
+                        <AlertCircle className="h-3 w-3 mr-1" />
                         Verifica
                       </Button>
                     )}
@@ -297,9 +296,9 @@ export default function ProfessionalDashboard() {
           <TabsContent value="reviews" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Recensioni Recenti</CardTitle>
+                <CardTitle>Recensioni Ricevute</CardTitle>
                 <CardDescription>
-                  Gestisci le recensioni ricevute dai tuoi clienti
+                  Le recensioni autentiche ricevute dai tuoi clienti
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -331,7 +330,7 @@ export default function ProfessionalDashboard() {
                                 </div>
                               </div>
                             </div>
-                            <p className="text-sm text-gray-600">{review.comment}</p>
+                            <p className="text-sm text-gray-600">{review.content}</p>
                           </div>
                           <span className="text-xs text-gray-500">
                             {new Date(review.createdAt).toLocaleDateString()}
@@ -344,6 +343,7 @@ export default function ProfessionalDashboard() {
                   <div className="text-center py-8">
                     <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500">Nessuna recensione ancora ricevuta</p>
+                    <p className="text-sm text-gray-400 mt-2">Le recensioni appariranno qui una volta ricevute dai clienti</p>
                   </div>
                 )}
               </CardContent>
@@ -355,49 +355,36 @@ export default function ProfessionalDashboard() {
               <CardHeader>
                 <CardTitle>Informazioni Profilo</CardTitle>
                 <CardDescription>
-                  Gestisci le informazioni del tuo profilo professionale
+                  Dati del tuo profilo professionale dal database
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium">Nome</label>
-                    <p className="text-sm text-gray-600">{user?.name}</p>
+                    <p className="text-sm text-gray-600">{user?.name || "Non specificato"}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Email</label>
-                    <p className="text-sm text-gray-600">{user?.email}</p>
+                    <p className="text-sm text-gray-600">{user?.email || "Non specificata"}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Categoria</label>
-                    <p className="text-sm text-gray-600">{professionalData?.category?.name || "Non specificata"}</p>
+                    <label className="text-sm font-medium">Nome Attività</label>
+                    <p className="text-sm text-gray-600">{professionalData?.businessName || "Non specificato"}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Stato Verifica</label>
                     <Badge variant={user?.isVerified ? "default" : "secondary"}>
-                      {user?.isVerified ? "Verificato" : "In attesa"}
+                      {user?.isVerified ? "Verificato" : "Non verificato"}
                     </Badge>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-sm font-medium">Descrizione</label>
+                    <p className="text-sm text-gray-600">{professionalData?.description || "Nessuna descrizione fornita"}</p>
                   </div>
                 </div>
                 <div className="pt-4">
-                  <Button>Modifica Profilo</Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Analytics</CardTitle>
-                <CardDescription>
-                  Analizza le performance del tuo profilo
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Analytics dettagliate in arrivo</p>
+                  <Button>Modifica Informazioni</Button>
                 </div>
               </CardContent>
             </Card>
