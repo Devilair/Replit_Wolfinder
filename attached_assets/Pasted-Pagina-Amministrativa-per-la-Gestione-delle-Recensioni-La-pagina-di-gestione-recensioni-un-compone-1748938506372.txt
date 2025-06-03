@@ -1,0 +1,169 @@
+Pagina Amministrativa per la Gestione delle Recensioni
+La pagina di gestione recensioni è un componente cruciale per garantire la qualità e l'autenticità delle recensioni su Wolfinder. Ecco come dovrebbe essere strutturata:
+Struttura e Funzionalità Principali
+1. Dashboard Recensioni - Vista d'insieme
+La pagina dovrebbe iniziare con metriche chiave visibili immediatamente:
+Copy┌─────────────────────────────────────────────────────────────┐
+│  📊 Statistiche Recensioni                                  │
+├─────────────────┬─────────────────┬─────────────────────────┤
+│ In Attesa       │ Da Verificare   │ Segnalate              │
+│ 🕐 45           │ ✓ 23            │ ⚠️ 12                   │
+├─────────────────┼─────────────────┼─────────────────────────┤
+│ Totali Oggi     │ Verificate Oggi │ Rifiutate Oggi         │
+│ 📝 67           │ ✅ 34           │ ❌ 8                    │
+└─────────────────┴─────────────────┴─────────────────────────┘
+2. Barra degli Strumenti e Filtri
+Una barra di ricerca e filtri avanzati per trovare rapidamente recensioni specifiche:
+
+Ricerca testuale: per cercare nel contenuto delle recensioni
+Filtri multipli:
+
+Stato: Tutte / In attesa / Verificate / Rifiutate / Segnalate
+Data: Oggi / Ultima settimana / Ultimo mese / Range personalizzato
+Rating: 1-5 stelle
+Professionista: Dropdown con autocompletamento
+Con/Senza prova di acquisto
+Lingua recensione
+
+
+
+3. Vista Lista Recensioni
+Ogni recensione dovrebbe essere presentata in un card che mostra:
+Copy┌──────────────────────────────────────────────────────────────┐
+│ [Avatar] Mario Rossi → Avv. Giuseppe Verdi                  │
+│ ⭐⭐⭐⭐☆ (4/5) • 15 marzo 2024 • Milano                      │
+│                                                              │
+│ "Ottimo professionista, molto competente e disponibile..."   │
+│                                                              │
+│ 📎 Prova allegata: Fattura_2024_123.pdf                     │
+│ ✓ Email verificata • IP: 192.168.1.1 • Prima recensione     │
+│                                                              │
+│ [🔍 Dettagli] [✅ Approva] [❌ Rifiuta] [💬 Richiedi info]  │
+└──────────────────────────────────────────────────────────────┘
+4. Pannello Dettagli Recensione (Modal o Sidebar)
+Quando si clicca su "Dettagli", dovrebbe aprirsi un pannello con:
+Informazioni Recensore
+
+Nome completo
+Email e stato verifica
+Storico recensioni precedenti
+Data registrazione account
+IP e geolocalizzazione
+
+Dettagli Recensione
+
+Testo completo
+Rating dettagliato (se implementato per categorie)
+Data e ora esatta
+Modifiche/versioni precedenti
+
+Prova di Acquisto
+
+Tipo documento (fattura, contratto, etc.)
+Visualizzatore documento integrato
+Data del servizio
+Importo (se disponibile)
+Verifica autenticità
+
+Analisi Automatica
+
+Score di affidabilità (basato su vari fattori)
+Flag automatici:
+
+Linguaggio sospetto
+Pattern di recensioni simili
+Velocità di scrittura anomala
+Link o contenuti promozionali
+
+
+
+Azioni Disponibili
+
+✅ Approva: Pubblica la recensione
+❌ Rifiuta: Con motivazione obbligatoria
+🔄 Richiedi modifiche: Invia richiesta all'utente
+📧 Richiedi documentazione aggiuntiva
+🚫 Segnala utente: Per comportamenti sospetti
+💬 Aggiungi nota interna: Per altri admin
+
+5. Sistema di Moderazione Batch
+Per gestire grandi volumi:
+
+Checkbox per selezione multipla
+Azioni batch: Approva/Rifiuta/Sposta selezionate
+Filtri rapidi predefiniti: "Mostra solo con prove", "Solo 5 stelle", etc.
+
+6. Template di Risposta
+Risposte predefinite per situazioni comuni:
+
+Richiesta documento mancante
+Recensione troppo breve
+Linguaggio inappropriato
+Contenuto non pertinente
+
+7. Dashboard Insights
+Una sezione dedicata alle analisi:
+
+Trend temporali: Grafico recensioni nel tempo
+Distribuzione rating: Grafico a torta dei voti
+Top professionisti recensiti
+Utenti più attivi
+Tempo medio di moderazione
+Tasso di approvazione/rifiuto
+
+Layout Visivo Consigliato
+Copy┌─────────────────────────────────────────────────────────────┐
+│  Gestione Recensioni                            [🔄 Aggiorna]│
+├─────────────────────────────────────────────────────────────┤
+│  [Statistiche Cards]                                        │
+├─────────────────────────────────────────────────────────────┤
+│  [🔍 Cerca...] [Filtri ▼] [Data ▼] [Stato ▼] [Azioni Batch]│
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────┬─────────────────────────────────┐ │
+│  │                     │                                 │ │
+│  │   Lista Recensioni  │    Pannello Dettagli           │ │
+│  │   (70% larghezza)   │    (30% larghezza)             │ │
+│  │                     │    (Si apre al click)          │ │
+│  │   [Recensione 1]    │                                 │ │
+│  │   [Recensione 2]    │    [Dettagli recensione        │ │
+│  │   [Recensione 3]    │     selezionata]               │ │
+│  │   ...               │                                 │ │
+│  │                     │                                 │ │
+│  └─────────────────────┴─────────────────────────────────┘ │
+│  [Paginazione: < 1 2 3 4 5 ... 10 >]                       │
+└─────────────────────────────────────────────────────────────┘
+Funzionalità Avanzate per il Futuro
+1. AI Assistant
+
+Suggerimenti automatici su recensioni sospette
+Categorizzazione automatica dei problemi
+Rilevamento di pattern fraudolenti
+
+2. Sistema di Code
+
+Assegnazione recensioni a moderatori specifici
+Sistema di priorità basato su criteri
+Tracking performance moderatori
+
+3. Integrazione CRM
+
+Storico completo interazioni con utente
+Note e tag personalizzati
+Comunicazioni precedenti
+
+4. Workflow Automation
+
+Regole automatiche per approvazione
+Escalation automatica per casi complessi
+Notifiche personalizzate
+
+Best Practices UX
+
+Caricamento incrementale: Non caricare tutte le recensioni, usa paginazione o scroll infinito
+Shortcuts da tastiera: A per approva, R per rifiuta, etc.
+Auto-save: Salva automaticamente note e modifiche
+Undo rapido: Possibilità di annullare l'ultima azione
+Vista compatta/espansa: Toggle per vedere più o meno dettagli
+Dark mode: Per sessioni di moderazione lunghe
+
+Questa struttura garantisce efficienza nella moderazione mantenendo alta la qualità delle recensioni pubblicate su Wolfinder.

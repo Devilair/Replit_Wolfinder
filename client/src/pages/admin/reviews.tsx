@@ -4,17 +4,44 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Star, CheckCircle, XCircle, Trash2 } from "lucide-react";
+import { 
+  Star, 
+  CheckCircle, 
+  XCircle, 
+  Trash2, 
+  Search, 
+  Filter, 
+  Eye, 
+  Clock, 
+  AlertTriangle,
+  FileText,
+  User,
+  MessageSquare,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react";
 import { useState } from "react";
 
 export default function AdminReviews() {
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedReviews, setSelectedReviews] = useState<number[]>([]);
+  const [selectedReview, setSelectedReview] = useState<any>(null);
+  const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const reviewsPerPage = 10;
 
   const { data: reviews = [] as any[], isLoading } = useQuery({
-    queryKey: ["/api/admin/reviews", statusFilter !== "all" ? statusFilter : undefined],
+    queryKey: ["/api/admin/reviews"],
   });
 
   const verifyMutation = useMutation({
