@@ -445,7 +445,7 @@ export class DatabaseStorage implements IStorage {
     const [newUsersThisWeek] = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
-      .where(sql`${users.createdAt} >= ${weekAgo}`);
+      .where(sql`${users.createdAt} >= ${weekAgo.toISOString()}`);
 
     const [totalProfessionals] = await db
       .select({ count: sql<number>`count(*)` })
