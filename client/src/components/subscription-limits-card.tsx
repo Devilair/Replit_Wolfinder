@@ -21,7 +21,7 @@ export default function SubscriptionLimitsCard({
   onUpgrade 
 }: SubscriptionLimitsCardProps) {
   const features = getProfessionalFeatures(subscription);
-  const planName = subscription?.plan.name || 'Gratuito';
+  const planName = subscription?.plan.name || 'Essentials';
   const isActive = subscription?.status === 'active';
 
   const photosStatus = getUsageStatus(currentUsage.photosUploaded, subscription, 'maxPhotos');
@@ -111,34 +111,7 @@ export default function SubscriptionLimitsCard({
           
           <div className="grid grid-cols-1 gap-2 text-sm">
             <div className="flex items-center justify-between">
-              <span>Visibilità potenziata</span>
-              {features.enhancedVisibility ? (
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              ) : (
-                <XCircle className="h-4 w-4 text-gray-400" />
-              )}
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <span>Priorità nella ricerca</span>
-              {features.priorityInSearch ? (
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              ) : (
-                <XCircle className="h-4 w-4 text-gray-400" />
-              )}
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <span>Messaggi diretti</span>
-              {features.directMessaging ? (
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              ) : (
-                <XCircle className="h-4 w-4 text-gray-400" />
-              )}
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <span>Sezione portfolio</span>
+              <span>Video Presentazione e Portfolio</span>
               {features.portfolioSection ? (
                 <CheckCircle className="h-4 w-4 text-green-500" />
               ) : (
@@ -147,7 +120,34 @@ export default function SubscriptionLimitsCard({
             </div>
             
             <div className="flex items-center justify-between">
-              <span>Analisi dettagliate</span>
+              <span>Sezione Certificazioni</span>
+              {features.certificationsSection ? (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              ) : (
+                <XCircle className="h-4 w-4 text-gray-400" />
+              )}
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span>Risposta alle Recensioni</span>
+              {features.reviewResponseEnabled ? (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              ) : (
+                <XCircle className="h-4 w-4 text-gray-400" />
+              )}
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span>Alert Recensioni Negative</span>
+              {features.reviewHighlights ? (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              ) : (
+                <XCircle className="h-4 w-4 text-gray-400" />
+              )}
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span>Dashboard Analytics</span>
               {features.analyticsAccess ? (
                 <CheckCircle className="h-4 w-4 text-green-500" />
               ) : (
@@ -156,8 +156,35 @@ export default function SubscriptionLimitsCard({
             </div>
 
             <div className="flex items-center justify-between">
-              <span>Badge verificato</span>
+              <span>Analytics Avanzate</span>
+              {features.detailedStats ? (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              ) : (
+                <XCircle className="h-4 w-4 text-gray-400" />
+              )}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span>Analisi Competitiva</span>
+              {features.competitorAnalysis ? (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              ) : (
+                <XCircle className="h-4 w-4 text-gray-400" />
+              )}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span>Badge Identità Verificata</span>
               {features.verifiedBadge ? (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              ) : (
+                <XCircle className="h-4 w-4 text-gray-400" />
+              )}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span>Badge Piano Premium</span>
+              {features.premiumBadge ? (
                 <CheckCircle className="h-4 w-4 text-green-500" />
               ) : (
                 <XCircle className="h-4 w-4 text-gray-400" />
@@ -167,7 +194,7 @@ export default function SubscriptionLimitsCard({
         </div>
 
         {/* Call to action per upgrade */}
-        {planName === 'Gratuito' && onUpgrade && (
+        {planName === 'Essentials' && onUpgrade && (
           <div className="pt-4 border-t">
             <Button onClick={onUpgrade} className="w-full" size="sm">
               <Zap className="h-4 w-4 mr-2" />
