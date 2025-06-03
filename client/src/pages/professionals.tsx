@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import Header from "@/components/header";
@@ -15,21 +15,28 @@ import type { Category, ProfessionalSummary } from "@shared/schema";
 
 export default function Professionals() {
   const [location] = useLocation();
-  const searchParams = new URLSearchParams(location.split('?')[1] || '');
   
-  // Leggi i parametri URL all'avvio e mantienili
-  const initialSearch = searchParams.get('search') || '';
-  const initialCity = searchParams.get('city') || '';
-  const initialCategoryId = searchParams.get('categoryId') || '';
-  
-  const [search, setSearch] = useState(initialSearch);
-  const [city, setCity] = useState(initialCity);
-  const [categoryId, setCategoryId] = useState(initialCategoryId);
+  const [search, setSearch] = useState('');
+  const [city, setCity] = useState('');
+  const [categoryId, setCategoryId] = useState('');
   const [sortBy, setSortBy] = useState('rating');
   const [page, setPage] = useState(1);
   
-  console.log('URL location:', location);
-  console.log('Parsed params:', { initialSearch, initialCity, initialCategoryId });
+  // Sincronizza i parametri URL quando la location cambia
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.split('?')[1] || '');
+    const urlSearch = searchParams.get('search') || '';
+    const urlCity = searchParams.get('city') || '';
+    const urlCategoryId = searchParams.get('categoryId') || '';
+    
+    console.log('URL location:', location);
+    console.log('URL params from location:', { urlSearch, urlCity, urlCategoryId });
+    
+    setSearch(urlSearch);
+    setCity(urlCity);
+    setCategoryId(urlCategoryId);
+    setPage(1); // Reset alla prima pagina quando cambiano i parametri
+  }, [location]);
 
   const { data: categories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
