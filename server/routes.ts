@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { simpleAdminStorage } from "./storage-simple";
 import { adminAdvancedStorage } from "./admin-storage";
-import { simpleAuthService } from "./simple-auth";
+import { authService } from "./auth";
 import multer from "multer";
 import { 
   insertProfessionalSchema, 
