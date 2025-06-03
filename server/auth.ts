@@ -72,9 +72,10 @@ export class AuthService {
 
       // Crea l'utente con solo i campi esistenti nello schema
       const [newUser] = await db.insert(users).values({
-        name: data.name,
+        username: data.username,
         email: data.email,
         password: passwordHash,
+        name: data.name,
         role: data.userType,
         isVerified: false
       }).returning();
@@ -82,11 +83,16 @@ export class AuthService {
       // Se è un professionista, crea il record professional
       if (data.userType === 'professional' && data.businessName && data.categoryId) {
         await db.insert(professionals).values({
+          userId: newUser.id,
           businessName: data.businessName,
           categoryId: data.categoryId,
           email: data.email,
           description: 'Professionista registrato su Wolfinder',
-          isVerified: false
+          isVerified: false,
+          address: 'Via principale, 1',
+          city: 'Ferrara',
+          province: 'FE',
+          postalCode: '44121'
         });
       }
 

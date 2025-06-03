@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { simpleAdminStorage } from "./storage-simple";
+
 import { adminAdvancedStorage } from "./admin-storage";
 import { authService } from "./auth";
 import multer from "multer";
@@ -35,7 +35,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication Routes
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const result = await simpleAuthService.registerUser(req.body);
+      const { name, username, email, password, userType, acceptTerms, businessName, categoryId } = req.body;
+      
+      if (!name || !username || !email || !password || !userType || !acceptTerms) {
+        return res.status(400).json({ error: "Tutti i campi obbligatori devono essere compilati" });
+      }
+
+      const result = await authService.registerUser({
+        name,
+        username,
+        email,
+        password,
+        userType,
+        businessName,
+        categoryId: categoryId ? parseInt(categoryId) : undefined
+      });
       
       if (!result.success) {
         return res.status(400).json({ error: result.error });
@@ -60,7 +74,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Email e password richieste" });
       }
 
-      const result = await simpleAuthService.loginUser(email, password);
+      const result = await authService.loginUser(email, password);
       
       if (!result.success) {
         return res.status(401).json({ error: result.error });
@@ -77,7 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/auth/profile", simpleAuthService.authenticateToken, async (req, res) => {
+  app.get("/api/auth/profile", authService.authenticateToken, async (req, res) => {
     try {
       const user = req.user;
       if (!user) {
@@ -93,8 +107,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Professional verification routes
   app.post("/api/auth/professionals/upload-document", 
-    simpleAuthService.authenticateToken,
-    simpleAuthService.requireRole(['professional']),
+    authService.authenticateToken,
+    authService.requireRole(['professional']),
     upload.single('document'),
     async (req, res) => {
       try {
