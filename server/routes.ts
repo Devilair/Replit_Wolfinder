@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { simpleAdminStorage } from "./storage-simple";
 import { adminAdvancedStorage } from "./admin-storage";
-import { authService } from "./auth-service";
+import { simpleAuthService } from "./simple-auth";
 import multer from "multer";
 import { 
   insertProfessionalSchema, 
@@ -35,8 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication Routes
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const clientIP = req.ip || req.connection.remoteAddress || '127.0.0.1';
-      const result = await authService.registerUser(req.body, clientIP);
+      const result = await simpleAuthService.registerUser(req.body);
       
       if (!result.success) {
         return res.status(400).json({ error: result.error });
