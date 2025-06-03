@@ -43,14 +43,65 @@ export class SimpleAdminStorage {
         .select({ average: sql<number>`AVG(${reviews.rating})` })
         .from(reviews);
 
+      // Get additional metrics for advanced dashboard
+      const [verifiedReviews] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(reviews)
+        .where(eq(reviews.status, 'verified'));
+
+      const [rejectedReviews] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(reviews)
+        .where(eq(reviews.status, 'rejected'));
+
+      const [newReviewsToday] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(reviews)
+        .where(sql`DATE(${reviews.createdAt}) = CURRENT_DATE`);
+
+      const [activeUsersToday] = await db
+        .select({ count: sql<number>`count(DISTINCT ${reviews.userId})` })
+        .from(reviews)
+        .where(sql`DATE(${reviews.createdAt}) = CURRENT_DATE`);
+
+      const [activeUsersWeek] = await db
+        .select({ count: sql<number>`count(DISTINCT ${reviews.userId})` })
+        .from(reviews)
+        .where(sql`${reviews.createdAt} >= ${weekAgo.toISOString()}`);
+
+      const monthAgo = new Date();
+      monthAgo.setDate(monthAgo.getDate() - 30);
+
+      const [activeUsersMonth] = await db
+        .select({ count: sql<number>`count(DISTINCT ${reviews.userId})` })
+        .from(reviews)
+        .where(sql`${reviews.createdAt} >= ${monthAgo.toISOString()}`);
+
+      const [avgVerificationTime] = await db
+        .select({ average: sql<number>`AVG(EXTRACT(EPOCH FROM (${reviews.updatedAt} - ${reviews.createdAt}))/3600)` })
+        .from(reviews)
+        .where(eq(reviews.status, 'verified'));
+
+      const conversionRate = totalProfessionals.count > 0 
+        ? ((verifiedProfessionals.count / totalProfessionals.count) * 100).toFixed(1)
+        : "0";
+
       return {
-        totalUsers: totalUsers.count,
-        newUsersThisWeek: newUsersThisWeek.count,
-        totalProfessionals: totalProfessionals.count,
-        verifiedProfessionals: verifiedProfessionals.count,
-        totalReviews: totalReviews.count,
-        pendingReviews: pendingReviews.count,
+        totalUsers: totalUsers.count.toString(),
+        newUsersThisWeek: newUsersThisWeek.count.toString(),
+        activeUsersToday: activeUsersToday.count.toString(),
+        activeUsersWeek: activeUsersWeek.count.toString(),
+        activeUsersMonth: activeUsersMonth.count.toString(),
+        totalProfessionals: totalProfessionals.count.toString(),
+        verifiedProfessionals: verifiedProfessionals.count.toString(),
+        totalReviews: totalReviews.count.toString(),
+        verifiedReviews: verifiedReviews.count.toString(),
+        pendingReviews: pendingReviews.count.toString(),
+        rejectedReviews: rejectedReviews.count.toString(),
+        newReviewsToday: newReviewsToday.count.toString(),
         averageRating: avgRating.average ? Number(avgRating.average).toFixed(1) : "0.0",
+        averageVerificationTime: avgVerificationTime.average ? Number(avgVerificationTime.average).toFixed(1) : "0.0",
+        conversionRate: conversionRate,
       };
     } catch (error) {
       console.error("Error in getAdminStats:", error);
@@ -242,8 +293,16 @@ export class SimpleAdminStorage {
           status: reviews.status,
           createdAt: reviews.createdAt,
           updatedAt: reviews.updatedAt,
-          user: users,
-          professional: professionals,
+          // User fields - only existing columns
+          userName: users.name,
+          userEmail: users.email,
+          userUsername: users.username,
+          userCreatedAt: users.createdAt,
+          // Professional fields
+          professionalBusinessName: professionals.businessName,
+          professionalEmail: professionals.email,
+          professionalCity: professionals.city,
+          professionalProvince: professionals.province,
         })
         .from(reviews)
         .leftJoin(users, eq(reviews.userId, users.id))
@@ -252,9 +311,29 @@ export class SimpleAdminStorage {
         .orderBy(desc(reviews.createdAt));
 
       return results.map(result => ({
-        ...result,
-        user: result.user!,
-        professional: result.professional!,
+        id: result.id,
+        professionalId: result.professionalId,
+        userId: result.userId,
+        rating: result.rating,
+        title: result.title,
+        content: result.content,
+        status: result.status,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+        user: {
+          id: result.userId,
+          name: result.userName,
+          email: result.userEmail,
+          username: result.userUsername,
+          createdAt: result.userCreatedAt,
+        },
+        professional: {
+          id: result.professionalId,
+          businessName: result.professionalBusinessName,
+          email: result.professionalEmail,
+          city: result.professionalCity,
+          province: result.professionalProvince,
+        },
       }));
     } catch (error) {
       console.error("Error in getPendingReviews:", error);

@@ -1,0 +1,363 @@
+Dashboard Amministrativa Wolfinder: Specifiche Tecniche Complete
+1. Dashboard Principale (Home)
+Pannello Superiore: KPI Critici
+•	Metriche in tempo reale con confronto periodo precedente: 
+o	Utenti attivi (oggi, settimana, mese)
+o	Nuove recensioni (verificate vs non verificate)
+o	Nuovi professionisti registrati
+o	Tasso di conversione abbonamenti
+o	Ricavi correnti (MTD) con proiezione mensile
+Grafici Principali
+•	Grafico principale interattivo con toggle per visualizzare: 
+o	Recensioni totali/verificate/rifiutate (trend temporale)
+o	Registrazioni professionisti per categoria
+o	Conversione da free a piani a pagamento
+o	Engagement utenti (visite, ricerche, interazioni)
+Attività Critiche
+•	Code di lavoro con contatori: 
+o	Recensioni in attesa di verifica (prioritizzate per rating)
+o	Richieste di verifica professionisti
+o	Segnalazioni contenuti inappropriati
+o	Richieste di supporto non gestite
+Avvisi e Notifiche
+•	Sistema di alerting con livelli di priorità: 
+o	Attività sospette (pattern di recensioni anomale)
+o	Picchi di traffico o utilizzo insoliti
+o	Problemi di performance del sistema
+o	Threshold raggiunti (es. >50 recensioni in attesa)
+2. Gestione Professionisti
+Lista Professionisti Master
+•	Tabella avanzata con: 
+o	ID, nome, professione, località, data registrazione
+o	Status verifica (verificato, in attesa, respinto)
+o	Rating medio e numero recensioni
+o	Piano abbonamento attivo
+o	Indicatori di attività (ultimo accesso, % completamento profilo)
+o	Flag per professionisti problematici
+Filtri e Ricerca
+•	Sistema di filtri avanzati: 
+o	Multi-select per categorie professionali
+o	Filtro geografico (regione, provincia, città)
+o	Filtro per status verifica e completezza profilo
+o	Filtro per piano abbonamento
+o	Ricerca full-text con suggerimenti
+o	Filtri salvabili per uso frequente
+Scheda Dettaglio Professionista
+•	Panoramica completa: 
+o	Dati anagrafici e di contatto completi
+o	Storico verifiche con documenti caricati
+o	Timeline attività sulla piattaforma
+o	Tutte le recensioni ricevute con filtri
+o	Statistiche di performance (visualizzazioni profilo, CTR, confronto con media categoria)
+o	Log comunicazioni e note amministrative
+Azioni Amministrative
+•	Suite completa di strumenti: 
+o	Verifica/rifiuto credenziali con feedback
+o	Modifica diretta informazioni profilo
+o	Sospensione temporanea account (con timer)
+o	Ban permanente con motivazione
+o	Gestione manuale abbonamento
+o	Invio comunicazioni dirette
+o	Generazione report personalizzati
+3. Gestione Recensioni
+Dashboard Recensioni
+•	Panoramica status recensioni: 
+o	Distribuzione per status (nuove, verificate, in attesa, rifiutate)
+o	Distribuzione per rating
+o	Tempo medio di verifica
+o	Tasso di rifiuto e motivi principali
+Coda di Moderazione
+•	Sistema di prioritizzazione intelligente: 
+o	Code separate per prima verifica e segnalazioni
+o	Priorità automatica per recensioni estremamente negative o potenzialmente fraudolente
+o	Assegnazione recensioni a moderatori specifici
+o	Indicatori tempo in coda
+o	Vista "split-screen" per verifica documento/recensione
+Interfaccia di Verifica
+•	Strumenti avanzati per moderatori: 
+o	Visualizzatore documenti con zoom e rotazione
+o	Confronto side-by-side dati dichiarati vs documento
+o	Accesso a storico utente e professionista
+o	Quick-actions per approvazione/rifiuto
+o	Template risposta per rifiuti comuni
+o	Sistema di flag per revisione senior
+o	OCR per estrazione automatica dati da documenti
+Gestione Segnalazioni
+•	Sistema completo: 
+o	Vista aggregata segnalazioni per recensione
+o	Categorizzazione automatica motivi
+o	Storico decisioni su casi simili
+o	Workflow approvazione/rimozione/modifica
+o	Sistema di notifica agli interessati
+4. Gestione Utenti
+Lista Utenti Master
+•	Tabella completa con: 
+o	Dati utente e stato verifica
+o	Numero recensioni pubblicate/verificate
+o	Data registrazione e ultimo accesso
+o	Origine acquisizione
+o	Indicatori di comportamento (engagement score)
+o	Flag per attività sospette
+Profilo Utente Dettagliato
+•	Vista amministrativa completa: 
+o	Dati personali completi
+o	Storico recensioni e interazioni
+o	Log accessi con device e IP
+o	Timeline attività
+o	Note amministrative
+o	Sistemi di verifica utilizzati
+Strumenti di Gestione
+•	Funzionalità amministrative: 
+o	Verifica/sospensione/ban account
+o	Reset password e accesso di emergenza
+o	Modifica livelli permessi
+o	Unione account duplicati
+o	Anonimizzazione dati (GDPR)
+o	Invio comunicazioni dirette
+Sistema Anti-frode
+•	Strumenti di rilevamento: 
+o	Visualizzazione pattern di attività sospette
+o	Correlazione tra account potenzialmente collegati
+o	Mappa di geolocalizzazione accessi
+o	Analisi comportamentale con scoring
+o	Strumenti di indagine approfondita
+5. Abbonamenti e Fatturazione
+Dashboard Finanziaria
+•	Metriche chiave business: 
+o	Ricavi ricorrenti mensili (MRR)
+o	Customer Lifetime Value (LTV)
+o	Churn rate e retention
+o	Average Revenue Per User (ARPU)
+o	Previsioni finanziarie con trend
+Gestione Abbonamenti
+•	Vista completa iscrizioni: 
+o	Lista abbonamenti attivi/scaduti/in prova
+o	Filtri per piano, stato, data scadenza
+o	Metriche conversione da free a paid
+o	Gestione promozioni e codici sconto
+o	Funzionalità batch per rinnovi/upgrade
+Transazioni e Fatturazione
+•	Sistema completo: 
+o	Log transazioni con stato e metodo pagamento
+o	Gestione fatturazione elettronica
+o	Strumenti rimborso e note di credito
+o	Reportistica fiscale
+o	Riconciliazione pagamenti
+o	Export dati contabili
+Configurazione Piani
+•	Gestione offerta commerciale: 
+o	Editor piani abbonamento
+o	A/B testing prezzi
+o	Gestione funzionalità incluse
+o	Creazione offerte speciali
+o	Automazione email pre/post scadenza
+6. Analytics e Reporting
+Analytics Platform
+•	Sistema analisi avanzato: 
+o	Funnel conversione utente (visitatore → registrato → recensore)
+o	Funnel professionista (registrazione → verifica → abbonamento)
+o	Heatmap utilizzo piattaforma
+o	Analisi SEO e traffico
+o	Analisi performance per categoria professionale
+o	Retention e churn analysis
+Report Builder
+•	Generatore report personalizzati: 
+o	Interfaccia drag-and-drop per creazione report
+o	Libreria template pre-configurati
+o	Scheduling automatico invio report
+o	Export in multiple formati (PDF, Excel, CSV)
+o	Condivisione diretta con stakeholder
+Business Intelligence
+•	Dashboard executive: 
+o	KPI aggregati per management
+o	Forecast finanziario e di crescita
+o	Analisi competitiva (anonimizzata)
+o	Performance marketing channels
+o	Unit economics
+Data Exploration
+•	Strumenti analisi avanzata: 
+o	Query builder per esplorazione dati
+o	Visualizzazioni personalizzabili
+o	Segmentazione utenti/professionisti
+o	Analisi predittiva (churn, conversione)
+o	Export dataset per analisi esterne
+7. Moderazione Contenuti
+Monitoraggio Attivo
+•	Dashboard moderazione: 
+o	Nuovi contenuti da revisionare
+o	Code per tipo contenuto (recensioni, profili, risposte)
+o	Sistema di flag automatico per contenuti potenzialmente inappropriati
+o	Strumenti di analisi semantica per rilevare linguaggio offensivo
+Strumenti Moderazione
+•	Suite completa: 
+o	Editor contenuti con tracking modifiche
+o	Sistema approvazione multi-livello
+o	Regole automatiche configurabili
+o	Template di risposta per situazioni comuni
+o	Workflow escalation per casi complessi
+Gestione Dispute
+•	Sistema risoluzione conflitti: 
+o	Vista casi aperti con prioritizzazione
+o	Timeline completa comunicazioni
+o	Repository documentazione correlata
+o	Strumenti mediazione professionista/utente
+o	Template risoluzioni standard
+o	Log decisioni per precedenti
+Content Policy Manager
+•	Gestione regole piattaforma: 
+o	Editor linee guida contenuti
+o	Configurazione filtri automatici
+o	Regole per ogni tipo di contenuto
+o	Gestione banned keywords
+o	A/B testing efficacia regole
+8. Comunicazioni
+Email Manager
+•	Sistema completo: 
+o	Editor template email con supporto responsive
+o	Personalizzazione dinamica contenuti
+o	Scheduling e automazione
+o	A/B testing soggetti e contenuti
+o	Analytics aperture e click
+o	Gestione liste e segmentazione
+Notifiche Push
+•	Centro gestione: 
+o	Creazione messaggi push
+o	Targeting per segmenti utenti
+o	Scheduling e frequenza invio
+o	Performance metrics
+o	Opt-in/out management
+Annunci Piattaforma
+•	Sistema comunicazioni in-app: 
+o	Editor annunci con formatting
+o	Targeting per tipo utente
+o	Scheduling pubblicazione/rimozione
+o	Analytics visualizzazioni/interazioni
+o	Posizionamento personalizzabile
+Supporto Utenti
+•	Helpdesk integrato: 
+o	Gestione ticket support
+o	Chatbot configurabile
+o	Knowledge base editor
+o	SLA monitoring
+o	Routing automatico richieste
+o	Analytics tempi risposta
+9. Impostazioni Sistema
+Configurazione Piattaforma
+•	Controlli generali: 
+o	Toggle funzionalità attive/beta
+o	Parametri algoritmo ranking
+o	Soglie verifiche automatiche
+o	Configurazione limiti sistema
+o	Feature flags per rollout graduali
+Gestione Utenti Admin
+•	Amministrazione team: 
+o	Creazione/modifica ruoli personalizzati
+o	Assegnazione permessi granulari
+o	Log attività admin
+o	Autenticazione 2FA obbligatoria
+o	Session management
+o	Policy accessi
+Localizzazione
+•	Gestione multi-lingua: 
+o	Editor traduzioni piattaforma
+o	Preview in-context traduzioni
+o	Import/export dizionari
+o	Gestione date/numeri/valute
+o	Rilevamento automatico lingua
+Sistema & Performance
+•	Monitoraggio tecnico: 
+o	Dashboard performance API/frontend
+o	Metriche server e database
+o	Log errori e exception
+o	Gestione cache e ottimizzazioni
+o	Scheduling backup
+o	Configurazione CDN e risorse
+10. Sicurezza e Compliance
+Security Dashboard
+•	Panoramica sicurezza: 
+o	Tentativi accesso falliti
+o	Attività sospette real-time
+o	Vulnerabilità rilevate
+o	Status patch sistema
+o	Audit log accessi sensibili
+Privacy Manager
+•	Strumenti GDPR: 
+o	Gestione richieste accesso dati
+o	Strumenti cancellazione/anonimizzazione
+o	Log consensi utenti
+o	Configurazione data retention
+o	Export dati personali
+Fraud Detection
+•	Sistema anti-frode: 
+o	Pattern recognition attività anomale
+o	IP/device fingerprinting
+o	Rate limiting configurabile
+o	Regole personalizzabili
+o	Dashboard casi sospetti
+Audit & Compliance
+•	Strumenti conformità: 
+o	Generazione report compliance
+o	Log modifiche configurazione
+o	Registro trattamenti dati
+o	Documentazione procedure
+o	Checklist verifiche periodiche
+11. API & Integrazioni
+API Management
+•	Gestione completa: 
+o	Dashboard utilizzo API
+o	Generazione/revoca token
+o	Rate limiting e throttling
+o	Documentazione interattiva
+o	Log chiamate e debugging
+Integrazioni
+•	Hub connettori: 
+o	Configurazione webhook
+o	Integrazione sistemi pagamento
+o	Connettori CRM/marketing
+o	Social media integration
+o	Analytics integrations
+o	Custom integrations builder
+Developer Portal
+•	Risorse sviluppatori: 
+o	Documentazione tecnica
+o	SDK e librerie
+o	Ambiente sandbox
+o	Strumenti testing API
+o	Gestione chiavi di accesso
+12. Mobile Management
+App Manager
+•	Controllo versioni mobile: 
+o	Gestione versioni iOS/Android
+o	Forced update configuration
+o	Feature toggle per piattaforma
+o	Push notification dashboard
+o	Analytics uso app
+13. Elementi trasversali dell'interfaccia
+UX Amministrativa
+•	Elementi di usabilità: 
+o	Tema chiaro/scuro
+o	Layout responsive
+o	Scorciatoie tastiera
+o	Preferenze personali salvabili
+o	Multi-tab workspace
+o	Ricerca globale con preview risultati
+o	Cronologia azioni recenti
+o	Sistema notifiche interno
+Visualizzazione Dati
+•	Componenti avanzati: 
+o	Tabelle con ordinamento multi-colonna
+o	Filtri componibili e salvabili
+o	Export one-click in più formati
+o	Grafici interattivi con drill-down
+o	Dashboard personalizzabili
+o	Metriche con confronto storico
+o	Alerting threshold configurabili
+Automazione
+•	Strumenti workflow: 
+o	Builder regole automatiche
+o	Scheduling attività
+o	Template azioni multiple
+o	Trigger configurabili
+o	Log esecuzioni automatiche
+o	Notifiche risultati automazioni
+Questa dashboard amministrativa rappresenta un sistema completo e maturo per gestire ogni aspetto della piattaforma Wolfinder, fornendo gli strumenti necessari per garantire qualità, autenticità e un'esperienza utente eccellente, mantenendo sempre al centro la trasparenza e la meritocrazia che sono i valori fondamentali della piattaforma.
