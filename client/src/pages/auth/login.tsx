@@ -36,8 +36,8 @@ export default function Login() {
       return apiRequest("POST", "/api/auth/login", data);
     },
     onSuccess: (response: any) => {
-      // La risposta contiene success, user, token
-      if (response?.success && response?.token && response?.user) {
+      // La risposta contiene message, user, token
+      if (response?.token && response?.user) {
         localStorage.setItem("authToken", response.token);
         localStorage.setItem("user", JSON.stringify(response.user));
         
@@ -57,7 +57,7 @@ export default function Login() {
       } else {
         toast({
           title: "Errore login",
-          description: response?.error || "Risposta del server non valida",
+          description: response?.message || "Risposta del server non valida",
           variant: "destructive",
         });
       }
