@@ -235,6 +235,20 @@ export class DatabaseStorage implements IStorage {
         reviewCount: professionals.reviewCount,
         createdAt: professionals.createdAt,
         updatedAt: professionals.updatedAt,
+        // New admin fields
+        verificationStatus: professionals.verificationStatus,
+        verificationNotes: professionals.verificationNotes,
+        verificationDate: professionals.verificationDate,
+        verifiedBy: professionals.verifiedBy,
+        profileCompleteness: professionals.profileCompleteness,
+        lastActivityAt: professionals.lastActivityAt,
+        profileViews: professionals.profileViews,
+        clickThroughRate: professionals.clickThroughRate,
+        responseRate: professionals.responseRate,
+        averageResponseTime: professionals.averageResponseTime,
+        isProblematic: professionals.isProblematic,
+        problematicReason: professionals.problematicReason,
+        adminNotes: professionals.adminNotes,
         category: categories,
       })
       .from(professionals)
@@ -542,7 +556,7 @@ export class DatabaseStorage implements IStorage {
     const [pendingReviews] = await db
       .select({ count: sql<number>`count(*)` })
       .from(reviews)
-      .where(eq(reviews.isVerified, false));
+      .where(sql`${reviews.status} = 'pending'`);
 
     const [avgRating] = await db
       .select({ average: sql<number>`AVG(${reviews.rating})` })
