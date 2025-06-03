@@ -11,15 +11,14 @@ export interface AuthUser {
 
 export function useAuth() {
   const { data: user, isLoading, error } = useQuery({
-    queryKey: ['/api/auth/profile'],
+    queryKey: ["/api/auth/me"],
     retry: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   return {
     user: user as AuthUser | undefined,
     isLoading,
-    isAuthenticated: !!user && !error,
+    isAuthenticated: !!user,
     error
   };
 }
