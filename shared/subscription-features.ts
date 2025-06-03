@@ -17,6 +17,15 @@ export interface SubscriptionFeatures {
   detailedStats: boolean;
   competitorAnalysis: boolean;
   
+  // Funzionalità avanzate Enterprise
+  apiAccess: boolean;
+  whitelabelBranding: boolean;
+  bulkOperations: boolean;
+  advancedReporting: boolean;
+  customIntegrations: boolean;
+  prioritySupport: boolean;
+  dedicatedAccountManager: boolean;
+  
   // Badge e distintivi
   verifiedBadge: boolean;
   premiumBadge: boolean;
@@ -37,6 +46,13 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
     analyticsAccess: true, // Analytics di base
     detailedStats: false,
     competitorAnalysis: false,
+    apiAccess: false,
+    whitelabelBranding: false,
+    bulkOperations: false,
+    advancedReporting: false,
+    customIntegrations: false,
+    prioritySupport: false,
+    dedicatedAccountManager: false,
     verifiedBadge: true, // Badge "Identità Verificata"
     premiumBadge: false,
     supportLevel: 'basic',
@@ -52,6 +68,13 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
     analyticsAccess: true,
     detailedStats: true, // Dashboard interattiva, export dati
     competitorAnalysis: false,
+    apiAccess: false,
+    whitelabelBranding: false,
+    bulkOperations: false,
+    advancedReporting: false,
+    customIntegrations: false,
+    prioritySupport: true,
+    dedicatedAccountManager: false,
     verifiedBadge: true,
     premiumBadge: true, // Badge "Professional"
     supportLevel: 'priority',
@@ -66,7 +89,14 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
     reviewHighlights: true,
     analyticsAccess: true,
     detailedStats: true,
-    competitorAnalysis: true, // Analytics predittive, benchmark
+    competitorAnalysis: true, // Analytics predittive, benchmark completo
+    apiAccess: true, // Accesso API per integrazioni esterne
+    whitelabelBranding: false,
+    bulkOperations: true, // Operazioni in massa per gestire più clienti
+    advancedReporting: true, // Report personalizzati e export avanzati
+    customIntegrations: false,
+    prioritySupport: true,
+    dedicatedAccountManager: false,
     verifiedBadge: true,
     premiumBadge: true, // Badge "Expert Verified"
     supportLevel: 'priority',
@@ -81,9 +111,16 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
     reviewHighlights: true,
     analyticsAccess: true,
     detailedStats: true,
-    competitorAnalysis: true, // Intelligence competitiva completa
+    competitorAnalysis: true, // Intelligence competitiva completa + AI insights
+    apiAccess: true, // API completa + webhooks
+    whitelabelBranding: true, // Branding personalizzato per studi legali/grandi aziende
+    bulkOperations: true, // Gestione multi-sede e team
+    advancedReporting: true, // Dashboard personalizzabile + BI integrata
+    customIntegrations: true, // Integrazioni custom con CRM/ERP aziendali
+    prioritySupport: true,
+    dedicatedAccountManager: true, // Account manager dedicato
     verifiedBadge: true,
-    premiumBadge: true, // Badge "Enterprise"
+    premiumBadge: true, // Badge "Enterprise Partner"
     supportLevel: 'dedicated',
   },
 };
