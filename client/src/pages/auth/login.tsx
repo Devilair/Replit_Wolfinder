@@ -35,22 +35,31 @@ export default function Login() {
     mutationFn: async (data: LoginFormData) => {
       return apiRequest("POST", "/api/auth/login", data);
     },
-    onSuccess: (data) => {
-      localStorage.setItem("authToken", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      
-      toast({
-        title: "Login effettuato",
-        description: `Benvenuto ${data.user.name}!`,
-      });
+    onSuccess: (response: any) => {
+      // La risposta contiene success, user, token
+      if (response?.success && response?.token && response?.user) {
+        localStorage.setItem("authToken", response.token);
+        localStorage.setItem("user", JSON.stringify(response.user));
+        
+        toast({
+          title: "Login effettuato",
+          description: `Benvenuto ${response.user.name}!`,
+        });
 
-      // Redirect based on user role
-      if (data.user.role === "admin") {
-        navigate("/admin");
-      } else if (data.user.role === "professional") {
-        navigate("/dashboard/professional");
+        // Redirect based on user role
+        if (response.user.role === "admin") {
+          navigate("/admin");
+        } else if (response.user.role === "professional") {
+          navigate("/dashboard/professional");
+        } else {
+          navigate("/");
+        }
       } else {
-        navigate("/");
+        toast({
+          title: "Errore login",
+          description: response?.error || "Risposta del server non valida",
+          variant: "destructive",
+        });
       }
     },
     onError: (error: Error) => {
