@@ -103,6 +103,19 @@ export const reviews = pgTable("reviews", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Tabella per tracciare l'utilizzo delle funzionalità dei professionisti
+export const professionalUsage = pgTable("professional_usage", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  month: integer("month").notNull(), // Mese (1-12)
+  year: integer("year").notNull(), // Anno
+  contactsReceived: integer("contacts_received").default(0).notNull(),
+  photosUploaded: integer("photos_uploaded").default(0).notNull(),
+  servicesListed: integer("services_listed").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   professionals: many(professionals),
@@ -125,6 +138,7 @@ export const professionalsRelations = relations(professionals, ({ one, many }) =
   reviews: many(reviews),
   subscriptions: many(subscriptions),
   transactions: many(transactions),
+  usage: many(professionalUsage),
 }));
 
 export const reviewsRelations = relations(reviews, ({ one }) => ({
@@ -162,6 +176,13 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
   }),
   professional: one(professionals, {
     fields: [transactions.professionalId],
+    references: [professionals.id],
+  }),
+}));
+
+export const professionalUsageRelations = relations(professionalUsage, ({ one }) => ({
+  professional: one(professionals, {
+    fields: [professionalUsage.professionalId],
     references: [professionals.id],
   }),
 }));
@@ -234,3 +255,7 @@ export type SubscriptionWithDetails = Subscription & {
   professional: Professional & { user: User };
   transactions: Transaction[];
 };
+
+// Professional usage types
+export type ProfessionalUsage = typeof professionalUsage.$inferSelect;
+export type InsertProfessionalUsage = typeof professionalUsage.$inferInsert;
