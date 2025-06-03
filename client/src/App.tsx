@@ -19,16 +19,16 @@ function Router() {
       <Route path="/professionals/:id" component={ProfessionalProfile} />
       
       {/* Admin Routes */}
-      <Route path="/admin">
+      <Route path="/admin" component={() => (
         <AdminLayout>
           <AdminDashboard />
         </AdminLayout>
-      </Route>
-      <Route path="/admin/professionals">
+      )} />
+      <Route path="/admin/professionals" component={() => (
         <AdminLayout>
           <AdminProfessionals />
         </AdminLayout>
-      </Route>
+      )} />
       
       <Route component={NotFound} />
     </Switch>
