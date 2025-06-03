@@ -284,6 +284,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Advanced Analytics Routes for Enterprise Dashboard
+
+  app.get("/api/admin/analytics/reviews", async (req, res) => {
+    try {
+      const analytics = await simpleAdminStorage.getReviewAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching review analytics:", error);
+      res.status(500).json({ message: "Failed to fetch review analytics" });
+    }
+  });
+
+  app.get("/api/admin/analytics/professionals-by-category", async (req, res) => {
+    try {
+      const analytics = await simpleAdminStorage.getProfessionalsByCategory();
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching professionals by category:", error);
+      res.status(500).json({ message: "Failed to fetch professionals by category" });
+    }
+  });
+
+  app.get("/api/admin/analytics/advanced-metrics", async (req, res) => {
+    try {
+      const metrics = await simpleAdminStorage.getAdvancedMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching advanced metrics:", error);
+      res.status(500).json({ message: "Failed to fetch advanced metrics" });
+    }
+  });
+
+  app.get("/api/admin/security/suspicious-activity", async (req, res) => {
+    try {
+      const activity = await simpleAdminStorage.getSuspiciousActivity();
+      res.json(activity);
+    } catch (error) {
+      console.error("Error fetching suspicious activity:", error);
+      res.status(500).json({ message: "Failed to fetch suspicious activity" });
+    }
+  });
+
+  app.get("/api/admin/analytics/geographic-distribution", async (req, res) => {
+    try {
+      const distribution = await simpleAdminStorage.getGeographicDistribution();
+      res.json(distribution);
+    } catch (error) {
+      console.error("Error fetching geographic distribution:", error);
+      res.status(500).json({ message: "Failed to fetch geographic distribution" });
+    }
+  });
+
+  app.patch("/api/admin/reviews/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid review ID" });
+      }
+
+      const { status, adminNotes } = req.body;
+      await simpleAdminStorage.updateReviewStatus(id, status, adminNotes);
+      res.json({ message: "Review status updated successfully" });
+    } catch (error) {
+      console.error("Error updating review status:", error);
+      res.status(500).json({ message: "Failed to update review status" });
+    }
+  });
+
   // Admin Users Management
   app.get("/api/admin/users", async (req, res) => {
     try {
