@@ -19,6 +19,8 @@ import AdminUsers from "@/pages/admin/users";
 import AdminSettings from "@/pages/admin/settings";
 import AdminLogin from "@/pages/admin-login";
 import ProfessionalSubscriptionDemo from "@/pages/professional-subscription-demo";
+import Register from "@/pages/auth/register";
+import Login from "@/pages/auth/login";
 
 function Router() {
   return (

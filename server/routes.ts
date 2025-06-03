@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { simpleAdminStorage } from "./storage-simple";
 import { adminAdvancedStorage } from "./admin-storage";
+import { authService } from "./auth-service";
+import multer from "multer";
 import { 
   insertProfessionalSchema, 
   insertReviewSchema, 
@@ -14,6 +16,182 @@ import {
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Multer configuration for file uploads
+  const upload = multer({
+    dest: 'uploads/',
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Tipo di file non supportato'));
+      }
+    }
+  });
+
+  // Authentication Routes
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const clientIP = req.ip || req.connection.remoteAddress || '127.0.0.1';
+      const result = await authService.registerUser(req.body, clientIP);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      res.status(201).json({
+        message: "Registrazione completata con successo",
+        user: result.user,
+        token: result.token,
+        requiresVerification: result.requiresVerification
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email e password richieste" });
+      }
+
+      const clientIP = req.ip || req.connection.remoteAddress || '127.0.0.1';
+      const result = await authService.loginUser(email, password, clientIP);
+      
+      if (!result.success) {
+        return res.status(401).json({ error: result.error });
+      }
+
+      res.json({
+        message: "Login effettuato con successo",
+        user: result.user,
+        token: result.token
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  app.post("/api/auth/verify-email", authService.authenticateToken, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "Utente non autenticato" });
+      }
+
+      const result = await authService.verifyEmail(userId);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      res.json({ message: "Email verificata con successo" });
+    } catch (error) {
+      console.error('Email verification error:', error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: "Email richiesta" });
+      }
+
+      const result = await authService.requestPasswordReset(email);
+      
+      res.json({ 
+        message: "Se l'email esiste, riceverai le istruzioni per il reset della password",
+        resetToken: result.token // In development only
+      });
+    } catch (error) {
+      console.error('Password reset request error:', error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { email, newPassword } = req.body;
+      
+      if (!email || !newPassword) {
+        return res.status(400).json({ error: "Email e nuova password richieste" });
+      }
+
+      const result = await authService.resetPassword(email, newPassword);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      res.json({ message: "Password reimpostata con successo" });
+    } catch (error) {
+      console.error('Password reset error:', error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  app.get("/api/auth/profile", authService.authenticateToken, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "Utente non autenticato" });
+      }
+
+      const profile = await authService.getUserProfile(userId);
+      
+      if (!profile) {
+        return res.status(404).json({ error: "Profilo non trovato" });
+      }
+
+      res.json(profile);
+    } catch (error) {
+      console.error('Get profile error:', error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  // Professional verification routes
+  app.post("/api/auth/professionals/upload-document", 
+    authService.authenticateToken,
+    authService.requireRole(['professional']),
+    upload.single('document'),
+    async (req, res) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({ error: "Documento richiesto" });
+        }
+
+        const { documentType } = req.body;
+        if (!documentType) {
+          return res.status(400).json({ error: "Tipo documento richiesto" });
+        }
+
+        // Here you would normally save to cloud storage and update verification status
+        // For now, we'll just return success
+        res.json({
+          message: "Documento caricato con successo",
+          fileName: req.file.filename,
+          documentType,
+          status: "pending_review"
+        });
+      } catch (error) {
+        console.error('Document upload error:', error);
+        res.status(500).json({ error: "Errore nel caricamento del documento" });
+      }
+    }
+  );
+
   // Get statistics
   app.get("/api/stats", async (req, res) => {
     try {
