@@ -5,19 +5,19 @@ import { Users, UserCheck, MessageSquare, Building2, TrendingUp, Clock } from "l
 import { Link } from "wouter";
 
 export default function AdminDashboard() {
-  const { data: stats } = useQuery({
+  const { data: stats = {} as any } = useQuery({
     queryKey: ["/api/admin/stats"],
   });
 
-  const { data: recentActivity } = useQuery({
+  const { data: recentActivity = [] as any[] } = useQuery({
     queryKey: ["/api/admin/recent-activity"],
   });
 
-  const { data: pendingReviews } = useQuery({
+  const { data: pendingReviews = [] as any[] } = useQuery({
     queryKey: ["/api/admin/pending-reviews"],
   });
 
-  const { data: unverifiedProfessionals } = useQuery({
+  const { data: unverifiedProfessionals = [] as any[] } = useQuery({
     queryKey: ["/api/admin/unverified-professionals"],
   });
 

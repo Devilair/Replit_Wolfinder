@@ -24,6 +24,11 @@ function Router() {
           <AdminDashboard />
         </AdminLayout>
       )} />
+      <Route path="/admin/dashboard" component={() => (
+        <AdminLayout>
+          <AdminDashboard />
+        </AdminLayout>
+      )} />
       <Route path="/admin/professionals" component={() => (
         <AdminLayout>
           <AdminProfessionals />
