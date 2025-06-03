@@ -14,29 +14,47 @@ import { Search, Filter, MapPin } from "lucide-react";
 import type { Category, ProfessionalSummary } from "@shared/schema";
 
 export default function Professionals() {
-  const [location] = useLocation();
-  
   const [search, setSearch] = useState('');
   const [city, setCity] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [sortBy, setSortBy] = useState('rating');
   const [page, setPage] = useState(1);
   
-  // Sincronizza i parametri URL quando la location cambia
+  // Leggi i parametri URL direttamente dal browser
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.split('?')[1] || '');
-    const urlSearch = searchParams.get('search') || '';
-    const urlCity = searchParams.get('city') || '';
-    const urlCategoryId = searchParams.get('categoryId') || '';
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSearch = urlParams.get('search') || '';
+    const urlCity = urlParams.get('city') || '';
+    const urlCategoryId = urlParams.get('categoryId') || '';
     
-    console.log('URL location:', location);
-    console.log('URL params from location:', { urlSearch, urlCity, urlCategoryId });
+    console.log('Browser URL search:', window.location.search);
+    console.log('URL params from browser:', { urlSearch, urlCity, urlCategoryId });
     
-    setSearch(urlSearch);
-    setCity(urlCity);
-    setCategoryId(urlCategoryId);
-    setPage(1); // Reset alla prima pagina quando cambiano i parametri
-  }, [location]);
+    if (urlSearch || urlCity || urlCategoryId) {
+      setSearch(urlSearch);
+      setCity(urlCity);
+      setCategoryId(urlCategoryId);
+      setPage(1);
+    }
+  }, []);
+  
+  // Rileggi i parametri quando l'URL cambia
+  useEffect(() => {
+    const handlePopstate = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlSearch = urlParams.get('search') || '';
+      const urlCity = urlParams.get('city') || '';
+      const urlCategoryId = urlParams.get('categoryId') || '';
+      
+      setSearch(urlSearch);
+      setCity(urlCity);
+      setCategoryId(urlCategoryId);
+      setPage(1);
+    };
+    
+    window.addEventListener('popstate', handlePopstate);
+    return () => window.removeEventListener('popstate', handlePopstate);
+  }, []);
 
   const { data: categories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
