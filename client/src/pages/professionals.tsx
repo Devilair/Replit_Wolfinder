@@ -39,7 +39,7 @@ export default function Professionals() {
       
       if (search) params.append('search', search);
       if (city) params.append('city', city);
-      if (categoryId) params.append('categoryId', categoryId);
+      if (categoryId && categoryId !== 'all') params.append('categoryId', categoryId);
 
       const response = await fetch(`/api/professionals?${params}`);
       if (!response.ok) throw new Error('Failed to fetch professionals');
@@ -99,7 +99,7 @@ export default function Professionals() {
                     <SelectValue placeholder="Categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tutte le categorie</SelectItem>
+                    <SelectItem value="all">Tutte le categorie</SelectItem>
                     {categories?.map((category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         {category.name}
@@ -183,7 +183,7 @@ export default function Professionals() {
             {professionals.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {professionals.map((professional) => (
+                  {professionals.map((professional: ProfessionalSummary) => (
                     <ProfessionalCard key={professional.id} professional={professional} />
                   ))}
                 </div>
@@ -212,7 +212,7 @@ export default function Professionals() {
                 <Button onClick={() => {
                   setSearch('');
                   setCity('');
-                  setCategoryId('');
+                  setCategoryId('all');
                   setPage(1);
                 }}>
                   Cancella Filtri
