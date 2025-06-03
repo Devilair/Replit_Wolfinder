@@ -42,6 +42,14 @@ export default function Header() {
             </nav>
           </div>
           <div className="flex items-center space-x-4">
+            <Link href="/admin">
+              <Button 
+                variant="ghost" 
+                className="text-gray-500 hover:text-blue-600 font-medium hidden sm:block"
+              >
+                Admin
+              </Button>
+            </Link>
             <Button 
               variant="ghost" 
               className="text-gray-500 hover:text-blue-600 font-medium hidden sm:block"
