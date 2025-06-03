@@ -16,6 +16,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import { Link } from "wouter";
+import SiteLayout from "@/components/site-layout";
 
 export default function ChiSiamo() {
   const valori = [
@@ -103,7 +104,8 @@ export default function ChiSiamo() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <SiteLayout>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
         <div className="absolute inset-0 bg-black/20"></div>
@@ -330,5 +332,6 @@ export default function ChiSiamo() {
         </div>
       </div>
     </div>
+    </SiteLayout>
   );
 }
