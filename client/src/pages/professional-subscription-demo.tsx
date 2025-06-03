@@ -25,7 +25,7 @@ const DEMO_SUBSCRIPTIONS = {
     plan: {
       id: 1,
       name: 'Professional',
-      price: 19.99,
+      price: 39.00,
       currency: 'EUR',
       interval: 'month' as const,
       features: JSON.stringify([]),
@@ -49,7 +49,7 @@ const DEMO_SUBSCRIPTIONS = {
     plan: {
       id: 2,
       name: 'Expert',
-      price: 49.99,
+      price: 120.00,
       currency: 'EUR',
       interval: 'month' as const,
       features: JSON.stringify([]),
@@ -73,7 +73,7 @@ const DEMO_SUBSCRIPTIONS = {
     plan: {
       id: 3,
       name: 'Enterprise',
-      price: 129.99,
+      price: 200.00,
       currency: 'EUR',
       interval: 'month' as const,
       features: JSON.stringify([]),
@@ -164,7 +164,7 @@ export default function ProfessionalSubscriptionDemo() {
                   <Crown className="h-4 w-4" />
                   <span className="font-semibold">Professional</span>
                 </div>
-                <span className="text-sm text-gray-500">€19.99/mese</span>
+                <span className="text-sm text-gray-500">€39/mese</span>
               </Button>
               
               <Button
@@ -176,7 +176,7 @@ export default function ProfessionalSubscriptionDemo() {
                   <Crown className="h-4 w-4" />
                   <span className="font-semibold">Expert</span>
                 </div>
-                <span className="text-sm text-gray-500">€49.99/mese</span>
+                <span className="text-sm text-gray-500">€120/mese</span>
               </Button>
               
               <Button
@@ -188,7 +188,7 @@ export default function ProfessionalSubscriptionDemo() {
                   <Crown className="h-4 w-4" />
                   <span className="font-semibold">Enterprise</span>
                 </div>
-                <span className="text-sm text-gray-500">€129.99/mese</span>
+                <span className="text-sm text-gray-500">€200/mese</span>
               </Button>
             </div>
             
@@ -262,23 +262,7 @@ export default function ProfessionalSubscriptionDemo() {
                       </Button>
                     </div>
 
-                    {/* Messaggi diretti */}
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <MessageSquare className="h-5 w-5 text-indigo-500" />
-                        <div>
-                          <h4 className="font-medium">Messaggi Diretti</h4>
-                          <p className="text-sm text-gray-500">Comunica direttamente con i clienti</p>
-                        </div>
-                      </div>
-                      <Button 
-                        disabled={!features.directMessaging}
-                        size="sm"
-                        variant={features.directMessaging ? "default" : "secondary"}
-                      >
-                        {features.directMessaging ? 'Disponibile' : 'Non Disponibile'}
-                      </Button>
-                    </div>
+
                   </CardContent>
                 </Card>
               </TabsContent>
