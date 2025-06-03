@@ -295,17 +295,17 @@ export default function AdminSubscriptions() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {subscriptionPlans.map((plan) => (
-                  <Card key={plan.id} className={`relative ${plan.name === "Pro" ? "ring-2 ring-blue-500" : ""}`}>
-                    {plan.name === "Pro" && (
+                  <Card key={plan.id} className={`relative ${plan.name === "Professional" ? "ring-2 ring-blue-500" : ""}`}>
+                    {plan.name === "Professional" && (
                       <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                         <Badge className="bg-blue-500">Più Popolare</Badge>
                       </div>
                     )}
                     <CardHeader className="text-center">
                       <div className="flex items-center justify-center mb-2">
-                        {plan.name === "Base" && <Users className="h-8 w-8 text-gray-500" />}
-                        {plan.name === "Pro" && <Crown className="h-8 w-8 text-blue-500" />}
-                        {plan.name === "Business" && <Zap className="h-8 w-8 text-purple-500" />}
+                        {plan.name === "Essentials" && <Users className="h-8 w-8 text-gray-500" />}
+                        {plan.name === "Professional" && <Crown className="h-8 w-8 text-blue-500" />}
+                        {plan.name === "Expert" && <Zap className="h-8 w-8 text-purple-500" />}
                         {plan.name === "Enterprise" && <Star className="h-8 w-8 text-orange-500" />}
                       </div>
                       <CardTitle className="text-xl">{plan.name}</CardTitle>
