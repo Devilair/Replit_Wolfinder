@@ -87,7 +87,7 @@ const DEMO_SUBSCRIPTIONS = {
 };
 
 export default function ProfessionalSubscriptionDemo() {
-  const [selectedPlan, setSelectedPlan] = useState<'gratuito' | 'professional' | 'enterprise'>('gratuito');
+  const [selectedPlan, setSelectedPlan] = useState<'essentials' | 'professional' | 'expert' | 'enterprise'>('essentials');
   const [currentUsage, setCurrentUsage] = useState({
     photosUploaded: 2,
     servicesListed: 2
@@ -145,14 +145,14 @@ export default function ProfessionalSubscriptionDemo() {
             <CardTitle>Seleziona Piano da Testare</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Button
-                variant={selectedPlan === 'gratuito' ? 'default' : 'outline'}
-                onClick={() => setSelectedPlan('gratuito')}
+                variant={selectedPlan === 'essentials' ? 'default' : 'outline'}
+                onClick={() => setSelectedPlan('essentials')}
                 className="h-20 flex flex-col items-center justify-center"
               >
-                <span className="font-semibold">Piano Gratuito</span>
-                <span className="text-sm text-gray-500">Funzionalità limitate</span>
+                <span className="font-semibold">Essentials</span>
+                <span className="text-sm text-gray-500">Gratuito</span>
               </Button>
               
               <Button
@@ -164,7 +164,19 @@ export default function ProfessionalSubscriptionDemo() {
                   <Crown className="h-4 w-4" />
                   <span className="font-semibold">Professional</span>
                 </div>
-                <span className="text-sm text-gray-500">€29.99/mese</span>
+                <span className="text-sm text-gray-500">€19.99/mese</span>
+              </Button>
+              
+              <Button
+                variant={selectedPlan === 'expert' ? 'default' : 'outline'}
+                onClick={() => setSelectedPlan('expert')}
+                className="h-20 flex flex-col items-center justify-center"
+              >
+                <div className="flex items-center space-x-1 mb-1">
+                  <Crown className="h-4 w-4" />
+                  <span className="font-semibold">Expert</span>
+                </div>
+                <span className="text-sm text-gray-500">€49.99/mese</span>
               </Button>
               
               <Button
@@ -176,7 +188,7 @@ export default function ProfessionalSubscriptionDemo() {
                   <Crown className="h-4 w-4" />
                   <span className="font-semibold">Enterprise</span>
                 </div>
-                <span className="text-sm text-gray-500">€99.99/mese</span>
+                <span className="text-sm text-gray-500">€129.99/mese</span>
               </Button>
             </div>
             
