@@ -24,6 +24,7 @@ function Router() {
       <Route path="/professionals" component={Professionals} />
       <Route path="/professionals/:id" component={ProfessionalProfile} />
       <Route path="/demo/subscription-limits" component={ProfessionalSubscriptionDemo} />
+      <Route path="/professional-subscription-demo" component={ProfessionalSubscriptionDemo} />
       
       {/* Admin Routes */}
       <Route path="/admin" component={() => (
