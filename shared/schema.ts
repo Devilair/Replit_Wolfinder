@@ -12,6 +12,19 @@ export const users = pgTable("users", {
   role: text("role").default("user").notNull(), // 'user', 'professional', 'admin', 'moderator'
   isVerified: boolean("is_verified").default(false).notNull(),
   verificationMethod: text("verification_method"), // 'email', 'phone', 'document'
+  // Enhanced authentication fields
+  isEmailVerified: boolean("is_email_verified").default(false),
+  emailVerifiedAt: timestamp("email_verified_at"),
+  isPhoneVerified: boolean("is_phone_verified").default(false),
+  phone: text("phone"),
+  mfaEnabled: boolean("mfa_enabled").default(false),
+  mfaSecret: text("mfa_secret"),
+  failedLoginAttempts: integer("failed_login_attempts").default(0),
+  lockedUntil: timestamp("locked_until"),
+  lastFailedLogin: timestamp("last_failed_login"),
+  marketingConsent: boolean("marketing_consent").default(false),
+  privacyConsent: boolean("privacy_consent").default(true),
+  // Existing fields
   lastLoginAt: timestamp("last_login_at"),
   lastActivityAt: timestamp("last_activity_at"),
   ipAddress: text("ip_address"),
@@ -24,6 +37,96 @@ export const users = pgTable("users", {
   adminNotes: text("admin_notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// User sessions for JWT refresh token management
+export const userSessions = pgTable("user_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  sessionToken: text("session_token").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  isActive: boolean("is_active").default(true),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Verification tokens for email, phone, password reset
+export const verificationTokens = pgTable("verification_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  type: text("type").notNull(), // email_verification, phone_verification, password_reset, mfa_setup
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Security audit logs for authentication events
+export const authAuditLogs = pgTable("auth_audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  action: text("action").notNull(), // login_success, login_failed, password_changed, etc.
+  metadata: jsonb("metadata"), // Additional context data
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Professional verification documents
+export const verificationDocuments = pgTable("verification_documents", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").notNull().references(() => professionals.id, { onDelete: "cascade" }),
+  documentType: text("document_type").notNull(), // identity_card, professional_certificate, business_license
+  fileName: text("file_name").notNull(),
+  filePath: text("file_path").notNull(),
+  fileSize: integer("file_size"),
+  mimeType: text("mime_type"),
+  status: text("status").default("pending"), // pending, approved, rejected
+  rejectionReason: text("rejection_reason"),
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Professional verification workflow
+export const professionalVerifications = pgTable("professional_verifications", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").notNull().references(() => professionals.id, { onDelete: "cascade" }),
+  level: text("level").notNull().default("basic"), // basic, documents, advanced, gold
+  status: text("status").notNull().default("pending"), // pending, approved, rejected, requires_documents
+  submittedAt: timestamp("submitted_at").defaultNow(),
+  reviewStartedAt: timestamp("review_started_at"),
+  completedAt: timestamp("completed_at"),
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  reviewNotes: text("review_notes"),
+  requiredDocuments: jsonb("required_documents"), // List of required document types
+  nextReviewDate: timestamp("next_review_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Rate limiting for security
+export const rateLimits = pgTable("rate_limits", {
+  id: serial("id").primaryKey(),
+  identifier: text("identifier").notNull(), // IP address, user ID, etc.
+  action: text("action").notNull(), // login_attempt, registration, password_reset
+  attempts: integer("attempts").default(1),
+  windowStart: timestamp("window_start").defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
+
+// GDPR compliance - data export/deletion requests
+export const dataRequests = pgTable("data_requests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // export, deletion
+  status: text("status").default("pending"), // pending, processing, completed, failed
+  requestedAt: timestamp("requested_at").defaultNow(),
+  processedAt: timestamp("processed_at"),
+  downloadUrl: text("download_url"),
+  expiresAt: timestamp("expires_at"),
 });
 
 export const categories = pgTable("categories", {
