@@ -21,6 +21,7 @@ import AdminLogin from "@/pages/admin-login";
 import ProfessionalSubscriptionDemo from "@/pages/professional-subscription-demo";
 import Register from "@/pages/auth/register";
 import Login from "@/pages/auth/login";
+import ProfessionalDashboard from "@/pages/dashboard/professional";
 
 function Router() {
   return (
@@ -34,6 +35,9 @@ function Router() {
       {/* Authentication Routes */}
       <Route path="/auth/register" component={Register} />
       <Route path="/auth/login" component={Login} />
+      
+      {/* Professional Dashboard */}
+      <Route path="/dashboard/professional" component={ProfessionalDashboard} />
       
       {/* Admin Login */}
       <Route path="/admin-login" component={AdminLogin} />
