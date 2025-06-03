@@ -55,6 +55,7 @@ export default function AdminProfessionalsAdvanced() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [cityFilter, setCityFilter] = useState<string>("all");
+  const [subscriptionFilter, setSubscriptionFilter] = useState<string>("all");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
   const [selectedProfessionals, setSelectedProfessionals] = useState<number[]>([]);
@@ -142,7 +143,12 @@ export default function AdminProfessionalsAdvanced() {
     const matchesCity = cityFilter === "all" || 
       professional.city?.toLowerCase().includes(cityFilter.toLowerCase());
     
-    return matchesSearch && matchesStatus && matchesCategory && matchesCity;
+    const matchesSubscription = subscriptionFilter === "all" ||
+      (subscriptionFilter === "active" && professional.subscription?.status === "active") ||
+      (subscriptionFilter === "inactive" && (!professional.subscription || professional.subscription?.status !== "active")) ||
+      (subscriptionFilter === "none" && !professional.subscription);
+    
+    return matchesSearch && matchesStatus && matchesCategory && matchesCity && matchesSubscription;
   });
 
   const totalPages = Math.ceil(filteredProfessionals.length / professionalsPerPage);
@@ -361,15 +367,15 @@ export default function AdminProfessionalsAdvanced() {
                     <SelectItem value="2">2+ stelle</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select defaultValue="all">
+                <Select value={subscriptionFilter} onValueChange={setSubscriptionFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="Piano abbonamento" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tutti i piani</SelectItem>
-                    <SelectItem value="premium">Premium</SelectItem>
-                    <SelectItem value="basic">Basic</SelectItem>
-                    <SelectItem value="free">Gratuito</SelectItem>
+                    <SelectItem value="active">Abbonamenti Attivi</SelectItem>
+                    <SelectItem value="inactive">Abbonamenti Scaduti</SelectItem>
+                    <SelectItem value="none">Nessun Abbonamento</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select defaultValue="all">
@@ -552,10 +558,21 @@ export default function AdminProfessionalsAdvanced() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-purple-600">
-                        <Crown className="h-3 w-3 mr-1" />
-                        Premium
-                      </Badge>
+                      {professional.subscription ? (
+                        <Badge 
+                          variant={professional.subscription.status === 'active' ? "default" : "secondary"}
+                          className={professional.subscription.status === 'active' ? "text-purple-600 border-purple-200" : ""}
+                        >
+                          {professional.subscription.status === 'active' && (
+                            <Crown className="h-3 w-3 mr-1" />
+                          )}
+                          {professional.subscription.plan.name}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-gray-500">
+                          Nessun Piano
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-gray-600">
@@ -636,15 +653,33 @@ export default function AdminProfessionalsAdvanced() {
                     </div>
 
                     <div className="flex items-center justify-between mt-4">
-                      <div className="flex space-x-2">
-                        <Badge variant={professional.isVerified ? "default" : "secondary"}>
-                          {professional.isVerified ? "Verificato" : "Non verificato"}
-                        </Badge>
-                        {professional.isSuspended && (
-                          <Badge variant="destructive">Sospeso</Badge>
-                        )}
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex space-x-2">
+                          <Badge variant={professional.isVerified ? "default" : "secondary"}>
+                            {professional.isVerified ? "Verificato" : "Non verificato"}
+                          </Badge>
+                          {professional.isSuspended && (
+                            <Badge variant="destructive">Sospeso</Badge>
+                          )}
+                        </div>
+                        <div>
+                          {professional.subscription ? (
+                            <Badge 
+                              variant={professional.subscription.status === 'active' ? "default" : "secondary"}
+                              className={professional.subscription.status === 'active' ? "text-purple-600 border-purple-200" : ""}
+                            >
+                              {professional.subscription.status === 'active' && (
+                                <Crown className="h-3 w-3 mr-1" />
+                              )}
+                              {professional.subscription.plan.name}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-gray-500">
+                              Nessun Piano
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <Crown className="h-4 w-4 text-purple-500" />
                     </div>
                   </CardContent>
                 </Card>
