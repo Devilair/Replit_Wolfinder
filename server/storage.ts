@@ -556,11 +556,20 @@ export class DatabaseStorage implements IStorage {
     const [pendingReviews] = await db
       .select({ count: sql<number>`count(*)` })
       .from(reviews)
-      .where(sql`${reviews.status} = 'pending'`);
+      .where(eq(reviews.isVerified, false));
 
-    const [avgRating] = await db
-      .select({ average: sql<number>`AVG(${reviews.rating})` })
-      .from(reviews);
+    let averageRating = "0.0";
+    
+    try {
+      const avgRatingResult = await db
+        .select({ average: sql<string>`COALESCE(ROUND(AVG(CAST(${reviews.rating} AS DECIMAL)), 1), 0)` })
+        .from(reviews);
+
+      averageRating = avgRatingResult[0]?.average || "0.0";
+    } catch (error) {
+      console.log("Error calculating average rating, using default 0.0");
+      averageRating = "0.0";
+    }
 
     return {
       totalUsers: totalUsers.count,
@@ -569,7 +578,7 @@ export class DatabaseStorage implements IStorage {
       verifiedProfessionals: verifiedProfessionals.count,
       totalReviews: totalReviews.count,
       pendingReviews: pendingReviews.count,
-      averageRating: avgRating.average ? avgRating.average.toFixed(1) : "0.0",
+      averageRating: averageRating,
     };
   }
 
