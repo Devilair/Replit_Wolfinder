@@ -1,0 +1,103 @@
+Sistema di Recensioni Wolfinder: Architettura e Logiche
+Creare un sistema di recensioni efficace e meritocratico è fondamentale per il successo di Wolfinder. Ecco una spiegazione dettagliata di come implementare questo sistema:
+1. Struttura delle recensioni
+Modello dati per le recensioni
+Ogni recensione dovrebbe contenere:
+•	Informazioni di base: 
+o	ID univoco della recensione
+o	ID dell'utente che ha scritto la recensione
+o	ID del professionista recensito
+o	Data di creazione
+o	Data dell'ultima modifica
+•	Contenuto della recensione: 
+o	Titolo della recensione (opzionale)
+o	Testo della recensione
+o	Valutazione generale (da 1 a 5 stelle)
+o	Valutazioni specifiche: 
+	Competenza professionale (1-5)
+	Rapporto qualità/prezzo (1-5)
+	Comunicazione/disponibilità (1-5)
+	Puntualità/rispetto dei tempi (1-5)
+•	Stato di verifica: 
+o	Stato (non verificata, in attesa di verifica, verificata, rifiutata)
+o	Tipo di prova fornita (fattura, contratto, ricevuta, altro)
+o	Dettagli della prova (numero documento, data, importo)
+o	Note interne di verifica (visibili solo agli admin)
+•	Interazioni: 
+o	Contatore visualizzazioni
+o	Feedback utili (quanti utenti hanno trovato utile la recensione)
+o	Flag per segnalazioni
+o	Risposta del professionista (testo, data)
+2. Processo di creazione e verifica recensioni
+Flusso di creazione recensione
+1.	Autenticazione: Solo utenti registrati e verificati (email confermata) possono scrivere recensioni
+2.	Form di recensione: 
+o	Campo valutazione generale (obbligatorio)
+o	Campi valutazioni specifiche (obbligatori)
+o	Campo titolo (opzionale)
+o	Campo testo recensione (obbligatorio, minimo 50 caratteri)
+o	Sezione prova di acquisto (opzionale per invio immediato, ma necessaria per la verifica)
+3.	Invio recensione: 
+o	Se inviata senza prova: stato "non verificata"
+o	Se inviata con prova: stato "in attesa di verifica"
+o	Notifica all'utente del corretto invio
+o	Notifica al professionista dell'arrivo di una nuova recensione
+Sistema di verifica
+1.	Processo di verifica manuale: 
+o	Dashboard admin con elenco recensioni da verificare
+o	Sistema di prioritizzazione delle verifiche (prima le recensioni negative, poi le positive)
+o	Interfaccia per visualizzare la prova caricata e confrontarla con i dati inseriti
+2.	Criteri di verifica: 
+o	Corrispondenza tra data della prova e periodo dichiarato
+o	Corrispondenza tra importo e servizio
+o	Autenticità del documento (controlli anti-frode)
+o	Unicità della prova (non già utilizzata per altre recensioni)
+3.	Azioni dopo la verifica: 
+o	Approvazione → stato "verificata", badge aggiunto alla recensione
+o	Richiesta di ulteriori informazioni → notifica all'utente
+o	Rifiuto → stato "rifiutata", notifica all'utente con motivazione
+4.	Sistema anti-frode: 
+o	Controllo IP durante l'invio
+o	Rilevamento pattern sospetti (molte recensioni simili in poco tempo)
+o	Analisi del testo per individuare spam o contenuti inappropriati
+o	Flag automatici per recensioni che potrebbero violare i termini di servizio
+3. Algoritmo di merito e ranking
+Componenti dell'algoritmo
+1.	Peso delle recensioni (60% del punteggio totale): 
+o	Recensioni verificate: peso 100%
+o	Recensioni non verificate: peso 40%
+o	Recensioni recenti (ultimi 6 mesi): bonus 20%
+o	Recensioni dettagliate (testo lungo): bonus 10%
+2.	Quantità e costanza (15% del punteggio totale): 
+o	Numero totale di recensioni (con diminishing returns)
+o	Distribuzione temporale delle recensioni (regolarità)
+o	Tasso di crescita delle recensioni positive
+3.	Tasso di risposta (10% del punteggio totale): 
+o	Percentuale di recensioni a cui il professionista ha risposto
+o	Tempo medio di risposta
+o	Qualità delle risposte (lunghezza, personalizzazione)
+4.	Completezza profilo (10% del punteggio totale): 
+o	Profilo verificato
+o	Completezza delle informazioni (bio, specializzazioni, etc.)
+o	Foto professionali caricate
+o	Aggiornamenti regolari del profilo
+5.	Engagement (5% del punteggio totale): 
+o	Frequenza di accesso alla piattaforma
+o	Risposte a domande nella community (se implementata)
+o	Condivisione di contenuti utili
+Formula di calcolo
+La formula esatta del ranking dovrebbe rimanere flessibile per eventuali aggiustamenti, ma potrebbe seguire questa struttura:
+Copy
+Ranking = (MediaRecensioniPesate * 0.6) + 
+          (PunteggioQuantità * 0.15) + 
+          (PunteggioRisposte * 0.10) + 
+          (PunteggioCompletezza * 0.10) + 
+          (PunteggioEngagement * 0.05)
+Dove:
+•	MediaRecensioniPesate considera sia il valore che il peso di ciascuna recensione
+•	Ogni componente è normalizzato su una scala 0-10
+Trasparenza dell'algoritmo
+Molto importante:
+•	Pubblicare una spiegazione semplificata dell'algoritmo nella sezione FAQ
+•	Mostrare al professionista il breakdown del suo punteggio
+•	Fornire suggerimenti personalizzati per migliorare il proprio ranking

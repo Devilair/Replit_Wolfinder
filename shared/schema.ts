@@ -96,11 +96,39 @@ export const reviews = pgTable("reviews", {
   id: serial("id").primaryKey(),
   professionalId: integer("professional_id").references(() => professionals.id).notNull(),
   userId: integer("user_id").references(() => users.id).notNull(),
-  rating: integer("rating").notNull(), // 1-5 stars
-  title: text("title").notNull(),
+  
+  // Valutazioni dettagliate
+  rating: integer("rating").notNull(), // Valutazione generale (1-5)
+  competenceRating: integer("competence_rating").notNull(), // Competenza professionale (1-5)
+  qualityPriceRating: integer("quality_price_rating").notNull(), // Rapporto qualità/prezzo (1-5)
+  communicationRating: integer("communication_rating").notNull(), // Comunicazione/disponibilità (1-5)
+  punctualityRating: integer("punctuality_rating").notNull(), // Puntualità/rispetto dei tempi (1-5)
+  
+  // Contenuto
+  title: text("title"),
   content: text("content").notNull(),
-  isVerified: boolean("is_verified").default(false).notNull(),
+  
+  // Sistema di verifica avanzato
+  status: text("status").default("unverified").notNull(), // unverified, pending_verification, verified, rejected
+  proofType: text("proof_type"), // invoice, contract, receipt, other
+  proofDetails: text("proof_details"), // JSON con numero documento, data, importo
+  verificationNotes: text("verification_notes"), // Note interne admin
+  
+  // Interazioni e analytics
+  viewCount: integer("view_count").default(0).notNull(),
+  helpfulCount: integer("helpful_count").default(0).notNull(),
+  flagCount: integer("flag_count").default(0).notNull(),
+  
+  // Risposta del professionista
+  professionalResponse: text("professional_response"),
+  responseDate: timestamp("response_date"),
+  
+  // Anti-frode e sicurezza
+  ipAddress: text("ip_address"), // Per controlli anti-frode
+  userAgent: text("user_agent"),
+  
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Tabella per tracciare l'utilizzo delle funzionalità dei professionisti
@@ -114,6 +142,26 @@ export const professionalUsage = pgTable("professional_usage", {
   servicesListed: integer("services_listed").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Tabella per gestire i voti "utile" sulle recensioni
+export const reviewHelpfulVotes = pgTable("review_helpful_votes", {
+  id: serial("id").primaryKey(),
+  reviewId: integer("review_id").references(() => reviews.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  isHelpful: boolean("is_helpful").notNull(), // true = utile, false = non utile
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Tabella per le segnalazioni di recensioni
+export const reviewFlags = pgTable("review_flags", {
+  id: serial("id").primaryKey(),
+  reviewId: integer("review_id").references(() => reviews.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  reason: text("reason").notNull(), // spam, inappropriate, fake, other
+  description: text("description"),
+  status: text("status").default("pending").notNull(), // pending, reviewed, dismissed
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Relations
@@ -141,13 +189,37 @@ export const professionalsRelations = relations(professionals, ({ one, many }) =
   usage: many(professionalUsage),
 }));
 
-export const reviewsRelations = relations(reviews, ({ one }) => ({
+export const reviewsRelations = relations(reviews, ({ one, many }) => ({
   professional: one(professionals, {
     fields: [reviews.professionalId],
     references: [professionals.id],
   }),
   user: one(users, {
     fields: [reviews.userId],
+    references: [users.id],
+  }),
+  helpfulVotes: many(reviewHelpfulVotes),
+  flags: many(reviewFlags),
+}));
+
+export const reviewHelpfulVotesRelations = relations(reviewHelpfulVotes, ({ one }) => ({
+  review: one(reviews, {
+    fields: [reviewHelpfulVotes.reviewId],
+    references: [reviews.id],
+  }),
+  user: one(users, {
+    fields: [reviewHelpfulVotes.userId],
+    references: [users.id],
+  }),
+}));
+
+export const reviewFlagsRelations = relations(reviewFlags, ({ one }) => ({
+  review: one(reviews, {
+    fields: [reviewFlags.reviewId],
+    references: [reviews.id],
+  }),
+  user: one(users, {
+    fields: [reviewFlags.userId],
     references: [users.id],
   }),
 }));
@@ -199,7 +271,27 @@ export const insertProfessionalSchema = createInsertSchema(professionals).omit({
 });
 export const insertReviewSchema = createInsertSchema(reviews).omit({ 
   id: true, 
-  isVerified: true, 
+  status: true,
+  viewCount: true,
+  helpfulCount: true,
+  flagCount: true,
+  professionalResponse: true,
+  responseDate: true,
+  ipAddress: true,
+  userAgent: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+// Schema per voti utili e segnalazioni
+export const insertReviewHelpfulVoteSchema = createInsertSchema(reviewHelpfulVotes).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertReviewFlagSchema = createInsertSchema(reviewFlags).omit({ 
+  id: true, 
+  status: true,
   createdAt: true 
 });
 
@@ -228,6 +320,12 @@ export type Professional = typeof professionals.$inferSelect;
 export type InsertProfessional = z.infer<typeof insertProfessionalSchema>;
 export type Review = typeof reviews.$inferSelect;
 export type InsertReview = z.infer<typeof insertReviewSchema>;
+
+// Tipi per le nuove tabelle recensioni
+export type ReviewHelpfulVote = typeof reviewHelpfulVotes.$inferSelect;
+export type InsertReviewHelpfulVote = z.infer<typeof insertReviewHelpfulVoteSchema>;
+export type ReviewFlag = typeof reviewFlags.$inferSelect;
+export type InsertReviewFlag = z.infer<typeof insertReviewFlagSchema>;
 
 // Subscription types
 export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
