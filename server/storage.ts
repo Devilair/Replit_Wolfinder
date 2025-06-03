@@ -412,28 +412,38 @@ export class DatabaseStorage implements IStorage {
     citiesCount: number;
     averageRating: number;
   }> {
-    const [professionalsCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(professionals);
+    try {
+      const [professionalsCount] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(professionals);
 
-    const [reviewsCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(reviews);
+      const [reviewsCount] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(reviews);
 
-    const [citiesCount] = await db
-      .select({ count: sql<number>`count(distinct ${professionals.city})` })
-      .from(professionals);
+      const [citiesCount] = await db
+        .select({ count: sql<number>`count(distinct ${professionals.city})` })
+        .from(professionals);
 
-    const [avgRating] = await db
-      .select({ average: sql<number>`avg(${reviews.rating})` })
-      .from(reviews);
+      const [avgRating] = await db
+        .select({ average: sql<number>`avg(${reviews.rating})` })
+        .from(reviews);
 
-    return {
-      professionalsCount: professionalsCount.count,
-      reviewsCount: reviewsCount.count,
-      citiesCount: citiesCount.count,
-      averageRating: Number(avgRating.average?.toFixed(1)) || 0,
-    };
+      return {
+        professionalsCount: professionalsCount.count,
+        reviewsCount: reviewsCount.count,
+        citiesCount: citiesCount.count,
+        averageRating: Number(avgRating.average?.toFixed(1)) || 0,
+      };
+    } catch (error) {
+      console.error('Error getting stats:', error);
+      return {
+        professionalsCount: 0,
+        reviewsCount: 0,
+        citiesCount: 0,
+        averageRating: 0,
+      };
+    }
   }
 
   // Admin methods implementation
@@ -446,49 +456,62 @@ export class DatabaseStorage implements IStorage {
     pendingReviews: number;
     averageRating: string;
   }> {
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
+    try {
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
 
-    const [totalUsers] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(users);
+      const [totalUsers] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(users);
 
-    const [newUsersThisWeek] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(users)
-      .where(sql`${users.createdAt} >= ${weekAgo}`);
+      const [newUsersThisWeek] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(sql`${users.createdAt} >= ${weekAgo}`);
 
-    const [totalProfessionals] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(professionals);
+      const [totalProfessionals] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(professionals);
 
-    const [verifiedProfessionals] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(professionals)
-      .where(eq(professionals.isVerified, true));
+      const [verifiedProfessionals] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(professionals)
+        .where(eq(professionals.isVerified, true));
 
-    const [totalReviews] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(reviews);
+      const [totalReviews] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(reviews);
 
-    const [pendingReviews] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(reviews)
-      .where(eq(reviews.isVerified, false));
+      const [pendingReviews] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(reviews)
+        .where(eq(reviews.isVerified, false));
 
-    const [avgRating] = await db
-      .select({ average: sql<number>`avg(${reviews.rating})` })
-      .from(reviews);
+      const [avgRating] = await db
+        .select({ average: sql<number>`avg(${reviews.rating})` })
+        .from(reviews);
 
-    return {
-      totalUsers: totalUsers.count,
-      newUsersThisWeek: newUsersThisWeek.count,
-      totalProfessionals: totalProfessionals.count,
-      verifiedProfessionals: verifiedProfessionals.count,
-      totalReviews: totalReviews.count,
-      pendingReviews: pendingReviews.count,
-      averageRating: avgRating.average?.toFixed(1) || "0.0",
-    };
+      return {
+        totalUsers: totalUsers.count,
+        newUsersThisWeek: newUsersThisWeek.count,
+        totalProfessionals: totalProfessionals.count,
+        verifiedProfessionals: verifiedProfessionals.count,
+        totalReviews: totalReviews.count,
+        pendingReviews: pendingReviews.count,
+        averageRating: avgRating.average?.toFixed(1) || "0.0",
+      };
+    } catch (error) {
+      console.error('Error getting admin stats:', error);
+      return {
+        totalUsers: 0,
+        newUsersThisWeek: 0,
+        totalProfessionals: 0,
+        verifiedProfessionals: 0,
+        totalReviews: 0,
+        pendingReviews: 0,
+        averageRating: "0.0",
+      };
+    }
   }
 
   async getAdminProfessionals(params?: any): Promise<ProfessionalWithDetails[]> {
@@ -576,7 +599,6 @@ export class DatabaseStorage implements IStorage {
   async deleteProfessional(id: number): Promise<void> {
     // First delete all reviews for this professional
     await db.delete(reviews).where(eq(reviews.professionalId, id));
-    
     // Then delete the professional
     await db.delete(professionals).where(eq(professionals.id, id));
   }
@@ -590,6 +612,164 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: reviews.id,
         professionalId: reviews.professionalId,
+        userId: reviews.userId,
+        rating: reviews.rating,
+        title: reviews.title,
+        content: reviews.content,
+        isVerified: reviews.isVerified,
+        createdAt: reviews.createdAt,
+        user: users,
+        professional: professionals,
+      })
+      .from(reviews)
+      .leftJoin(users, eq(reviews.userId, users.id))
+      .leftJoin(professionals, eq(reviews.professionalId, professionals.id));
+
+    if (status === 'pending') {
+      query = query.where(eq(reviews.isVerified, false));
+    } else if (status === 'verified') {
+      query = query.where(eq(reviews.isVerified, true));
+    }
+
+    const results = await query.orderBy(desc(reviews.createdAt));
+    
+    return results.map(result => ({
+      ...result,
+      user: result.user!,
+      professional: result.professional!,
+    }));
+  }
+
+  async updateReview(id: number, data: any): Promise<void> {
+    await db
+      .update(reviews)
+      .set(data)
+      .where(eq(reviews.id, id));
+  }
+
+  async deleteReview(id: number): Promise<void> {
+    await db.delete(reviews).where(eq(reviews.id, id));
+  }
+
+  async updateCategory(id: number, data: any): Promise<void> {
+    await db
+      .update(categories)
+      .set(data)
+      .where(eq(categories.id, id));
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    // Check if there are professionals using this category
+    const [profCount] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(professionals)
+      .where(eq(professionals.categoryId, id));
+    
+    if (profCount.count > 0) {
+      throw new Error('Cannot delete category with existing professionals');
+    }
+    
+    await db.delete(categories).where(eq(categories.id, id));
+  }
+
+  async getRecentActivity(): Promise<any[]> {
+    // Get recent professionals
+    const recentProfessionals = await db
+      .select({
+        id: professionals.id,
+        type: sql<string>`'professional'`,
+        title: professionals.businessName,
+        createdAt: professionals.createdAt,
+      })
+      .from(professionals)
+      .orderBy(desc(professionals.createdAt))
+      .limit(5);
+
+    // Get recent reviews
+    const recentReviews = await db
+      .select({
+        id: reviews.id,
+        type: sql<string>`'review'`,
+        title: reviews.title,
+        createdAt: reviews.createdAt,
+      })
+      .from(reviews)
+      .orderBy(desc(reviews.createdAt))
+      .limit(5);
+
+    // Combine and sort all activities
+    const allActivities = [...recentProfessionals, ...recentReviews];
+    allActivities.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    return allActivities.slice(0, 10);
+  }
+
+  async getPendingReviews(): Promise<(Review & { user: User; professional: Professional })[]> {
+    const results = await db
+      .select({
+        id: reviews.id,
+        professionalId: reviews.professionalId,
+        userId: reviews.userId,
+        rating: reviews.rating,
+        title: reviews.title,
+        content: reviews.content,
+        isVerified: reviews.isVerified,
+        createdAt: reviews.createdAt,
+        user: users,
+        professional: professionals,
+      })
+      .from(reviews)
+      .leftJoin(users, eq(reviews.userId, users.id))
+      .leftJoin(professionals, eq(reviews.professionalId, professionals.id))
+      .where(eq(reviews.isVerified, false))
+      .orderBy(desc(reviews.createdAt));
+    
+    return results.map(result => ({
+      ...result,
+      user: result.user!,
+      professional: result.professional!,
+    }));
+  }
+
+  async getUnverifiedProfessionals(): Promise<ProfessionalSummary[]> {
+    const results = await db
+      .select({
+        id: professionals.id,
+        userId: professionals.userId,
+        categoryId: professionals.categoryId,
+        businessName: professionals.businessName,
+        description: professionals.description,
+        phone: professionals.phone,
+        email: professionals.email,
+        website: professionals.website,
+        address: professionals.address,
+        city: professionals.city,
+        province: professionals.province,
+        postalCode: professionals.postalCode,
+        priceRangeMin: professionals.priceRangeMin,
+        priceRangeMax: professionals.priceRangeMax,
+        priceUnit: professionals.priceUnit,
+        isVerified: professionals.isVerified,
+        isPremium: professionals.isPremium,
+        rating: professionals.rating,
+        reviewCount: professionals.reviewCount,
+        createdAt: professionals.createdAt,
+        updatedAt: professionals.updatedAt,
+        category: categories,
+      })
+      .from(professionals)
+      .leftJoin(categories, eq(professionals.categoryId, categories.id))
+      .where(eq(professionals.isVerified, false))
+      .orderBy(desc(professionals.createdAt));
+    
+    return results.map(result => ({
+      ...result,
+      category: result.category!,
+    }));
+  }
+}
+
+export const storage = new DatabaseStorage();
         userId: reviews.userId,
         rating: reviews.rating,
         title: reviews.title,

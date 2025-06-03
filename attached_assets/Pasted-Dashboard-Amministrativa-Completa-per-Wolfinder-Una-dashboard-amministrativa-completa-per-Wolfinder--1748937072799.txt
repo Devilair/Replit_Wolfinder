@@ -1,0 +1,186 @@
+Dashboard Amministrativa Completa per Wolfinder
+Una dashboard amministrativa completa per Wolfinder dovrebbe fornire una visione d'insieme immediata dello stato della piattaforma e permettere un controllo efficace di tutte le operazioni. Ecco come dovrebbe essere strutturata:
+1. Panoramica Generale (Overview)
+Metriche Chiave (KPI Cards)
+
+Totale Professionisti
+
+Numero totale, crescita settimanale/mensile
+Breakdown per stato (attivi, sospesi, in verifica)
+
+
+Utenti Registrati
+
+Totale utenti, nuovi registrati oggi/settimana/mese
+Tasso di attivazione (utenti che hanno lasciato almeno una recensione)
+
+
+Recensioni
+
+Totale recensioni, media giornaliera
+Breakdown per stato (verificate, in attesa, rifiutate)
+
+
+Tasso di Verifica
+
+Percentuale recensioni verificate vs non verificate
+Tempo medio di verifica
+
+
+Ricavi (quando implementato)
+
+MRR (Monthly Recurring Revenue)
+Crescita mese su mese
+Churn rate
+
+
+
+Grafici Principali
+
+Grafico crescita utenti e professionisti (ultimi 30/60/90 giorni)
+Distribuzione geografica (mappa interattiva o grafico)
+Categorie professionali più popolari (pie chart)
+Andamento recensioni (line chart con verificate vs non verificate)
+
+2. Sezione Attività in Tempo Reale
+Live Feed
+
+Ultime iscrizioni professionisti
+Ultime recensioni pubblicate
+Ultime segnalazioni ricevute
+Azioni di moderazione recenti
+Errori di sistema o anomalie
+
+Notifiche Prioritarie
+
+Recensioni sospette (pattern anomali rilevati)
+Segnalazioni urgenti
+Professionisti in attesa di verifica da oltre X giorni
+Picchi di traffico anomali
+
+3. Analisi Dettagliate
+Metriche Professionisti
+
+Top performer (per rating, numero recensioni, visualizzazioni)
+Professionisti a rischio (basso rating, segnalazioni multiple)
+Distribuzione per città e categoria
+Tasso di completamento profilo
+Tempo medio di permanenza sulla piattaforma
+
+Metriche Recensioni
+
+Volume recensioni per categoria
+Distribuzione rating (1-5 stelle)
+Lunghezza media recensioni
+Tempo tra servizio e recensione
+Tasso di risposta dei professionisti
+
+Metriche Utenti
+
+Engagement rate (utenti attivi/totali)
+Frequenza di utilizzo
+Percorsi utente più comuni
+Tasso di conversione (visitatore → utente → recensore)
+
+4. Strumenti di Gestione Rapida
+Azioni Rapide
+
+Approvazione bulk recensioni
+Verifica rapida professionisti
+Invio comunicazioni di massa
+Blocco/sblocco utenti
+Export dati
+
+Ricerca Avanzata
+
+Ricerca globale (professionisti, utenti, recensioni)
+Filtri avanzati combinabili
+Ricerca per pattern (es. recensioni simili)
+
+5. Monitoraggio Performance
+Metriche Tecniche
+
+Uptime della piattaforma
+Tempo di risposta medio API
+Errori HTTP (4xx, 5xx)
+Utilizzo risorse server
+Query database più lente
+
+Metriche SEO
+
+Traffico organico
+Posizionamento keywords principali
+Pagine più visitate
+Bounce rate
+
+6. Gestione Finanziaria (Futura)
+Abbonamenti
+
+Professionisti con piano premium
+Previsioni di ricavo
+Tasso di conversione free → premium
+Lifetime value dei clienti
+
+Transazioni
+
+Pagamenti in entrata
+Failed payments
+Rimborsi richiesti
+Revenue per categoria professionale
+
+7. Compliance e Sicurezza
+GDPR e Privacy
+
+Richieste di cancellazione dati
+Export dati utente
+Log accessi e modifiche
+Consensi privacy raccolti
+
+Sicurezza
+
+Tentativi di accesso falliti
+IP sospetti bloccati
+Attività anomale rilevate
+Backup status
+
+8. Report e Analytics
+Report Automatici
+
+Report settimanale performance
+Report mensile crescita
+Report qualità contenuti
+Report soddisfazione utenti
+
+Export e Integrazioni
+
+Export CSV/Excel personalizzabili
+Integrazione con Google Analytics
+Webhook per eventi importanti
+API per dashboard esterne
+
+Implementazione UI/UX
+Layout Suggerito
+Copy┌─────────────────────────────────────────────────────┐
+│ Header con periodo selezionato e azioni rapide      │
+├─────────────────────────────────────────────────────┤
+│ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐   │
+│ │  KPI 1  │ │  KPI 2  │ │  KPI 3  │ │  KPI 4  │   │
+│ └─────────┘ └─────────┘ └─────────┘ └─────────┘   │
+├─────────────────────────────────────────────────────┤
+│ ┌─────────────────────┐ ┌─────────────────────┐     │
+│ │   Grafico Crescita  │ │  Distribuzione Cat │     │
+│ └─────────────────────┘ └─────────────────────┘     │
+├─────────────────────────────────────────────────────┤
+│ ┌──────────────┐ ┌──────────────────────────┐      │
+│ │ Live Feed    │ │   Azioni Rapide         │      │
+│ │              │ │                          │      │
+│ └──────────────┘ └──────────────────────────┘      │
+└─────────────────────────────────────────────────────┘
+Caratteristiche Chiave UI
+
+Dark/Light mode toggle
+Customizzazione widget (drag & drop)
+Filtri temporali globali (oggi, settimana, mese, anno)
+Refresh automatico dati real-time
+Notifiche push per eventi critici
+Responsive design per accesso mobile
