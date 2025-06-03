@@ -94,8 +94,16 @@ export class SimpleAdminStorage {
           reviewCount: professionals.reviewCount,
           createdAt: professionals.createdAt,
           updatedAt: professionals.updatedAt,
-          user: users,
-          category: categories,
+          // User fields - only select existing columns
+          userName: users.name,
+          userEmail: users.email,
+          userUsername: users.username,
+          userCreatedAt: users.createdAt,
+          userLastActivityAt: users.lastActivityAt,
+          // Category fields
+          categoryName: categories.name,
+          categorySlug: categories.slug,
+          categoryIcon: categories.icon,
         })
         .from(professionals)
         .leftJoin(users, eq(professionals.userId, users.id))
@@ -103,9 +111,41 @@ export class SimpleAdminStorage {
         .orderBy(desc(professionals.createdAt));
 
       return results.map(result => ({
-        ...result,
-        user: result.user!,
-        category: result.category!,
+        id: result.id,
+        userId: result.userId,
+        categoryId: result.categoryId,
+        businessName: result.businessName,
+        description: result.description,
+        phone: result.phone,
+        email: result.email,
+        website: result.website,
+        address: result.address,
+        city: result.city,
+        province: result.province,
+        postalCode: result.postalCode,
+        priceRangeMin: result.priceRangeMin,
+        priceRangeMax: result.priceRangeMax,
+        priceUnit: result.priceUnit,
+        isVerified: result.isVerified,
+        isPremium: result.isPremium,
+        rating: result.rating,
+        reviewCount: result.reviewCount,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+        user: {
+          id: result.userId,
+          name: result.userName,
+          email: result.userEmail,
+          username: result.userUsername,
+          createdAt: result.userCreatedAt,
+          lastActivityAt: result.userLastActivityAt,
+        },
+        category: {
+          id: result.categoryId,
+          name: result.categoryName,
+          slug: result.categorySlug,
+          icon: result.categoryIcon,
+        },
       }));
     } catch (error) {
       console.error("Error in getAdminProfessionals:", error);
