@@ -1,0 +1,94 @@
+Di seguito trovi due testi pronti — uno per “Chi siamo” (più istituzionale) e uno per “La nostra storia” (più narrativo). 
+
+Ho incluso anche suggerimenti pratici su immagini, layout e call-to-action da integrare subito nel sito.
+
+1. Pagina “Chi siamo” – versione istituzionale
+Titolo H1: Chi siamo
+Sottotitolo (tagline): Il passaparola digitale, verificato e meritocratico
+
+La nostra missione
+Aiutiamo cittadini e imprese a trovare professionisti affidabili grazie a recensioni autentiche, verificate e libere da logiche pay-to-play. Vogliamo rendere il mercato dei servizi più trasparente, equo e meritocratico. 
+shopify.com
+searchengineland.com
+
+La nostra visione
+Diventare il punto di riferimento nazionale dove qualità, integrità e fiducia guidano la scelta di avvocati, commercialisti, notai, ingegneri, architetti, geometri, consulenti del lavoro e altre figure non medicali, a partire da Ferrara e Livorno e via via in tutta Italia.
+
+Cosa facciamo in concreto
+Piattaforma di recensioni verificate: ogni feedback passa filtri anti-frode multilivello.
+
+Ranking meritocratico: nessuno può “comprarsi” il posizionamento.
+
+Profilo chiaro del professionista: competenze, casi studio, tariffe indicative.
+
+Dialogo aperto: i professionisti possono replicare, migliorare e crescere.
+
+Educazione alla qualità: guide, webinar e metriche per capire cosa significa “lavoro ben fatto”.
+
+Perché siamo diversi
+Verifica a prova di frode – tecnologia proprietaria + controlli manuali.
+
+No pay-to-win – niente piani a pagamento che alterano la classifica.
+
+Forte ancoraggio locale – partiamo da due città reali per creare community fisiche oltre che digitali.
+
+Focus esclusivo sui professionisti non medicali – evitiamo conflitti con ordini sanitari e normative di settore.
+
+Metriche di qualità trasparenti – punteggi basati su parametri oggettivi (tempi di risposta, tasso di risoluzione casi, ecc.).
+
+I nostri valori
+Valore	Significato Operativo
+Trasparenza	Recensioni pubbliche, criteri di ranking visibili.
+Equità	Opportunità identiche per tutti i professionisti.
+Integrità	Controlli serrati su falsi account o recensioni artefatte.
+Innovazione	Tecnologie AI e blockchain per la prova d’integrità dei dati.
+Comunità	Incentiviamo il confronto e la crescita reciproca.
+
+Il nostro team
+Siamo professionisti dell’IT, legali e consulenti che hanno unito competenze complementari. Mirko Collini (Founder) porta oltre vent’anni di esperienza nella gestione documentale e nell’enterprise software.
+
+Vuoi fare parte di Wolfinder?
+Se sei un professionista: [Crea il tuo profilo]
+
+Se cerchi un professionista: [Inizia la ricerca]
+
+Se vuoi lasciare una recensione: [Registrati gratis]
+
+2. Pagina “La nostra storia” – versione narrativa
+Titolo H1: La nostra storia
+Sottotitolo: Da un bisogno personale a un progetto di fiducia collettiva
+
+Dove tutto è cominciato
+Ferrara, 2016. Dovevo trovare lo specialista giusto per un problema legale: tre preventivi, zero recensioni affidabili, molta confusione. Fu la classica “goccia”: anni di lavoro nell’IT mi avevano insegnato quanto la trasparenza dei dati cambi i mercati; eppure nel mondo dei servizi professionali regnava l’opacità.
+
+“Se esiste TripAdvisor per hotel, perché non qualcosa di serio per avvocati e consulenti?” – Mirko Collini
+
+Dall’idea al prototipo
+2018-2022 Ricerca sul campo, interviste a clienti e studi professionali.
+
+Ottobre 2023 Nasce il nome in codice Passaparola Digitale, poi evoluto in Wolfinder: il lupo come guida, la community come branco.
+
+Gennaio 2024 Scelta dello stack Next.js 14 + MongoDB per un MVP agile. Avvio dello sviluppo con assistenza AI.
+
+Marzo-Aprile 2025 Testing chiuso con 80 utenti, >300 recensioni verificate.
+
+Giugno 2025 Lancio pubblico limitato a Ferrara e Livorno.
+
+Gli ostacoli (e le soluzioni)
+Falsi feedback → motore anti-frode proprietario + verifica documentale.
+
+Pay-to-play diffuso nel settore → modello freemium senza influenze sul ranking.
+
+Debiti personali del fondatore → massima trasparenza per attrarre partner disposti a investire nel medio termine, non nel quick win.
+
+Dove stiamo andando
+Entro fine 2025 vogliamo:
+
+Coprire tutta l’Emilia-Romagna e la Toscana.
+
+Integrare metriche di performance (SLA, tempistiche) direttamente dai software gestionali dei professionisti.
+
+Lanciare il Programma Ambasciatori per premiare gli utenti che aiutano a validare nuove recensioni.
+
+Un invito
+Se anche tu credi che la fiducia sia un bene pubblico, unisciti a noi come utente, professionista o investitore. La tua voce renderà il mercato dei servizi più giusto per tutti.

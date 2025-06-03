@@ -88,10 +88,10 @@ export default function Landing() {
             </div>
             
             <nav className="hidden md:flex items-center gap-6">
-              <Link href="/about" className="text-gray-600 hover:text-gray-900 transition-colors">Chi Siamo</Link>
-              <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900 transition-colors">Come Funziona</Link>
-              <Link href="/categories" className="text-gray-600 hover:text-gray-900 transition-colors">Categorie</Link>
-              <Link href="/for-professionals" className="text-gray-600 hover:text-gray-900 transition-colors">Per i Professionisti</Link>
+              <Link href="/chi-siamo" className="text-gray-600 hover:text-gray-900 transition-colors">Chi Siamo</Link>
+              <Link href="/la-nostra-storia" className="text-gray-600 hover:text-gray-900 transition-colors">La Nostra Storia</Link>
+              <Link href="/professionals" className="text-gray-600 hover:text-gray-900 transition-colors">Professionisti</Link>
+              <Link href="/auth/register" className="text-gray-600 hover:text-gray-900 transition-colors">Per i Professionisti</Link>
             </nav>
             
             <div className="flex items-center gap-3">
@@ -621,10 +621,10 @@ export default function Landing() {
               <h3 className="font-bold text-gray-900 mb-4">Navigazione</h3>
               <div className="space-y-3">
                 <Link href="/" className="block text-gray-600 hover:text-gray-900 transition-colors">Home</Link>
-                <Link href="/about" className="block text-gray-600 hover:text-gray-900 transition-colors">Chi Siamo</Link>
-                <Link href="/how-it-works" className="block text-gray-600 hover:text-gray-900 transition-colors">Come Funziona</Link>
-                <Link href="/categories" className="block text-gray-600 hover:text-gray-900 transition-colors">Categorie</Link>
-                <Link href="/for-professionals" className="block text-gray-600 hover:text-gray-900 transition-colors">Per i Professionisti</Link>
+                <Link href="/chi-siamo" className="block text-gray-600 hover:text-gray-900 transition-colors">Chi Siamo</Link>
+                <Link href="/la-nostra-storia" className="block text-gray-600 hover:text-gray-900 transition-colors">La Nostra Storia</Link>
+                <Link href="/professionals" className="block text-gray-600 hover:text-gray-900 transition-colors">Professionisti</Link>
+                <Link href="/auth/register" className="block text-gray-600 hover:text-gray-900 transition-colors">Per i Professionisti</Link>
               </div>
             </div>
             

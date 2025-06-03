@@ -22,6 +22,8 @@ import ProfessionalSubscriptionDemo from "@/pages/professional-subscription-demo
 import Register from "@/pages/auth/register";
 import Login from "@/pages/auth/login";
 import ProfessionalDashboard from "@/pages/dashboard/professional";
+import ChiSiamo from "@/pages/about/chi-siamo";
+import LaNostraStoria from "@/pages/about/la-nostra-storia";
 
 function Router() {
   return (
@@ -31,6 +33,10 @@ function Router() {
       <Route path="/professionals/:id" component={ProfessionalProfile} />
       <Route path="/demo/subscription-limits" component={ProfessionalSubscriptionDemo} />
       <Route path="/professional-subscription-demo" component={ProfessionalSubscriptionDemo} />
+      
+      {/* About Pages */}
+      <Route path="/chi-siamo" component={ChiSiamo} />
+      <Route path="/la-nostra-storia" component={LaNostraStoria} />
       
       {/* Authentication Routes */}
       <Route path="/auth/register" component={Register} />
