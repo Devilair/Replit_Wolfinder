@@ -31,6 +31,10 @@ function Router() {
       <Route path="/demo/subscription-limits" component={ProfessionalSubscriptionDemo} />
       <Route path="/professional-subscription-demo" component={ProfessionalSubscriptionDemo} />
       
+      {/* Authentication Routes */}
+      <Route path="/auth/register" component={Register} />
+      <Route path="/auth/login" component={Login} />
+      
       {/* Admin Login */}
       <Route path="/admin-login" component={AdminLogin} />
       
