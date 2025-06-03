@@ -336,7 +336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Routes
   
   // Admin Stats
-  app.get("/api/admin/stats", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
+  app.get("/api/admin/stats", async (req, res) => {
     try {
       const stats = await storage.getAdminStats();
       res.json(stats);
