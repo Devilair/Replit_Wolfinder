@@ -9,7 +9,7 @@ import Home from "@/pages/home";
 import Professionals from "@/pages/professionals";
 import ProfessionalProfile from "@/pages/professional-profile";
 import AdminDashboard from "@/pages/admin/dashboard";
-import AdminProfessionals from "@/pages/admin/professionals";
+import AdminProfessionals from "@/pages/admin/professionals-advanced";
 import AdminReviews from "@/pages/admin/reviews-advanced";
 import AdminCategories from "@/pages/admin/categories";
 import AdminUsers from "@/pages/admin/users";

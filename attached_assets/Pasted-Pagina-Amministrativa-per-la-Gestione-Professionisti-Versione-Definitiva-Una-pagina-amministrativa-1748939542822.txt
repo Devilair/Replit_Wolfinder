@@ -1,0 +1,265 @@
+Pagina Amministrativa per la Gestione Professionisti - Versione Definitiva
+Una pagina amministrativa completa per la gestione dei professionisti dovrebbe essere potente, intuitiva e offrire tutte le funzionalità necessarie per gestire efficacemente i professionisti sulla piattaforma. Ecco come la progetterei:
+1. Dashboard principale di gestione professionisti
+Layout principale
+
+Header: Con titolo "Gestione Professionisti", conteggio totale, e statistiche rapide (verificati, non verificati, sospesi)
+Barra delle azioni principali: Pulsante "Aggiungi professionista", "Esporta dati", "Azioni in massa"
+Filtri avanzati: Sezione espandibile con filtri completi (collassabile per risparmiare spazio)
+Vista principale: Tabella professionisti con opzioni di visualizzazione alternativa (grid/card)
+
+Funzionalità di ricerca e filtro avanzate
+
+Barra di ricerca globale: Con suggerimenti e ricerca full-text
+Filtri rapidi predefiniti: "Tutti", "Da verificare", "Verificati", "Sospesi", "Premium"
+Filtri avanzati:
+
+Categoria professionale e specializzazioni
+Località (regione, provincia, città)
+Range di date (iscrizione, ultima attività)
+Rating (min-max)
+Stato abbonamento
+Numero di recensioni
+Flag personalizzati (es. "VIP", "Segnalato", ecc.)
+
+
+
+Tabella professionisti (vista principale)
+
+Colonne personalizzabili con opzione drag-and-drop per riordinare
+Colonne principali:
+
+Checkbox selezione (per azioni in massa)
+Avatar/Logo e Nome
+Professione e specializzazione
+Città/Località
+Rating medio
+Numero recensioni
+Stato verifica (con badge colorato)
+Piano abbonamento
+Data iscrizione
+Ultima attività
+Azioni rapide (menu dropdown)
+
+
+Ordinamento per qualsiasi colonna
+Paginazione avanzata con scelta di elementi per pagina
+Stato sincronizzazione (indicatore se i dati sono aggiornati)
+
+Azioni in massa
+
+Selezione multipla con opzioni "Seleziona tutti", "Deseleziona tutti"
+Azioni disponibili:
+
+Verifica/revoca verifica in massa
+Invio email/notifica di gruppo
+Modifica stato (attivo/sospeso)
+Assegnazione tag/etichette
+Esportazione dati selezionati (CSV, Excel)
+Cambio categoria/gruppo
+
+
+
+2. Scheda dettaglio professionista
+Header profilo
+
+Informazioni principali: Avatar/logo, nome, professione, badge di verifica
+Pulsanti azione principali: Modifica, Verifica/Revoca, Sospendi/Attiva, Elimina, Contatta
+Indicatori di stato: Badge colorati per stato verifica, abbonamento, attività
+
+Navigazione a tab
+
+Panoramica: Dati principali e statistiche
+Dati anagrafici: Informazioni complete e campi personalizzati
+Recensioni: Lista recensioni ricevute e risposte
+Verifiche: Documenti, credenziali e storico verifiche
+Abbonamento: Piano attuale, storico pagamenti, opzioni
+Attività: Log delle azioni e modifiche
+Comunicazioni: Storico messaggi e notifiche
+Analytics: Statistiche di visualizzazione e performance
+
+Tab Panoramica
+
+Card informazioni principali:
+
+Dati di contatto
+Indirizzo e mappa
+Collegamenti a profili social/sito web
+
+
+Metriche chiave:
+
+Rating medio (con breakdown per categoria)
+Visualizzazioni profilo (trend)
+Click su contatti
+Posizione nei risultati di ricerca
+
+
+Timeline attività recenti:
+
+Ultime recensioni
+Modifiche al profilo
+Interazioni con la piattaforma
+
+
+
+Tab Dati anagrafici
+
+Form completo dati professionista:
+
+Informazioni personali/aziendali
+Qualifiche professionali
+Specializzazioni e servizi offerti
+Orari e disponibilità
+Bio/descrizione
+Portfolio lavori (se applicabile)
+
+
+Sezione documenti caricati:
+
+Documenti d'identità
+Certificazioni professionali
+Altri allegati
+
+
+
+Tab Recensioni
+
+Lista completa recensioni:
+
+Filtri per rating, data, stato verifica
+Testo completo e rating dettagliato
+Risposte del professionista
+
+
+Azioni di moderazione:
+
+Approva/rifiuta
+Segnala/nascondi
+Modifica (con log di audit)
+
+
+Statistiche recensioni:
+
+Distribuzione rating
+Trend nel tempo
+Parole chiave ricorrenti
+
+
+
+Tab Verifiche
+
+Stato verifica attuale con cronologia
+Documenti di verifica:
+
+Visualizzatore documenti integrato
+Note/commenti su ciascun documento
+
+
+Processo di verifica:
+
+Checklist requisiti completati
+Note amministratore
+Azioni richieste
+
+
+
+Tab Abbonamento
+
+Piano attuale con dettagli e scadenza
+Storico pagamenti con ricevute
+Opzioni di modifica piano:
+
+Upgrade/downgrade
+Rinnovo manuale
+Applicazione sconti/promozioni
+
+
+Funzionalità attive in base al piano
+
+Tab Attività
+
+Log completo azioni:
+
+Filtri per tipo, data, operatore
+Timestamp e dettagli azione
+Modifiche dati (prima/dopo)
+
+
+Login e accessi:
+
+Storico login
+Dispositivi utilizzati
+Attività sospette
+
+
+
+Tab Comunicazioni
+
+Storico comunicazioni:
+
+Email inviate/ricevute
+Notifiche in-app
+Messaggi di sistema
+
+
+Sistema di comunicazione diretto:
+
+Invio messaggi/email
+Template predefiniti
+Allegati e formattazione
+
+
+
+3. Funzionalità avanzate
+Sistema di note e flag
+
+Note interne visibili solo agli amministratori
+Sistema di flag/tag personalizzabile
+Promemoria e follow-up programmati
+
+Automazioni
+
+Regole personalizzabili: Es. "Notifica quando un professionista riceve 3 recensioni negative consecutive"
+Azioni automatiche: Basate su trigger predefiniti
+Notifiche programmate: Per scadenze, rinnovi, ecc.
+
+Reportistica avanzata
+
+Report personalizzabili sui dati dei professionisti
+Dashboard analytics per trend e pattern
+Esportazione programmata di report
+
+Strumenti di verifica
+
+Verifica documenti con confronto automatico
+Controllo anti-frode per identificare account sospetti
+Integrazione con database esterni per verifica credenziali
+
+4. Aspetti tecnici e UX
+Responsive e adattivo
+
+Layout fluido per diverse dimensioni schermo
+Versione mobile ottimizzata per operazioni essenziali
+Persistent state per mantenere filtri e selezioni
+
+Performance
+
+Caricamento dati in streaming per grandi dataset
+Paginazione e lazy loading per ottimizzare le performance
+Memorizzazione cache per ricerche frequenti
+
+UX avanzata
+
+Filtri persistenti salvati per utente
+Visualizzazioni personalizzate salvabili
+Keyboard shortcuts per operazioni rapide
+Notifiche in-app per azioni completate
+Drag & drop per riordinare elementi
+Feedback contestuale per ogni azione
+
+Sicurezza e audit
+
+Log completo modifiche con utente e timestamp
+Permessi granulari per diversi ruoli amministrativi
+Conferme per azioni critiche con autenticazione a due fattori per operazioni sensibili
