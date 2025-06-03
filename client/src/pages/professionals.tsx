@@ -17,11 +17,19 @@ export default function Professionals() {
   const [location] = useLocation();
   const searchParams = new URLSearchParams(location.split('?')[1] || '');
   
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [city, setCity] = useState(searchParams.get('city') || '');
-  const [categoryId, setCategoryId] = useState(searchParams.get('categoryId') || '');
+  // Leggi i parametri URL all'avvio e mantienili
+  const initialSearch = searchParams.get('search') || '';
+  const initialCity = searchParams.get('city') || '';
+  const initialCategoryId = searchParams.get('categoryId') || '';
+  
+  const [search, setSearch] = useState(initialSearch);
+  const [city, setCity] = useState(initialCity);
+  const [categoryId, setCategoryId] = useState(initialCategoryId);
   const [sortBy, setSortBy] = useState('rating');
   const [page, setPage] = useState(1);
+  
+  console.log('URL location:', location);
+  console.log('Parsed params:', { initialSearch, initialCity, initialCategoryId });
 
   const { data: categories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
