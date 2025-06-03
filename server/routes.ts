@@ -1,7 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProfessionalSchema, insertReviewSchema, insertCategorySchema } from "@shared/schema";
+import { 
+  insertProfessionalSchema, 
+  insertReviewSchema, 
+  insertCategorySchema,
+  insertSubscriptionPlanSchema,
+  insertSubscriptionSchema,
+  insertTransactionSchema
+} from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -377,6 +384,229 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(professionals);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch unverified professionals" });
+    }
+  });
+
+  // === SUBSCRIPTION MANAGEMENT ROUTES ===
+  
+  // Subscription Plans
+  app.get("/api/admin/subscription-plans", async (req, res) => {
+    try {
+      const plans = await storage.getSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch subscription plans" });
+    }
+  });
+
+  app.get("/api/admin/subscription-plans/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid plan ID" });
+      }
+
+      const plan = await storage.getSubscriptionPlan(id);
+      if (!plan) {
+        return res.status(404).json({ message: "Plan not found" });
+      }
+
+      res.json(plan);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch subscription plan" });
+    }
+  });
+
+  app.post("/api/admin/subscription-plans", async (req, res) => {
+    try {
+      const result = insertSubscriptionPlanSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid plan data", errors: result.error.errors });
+      }
+      
+      const plan = await storage.createSubscriptionPlan(result.data);
+      res.status(201).json(plan);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create subscription plan" });
+    }
+  });
+
+  app.patch("/api/admin/subscription-plans/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid plan ID" });
+      }
+
+      await storage.updateSubscriptionPlan(id, req.body);
+      res.json({ message: "Subscription plan updated successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update subscription plan" });
+    }
+  });
+
+  app.delete("/api/admin/subscription-plans/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid plan ID" });
+      }
+
+      await storage.deleteSubscriptionPlan(id);
+      res.json({ message: "Subscription plan deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete subscription plan" });
+    }
+  });
+
+  // Subscriptions
+  app.get("/api/admin/subscriptions", async (req, res) => {
+    try {
+      const { status, planId, professionalId, limit, offset } = req.query;
+      
+      const params: any = {};
+      if (status) params.status = status as string;
+      if (planId) params.planId = parseInt(planId as string);
+      if (professionalId) params.professionalId = parseInt(professionalId as string);
+      if (limit) params.limit = parseInt(limit as string);
+      if (offset) params.offset = parseInt(offset as string);
+
+      const subscriptions = await storage.getSubscriptions(params);
+      res.json(subscriptions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch subscriptions" });
+    }
+  });
+
+  app.get("/api/admin/subscriptions/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid subscription ID" });
+      }
+
+      const subscription = await storage.getSubscription(id);
+      if (!subscription) {
+        return res.status(404).json({ message: "Subscription not found" });
+      }
+
+      res.json(subscription);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch subscription" });
+    }
+  });
+
+  app.post("/api/admin/subscriptions", async (req, res) => {
+    try {
+      const result = insertSubscriptionSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid subscription data", errors: result.error.errors });
+      }
+      
+      const subscription = await storage.createSubscription(result.data);
+      res.status(201).json(subscription);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create subscription" });
+    }
+  });
+
+  app.patch("/api/admin/subscriptions/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid subscription ID" });
+      }
+
+      await storage.updateSubscription(id, req.body);
+      res.json({ message: "Subscription updated successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update subscription" });
+    }
+  });
+
+  app.patch("/api/admin/subscriptions/:id/cancel", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid subscription ID" });
+      }
+
+      await storage.cancelSubscription(id);
+      res.json({ message: "Subscription cancelled successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to cancel subscription" });
+    }
+  });
+
+  // Transactions
+  app.get("/api/admin/transactions", async (req, res) => {
+    try {
+      const { status, subscriptionId, professionalId, limit, offset } = req.query;
+      
+      const params: any = {};
+      if (status) params.status = status as string;
+      if (subscriptionId) params.subscriptionId = parseInt(subscriptionId as string);
+      if (professionalId) params.professionalId = parseInt(professionalId as string);
+      if (limit) params.limit = parseInt(limit as string);
+      if (offset) params.offset = parseInt(offset as string);
+
+      const transactions = await storage.getTransactions(params);
+      res.json(transactions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch transactions" });
+    }
+  });
+
+  app.post("/api/admin/transactions", async (req, res) => {
+    try {
+      const result = insertTransactionSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid transaction data", errors: result.error.errors });
+      }
+      
+      const transaction = await storage.createTransaction(result.data);
+      res.status(201).json(transaction);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create transaction" });
+    }
+  });
+
+  app.patch("/api/admin/transactions/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid transaction ID" });
+      }
+
+      await storage.updateTransaction(id, req.body);
+      res.json({ message: "Transaction updated successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update transaction" });
+    }
+  });
+
+  // Subscription Analytics
+  app.get("/api/admin/subscription-stats", async (req, res) => {
+    try {
+      const stats = await storage.getSubscriptionStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch subscription statistics" });
+    }
+  });
+
+  // Professional Subscription Management
+  app.get("/api/professionals/:id/subscription", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid professional ID" });
+      }
+
+      const subscription = await storage.getSubscriptionByProfessional(id);
+      res.json(subscription);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch professional subscription" });
     }
   });
 

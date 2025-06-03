@@ -12,6 +12,7 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import AdminProfessionals from "@/pages/admin/professionals-advanced";
 import AdminReviews from "@/pages/admin/reviews-advanced";
 import AdminCategories from "@/pages/admin/categories";
+import AdminSubscriptions from "@/pages/admin/subscriptions";
 import AdminUsers from "@/pages/admin/users";
 import AdminSettings from "@/pages/admin/settings";
 
@@ -46,6 +47,11 @@ function Router() {
       <Route path="/admin/categories" component={() => (
         <AdminLayout>
           <AdminCategories />
+        </AdminLayout>
+      )} />
+      <Route path="/admin/subscriptions" component={() => (
+        <AdminLayout>
+          <AdminSubscriptions />
         </AdminLayout>
       )} />
       <Route path="/admin/users" component={() => (

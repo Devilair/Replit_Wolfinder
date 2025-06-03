@@ -7,6 +7,7 @@ import {
   UserCheck, 
   MessageSquare, 
   Building2,
+  CreditCard,
   Settings,
   LogOut,
   Home
@@ -24,6 +25,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { name: "Professionisti", href: "/admin/professionals", icon: UserCheck, current: location === "/admin/professionals" },
     { name: "Recensioni", href: "/admin/reviews", icon: MessageSquare, current: location === "/admin/reviews" },
     { name: "Categorie", href: "/admin/categories", icon: Building2, current: location === "/admin/categories" },
+    { name: "Abbonamenti", href: "/admin/subscriptions", icon: CreditCard, current: location === "/admin/subscriptions" },
     { name: "Utenti", href: "/admin/users", icon: Users, current: location === "/admin/users" },
     { name: "Impostazioni", href: "/admin/settings", icon: Settings, current: location === "/admin/settings" },
   ];
