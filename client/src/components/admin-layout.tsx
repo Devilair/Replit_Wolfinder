@@ -22,6 +22,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const navigation = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard, current: location === "/admin" },
+    { name: "Analytics Avanzate", href: "/admin/advanced", icon: LayoutDashboard, current: location === "/admin/advanced" },
     { name: "Professionisti", href: "/admin/professionals", icon: UserCheck, current: location === "/admin/professionals" },
     { name: "Recensioni", href: "/admin/reviews", icon: MessageSquare, current: location === "/admin/reviews" },
     { name: "Categorie", href: "/admin/categories", icon: Building2, current: location === "/admin/categories" },

@@ -43,6 +43,11 @@ function Router() {
           <AdminDashboard />
         </AdminLayout>
       )} />
+      <Route path="/admin/advanced" component={() => (
+        <AdminLayout>
+          <AdvancedDashboard />
+        </AdminLayout>
+      )} />
       <Route path="/admin/professionals" component={() => (
         <AdminLayout>
           <AdminProfessionals />
