@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { adminAdvancedStorage } from "./admin-storage";
 import { 
   insertProfessionalSchema, 
   insertReviewSchema, 
@@ -728,6 +729,308 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error detecting suspicious activity:", error);
       res.status(500).json({ message: "Failed to detect suspicious activity" });
+    }
+  });
+
+  // ===== ADVANCED ADMINISTRATIVE DASHBOARD API ROUTES =====
+
+  // Dashboard KPI and Statistics
+  app.get("/api/admin/dashboard/stats", async (req, res) => {
+    try {
+      const stats = await adminAdvancedStorage.getDashboardStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard statistics" });
+    }
+  });
+
+  app.get("/api/admin/dashboard/advanced-metrics", async (req, res) => {
+    try {
+      const metrics = await adminAdvancedStorage.getAdvancedMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching advanced metrics:", error);
+      res.status(500).json({ message: "Failed to fetch advanced metrics" });
+    }
+  });
+
+  // Advanced Professional Management
+  app.get("/api/admin/professionals/advanced", async (req, res) => {
+    try {
+      const {
+        page,
+        limit,
+        search,
+        categories,
+        verificationStatus,
+        subscriptionStatus,
+        cities,
+        provinces,
+        ratingMin,
+        ratingMax,
+        registrationStartDate,
+        registrationEndDate,
+        lastActivityStartDate,
+        lastActivityEndDate,
+        isProblematic,
+        sortBy,
+        sortOrder
+      } = req.query;
+
+      const params: any = {};
+      
+      if (page) params.page = parseInt(page as string);
+      if (limit) params.limit = parseInt(limit as string);
+      if (search) params.search = search as string;
+      if (categories) params.categories = (categories as string).split(',');
+      if (verificationStatus) params.verificationStatus = (verificationStatus as string).split(',');
+      if (subscriptionStatus) params.subscriptionStatus = (subscriptionStatus as string).split(',');
+      if (cities) params.cities = (cities as string).split(',');
+      if (provinces) params.provinces = (provinces as string).split(',');
+      if (ratingMin && ratingMax) params.ratingRange = [parseFloat(ratingMin as string), parseFloat(ratingMax as string)];
+      if (registrationStartDate && registrationEndDate) {
+        params.registrationDateRange = [new Date(registrationStartDate as string), new Date(registrationEndDate as string)];
+      }
+      if (lastActivityStartDate && lastActivityEndDate) {
+        params.lastActivityRange = [new Date(lastActivityStartDate as string), new Date(lastActivityEndDate as string)];
+      }
+      if (isProblematic !== undefined) params.isProblematic = isProblematic === 'true';
+      if (sortBy) params.sortBy = sortBy as string;
+      if (sortOrder) params.sortOrder = sortOrder as string;
+
+      const professionals = await adminAdvancedStorage.getProfessionalsWithAdvancedFilters(params);
+      res.json(professionals);
+    } catch (error) {
+      console.error("Error fetching advanced professionals:", error);
+      res.status(500).json({ message: "Failed to fetch professionals with advanced filters" });
+    }
+  });
+
+  app.get("/api/admin/professionals/:id/analytics", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      if (isNaN(professionalId)) {
+        return res.status(400).json({ message: "Invalid professional ID" });
+      }
+
+      const analytics = await adminAdvancedStorage.getProfessionalDetailedAnalytics(professionalId);
+      if (!analytics) {
+        return res.status(404).json({ message: "Professional not found" });
+      }
+
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching professional analytics:", error);
+      res.status(500).json({ message: "Failed to fetch professional analytics" });
+    }
+  });
+
+  // Moderation Queue Management
+  app.get("/api/admin/moderation/queue", async (req, res) => {
+    try {
+      const { type, priority, status, assignedTo, page, limit } = req.query;
+      
+      const filters: any = {};
+      if (type) filters.type = type as string;
+      if (priority) filters.priority = priority as string;
+      if (status) filters.status = status as string;
+      if (assignedTo) filters.assignedTo = parseInt(assignedTo as string);
+      if (page) filters.page = parseInt(page as string);
+      if (limit) filters.limit = parseInt(limit as string);
+
+      const queue = await adminAdvancedStorage.getModerationQueue(filters);
+      res.json(queue);
+    } catch (error) {
+      console.error("Error fetching moderation queue:", error);
+      res.status(500).json({ message: "Failed to fetch moderation queue" });
+    }
+  });
+
+  app.patch("/api/admin/moderation/queue/:id/assign", async (req, res) => {
+    try {
+      const queueId = parseInt(req.params.id);
+      const { moderatorId } = req.body;
+
+      if (isNaN(queueId) || !moderatorId) {
+        return res.status(400).json({ message: "Invalid queue ID or moderator ID" });
+      }
+
+      const result = await adminAdvancedStorage.assignModerationTask(queueId, moderatorId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error assigning moderation task:", error);
+      res.status(500).json({ message: "Failed to assign moderation task" });
+    }
+  });
+
+  app.patch("/api/admin/moderation/queue/:id/complete", async (req, res) => {
+    try {
+      const queueId = parseInt(req.params.id);
+      const { notes, decision } = req.body;
+
+      if (isNaN(queueId) || !notes || !decision) {
+        return res.status(400).json({ message: "Invalid parameters" });
+      }
+
+      const result = await adminAdvancedStorage.completeModerationTask(queueId, notes, decision);
+      res.json(result);
+    } catch (error) {
+      console.error("Error completing moderation task:", error);
+      res.status(500).json({ message: "Failed to complete moderation task" });
+    }
+  });
+
+  // Security and Fraud Detection
+  app.get("/api/admin/security/suspicious-activity", async (req, res) => {
+    try {
+      const patterns = await adminAdvancedStorage.detectSuspiciousActivity();
+      res.json(patterns);
+    } catch (error) {
+      console.error("Error detecting suspicious activity:", error);
+      res.status(500).json({ message: "Failed to detect suspicious activity" });
+    }
+  });
+
+  app.post("/api/admin/security/events", async (req, res) => {
+    try {
+      const { type, userId, ipAddress, userAgent, description, severity, metadata } = req.body;
+
+      if (!type || !ipAddress || !description) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const event = await adminAdvancedStorage.createSecurityEvent({
+        type,
+        userId,
+        ipAddress,
+        userAgent,
+        description,
+        severity,
+        metadata
+      });
+
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Error creating security event:", error);
+      res.status(500).json({ message: "Failed to create security event" });
+    }
+  });
+
+  // Business Intelligence and Analytics
+  app.get("/api/admin/analytics/business-intelligence", async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+
+      if (!startDate || !endDate) {
+        return res.status(400).json({ message: "Start date and end date are required" });
+      }
+
+      const dateRange: [Date, Date] = [new Date(startDate as string), new Date(endDate as string)];
+      const data = await adminAdvancedStorage.getBusinessIntelligenceData(dateRange);
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching business intelligence data:", error);
+      res.status(500).json({ message: "Failed to fetch business intelligence data" });
+    }
+  });
+
+  // System Alerts Management
+  app.get("/api/admin/alerts", async (req, res) => {
+    try {
+      const alerts = await adminAdvancedStorage.getActiveAlerts();
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching alerts:", error);
+      res.status(500).json({ message: "Failed to fetch alerts" });
+    }
+  });
+
+  app.post("/api/admin/alerts", async (req, res) => {
+    try {
+      const { type, severity, title, description, metadata } = req.body;
+
+      if (!type || !severity || !title || !description) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const alert = await adminAdvancedStorage.createSystemAlert({
+        type,
+        severity,
+        title,
+        description,
+        metadata
+      });
+
+      res.status(201).json(alert);
+    } catch (error) {
+      console.error("Error creating alert:", error);
+      res.status(500).json({ message: "Failed to create alert" });
+    }
+  });
+
+  app.patch("/api/admin/alerts/:id/resolve", async (req, res) => {
+    try {
+      const alertId = parseInt(req.params.id);
+      const { resolvedBy } = req.body;
+
+      if (isNaN(alertId) || !resolvedBy) {
+        return res.status(400).json({ message: "Invalid alert ID or resolved by user ID" });
+      }
+
+      const result = await adminAdvancedStorage.resolveAlert(alertId, resolvedBy);
+      res.json(result);
+    } catch (error) {
+      console.error("Error resolving alert:", error);
+      res.status(500).json({ message: "Failed to resolve alert" });
+    }
+  });
+
+  // Admin Activity Logging
+  app.post("/api/admin/activity/log", async (req, res) => {
+    try {
+      const { adminId, action, targetType, targetId, description, metadata, ipAddress, userAgent } = req.body;
+
+      if (!adminId || !action || !targetType || !targetId || !description) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const activity = await adminAdvancedStorage.logAdminActivity({
+        adminId,
+        action,
+        targetType,
+        targetId,
+        description,
+        metadata,
+        ipAddress,
+        userAgent
+      });
+
+      res.status(201).json(activity);
+    } catch (error) {
+      console.error("Error logging admin activity:", error);
+      res.status(500).json({ message: "Failed to log admin activity" });
+    }
+  });
+
+  app.get("/api/admin/activity/log", async (req, res) => {
+    try {
+      const { adminId, targetType, startDate, endDate, page, limit } = req.query;
+
+      const filters: any = {};
+      if (adminId) filters.adminId = parseInt(adminId as string);
+      if (targetType) filters.targetType = targetType as string;
+      if (startDate && endDate) {
+        filters.dateRange = [new Date(startDate as string), new Date(endDate as string)];
+      }
+      if (page) filters.page = parseInt(page as string);
+      if (limit) filters.limit = parseInt(limit as string);
+
+      const logs = await adminAdvancedStorage.getAdminActivityLog(filters);
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching admin activity log:", error);
+      res.status(500).json({ message: "Failed to fetch admin activity log" });
     }
   });
 
