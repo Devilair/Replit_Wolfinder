@@ -161,39 +161,103 @@ export class DatabaseStorage implements IStorage {
       .from(professionals)
       .leftJoin(categories, eq(professionals.categoryId, categories.id));
 
-    if (params?.search) {
-      query = query.where(
-        or(
-          ilike(professionals.businessName, `%${params.search}%`),
-          ilike(professionals.description, `%${params.search}%`),
-          ilike(categories.name, `%${params.search}%`)
-        )
-      );
+    const conditions = [];
+
+    // Gestisce la ricerca intelligente con parametri separati o combinati
+    let searchTerm = params?.search || '';
+    let cityFilter = params?.city || '';
+    let combinedSearch = false;
+    
+    // Se abbiamo sia search che city, combina per la ricerca intelligente
+    if (searchTerm && cityFilter) {
+      searchTerm = `${searchTerm} ${cityFilter}`;
+      combinedSearch = true;
+      cityFilter = ''; // Reset per evitare duplicazione
     }
 
-    if (params?.categoryId) {
-      query = query.where(eq(professionals.categoryId, params.categoryId));
+    // Parsing intelligente della ricerca per categoria e città
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      
+      // Mapping per categorie
+      let foundCategoryId = null;
+      if (searchLower.includes('avvocato') || searchLower.includes('legale')) {
+        foundCategoryId = 15;
+      } else if (searchLower.includes('notaio')) {
+        foundCategoryId = 16;
+      } else if (searchLower.includes('commercialista') || searchLower.includes('fiscale')) {
+        foundCategoryId = 17;
+      } else if (searchLower.includes('ingegnere') || searchLower.includes('ingegneria')) {
+        foundCategoryId = 18;
+      } else if (searchLower.includes('architetto') || searchLower.includes('architettura')) {
+        foundCategoryId = 19;
+      }
+      
+      // Mapping per città
+      let foundCity = null;
+      if (searchLower.includes('ferrara')) {
+        foundCity = 'Ferrara';
+      } else if (searchLower.includes('livorno')) {
+        foundCity = 'Livorno';
+      }
+      
+      // Applica filtri basati sui risultati del parsing
+      if (foundCategoryId && foundCity) {
+        // Ricerca specifica: categoria + città
+        conditions.push(eq(professionals.categoryId, foundCategoryId));
+        conditions.push(eq(professionals.city, foundCity));
+      } else if (foundCategoryId) {
+        // Solo categoria
+        conditions.push(eq(professionals.categoryId, foundCategoryId));
+      } else if (foundCity) {
+        // Solo città
+        conditions.push(eq(professionals.city, foundCity));
+      } else {
+        // Ricerca generica nel testo
+        conditions.push(
+          or(
+            ilike(professionals.businessName, `%${searchTerm}%`),
+            ilike(professionals.description, `%${searchTerm}%`),
+            ilike(categories.name, `%${searchTerm}%`)
+          )
+        );
+      }
     }
 
-    if (params?.city) {
-      query = query.where(eq(professionals.city, params.city));
+    // Filtri aggiuntivi espliciti (solo se non abbiamo già applicato la ricerca intelligente)
+    if (params?.categoryId && !searchTerm) {
+      conditions.push(eq(professionals.categoryId, params.categoryId));
+    }
+
+    // Filtro città separato (solo se non è stato già processato nella ricerca intelligente)
+    if (cityFilter) {
+      conditions.push(ilike(professionals.city, `%${cityFilter}%`));
     }
 
     if (params?.province) {
-      query = query.where(eq(professionals.province, params.province));
+      conditions.push(ilike(professionals.province, `%${params.province}%`));
     }
 
-    if (params?.sortBy) {
-      const sortFn = params.sortOrder === 'asc' ? asc : desc;
-      if (params.sortBy === 'rating') {
-        query = query.orderBy(sortFn(professionals.rating));
-      } else if (params.sortBy === 'reviewCount') {
-        query = query.orderBy(sortFn(professionals.reviewCount));
-      } else if (params.sortBy === 'createdAt') {
-        query = query.orderBy(sortFn(professionals.createdAt));
-      }
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    // Sorting
+    const sortBy = params?.sortBy || 'rating';
+    const sortOrder = params?.sortOrder || 'desc';
+    
+    if (sortBy === 'rating') {
+      query = sortOrder === 'desc' 
+        ? query.orderBy(desc(professionals.rating))
+        : query.orderBy(asc(professionals.rating));
+    } else if (sortBy === 'reviewCount') {
+      query = sortOrder === 'desc'
+        ? query.orderBy(desc(professionals.reviewCount))
+        : query.orderBy(asc(professionals.reviewCount));
     } else {
-      query = query.orderBy(desc(professionals.rating));
+      query = sortOrder === 'desc'
+        ? query.orderBy(desc(professionals.createdAt))
+        : query.orderBy(asc(professionals.createdAt));
     }
 
     if (params?.limit) {
@@ -213,7 +277,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProfessional(id: number): Promise<ProfessionalWithDetails | undefined> {
-    const [result] = await db
+    const [professional] = await db
       .select({
         id: professionals.id,
         userId: professionals.userId,
@@ -244,94 +308,28 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(categories, eq(professionals.categoryId, categories.id))
       .where(eq(professionals.id, id));
 
-    if (!result) return undefined;
+    if (!professional) return undefined;
 
     const professionalReviews = await this.getReviewsByProfessional(id);
 
     return {
-      ...result,
-      user: result.user!,
-      category: result.category!,
+      ...professional,
+      user: professional.user!,
+      category: professional.category!,
       reviews: professionalReviews,
     };
   }
 
   async getProfessionalsByCategory(categoryId: number): Promise<ProfessionalSummary[]> {
-    const results = await db
-      .select({
-        id: professionals.id,
-        userId: professionals.userId,
-        categoryId: professionals.categoryId,
-        businessName: professionals.businessName,
-        description: professionals.description,
-        phone: professionals.phone,
-        email: professionals.email,
-        website: professionals.website,
-        address: professionals.address,
-        city: professionals.city,
-        province: professionals.province,
-        postalCode: professionals.postalCode,
-        priceRangeMin: professionals.priceRangeMin,
-        priceRangeMax: professionals.priceRangeMax,
-        priceUnit: professionals.priceUnit,
-        isVerified: professionals.isVerified,
-        isPremium: professionals.isPremium,
-        rating: professionals.rating,
-        reviewCount: professionals.reviewCount,
-        createdAt: professionals.createdAt,
-        updatedAt: professionals.updatedAt,
-        category: categories,
-      })
-      .from(professionals)
-      .leftJoin(categories, eq(professionals.categoryId, categories.id))
-      .where(eq(professionals.categoryId, categoryId))
-      .orderBy(desc(professionals.rating));
-
-    return results.map(result => ({
-      ...result,
-      category: result.category!,
-    }));
+    return this.getProfessionals({ categoryId, limit: 20, sortBy: 'rating' });
   }
 
   async getFeaturedProfessionals(): Promise<ProfessionalSummary[]> {
-    const results = await db
-      .select({
-        id: professionals.id,
-        userId: professionals.userId,
-        categoryId: professionals.categoryId,
-        businessName: professionals.businessName,
-        description: professionals.description,
-        phone: professionals.phone,
-        email: professionals.email,
-        website: professionals.website,
-        address: professionals.address,
-        city: professionals.city,
-        province: professionals.province,
-        postalCode: professionals.postalCode,
-        priceRangeMin: professionals.priceRangeMin,
-        priceRangeMax: professionals.priceRangeMax,
-        priceUnit: professionals.priceUnit,
-        isVerified: professionals.isVerified,
-        isPremium: professionals.isPremium,
-        rating: professionals.rating,
-        reviewCount: professionals.reviewCount,
-        createdAt: professionals.createdAt,
-        updatedAt: professionals.updatedAt,
-        category: categories,
-      })
-      .from(professionals)
-      .leftJoin(categories, eq(professionals.categoryId, categories.id))
-      .where(and(
-        eq(professionals.isVerified, true),
-        eq(professionals.isPremium, true)
-      ))
-      .orderBy(desc(professionals.rating))
-      .limit(6);
-
-    return results.map(result => ({
-      ...result,
-      category: result.category!,
-    }));
+    return this.getProfessionals({ 
+      limit: 6, 
+      sortBy: 'rating',
+      sortOrder: 'desc' 
+    });
   }
 
   async createProfessional(insertProfessional: InsertProfessional): Promise<Professional> {
@@ -339,26 +337,37 @@ export class DatabaseStorage implements IStorage {
       .insert(professionals)
       .values(insertProfessional)
       .returning();
+    
+    // Update category count
+    await db
+      .update(categories)
+      .set({ count: sql`${categories.count} + 1` })
+      .where(eq(categories.id, insertProfessional.categoryId));
+    
     return professional;
   }
 
   async updateProfessionalRating(id: number): Promise<void> {
-    const [stats] = await db
+    const reviewStats = await db
       .select({
-        averageRating: sql<number>`AVG(${reviews.rating})`,
-        reviewCount: sql<number>`COUNT(*)`,
+        count: sql<number>`count(*)`,
+        average: sql<number>`avg(${reviews.rating})`,
       })
       .from(reviews)
-      .where(eq(reviews.professionalId, id));
+      .where(eq(reviews.professionalId, id))
+      .groupBy(reviews.professionalId);
 
-    await db
-      .update(professionals)
-      .set({
-        rating: stats.averageRating ? Number(stats.averageRating.toFixed(1)) : 0,
-        reviewCount: stats.reviewCount || 0,
-        updatedAt: new Date(),
-      })
-      .where(eq(professionals.id, id));
+    if (reviewStats.length > 0) {
+      const { count, average } = reviewStats[0];
+      await db
+        .update(professionals)
+        .set({
+          rating: average.toFixed(2),
+          reviewCount: count,
+          updatedAt: new Date(),
+        })
+        .where(eq(professionals.id, id));
+    }
   }
 
   async getReviewsByProfessional(professionalId: number): Promise<(Review & { user: User })[]> {
@@ -390,8 +399,10 @@ export class DatabaseStorage implements IStorage {
       .insert(reviews)
       .values(insertReview)
       .returning();
-
+    
+    // Update professional rating
     await this.updateProfessionalRating(insertReview.professionalId);
+    
     return review;
   }
 
@@ -401,31 +412,41 @@ export class DatabaseStorage implements IStorage {
     citiesCount: number;
     averageRating: number;
   }> {
-    const [professionalsCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(professionals);
+    try {
+      const [professionalsCount] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(professionals);
 
-    const [reviewsCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(reviews);
+      const [reviewsCount] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(reviews);
 
-    const [citiesCount] = await db
-      .select({ count: sql<number>`count(DISTINCT ${professionals.city})` })
-      .from(professionals);
+      const [citiesCount] = await db
+        .select({ count: sql<number>`count(distinct ${professionals.city})` })
+        .from(professionals);
 
-    const [avgRating] = await db
-      .select({ average: sql<number>`AVG(${reviews.rating})` })
-      .from(reviews);
+      const [avgRating] = await db
+        .select({ average: sql<number>`avg(${reviews.rating})` })
+        .from(reviews);
 
-    return {
-      professionalsCount: professionalsCount.count,
-      reviewsCount: reviewsCount.count,
-      citiesCount: citiesCount.count,
-      averageRating: avgRating.average ? Number(avgRating.average.toFixed(1)) : 0,
-    };
+      return {
+        professionalsCount: professionalsCount.count,
+        reviewsCount: reviewsCount.count,
+        citiesCount: citiesCount.count,
+        averageRating: Number(avgRating.average?.toFixed(1)) || 0,
+      };
+    } catch (error) {
+      console.error('Error getting stats:', error);
+      return {
+        professionalsCount: 0,
+        reviewsCount: 0,
+        citiesCount: 0,
+        averageRating: 0,
+      };
+    }
   }
 
-  // Admin methods
+  // Admin methods implementation
   async getAdminStats(): Promise<{
     totalUsers: number;
     newUsersThisWeek: number;
@@ -435,49 +456,62 @@ export class DatabaseStorage implements IStorage {
     pendingReviews: number;
     averageRating: string;
   }> {
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
+    try {
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
 
-    const [totalUsers] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(users);
+      const [totalUsers] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(users);
 
-    const [newUsersThisWeek] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(users)
-      .where(sql`${users.createdAt} >= ${weekAgo}`);
+      const [newUsersThisWeek] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(sql`${users.createdAt} >= ${weekAgo}`);
 
-    const [totalProfessionals] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(professionals);
+      const [totalProfessionals] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(professionals);
 
-    const [verifiedProfessionals] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(professionals)
-      .where(eq(professionals.isVerified, true));
+      const [verifiedProfessionals] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(professionals)
+        .where(eq(professionals.isVerified, true));
 
-    const [totalReviews] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(reviews);
+      const [totalReviews] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(reviews);
 
-    const [pendingReviews] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(reviews)
-      .where(eq(reviews.isVerified, false));
+      const [pendingReviews] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(reviews)
+        .where(eq(reviews.isVerified, false));
 
-    const [avgRating] = await db
-      .select({ average: sql<number>`AVG(${reviews.rating})` })
-      .from(reviews);
+      const [avgRating] = await db
+        .select({ average: sql<number>`avg(${reviews.rating})` })
+        .from(reviews);
 
-    return {
-      totalUsers: totalUsers.count,
-      newUsersThisWeek: newUsersThisWeek.count,
-      totalProfessionals: totalProfessionals.count,
-      verifiedProfessionals: verifiedProfessionals.count,
-      totalReviews: totalReviews.count,
-      pendingReviews: pendingReviews.count,
-      averageRating: avgRating.average ? avgRating.average.toFixed(1) : "0.0",
-    };
+      return {
+        totalUsers: totalUsers.count,
+        newUsersThisWeek: newUsersThisWeek.count,
+        totalProfessionals: totalProfessionals.count,
+        verifiedProfessionals: verifiedProfessionals.count,
+        totalReviews: totalReviews.count,
+        pendingReviews: pendingReviews.count,
+        averageRating: avgRating.average?.toFixed(1) || "0.0",
+      };
+    } catch (error) {
+      console.error('Error getting admin stats:', error);
+      return {
+        totalUsers: 0,
+        newUsersThisWeek: 0,
+        totalProfessionals: 0,
+        verifiedProfessionals: 0,
+        totalReviews: 0,
+        pendingReviews: 0,
+        averageRating: "0.0",
+      };
+    }
   }
 
   async getAdminProfessionals(params?: any): Promise<ProfessionalWithDetails[]> {
@@ -511,17 +545,31 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(professionals.userId, users.id))
       .leftJoin(categories, eq(professionals.categoryId, categories.id));
 
+    const conditions = [];
+
     if (params?.search) {
-      query = query.where(
+      conditions.push(
         or(
           ilike(professionals.businessName, `%${params.search}%`),
-          ilike(professionals.email, `%${params.search}%`)
+          ilike(professionals.description, `%${params.search}%`)
         )
       );
     }
 
-    if (params?.verified !== undefined) {
-      query = query.where(eq(professionals.isVerified, params.verified));
+    if (params?.categoryId) {
+      conditions.push(eq(professionals.categoryId, params.categoryId));
+    }
+
+    if (params?.isVerified !== undefined) {
+      conditions.push(eq(professionals.isVerified, params.isVerified));
+    }
+
+    if (params?.isPremium !== undefined) {
+      conditions.push(eq(professionals.isPremium, params.isPremium));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
     }
 
     const results = await query.orderBy(desc(professionals.createdAt));
@@ -549,7 +597,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProfessional(id: number): Promise<void> {
+    // First delete all reviews for this professional
     await db.delete(reviews).where(eq(reviews.professionalId, id));
+    // Then delete the professional
     await db.delete(professionals).where(eq(professionals.id, id));
   }
 
@@ -598,12 +648,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteReview(id: number): Promise<void> {
-    const [review] = await db.select().from(reviews).where(eq(reviews.id, id));
-    
-    if (review) {
-      await db.delete(reviews).where(eq(reviews.id, id));
-      await this.updateProfessionalRating(review.professionalId);
-    }
+    await db.delete(reviews).where(eq(reviews.id, id));
   }
 
   async updateCategory(id: number, data: any): Promise<void> {
@@ -614,49 +659,49 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCategory(id: number): Promise<void> {
+    // Check if there are professionals using this category
     const [profCount] = await db
       .select({ count: sql<number>`count(*)` })
       .from(professionals)
       .where(eq(professionals.categoryId, id));
-
+    
     if (profCount.count > 0) {
-      throw new Error("Cannot delete category with associated professionals");
+      throw new Error('Cannot delete category with existing professionals');
     }
-
+    
     await db.delete(categories).where(eq(categories.id, id));
   }
 
   async getRecentActivity(): Promise<any[]> {
+    // Get recent professionals
     const recentProfessionals = await db
       .select({
+        id: professionals.id,
         type: sql<string>`'professional'`,
-        description: sql<string>`'Nuovo professionista: ' || ${professionals.businessName}`,
-        timestamp: professionals.createdAt,
+        title: professionals.businessName,
+        createdAt: professionals.createdAt,
       })
       .from(professionals)
       .orderBy(desc(professionals.createdAt))
       .limit(5);
 
+    // Get recent reviews
     const recentReviews = await db
       .select({
+        id: reviews.id,
         type: sql<string>`'review'`,
-        description: sql<string>`'Nuova recensione per ' || ${professionals.businessName}`,
-        timestamp: reviews.createdAt,
+        title: reviews.title,
+        createdAt: reviews.createdAt,
       })
       .from(reviews)
-      .leftJoin(professionals, eq(reviews.professionalId, professionals.id))
       .orderBy(desc(reviews.createdAt))
       .limit(5);
 
-    const allActivities = [...recentProfessionals, ...recentReviews]
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, 10)
-      .map(activity => ({
-        ...activity,
-        timestamp: new Date(activity.timestamp).toLocaleDateString('it-IT'),
-      }));
-
-    return allActivities;
+    // Combine and sort all activities
+    const allActivities = [...recentProfessionals, ...recentReviews];
+    allActivities.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    return allActivities.slice(0, 10);
   }
 
   async getPendingReviews(): Promise<(Review & { user: User; professional: Professional })[]> {
@@ -678,7 +723,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(professionals, eq(reviews.professionalId, professionals.id))
       .where(eq(reviews.isVerified, false))
       .orderBy(desc(reviews.createdAt));
-
+    
     return results.map(result => ({
       ...result,
       user: result.user!,
@@ -716,7 +761,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(categories, eq(professionals.categoryId, categories.id))
       .where(eq(professionals.isVerified, false))
       .orderBy(desc(professionals.createdAt));
-
+    
     return results.map(result => ({
       ...result,
       category: result.category!,
