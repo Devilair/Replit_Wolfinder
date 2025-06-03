@@ -50,7 +50,7 @@ export class SimpleAdminStorage {
         verifiedProfessionals: verifiedProfessionals.count,
         totalReviews: totalReviews.count,
         pendingReviews: pendingReviews.count,
-        averageRating: avgRating.average ? avgRating.average.toFixed(1) : "0.0",
+        averageRating: avgRating.average ? Number(avgRating.average).toFixed(1) : "0.0",
       };
     } catch (error) {
       console.error("Error in getAdminStats:", error);
@@ -61,7 +61,14 @@ export class SimpleAdminStorage {
   // Get all users - simplified
   async getAllUsers() {
     try {
-      return await db.select().from(users).orderBy(desc(users.createdAt));
+      return await db.select({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        name: users.name,
+        createdAt: users.createdAt,
+        lastActivityAt: users.lastActivityAt,
+      }).from(users).orderBy(desc(users.createdAt));
     } catch (error) {
       console.error("Error in getAllUsers:", error);
       throw error;
@@ -167,8 +174,16 @@ export class SimpleAdminStorage {
           status: reviews.status,
           createdAt: reviews.createdAt,
           updatedAt: reviews.updatedAt,
-          user: users,
-          professional: professionals,
+          // User fields - only existing columns
+          userName: users.name,
+          userEmail: users.email,
+          userUsername: users.username,
+          userCreatedAt: users.createdAt,
+          // Professional fields - only existing columns
+          professionalBusinessName: professionals.businessName,
+          professionalEmail: professionals.email,
+          professionalCity: professionals.city,
+          professionalProvince: professionals.province,
         })
         .from(reviews)
         .leftJoin(users, eq(reviews.userId, users.id))
@@ -183,9 +198,29 @@ export class SimpleAdminStorage {
       const results = await query.orderBy(desc(reviews.createdAt));
       
       return results.map(result => ({
-        ...result,
-        user: result.user!,
-        professional: result.professional!,
+        id: result.id,
+        professionalId: result.professionalId,
+        userId: result.userId,
+        rating: result.rating,
+        title: result.title,
+        content: result.content,
+        status: result.status,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+        user: {
+          id: result.userId,
+          name: result.userName,
+          email: result.userEmail,
+          username: result.userUsername,
+          createdAt: result.userCreatedAt,
+        },
+        professional: {
+          id: result.professionalId,
+          businessName: result.professionalBusinessName,
+          email: result.professionalEmail,
+          city: result.professionalCity,
+          province: result.professionalProvince,
+        },
       }));
     } catch (error) {
       console.error("Error in getAdminReviews:", error);
