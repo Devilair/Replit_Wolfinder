@@ -44,8 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json({
         message: "Registrazione completata con successo",
         user: result.user,
-        token: result.token,
-        requiresVerification: result.requiresVerification
+        token: result.token
       });
     } catch (error) {
       console.error('Registration error:', error);
@@ -61,8 +60,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Email e password richieste" });
       }
 
-      const clientIP = req.ip || req.connection.remoteAddress || '127.0.0.1';
-      const result = await authService.loginUser(email, password, clientIP);
+      const result = await simpleAuthService.loginUser(email, password);
       
       if (!result.success) {
         return res.status(401).json({ error: result.error });

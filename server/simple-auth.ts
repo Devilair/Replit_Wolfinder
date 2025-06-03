@@ -87,8 +87,8 @@ export class SimpleAuthService {
         email: data.email,
         password_hash: passwordHash,
         role: data.userType,
-        is_verified: false,
-        verification_method: 'email'
+        isVerified: false,
+        verificationMethod: 'email'
       }).returning();
 
       // Se è un professionista, crea anche il record professional
@@ -137,11 +137,11 @@ export class SimpleAuthService {
     try {
       const [user] = await db.select().from(users).where(eq(users.email, email));
       
-      if (!user || !user.password_hash) {
+      if (!user || !user.passwordHash) {
         return { success: false, error: 'Email o password non validi' };
       }
 
-      const isValidPassword = await this.verifyPassword(password, user.password_hash);
+      const isValidPassword = await this.verifyPassword(password, user.passwordHash);
       if (!isValidPassword) {
         return { success: false, error: 'Email o password non validi' };
       }
