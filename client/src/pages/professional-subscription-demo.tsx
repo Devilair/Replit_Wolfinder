@@ -291,18 +291,16 @@ export default function ProfessionalSubscriptionDemo() {
                   <CardContent>
                     <div className="space-y-4">
                       {[
-                        { key: 'enhancedVisibility', label: 'Visibilità Potenziata' },
-                        { key: 'priorityInSearch', label: 'Priorità nella Ricerca' },
-                        { key: 'featuredListing', label: 'Listing in Evidenza' },
-                        { key: 'directMessaging', label: 'Messaggi Diretti' },
-                        { key: 'phoneNumberDisplay', label: 'Mostra Numero Telefono' },
-                        { key: 'portfolioSection', label: 'Sezione Portfolio' },
+                        { key: 'portfolioSection', label: 'Video Presentazione e Portfolio' },
                         { key: 'certificationsSection', label: 'Sezione Certificazioni' },
+                        { key: 'customDescription', label: 'Descrizione Personalizzata' },
                         { key: 'reviewResponseEnabled', label: 'Risposta alle Recensioni' },
-                        { key: 'analyticsAccess', label: 'Accesso Analytics' },
-                        { key: 'detailedStats', label: 'Statistiche Dettagliate' },
-                        { key: 'verifiedBadge', label: 'Badge Verificato' },
-                        { key: 'premiumBadge', label: 'Badge Premium' },
+                        { key: 'reviewHighlights', label: 'Alert Recensioni Negative' },
+                        { key: 'analyticsAccess', label: 'Dashboard Analytics Base' },
+                        { key: 'detailedStats', label: 'Analytics Interattive e Export' },
+                        { key: 'competitorAnalysis', label: 'Analisi Competitiva e Benchmark' },
+                        { key: 'verifiedBadge', label: 'Badge Identità Verificata' },
+                        { key: 'premiumBadge', label: 'Badge Piano Premium' },
                       ].map((feature) => (
                         <div key={feature.key} className="flex items-center justify-between p-3 border rounded">
                           <span className="font-medium">{feature.label}</span>
@@ -325,9 +323,9 @@ export default function ProfessionalSubscriptionDemo() {
         <Alert className="mt-8">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            <strong>Nota:</strong> Questa è una demo che mostra come le limitazioni dei piani vengono applicate nella realtà. 
-            I professionisti con piano gratuito hanno limitazioni su contatti, foto e servizi, mentre i piani a pagamento 
-            sbloccano funzionalità avanzate e aumentano o rimuovono i limiti.
+            <strong>Modello Meritocratico:</strong> Questa demo mostra il sistema di abbonamento che mantiene l'integrità della piattaforma. 
+            I contatti sono sempre illimitati per tutti. Solo foto e servizi hanno limitazioni per piano. 
+            Nessun piano a pagamento influenza il posizionamento nei risultati di ricerca - tutto basato sul merito e sulle recensioni.
           </AlertDescription>
         </Alert>
       </div>

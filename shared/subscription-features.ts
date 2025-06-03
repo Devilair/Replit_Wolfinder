@@ -1,16 +1,6 @@
 import type { Subscription, SubscriptionPlan } from "./schema";
 
 export interface SubscriptionFeatures {
-  // Visibilità e posizionamento
-  enhancedVisibility: boolean;
-  priorityInSearch: boolean;
-  featuredListing: boolean;
-  
-  // Contatti e comunicazione (sempre illimitati)
-  directMessaging: boolean;
-  phoneNumberDisplay: boolean;
-  emailDisplay: boolean;
-  
   // Profilo e contenuti
   maxPhotos: number;
   maxServices: number;
@@ -37,13 +27,6 @@ export interface SubscriptionFeatures {
 
 export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
   'Essentials': {
-    enhancedVisibility: false,
-    priorityInSearch: false,
-    featuredListing: false,
-
-    directMessaging: true,  // Contatti sempre illimitati
-    phoneNumberDisplay: true,
-    emailDisplay: true,
     maxPhotos: 3, // 1 profilo + 2 studio/attività
     maxServices: 3,
     portfolioSection: false,
@@ -59,13 +42,6 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
     supportLevel: 'basic',
   },
   'Professional': {
-    enhancedVisibility: false, // NO enhanced visibility per meritocrazia
-    priorityInSearch: false,   // NO priority per ranking equo
-    featuredListing: false,
-
-    directMessaging: true,
-    phoneNumberDisplay: true,
-    emailDisplay: true,
     maxPhotos: 10, // Galleria fino a 10 immagini
     maxServices: 8, // Fino a 8 specializzazioni
     portfolioSection: true, // Video + strumenti avanzati
@@ -81,13 +57,6 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
     supportLevel: 'priority',
   },
   'Expert': {
-    enhancedVisibility: false, // NO enhanced visibility per meritocrazia  
-    priorityInSearch: false,   // NO priority per ranking equo
-    featuredListing: false,
-
-    directMessaging: true,
-    phoneNumberDisplay: true,
-    emailDisplay: true,
     maxPhotos: -1, // Illimitati
     maxServices: -1, // Specializzazioni illimitate
     portfolioSection: true,
@@ -103,13 +72,6 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
     supportLevel: 'priority',
   },
   'Enterprise': {
-    enhancedVisibility: false, // NO enhanced visibility per meritocrazia
-    priorityInSearch: false,   // NO priority per ranking equo  
-    featuredListing: false,
-
-    directMessaging: true,
-    phoneNumberDisplay: true,
-    emailDisplay: true,
     maxPhotos: -1, // Illimitati
     maxServices: -1, // Illimitati
     portfolioSection: true,
