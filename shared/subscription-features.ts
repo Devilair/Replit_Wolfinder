@@ -36,54 +36,76 @@ export interface SubscriptionFeatures {
 }
 
 export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
-  'Gratuito': {
+  'Essentials': {
     enhancedVisibility: false,
     priorityInSearch: false,
     featuredListing: false,
 
-    directMessaging: false,
-    phoneNumberDisplay: false,
+    directMessaging: true,  // Contatti sempre illimitati
+    phoneNumberDisplay: true,
     emailDisplay: true,
-    maxPhotos: 3,
+    maxPhotos: 3, // 1 profilo + 2 studio/attività
     maxServices: 3,
     portfolioSection: false,
     certificationsSection: false,
-    customDescription: false,
-    reviewResponseEnabled: false,
+    customDescription: true,
+    reviewResponseEnabled: true, // Rispondere a tutte le recensioni
     reviewHighlights: false,
-    analyticsAccess: false,
+    analyticsAccess: true, // Analytics di base
     detailedStats: false,
     competitorAnalysis: false,
-    verifiedBadge: false,
+    verifiedBadge: true, // Badge "Identità Verificata"
     premiumBadge: false,
     supportLevel: 'basic',
   },
   'Professional': {
-    enhancedVisibility: true,
-    priorityInSearch: true,
+    enhancedVisibility: false, // NO enhanced visibility per meritocrazia
+    priorityInSearch: false,   // NO priority per ranking equo
     featuredListing: false,
 
     directMessaging: true,
     phoneNumberDisplay: true,
     emailDisplay: true,
-    maxPhotos: 10,
-    maxServices: 10,
+    maxPhotos: 10, // Galleria fino a 10 immagini
+    maxServices: 8, // Fino a 8 specializzazioni
+    portfolioSection: true, // Video + strumenti avanzati
+    certificationsSection: true,
+    customDescription: true,
+    reviewResponseEnabled: true,
+    reviewHighlights: true, // Alert per recensioni negative
+    analyticsAccess: true,
+    detailedStats: true, // Dashboard interattiva, export dati
+    competitorAnalysis: false,
+    verifiedBadge: true,
+    premiumBadge: true, // Badge "Professional"
+    supportLevel: 'priority',
+  },
+  'Expert': {
+    enhancedVisibility: false, // NO enhanced visibility per meritocrazia  
+    priorityInSearch: false,   // NO priority per ranking equo
+    featuredListing: false,
+
+    directMessaging: true,
+    phoneNumberDisplay: true,
+    emailDisplay: true,
+    maxPhotos: -1, // Illimitati
+    maxServices: -1, // Specializzazioni illimitate
     portfolioSection: true,
     certificationsSection: true,
     customDescription: true,
     reviewResponseEnabled: true,
     reviewHighlights: true,
     analyticsAccess: true,
-    detailedStats: false,
-    competitorAnalysis: false,
+    detailedStats: true,
+    competitorAnalysis: true, // Analytics predittive, benchmark
     verifiedBadge: true,
-    premiumBadge: true,
+    premiumBadge: true, // Badge "Expert Verified"
     supportLevel: 'priority',
   },
   'Enterprise': {
-    enhancedVisibility: true,
-    priorityInSearch: true,
-    featuredListing: true,
+    enhancedVisibility: false, // NO enhanced visibility per meritocrazia
+    priorityInSearch: false,   // NO priority per ranking equo  
+    featuredListing: false,
 
     directMessaging: true,
     phoneNumberDisplay: true,
@@ -97,9 +119,9 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
     reviewHighlights: true,
     analyticsAccess: true,
     detailedStats: true,
-    competitorAnalysis: true,
+    competitorAnalysis: true, // Intelligence competitiva completa
     verifiedBadge: true,
-    premiumBadge: true,
+    premiumBadge: true, // Badge "Enterprise"
     supportLevel: 'dedicated',
   },
 };
@@ -107,10 +129,10 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
 export function getProfessionalFeatures(subscription?: Subscription & { plan: SubscriptionPlan }): SubscriptionFeatures {
   // Se non ha abbonamento attivo, usa il piano gratuito
   if (!subscription || subscription.status !== 'active') {
-    return PLAN_FEATURES['Gratuito'];
+    return PLAN_FEATURES['Essentials'];
   }
   
-  return PLAN_FEATURES[subscription.plan.name] || PLAN_FEATURES['Gratuito'];
+  return PLAN_FEATURES[subscription.plan.name] || PLAN_FEATURES['Essentials'];
 }
 
 export function canAccessFeature(

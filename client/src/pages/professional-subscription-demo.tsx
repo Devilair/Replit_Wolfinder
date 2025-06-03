@@ -9,9 +9,9 @@ import { Crown, Camera, MessageSquare, Building, AlertTriangle, CheckCircle, XCi
 import { getProfessionalFeatures, canAccessFeature, getFeatureLimit } from "@shared/subscription-features";
 import type { Subscription, SubscriptionPlan } from "@shared/schema";
 
-// Dati demo per i tre piani
+// Dati demo per i quattro piani del modello meritocratico
 const DEMO_SUBSCRIPTIONS = {
-  gratuito: undefined,
+  essentials: undefined, // Piano gratuito
   professional: {
     id: 1,
     professionalId: 1,
@@ -25,7 +25,7 @@ const DEMO_SUBSCRIPTIONS = {
     plan: {
       id: 1,
       name: 'Professional',
-      price: 29.99,
+      price: 19.99,
       currency: 'EUR',
       interval: 'month' as const,
       features: JSON.stringify([]),
@@ -36,7 +36,7 @@ const DEMO_SUBSCRIPTIONS = {
       updatedAt: new Date('2024-01-01'),
     }
   },
-  enterprise: {
+  expert: {
     id: 2,
     professionalId: 1,
     planId: 2,
@@ -48,13 +48,37 @@ const DEMO_SUBSCRIPTIONS = {
     updatedAt: new Date('2024-01-01'),
     plan: {
       id: 2,
-      name: 'Enterprise',
-      price: 99.99,
+      name: 'Expert',
+      price: 49.99,
       currency: 'EUR',
       interval: 'month' as const,
       features: JSON.stringify([]),
       stripeProductId: 'prod_demo2',
       stripePriceId: 'price_demo2',
+      isActive: true,
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+    }
+  },
+  enterprise: {
+    id: 3,
+    professionalId: 1,
+    planId: 3,
+    status: 'active' as const,
+    stripeSubscriptionId: 'sub_demo3',
+    currentPeriodStart: new Date('2024-01-01'),
+    currentPeriodEnd: new Date('2024-02-01'),
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+    plan: {
+      id: 3,
+      name: 'Enterprise',
+      price: 129.99,
+      currency: 'EUR',
+      interval: 'month' as const,
+      features: JSON.stringify([]),
+      stripeProductId: 'prod_demo3',
+      stripePriceId: 'price_demo3',
       isActive: true,
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-01-01'),

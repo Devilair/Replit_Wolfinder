@@ -1,0 +1,223 @@
+Struttura dei Piani di Abbonamento per Wolfinder
+Progettare un modello di abbonamento per Wolfinder richiede un equilibrio delicato: generare ricavi senza compromettere la meritocrazia. Ecco una struttura dettagliata che mantiene l'integrità della piattaforma mentre offre valore reale ai professionisti.
+Principi fondamentali
+Prima di dettagliare i piani, è importante stabilire questi principi inviolabili:
+
+L'algoritmo di ranking rimane equo per tutti - Nessun piano a pagamento influenza il posizionamento nei risultati di ricerca
+Le recensioni sono trattate allo stesso modo - Il processo di verifica è identico indipendentemente dal piano
+La monetizzazione è basata su strumenti di valore aggiunto - Non sulla manipolazione della visibilità
+Trasparenza totale - Gli utenti sanno sempre che i risultati sono basati sul merito
+
+Piano "Essentials" (Gratuito)
+Filosofia: Garantire a tutti i professionisti una presenza equa sulla piattaforma.
+Caratteristiche:
+
+Profilo base completo
+
+Informazioni di contatto
+Descrizione dell'attività
+Specializzazioni (fino a 3)
+1 foto profilo + 2 immagini dello studio/attività
+
+
+Gestione recensioni
+
+Ricezione illimitata di recensioni
+Possibilità di rispondere a tutte le recensioni
+Notifiche email per nuove recensioni
+
+
+Analytics di base
+
+Dashboard semplice con statistiche essenziali
+Trend mensile delle valutazioni
+Report trimestrale via email
+
+
+Verifica dell'identità
+
+Badge "Identità Verificata" dopo processo di verifica
+Processo di verifica manuale standard
+
+
+
+Limitazioni:
+
+Nessun accesso ad analytics avanzate
+Notifiche base via email
+Supporto via email con tempi di risposta standard
+
+Target ideale: Professionisti individuali, nuovi sulla piattaforma, o con volume di clienti limitato.
+Piano "Professional" (€19.99/mese o €199/anno)
+Filosofia: Fornire strumenti per comprendere meglio le proprie performance e migliorare il servizio offerto.
+Caratteristiche (include tutto del piano Essentials, più):
+
+Profilo avanzato
+
+Fino a 8 specializzazioni dettagliate
+Galleria con fino a 10 immagini
+Video di presentazione (30 secondi)
+Badge "Professional" sul profilo
+
+
+Analytics estese
+
+Dashboard interattiva con filtri temporali
+Confronto con la media della categoria
+Analisi dettagliata per criterio di valutazione
+Export dati in CSV/PDF
+
+
+Gestione reputazione
+
+Alert immediati per recensioni negative (< 3 stelle)
+Modelli di risposta personalizzabili
+Suggerimenti di risposta basati sul sentiment
+
+
+Supporto potenziato
+
+Supporto via email con priorità media
+Accesso alla knowledge base esclusiva
+Webinar mensili su best practices
+
+
+
+Target ideale: Professionisti singoli o piccoli studi con clientela regolare, che vogliono monitorare attivamente la propria reputazione.
+Piano "Expert" (€49.99/mese o €499/anno)
+Filosofia: Fornire strumenti analitici avanzati per ottimizzare continuamente la qualità del servizio.
+Caratteristiche (include tutto del piano Professional, più):
+
+Profilo premium
+
+Specializzazioni illimitate con descrizioni dettagliate
+Sezione FAQ personalizzata sul profilo
+Highlight dei punti di forza basati sulle recensioni
+Badge "Expert Verified" (previa verifica avanzata)
+
+
+Analytics avanzate
+
+Dashboard con analisi predittive
+Rilevamento pattern nelle recensioni (temi ricorrenti)
+Analisi semantica del feedback testuale
+Suggerimenti personalizzati per migliorare il rating
+Benchmark con i top performer della categoria
+
+
+Strumenti di engagement
+
+Widget per il proprio sito web con recensioni dinamiche
+QR code personalizzato per richiedere recensioni
+Email template per follow-up post-servizio
+Integrazione con i principali CRM
+
+
+Supporto dedicato
+
+Supporto via email con priorità alta
+Supporto telefonico (5 ore/mese)
+Revisione trimestrale della strategia di recensioni
+
+
+
+Target ideale: Studi professionali con più membri, professionisti con alto volume di clienti, o esperti con forte focus sulla crescita.
+Piano "Enterprise" (€129.99/mese o €1299/anno)
+Filosofia: Soluzione completa per studi professionali o network con più sedi/professionisti.
+Caratteristiche (include tutto del piano Expert, più):
+
+Gestione multi-profilo
+
+Fino a 5 professionisti/sedi sotto un unico account
+Dashboard comparativa tra membri/sedi
+Gestione centralizzata delle recensioni
+Personalizzazione della landing page di studio
+
+
+Intelligence competitiva
+
+Analisi di mercato della propria categoria
+Insight anonimi sul posizionamento competitivo
+Report trimestrali sulle tendenze di settore
+Alert su cambiamenti significativi nel mercato
+
+
+Marketing integrato
+
+Toolkit completo per condivisione recensioni
+Generazione automatica di testimonial per marketing
+Badge e certificazioni di eccellenza (se meritati)
+Creazione di case studies basati su recensioni positive
+
+
+Supporto VIP
+
+Account manager dedicato
+Supporto telefonico prioritario illimitato
+Revisione mensile della strategia
+Formazione personalizzata per il team
+Accesso anticipato a nuove funzionalità
+
+
+
+Add-ons opzionali:
+
+Professionisti/sedi aggiuntivi: €20/mese ciascuno
+Servizio di risposta assistita alle recensioni: €99/mese
+Integrazione API personalizzata: preventivo su richiesta
+
+Target ideale: Studi professionali di medie dimensioni, network di professionisti, organizzazioni con più sedi.
+Garantire la Meritocrazia
+Per assicurare che il sistema rimanga veramente meritocratico:
+
+Trasparenza algoritmica
+
+Pagina pubblica che spiega come funziona il ranking
+Dichiarazione esplicita che gli abbonamenti non influenzano il posizionamento
+Audit periodici dell'algoritmo da parte di terze parti
+
+
+Badge distintivi
+
+I badge premium sono visivamente distinti dai badge di merito
+Etichette chiare che distinguono i badge pagati da quelli guadagnati
+
+
+Funzionalità che incentivano la qualità reale
+
+Gli strumenti premium aiutano a migliorare il servizio effettivo
+Focus su analytics che evidenziano aree di miglioramento
+Nessuno strumento che "nasconda" feedback negativi
+
+
+Politica di rimborso basata sui risultati
+
+Garanzia di soddisfazione di 30 giorni
+Possibilità di downgrade senza penalità
+Pricing trasparente senza costi nascosti
+
+
+
+Incentivi all'adozione
+
+Periodo di prova
+
+14 giorni di prova gratuita per tutti i piani a pagamento
+Demo personalizzata per il piano Enterprise
+
+
+Sconti e promozioni
+
+20% di sconto per i primi 100 abbonati di ogni categoria
+Sconto del 15% per pagamento annuale (già incluso nei prezzi annuali indicati)
+Programma referral: un mese gratis per ogni professionista portato
+
+
+Scalabilità
+
+Possibilità di upgrade/downgrade in qualsiasi momento
+Transizione fluida tra i piani con migrazione automatica dei dati
+
+
+
+Questo modello di abbonamento rispetta pienamente la filosofia meritocratica di Wolfinder, garantendo che il successo sulla piattaforma sia determinato dalla qualità del servizio e non dal budget marketing, mentre offre strumenti genuinamente utili per migliorare l'esperienza dei professionisti e, di conseguenza, dei loro clienti.
