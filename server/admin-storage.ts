@@ -310,7 +310,10 @@ export class AdminAdvancedStorage {
     }
 
     if (categories && categories.length > 0) {
-      conditions.push(sql`${professionals.categoryId} = ANY(${categories})`);
+      const categoryIds = categories.map(c => parseInt(c)).filter(id => !isNaN(id));
+      if (categoryIds.length > 0) {
+        conditions.push(sql`${professionals.categoryId} = ANY(${categoryIds})`);
+      }
     }
 
     if (verificationStatus && verificationStatus.length > 0) {
