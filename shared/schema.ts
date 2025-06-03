@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -9,7 +9,21 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   name: text("name").notNull(),
+  role: text("role").default("user").notNull(), // 'user', 'professional', 'admin', 'moderator'
+  isVerified: boolean("is_verified").default(false).notNull(),
+  verificationMethod: text("verification_method"), // 'email', 'phone', 'document'
+  lastLoginAt: timestamp("last_login_at"),
+  lastActivityAt: timestamp("last_activity_at"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  engagementScore: decimal("engagement_score", { precision: 5, scale: 2 }).default("0"),
+  acquisitionSource: text("acquisition_source"), // 'organic', 'social', 'referral', 'paid'
+  isSuspended: boolean("is_suspended").default(false).notNull(),
+  suspensionReason: text("suspension_reason"),
+  suspensionUntil: timestamp("suspension_until"),
+  adminNotes: text("admin_notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const categories = pgTable("categories", {
@@ -38,9 +52,22 @@ export const professionals = pgTable("professionals", {
   priceRangeMax: decimal("price_range_max", { precision: 10, scale: 2 }),
   priceUnit: text("price_unit"), // "ora", "visita", "progetto"
   isVerified: boolean("is_verified").default(false).notNull(),
+  verificationStatus: text("verification_status").default("pending").notNull(), // 'pending', 'verified', 'rejected'
+  verificationNotes: text("verification_notes"),
+  verificationDate: timestamp("verification_date"),
+  verifiedBy: integer("verified_by").references(() => users.id),
   isPremium: boolean("is_premium").default(false).notNull(),
   rating: decimal("rating", { precision: 3, scale: 2 }).default("0").notNull(),
   reviewCount: integer("review_count").default(0).notNull(),
+  profileCompleteness: decimal("profile_completeness", { precision: 5, scale: 2 }).default("0"),
+  lastActivityAt: timestamp("last_activity_at"),
+  profileViews: integer("profile_views").default(0).notNull(),
+  clickThroughRate: decimal("click_through_rate", { precision: 5, scale: 2 }).default("0"),
+  responseRate: decimal("response_rate", { precision: 5, scale: 2 }).default("0"),
+  averageResponseTime: integer("average_response_time"), // in minutes
+  isProblematic: boolean("is_problematic").default(false).notNull(),
+  problematicReason: text("problematic_reason"),
+  adminNotes: text("admin_notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -357,3 +384,162 @@ export type SubscriptionWithDetails = Subscription & {
 // Professional usage types
 export type ProfessionalUsage = typeof professionalUsage.$inferSelect;
 export type InsertProfessionalUsage = typeof professionalUsage.$inferInsert;
+
+// Administrative tracking tables
+export const adminActivity = pgTable("admin_activity", {
+  id: serial("id").primaryKey(),
+  adminId: integer("admin_id").references(() => users.id).notNull(),
+  action: text("action").notNull(),
+  targetType: text("target_type").notNull(), // 'user', 'professional', 'review', 'subscription'
+  targetId: integer("target_id").notNull(),
+  description: text("description").notNull(),
+  metadata: jsonb("metadata"), // Additional data about the action
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const systemAlerts = pgTable("system_alerts", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // 'security', 'performance', 'threshold', 'fraud'
+  severity: text("severity").notNull(), // 'low', 'medium', 'high', 'critical'
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  metadata: jsonb("metadata"),
+  isResolved: boolean("is_resolved").default(false).notNull(),
+  resolvedBy: integer("resolved_by").references(() => users.id),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const moderationQueue = pgTable("moderation_queue", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // 'review', 'professional_verification', 'content_report'
+  targetType: text("target_type").notNull(),
+  targetId: integer("target_id").notNull(),
+  priority: text("priority").default("medium").notNull(), // 'low', 'medium', 'high', 'urgent'
+  status: text("status").default("pending").notNull(), // 'pending', 'in_progress', 'completed', 'rejected'
+  assignedTo: integer("assigned_to").references(() => users.id),
+  reviewNotes: text("review_notes"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const securityEvents = pgTable("security_events", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // 'failed_login', 'suspicious_activity', 'rate_limit_exceeded'
+  userId: integer("user_id").references(() => users.id),
+  ipAddress: text("ip_address").notNull(),
+  userAgent: text("user_agent"),
+  description: text("description").notNull(),
+  metadata: jsonb("metadata"),
+  severity: text("severity").default("medium").notNull(),
+  isResolved: boolean("is_resolved").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const performanceMetrics = pgTable("performance_metrics", {
+  id: serial("id").primaryKey(),
+  metric: text("metric").notNull(),
+  value: decimal("value", { precision: 15, scale: 4 }).notNull(),
+  unit: text("unit"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  metadata: jsonb("metadata"),
+});
+
+export const emailCampaigns = pgTable("email_campaigns", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  subject: text("subject").notNull(),
+  content: text("content").notNull(),
+  templateId: text("template_id"),
+  targetSegment: text("target_segment"), // 'all', 'professionals', 'users', 'premium'
+  status: text("status").default("draft").notNull(), // 'draft', 'scheduled', 'sending', 'sent', 'cancelled'
+  scheduledAt: timestamp("scheduled_at"),
+  sentAt: timestamp("sent_at"),
+  recipientCount: integer("recipient_count").default(0),
+  openCount: integer("open_count").default(0),
+  clickCount: integer("click_count").default(0),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const apiKeys = pgTable("api_keys", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  keyHash: text("key_hash").notNull().unique(),
+  name: text("name").notNull(),
+  permissions: jsonb("permissions").notNull(), // API endpoint permissions
+  rateLimit: integer("rate_limit").default(1000).notNull(),
+  lastUsed: timestamp("last_used"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at"),
+});
+
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  action: text("action").notNull(),
+  entityType: text("entity_type").notNull(),
+  entityId: integer("entity_id"),
+  oldValues: jsonb("old_values"),
+  newValues: jsonb("new_values"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Relations for administrative tables
+export const adminActivityRelations = relations(adminActivity, ({ one }) => ({
+  admin: one(users, {
+    fields: [adminActivity.adminId],
+    references: [users.id],
+  }),
+}));
+
+export const systemAlertsRelations = relations(systemAlerts, ({ one }) => ({
+  resolvedBy: one(users, {
+    fields: [systemAlerts.resolvedBy],
+    references: [users.id],
+  }),
+}));
+
+export const moderationQueueRelations = relations(moderationQueue, ({ one }) => ({
+  assignedTo: one(users, {
+    fields: [moderationQueue.assignedTo],
+    references: [users.id],
+  }),
+}));
+
+export const emailCampaignsRelations = relations(emailCampaigns, ({ one }) => ({
+  createdBy: one(users, {
+    fields: [emailCampaigns.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+  professional: one(professionals, {
+    fields: [apiKeys.professionalId],
+    references: [professionals.id],
+  }),
+}));
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [auditLogs.userId],
+    references: [users.id],
+  }),
+}));
+
+// Administrative types
+export type AdminActivity = typeof adminActivity.$inferSelect;
+export type SystemAlert = typeof systemAlerts.$inferSelect;
+export type ModerationQueue = typeof moderationQueue.$inferSelect;
+export type SecurityEvent = typeof securityEvents.$inferSelect;
+export type PerformanceMetric = typeof performanceMetrics.$inferSelect;
+export type EmailCampaign = typeof emailCampaigns.$inferSelect;
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type AuditLog = typeof auditLogs.$inferSelect;
