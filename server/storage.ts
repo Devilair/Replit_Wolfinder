@@ -437,6 +437,22 @@ export class DatabaseStorage implements IStorage {
     return professional;
   }
 
+  async getProfessionalByUserId(userId: number): Promise<Professional | undefined> {
+    const [professional] = await db
+      .select()
+      .from(professionals)
+      .where(eq(professionals.userId, userId));
+    return professional || undefined;
+  }
+
+  async logActivity(activity: { type: string; description: string; userId: number; metadata?: any }): Promise<void> {
+    // Store activity in a simple format for now - in production this would use a proper activities table
+    console.log(`[ACTIVITY LOG] ${activity.type}: ${activity.description} (User: ${activity.userId})`);
+    if (activity.metadata) {
+      console.log(`[METADATA]`, activity.metadata);
+    }
+  }
+
   async updateProfessionalRating(id: number): Promise<void> {
     const [stats] = await db
       .select({
