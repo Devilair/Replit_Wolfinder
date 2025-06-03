@@ -163,9 +163,22 @@ export class DatabaseStorage implements IStorage {
 
     const conditions = [];
 
+    // Gestisce la ricerca intelligente con parametri separati o combinati
+    let searchTerm = params?.search || '';
+    let cityFilter = params?.city || '';
+    let combinedSearch = false;
+    
+    // Se abbiamo sia search che city, combina per la ricerca intelligente
+    if (searchTerm && cityFilter) {
+      searchTerm = `${searchTerm} ${cityFilter}`;
+      combinedSearch = true;
+      cityFilter = ''; // Reset per evitare duplicazione
+    }
+
     // Parsing intelligente della ricerca per categoria e città
-    if (params?.search) {
-      const searchLower = params.search.toLowerCase().trim();
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      console.log('Search term:', searchTerm, 'Combined search:', combinedSearch);
       
       // Mapping per categorie
       let foundCategoryId = null;
@@ -189,36 +202,43 @@ export class DatabaseStorage implements IStorage {
         foundCity = 'Livorno';
       }
       
+      console.log('Found category ID:', foundCategoryId, 'Found city:', foundCity);
+      
       // Applica filtri basati sui risultati del parsing
       if (foundCategoryId && foundCity) {
         // Ricerca specifica: categoria + città
+        console.log('Applying both category and city filters');
         conditions.push(eq(professionals.categoryId, foundCategoryId));
         conditions.push(eq(professionals.city, foundCity));
       } else if (foundCategoryId) {
         // Solo categoria
+        console.log('Applying only category filter');
         conditions.push(eq(professionals.categoryId, foundCategoryId));
       } else if (foundCity) {
         // Solo città
+        console.log('Applying only city filter');
         conditions.push(eq(professionals.city, foundCity));
       } else {
         // Ricerca generica nel testo
+        console.log('Applying generic text search');
         conditions.push(
           or(
-            ilike(professionals.businessName, `%${params.search}%`),
-            ilike(professionals.description, `%${params.search}%`),
-            ilike(categories.name, `%${params.search}%`)
+            ilike(professionals.businessName, `%${searchTerm}%`),
+            ilike(professionals.description, `%${searchTerm}%`),
+            ilike(categories.name, `%${searchTerm}%`)
           )
         );
       }
     }
 
-    // Filtri aggiuntivi espliciti (complementano la ricerca intelligente)
-    if (params?.categoryId && !params?.search) {
+    // Filtri aggiuntivi espliciti (solo se non abbiamo già applicato la ricerca intelligente)
+    if (params?.categoryId && !searchTerm) {
       conditions.push(eq(professionals.categoryId, params.categoryId));
     }
 
-    if (params?.city && !params?.search) {
-      conditions.push(ilike(professionals.city, `%${params.city}%`));
+    // Filtro città separato (solo se non è stato già processato nella ricerca intelligente)
+    if (cityFilter) {
+      conditions.push(ilike(professionals.city, `%${cityFilter}%`));
     }
 
     if (params?.province) {
