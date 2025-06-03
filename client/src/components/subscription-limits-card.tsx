@@ -9,7 +9,6 @@ import type { Subscription, SubscriptionPlan } from "@shared/schema";
 interface SubscriptionLimitsCardProps {
   subscription?: Subscription & { plan: SubscriptionPlan };
   currentUsage?: {
-    contactsThisMonth: number;
     photosUploaded: number;
     servicesListed: number;
   };
@@ -18,14 +17,13 @@ interface SubscriptionLimitsCardProps {
 
 export default function SubscriptionLimitsCard({ 
   subscription, 
-  currentUsage = { contactsThisMonth: 0, photosUploaded: 0, servicesListed: 0 },
+  currentUsage = { photosUploaded: 0, servicesListed: 0 },
   onUpgrade 
 }: SubscriptionLimitsCardProps) {
   const features = getProfessionalFeatures(subscription);
   const planName = subscription?.plan.name || 'Gratuito';
   const isActive = subscription?.status === 'active';
 
-  const contactsStatus = getUsageStatus(currentUsage.contactsThisMonth, subscription, 'maxContactsPerMonth');
   const photosStatus = getUsageStatus(currentUsage.photosUploaded, subscription, 'maxPhotos');
   const servicesStatus = getUsageStatus(currentUsage.servicesListed, subscription, 'maxServices');
 
@@ -101,9 +99,8 @@ export default function SubscriptionLimitsCard({
       <CardContent className="space-y-4">
         {/* Limiti di utilizzo */}
         <div className="space-y-4">
-          <h4 className="text-sm font-semibold text-gray-900">Utilizzo mensile</h4>
+          <h4 className="text-sm font-semibold text-gray-900">Limiti del profilo</h4>
           
-          {renderUsageBar("Contatti ricevuti", contactsStatus)}
           {renderUsageBar("Foto caricate", photosStatus)}
           {renderUsageBar("Servizi elencati", servicesStatus)}
         </div>

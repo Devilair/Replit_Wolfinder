@@ -6,8 +6,7 @@ export interface SubscriptionFeatures {
   priorityInSearch: boolean;
   featuredListing: boolean;
   
-  // Contatti e comunicazione
-  maxContactsPerMonth: number;
+  // Contatti e comunicazione (sempre illimitati)
   directMessaging: boolean;
   phoneNumberDisplay: boolean;
   emailDisplay: boolean;
@@ -41,7 +40,7 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
     enhancedVisibility: false,
     priorityInSearch: false,
     featuredListing: false,
-    maxContactsPerMonth: 5,
+
     directMessaging: false,
     phoneNumberDisplay: false,
     emailDisplay: true,
@@ -63,7 +62,7 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
     enhancedVisibility: true,
     priorityInSearch: true,
     featuredListing: false,
-    maxContactsPerMonth: 50,
+
     directMessaging: true,
     phoneNumberDisplay: true,
     emailDisplay: true,
@@ -85,7 +84,7 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
     enhancedVisibility: true,
     priorityInSearch: true,
     featuredListing: true,
-    maxContactsPerMonth: -1, // Illimitati
+
     directMessaging: true,
     phoneNumberDisplay: true,
     emailDisplay: true,
