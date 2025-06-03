@@ -610,6 +610,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Advanced Review Management Routes
+  app.get("/api/admin/reviews", async (req, res) => {
+    try {
+      const status = req.query.status as string;
+      const reviews = await storage.getAdminReviews(status);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching admin reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  app.get("/api/admin/reviews/analytics", async (req, res) => {
+    try {
+      const analytics = await storage.getReviewAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching review analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
+  app.patch("/api/admin/reviews/:id", async (req, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      const { status, verificationNotes } = req.body;
+      
+      await storage.updateReviewStatus(reviewId, status, verificationNotes);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating review:", error);
+      res.status(500).json({ message: "Failed to update review" });
+    }
+  });
+
+  app.get("/api/admin/reviews/pending", async (req, res) => {
+    try {
+      const pendingReviews = await storage.getPendingReviews();
+      res.json(pendingReviews);
+    } catch (error) {
+      console.error("Error fetching pending reviews:", error);
+      res.status(500).json({ message: "Failed to fetch pending reviews" });
+    }
+  });
+
+  // Review interaction routes
+  app.post("/api/reviews/:id/helpful", async (req, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      const { isHelpful } = req.body;
+      const userId = 1; // Placeholder for authenticated user
+      
+      await storage.addHelpfulVote({
+        reviewId,
+        userId,
+        isHelpful
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error adding helpful vote:", error);
+      res.status(500).json({ message: "Failed to add vote" });
+    }
+  });
+
+  app.post("/api/reviews/:id/flag", async (req, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      const { reason, description } = req.body;
+      const userId = 1; // Placeholder for authenticated user
+      
+      await storage.flagReview({
+        reviewId,
+        userId,
+        reason,
+        description
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error flagging review:", error);
+      res.status(500).json({ message: "Failed to flag review" });
+    }
+  });
+
+  app.post("/api/reviews/:id/response", async (req, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      const { response } = req.body;
+      
+      await storage.addProfessionalResponse(reviewId, response);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error adding professional response:", error);
+      res.status(500).json({ message: "Failed to add response" });
+    }
+  });
+
+  // Professional ranking and analytics
+  app.get("/api/professionals/:id/ranking", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      const ranking = await storage.calculateProfessionalRanking(professionalId);
+      res.json(ranking);
+    } catch (error) {
+      console.error("Error calculating professional ranking:", error);
+      res.status(500).json({ message: "Failed to calculate ranking" });
+    }
+  });
+
+  app.get("/api/admin/suspicious-activity/:id", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      const activity = await storage.detectSuspiciousActivity(professionalId);
+      res.json(activity);
+    } catch (error) {
+      console.error("Error detecting suspicious activity:", error);
+      res.status(500).json({ message: "Failed to detect suspicious activity" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
