@@ -11,7 +11,8 @@ import {
   insertCategorySchema,
   insertSubscriptionPlanSchema,
   insertSubscriptionSchema,
-  insertTransactionSchema
+  insertTransactionSchema,
+  type InsertClaimRequest
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -1715,6 +1716,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating claim status:", error);
       res.status(500).json({ message: "Failed to update claim status" });
+    }
+  });
+
+  // CLAIM PROFILE ROUTES
+  
+  // Create claim request (public)
+  app.post("/api/claim-requests", async (req, res) => {
+    try {
+      const claimData: InsertClaimRequest = {
+        professionalId: req.body.professionalId,
+        requesterName: req.body.requesterName,
+        requesterEmail: req.body.requesterEmail,
+        requesterPhone: req.body.requesterPhone,
+        verificationDocuments: req.body.verificationDocuments,
+        personalMessage: req.body.personalMessage,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+      };
+
+      const claimRequest = await storage.createClaimRequest(claimData);
+      res.status(201).json(claimRequest);
+    } catch (error) {
+      console.error("Error creating claim request:", error);
+      res.status(500).json({ message: "Failed to create claim request" });
+    }
+  });
+
+  // Get all claim requests (admin only)
+  app.get("/api/admin/claim-requests", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const status = req.query.status as string;
+      const claimRequests = await storage.getClaimRequests(status);
+      res.json(claimRequests);
+    } catch (error) {
+      console.error("Error getting claim requests:", error);
+      res.status(500).json({ message: "Failed to get claim requests" });
+    }
+  });
+
+  // Get single claim request (admin only)
+  app.get("/api/admin/claim-requests/:id", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
+
+      const claimRequest = await storage.getClaimRequest(id);
+      if (!claimRequest) {
+        return res.status(404).json({ message: "Claim request not found" });
+      }
+
+      res.json(claimRequest);
+    } catch (error) {
+      console.error("Error getting claim request:", error);
+      res.status(500).json({ message: "Failed to get claim request" });
+    }
+  });
+
+  // Update claim request status (admin only)
+  app.patch("/api/admin/claim-requests/:id/status", authService.requireRole(['admin']), async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status, adminNotes } = req.body;
+      const reviewedBy = req.user?.id;
+
+      if (isNaN(id) || !status) {
+        return res.status(400).json({ message: "Invalid parameters" });
+      }
+
+      await storage.updateClaimRequestStatus(id, status, adminNotes, reviewedBy);
+      res.json({ success: true, message: "Claim request status updated" });
+    } catch (error) {
+      console.error("Error updating claim request status:", error);
+      res.status(500).json({ message: "Failed to update claim request status" });
+    }
+  });
+
+  // Approve claim request (admin only)
+  app.post("/api/admin/claim-requests/:id/approve", authService.requireRole(['admin']), async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.user?.id;
+
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
+
+      const success = await storage.approveClaimRequest(id, userId);
+      if (success) {
+        res.json({ success: true, message: "Claim request approved and profile assigned" });
+      } else {
+        res.status(400).json({ success: false, message: "Failed to approve claim request" });
+      }
+    } catch (error) {
+      console.error("Error approving claim request:", error);
+      res.status(500).json({ message: "Failed to approve claim request" });
+    }
+  });
+
+  // Delete claim request (admin only)
+  app.delete("/api/admin/claim-requests/:id", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
+
+      await storage.deleteClaimRequest(id);
+      res.json({ success: true, message: "Claim request deleted" });
+    } catch (error) {
+      console.error("Error deleting claim request:", error);
+      res.status(500).json({ message: "Failed to delete claim request" });
     }
   });
 

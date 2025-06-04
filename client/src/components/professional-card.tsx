@@ -16,8 +16,9 @@ export default function ProfessionalCard({ professional }: ProfessionalCardProps
     : "Prezzo su richiesta";
 
   return (
-    <Card className="hover:shadow-xl transition-shadow">
-      <CardContent className="p-6">
+    <Link href={`/professional/${professional.id}`}>
+      <Card className="hover:shadow-xl transition-shadow cursor-pointer">
+        <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
@@ -63,13 +64,12 @@ export default function ProfessionalCard({ professional }: ProfessionalCardProps
             <Euro className="w-4 h-4 mr-1" />
             {priceRange}
           </div>
-          <Link href={`/professionals/${professional.id}`}>
-            <Button className="bg-blue-600 text-white hover:bg-blue-700">
-              Vedi Profilo
-            </Button>
-          </Link>
+          <Button className="bg-blue-600 text-white hover:bg-blue-700">
+            Vedi Profilo
+          </Button>
         </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }

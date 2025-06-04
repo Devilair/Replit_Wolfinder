@@ -1,479 +1,305 @@
-import { useParams } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
-import StarRating from "@/components/star-rating";
-import ReviewCard from "@/components/review-card";
+import { useQuery } from "@tanstack/react-query";
+import { useParams, useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { 
   MapPin, 
   Phone, 
   Mail, 
   Globe, 
-  Shield, 
   Star, 
+  MessageSquare,
   Euro,
-  MessageCircle,
-  Calendar,
-  Users
+  Clock,
+  Shield,
+  User,
+  Building
 } from "lucide-react";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import type { ProfessionalWithDetails } from "@shared/schema";
-
-const reviewSchema = z.object({
-  userId: z.number().min(1, "User ID richiesto"),
-  rating: z.number().min(1).max(5),
-  title: z.string().min(1, "Titolo richiesto"),
-  content: z.string().min(10, "La recensione deve essere di almeno 10 caratteri"),
-});
+import { useState } from "react";
+import ClaimProfileDialog from "@/components/claim-profile-dialog";
 
 export default function ProfessionalProfile() {
-  const params = useParams();
-  const { toast } = useToast();
-  const professionalId = parseInt(params.id as string);
+  const { id } = useParams();
+  const [, setLocation] = useLocation();
+  const [showClaimDialog, setShowClaimDialog] = useState(false);
 
-  const { data: professional, isLoading } = useQuery<ProfessionalWithDetails>({
-    queryKey: ["/api/professionals", professionalId],
-    queryFn: async () => {
-      const response = await fetch(`/api/professionals/${professionalId}`);
-      if (!response.ok) throw new Error('Professional not found');
-      return response.json();
-    },
-    enabled: !isNaN(professionalId),
+  const { data: professional, isLoading } = useQuery({
+    queryKey: ["/api/professionals", id],
+    enabled: !!id,
   });
-
-  const form = useForm<z.infer<typeof reviewSchema>>({
-    resolver: zodResolver(reviewSchema),
-    defaultValues: {
-      userId: 1, // For demo purposes - in real app this would come from auth
-      rating: 5,
-      title: "",
-      content: "",
-    },
-  });
-
-  const reviewMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof reviewSchema>) => {
-      await apiRequest("POST", `/api/professionals/${professionalId}/reviews`, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/professionals", professionalId] });
-      form.reset();
-      toast({
-        title: "Recensione pubblicata",
-        description: "La tua recensione è stata pubblicata con successo.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Errore",
-        description: "Si è verificato un errore durante la pubblicazione della recensione.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  if (isNaN(professionalId)) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <Card>
-            <CardContent className="text-center py-12">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">ID Professionista Non Valido</h1>
-              <p className="text-gray-600">L'ID del professionista specificato non è valido.</p>
-            </CardContent>
-          </Card>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <Card className="mb-8">
-            <CardContent className="p-8">
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex items-center">
-                  <Skeleton className="w-20 h-20 rounded-full mr-6" />
-                  <div>
-                    <Skeleton className="h-8 w-64 mb-2" />
-                    <Skeleton className="h-5 w-32 mb-2" />
-                    <Skeleton className="h-4 w-48" />
-                  </div>
-                </div>
-                <Skeleton className="h-8 w-24" />
-              </div>
-              <Skeleton className="h-20 w-full mb-6" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Skeleton className="h-32 w-full" />
-                <Skeleton className="h-32 w-full" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        <Footer />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
 
   if (!professional) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <Card>
-            <CardContent className="text-center py-12">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Professionista Non Trovato</h1>
-              <p className="text-gray-600">Il professionista richiesto non è stato trovato.</p>
-              <Button className="mt-4" onClick={() => window.history.back()}>
-                Torna Indietro
-              </Button>
-            </CardContent>
-          </Card>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Professionista non trovato</h1>
+          <p className="text-gray-600 mb-4">Il professionista che stai cercando non esiste.</p>
+          <Button onClick={() => setLocation("/")}>Torna alla home</Button>
         </div>
-        <Footer />
       </div>
     );
   }
 
-  const priceRange = professional.priceRangeMin && professional.priceRangeMax
-    ? `€${professional.priceRangeMin}-${professional.priceRangeMax}/${professional.priceUnit}`
-    : "Prezzo su richiesta";
+  const renderStars = (rating: number) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star
+        key={i}
+        className={`w-5 h-5 ${
+          i < Math.floor(rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+        }`}
+      />
+    ));
+  };
+
+  const formatPrice = (min?: number, max?: number, unit?: string) => {
+    if (!min && !max) return "Prezzo su richiesta";
+    if (min && max && min !== max) {
+      return `€${min} - €${max}${unit ? `/${unit}` : ""}`;
+    }
+    return `€${min || max}${unit ? `/${unit}` : ""}`;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Professional Header */}
-        <Card className="mb-8">
-          <CardContent className="p-8">
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex items-center">
-                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mr-6">
-                  <span className="text-2xl font-bold text-blue-600">
-                    {professional.businessName.charAt(0)}
-                  </span>
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    {professional.businessName}
-                  </h1>
-                  <p className="text-lg text-gray-600 mb-1">{professional.category.name}</p>
-                  <div className="flex items-center text-gray-500">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    {professional.city}, {professional.province}
-                  </div>
-                </div>
-              </div>
-              <div className="text-right">
-                {professional.isVerified && (
-                  <Badge className="bg-green-100 text-green-700 mb-2">
-                    <Shield className="w-3 h-3 mr-1" />
-                    Verificato
+        {/* Back Button */}
+        <Button 
+          variant="ghost" 
+          onClick={() => setLocation("/")}
+          className="mb-6"
+        >
+          ← Torna ai risultati
+        </Button>
+
+        {/* Header Card */}
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <CardTitle className="text-2xl font-bold text-gray-900 mb-2">
+                  {professional.businessName}
+                </CardTitle>
+                <div className="flex items-center gap-2 mb-3">
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                    {professional.category?.name}
                   </Badge>
-                )}
-                {!professional.isClaimed && (
-                  <Badge variant="outline" className="mb-2 ml-2">
-                    Profilo non reclamato
-                  </Badge>
-                )}
-                <div className="flex items-center justify-end mb-1">
-                  <StarRating rating={Number(professional.rating)} size="sm" />
-                  <span className="ml-2 font-semibold">{Number(professional.rating).toFixed(1)}</span>
+                  {professional.isVerified && (
+                    <Badge variant="default" className="bg-green-100 text-green-800">
+                      <Shield className="w-3 h-3 mr-1" />
+                      Verificato
+                    </Badge>
+                  )}
+                  {!professional.isClaimed && (
+                    <Badge variant="outline" className="border-orange-300 text-orange-600">
+                      <User className="w-3 h-3 mr-1" />
+                      Non reclamato
+                    </Badge>
+                  )}
                 </div>
-                <p className="text-sm text-gray-500 mb-3">
-                  {professional.reviewCount} recensioni
-                </p>
-                {!professional.isClaimed && (
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => window.location.href = `/reclama-profilo/${professionalId}`}
-                    className="w-full"
-                  >
-                    <Users className="w-4 h-4 mr-2" />
-                    Reclama Profilo
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <p className="text-gray-700 mb-6 leading-relaxed">
-              {professional.description}
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Contact Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Contatti</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {professional.phone && (
-                    <div className="flex items-center">
-                      <Phone className="w-4 h-4 mr-3 text-gray-400" />
-                      <span>{professional.phone}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center">
-                    <Mail className="w-4 h-4 mr-3 text-gray-400" />
-                    <span>{professional.email}</span>
-                  </div>
-                  {professional.website && (
-                    <div className="flex items-center">
-                      <Globe className="w-4 h-4 mr-3 text-gray-400" />
-                      <a 
-                        href={professional.website} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        Sito Web
-                      </a>
-                    </div>
-                  )}
-                  <div className="flex items-center">
-                    <MapPin className="w-4 h-4 mr-3 text-gray-400" />
-                    <span>{professional.address}</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Price and Actions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Servizi</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center">
-                    <Euro className="w-4 h-4 mr-3 text-gray-400" />
-                    <span className="font-semibold text-lg text-blue-600">
-                      {priceRange}
+                
+                {/* Rating */}
+                {professional.rating > 0 && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex">{renderStars(professional.rating)}</div>
+                    <span className="text-sm text-gray-600">
+                      {professional.rating.toFixed(1)} ({professional.reviewCount} recensioni)
                     </span>
                   </div>
-                  <Separator />
-                  <div className="space-y-2">
-                    <Button className="w-full" size="lg">
-                      <Phone className="w-4 h-4 mr-2" />
-                      Contatta Ora
-                    </Button>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" className="w-full" size="lg">
-                          <MessageCircle className="w-4 h-4 mr-2" />
-                          Scrivi Recensione
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Scrivi una Recensione</DialogTitle>
-                        </DialogHeader>
-                        <Form {...form}>
-                          <form onSubmit={form.handleSubmit((data) => reviewMutation.mutate(data))} className="space-y-4">
-                            <FormField
-                              control={form.control}
-                              name="rating"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Valutazione</FormLabel>
-                                  <FormControl>
-                                    <div className="flex items-center space-x-1">
-                                      {[1, 2, 3, 4, 5].map((star) => (
-                                        <button
-                                          key={star}
-                                          type="button"
-                                          onClick={() => field.onChange(star)}
-                                          className={`w-8 h-8 ${
-                                            star <= field.value
-                                              ? "text-amber-400"
-                                              : "text-gray-300"
-                                          }`}
-                                        >
-                                          <Star className="w-full h-full fill-current" />
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="title"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Titolo</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Titolo della recensione" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="content"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Recensione</FormLabel>
-                                  <FormControl>
-                                    <Textarea 
-                                      placeholder="Descrivi la tua esperienza..."
-                                      className="min-h-[100px]"
-                                      {...field}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <Button 
-                              type="submit" 
-                              className="w-full"
-                              disabled={reviewMutation.isPending}
-                            >
-                              {reviewMutation.isPending ? "Pubblicazione..." : "Pubblica Recensione"}
-                            </Button>
-                          </form>
-                        </Form>
-                      </DialogContent>
-                    </Dialog>
+                )}
+
+                {/* Location */}
+                <div className="flex items-center gap-2 text-gray-600">
+                  <MapPin className="w-4 h-4" />
+                  <span>{professional.address}, {professional.city} ({professional.province})</span>
+                </div>
+              </div>
+
+              {/* Claim Button */}
+              {!professional.isClaimed && (
+                <Button 
+                  onClick={() => setShowClaimDialog(true)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Reclama questo profilo
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Main Content */}
+        <div className="grid md:grid-cols-3 gap-6">
+          {/* Left Column - Main Info */}
+          <div className="md:col-span-2 space-y-6">
+            {/* Description */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building className="w-5 h-5" />
+                  Descrizione
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700 leading-relaxed">
+                  {professional.description || "Nessuna descrizione disponibile."}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Services */}
+            {professional.services && professional.services.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Servizi offerti</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {professional.services.map((service: string, index: number) => (
+                      <Badge key={index} variant="outline">
+                        {service}
+                      </Badge>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Reviews */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageCircle className="w-5 h-5" />
-              Recensioni ({professional.reviewCount})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {professional.reviews.length > 0 ? (
-              <div className="space-y-6">
-                {professional.reviews.map((review) => (
-                  <ReviewCard key={review.id} review={review} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Nessuna recensione ancora
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Sii il primo a lasciare una recensione per questo professionista.
-                </p>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button>Scrivi la Prima Recensione</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Scrivi una Recensione</DialogTitle>
-                    </DialogHeader>
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit((data) => reviewMutation.mutate(data))} className="space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="rating"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Valutazione</FormLabel>
-                              <FormControl>
-                                <div className="flex items-center space-x-1">
-                                  {[1, 2, 3, 4, 5].map((star) => (
-                                    <button
-                                      key={star}
-                                      type="button"
-                                      onClick={() => field.onChange(star)}
-                                      className={`w-8 h-8 ${
-                                        star <= field.value
-                                          ? "text-amber-400"
-                                          : "text-gray-300"
-                                      }`}
-                                    >
-                                      <Star className="w-full h-full fill-current" />
-                                    </button>
-                                  ))}
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="title"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Titolo</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Titolo della recensione" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="content"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Recensione</FormLabel>
-                              <FormControl>
-                                <Textarea 
-                                  placeholder="Descrivi la tua esperienza..."
-                                  className="min-h-[100px]"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button 
-                          type="submit" 
-                          className="w-full"
-                          disabled={reviewMutation.isPending}
-                        >
-                          {reviewMutation.isPending ? "Pubblicazione..." : "Pubblica Recensione"}
-                        </Button>
-                      </form>
-                    </Form>
-                  </DialogContent>
-                </Dialog>
-              </div>
             )}
-          </CardContent>
-        </Card>
+
+            {/* Reviews Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  Recensioni ({professional.reviewCount})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {professional.reviews && professional.reviews.length > 0 ? (
+                  <div className="space-y-4">
+                    {professional.reviews.map((review: any) => (
+                      <div key={review.id} className="border-b pb-4 last:border-b-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{review.user?.name || "Utente anonimo"}</span>
+                            <div className="flex">{renderStars(review.rating)}</div>
+                          </div>
+                          <span className="text-sm text-gray-500">
+                            {new Date(review.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        {review.title && (
+                          <h4 className="font-medium mb-1">{review.title}</h4>
+                        )}
+                        <p className="text-gray-700">{review.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-8">
+                    Nessuna recensione disponibile
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Contact & Info */}
+          <div className="space-y-6">
+            {/* Contact Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Contatti</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {professional.phone && (
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-4 h-4 text-gray-500" />
+                    <a href={`tel:${professional.phone}`} className="text-blue-600 hover:underline">
+                      {professional.phone}
+                    </a>
+                  </div>
+                )}
+                {professional.email && (
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-4 h-4 text-gray-500" />
+                    <a href={`mailto:${professional.email}`} className="text-blue-600 hover:underline">
+                      {professional.email}
+                    </a>
+                  </div>
+                )}
+                {professional.website && (
+                  <div className="flex items-center gap-3">
+                    <Globe className="w-4 h-4 text-gray-500" />
+                    <a 
+                      href={professional.website} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      Sito web
+                    </a>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Pricing */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Euro className="w-5 h-5" />
+                  Tariffe
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg font-medium text-gray-900">
+                  {formatPrice(professional.priceRangeMin, professional.priceRangeMax, professional.priceUnit)}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Additional Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Informazioni aggiuntive</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Clock className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm">
+                    Su Wolfinder dal {new Date(professional.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                {professional.yearsOfExperience && (
+                  <div className="flex items-center gap-3">
+                    <User className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm">
+                      {professional.yearsOfExperience} anni di esperienza
+                    </span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
 
-      <Footer />
+      {/* Claim Profile Dialog */}
+      <ClaimProfileDialog
+        isOpen={showClaimDialog}
+        onClose={() => setShowClaimDialog(false)}
+        professional={professional}
+      />
     </div>
   );
 }

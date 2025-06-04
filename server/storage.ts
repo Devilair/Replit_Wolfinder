@@ -1506,6 +1506,93 @@ export class DatabaseStorage implements IStorage {
       .set(updateData)
       .where(eq(professionals.id, professionalId));
   }
+
+  // Claim Profile Management
+  async createClaimRequest(request: InsertClaimRequest): Promise<ClaimRequest> {
+    const [claimRequest] = await db
+      .insert(claimRequests)
+      .values(request)
+      .returning();
+    return claimRequest;
+  }
+
+  async getClaimRequests(status?: string): Promise<(ClaimRequest & { professional: Professional & { category: Category } })[]> {
+    let query = db
+      .select()
+      .from(claimRequests)
+      .leftJoin(professionals, eq(claimRequests.professionalId, professionals.id))
+      .leftJoin(categories, eq(professionals.categoryId, categories.id));
+
+    if (status) {
+      query = query.where(eq(claimRequests.status, status));
+    }
+
+    const results = await query.orderBy(desc(claimRequests.createdAt));
+    
+    return results.map(result => ({
+      ...result.claim_requests,
+      professional: {
+        ...result.professionals!,
+        category: result.categories!
+      }
+    }));
+  }
+
+  async getClaimRequest(id: number): Promise<ClaimRequest | undefined> {
+    const [claimRequest] = await db
+      .select()
+      .from(claimRequests)
+      .where(eq(claimRequests.id, id));
+    return claimRequest;
+  }
+
+  async updateClaimRequestStatus(id: number, status: string, adminNotes?: string, reviewedBy?: number): Promise<void> {
+    await db
+      .update(claimRequests)
+      .set({
+        status,
+        adminNotes,
+        reviewedBy,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(claimRequests.id, id));
+  }
+
+  async deleteClaimRequest(id: number): Promise<void> {
+    await db
+      .delete(claimRequests)
+      .where(eq(claimRequests.id, id));
+  }
+
+  async approveClaimRequest(id: number, userId: number): Promise<boolean> {
+    try {
+      const claimRequest = await this.getClaimRequest(id);
+      if (!claimRequest) {
+        return false;
+      }
+
+      // Approva la richiesta
+      await this.updateClaimRequestStatus(id, 'approved', 'Profilo approvato e assegnato', userId);
+      
+      // Assegna il profilo all'utente
+      await this.updateProfessionalClaimStatus(claimRequest.professionalId, true, userId);
+      
+      // Aggiorna il campo userId del professionista
+      await db
+        .update(professionals)
+        .set({
+          userId: userId,
+          updatedAt: new Date(),
+        })
+        .where(eq(professionals.id, claimRequest.professionalId));
+
+      return true;
+    } catch (error) {
+      console.error('Error approving claim request:', error);
+      return false;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
