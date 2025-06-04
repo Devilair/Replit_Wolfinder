@@ -753,10 +753,10 @@ export default function AdminProfessionalsAdvanced() {
                       {selectedProfessional.isSuspended && (
                         <Badge variant="destructive">Sospeso</Badge>
                       )}
-                      {selectedProfessional.subscription?.status === 'active' && (
+                      {selectedProfessional.subscription?.status === 'active' && selectedProfessional.subscription.plan?.name && (
                         <Badge variant="outline" className="text-purple-600">
                           <Crown className="h-3 w-3 mr-1" />
-                          {selectedProfessional.subscription.plan?.name || 'Premium'}
+                          {selectedProfessional.subscription.plan.name}
                         </Badge>
                       )}
                     </div>

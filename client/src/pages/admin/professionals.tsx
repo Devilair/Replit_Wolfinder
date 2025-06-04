@@ -520,8 +520,10 @@ export default function AdminProfessionals() {
                             Non verificato
                           </Badge>
                         )}
-                        {professional.isPremium && (
-                          <Badge className="bg-amber-100 text-amber-700">Premium</Badge>
+                        {professional.subscription?.status === 'active' && (
+                          <Badge className="bg-amber-100 text-amber-700">
+                            {professional.subscription.plan?.name || 'Abbonamento Attivo'}
+                          </Badge>
                         )}
                       </div>
                     </TableCell>
