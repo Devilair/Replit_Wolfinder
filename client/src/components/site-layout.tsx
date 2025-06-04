@@ -116,6 +116,7 @@ export default function SiteLayout({ children }: SiteLayoutProps) {
                 <p className="text-gray-600">Ferrara & Livorno</p>
                 <p className="text-gray-600">Italia</p>
                 <Link href="/privacy" className="block text-gray-600 hover:text-gray-900 transition-colors">Privacy Policy</Link>
+                <Link href="/terms" className="block text-gray-600 hover:text-gray-900 transition-colors">Termini e Condizioni</Link>
               </div>
             </div>
           </div>
