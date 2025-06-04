@@ -160,7 +160,7 @@ export default function AdminProfessionalsAdvanced() {
   const verifiedProfessionals = (professionals as any[]).filter((p: any) => p.isVerified).length;
   const pendingProfessionals = (professionals as any[]).filter((p: any) => !p.isVerified).length;
   const suspendedProfessionals = (professionals as any[]).filter((p: any) => p.isSuspended).length;
-  const premiumProfessionals = Math.floor(totalProfessionals * 0.25); // Simulated
+  const premiumProfessionals = (professionals as any[]).filter((p: any) => p.subscription?.status === 'active').length;
 
   const renderStars = (rating: number) => {
     return (
@@ -753,10 +753,12 @@ export default function AdminProfessionalsAdvanced() {
                       {selectedProfessional.isSuspended && (
                         <Badge variant="destructive">Sospeso</Badge>
                       )}
-                      <Badge variant="outline" className="text-purple-600">
-                        <Crown className="h-3 w-3 mr-1" />
-                        Premium
-                      </Badge>
+                      {selectedProfessional.subscription?.status === 'active' && (
+                        <Badge variant="outline" className="text-purple-600">
+                          <Crown className="h-3 w-3 mr-1" />
+                          {selectedProfessional.subscription.plan?.name || 'Premium'}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <div className="flex space-x-2">
