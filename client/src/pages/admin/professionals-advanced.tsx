@@ -836,11 +836,11 @@ export default function AdminProfessionalsAdvanced() {
                         </div>
                         <div className="flex items-center justify-between">
                           <span>Visualizzazioni profilo:</span>
-                          <span className="font-medium">1,234</span>
+                          <span className="font-medium">{selectedProfessional.profileViews || 0}</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span>Click contatti:</span>
-                          <span className="font-medium">87</span>
+                          <span className="font-medium">0</span>
                         </div>
                       </CardContent>
                     </Card>
@@ -858,26 +858,16 @@ export default function AdminProfessionalsAdvanced() {
                     </CardContent>
                   </Card>
 
-                  {/* Timeline attività recenti */}
+                  {/* Attività Recenti - Solo dati reali */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">Attività Recenti</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-center space-x-3 text-sm">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-gray-500">2 ore fa</span>
-                        <span>Nuova recensione ricevuta (5 stelle)</span>
-                      </div>
-                      <div className="flex items-center space-x-3 text-sm">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <span className="text-gray-500">1 giorno fa</span>
-                        <span>Profilo visualizzato 23 volte</span>
-                      </div>
-                      <div className="flex items-center space-x-3 text-sm">
-                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                        <span className="text-gray-500">3 giorni fa</span>
-                        <span>Aggiornamento informazioni di contatto</span>
+                    <CardContent>
+                      <div className="text-center py-8">
+                        <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500">Nessuna attività recente registrata</p>
+                        <p className="text-sm text-gray-400 mt-2">Le attività del professionista appariranno qui</p>
                       </div>
                     </CardContent>
                   </Card>
