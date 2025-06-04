@@ -510,27 +510,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getReviewsByProfessional(professionalId: number): Promise<(Review & { user: User })[]> {
-    const results = await db
-      .select({
-        id: reviews.id,
-        professionalId: reviews.professionalId,
-        userId: reviews.userId,
-        rating: reviews.rating,
-        title: reviews.title,
-        content: reviews.content,
-        isVerified: reviews.isVerified,
-        createdAt: reviews.createdAt,
-        user: users,
-      })
+    const reviewsResult = await db
+      .select()
       .from(reviews)
-      .leftJoin(users, eq(reviews.userId, users.id))
       .where(eq(reviews.professionalId, professionalId))
       .orderBy(desc(reviews.createdAt));
 
-    return results.map(result => ({
-      ...result,
-      user: result.user!,
-    }));
+    const reviewsWithUsers = [];
+    for (const review of reviewsResult) {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, review.userId));
+      
+      if (user) {
+        reviewsWithUsers.push({
+          ...review,
+          user
+        });
+      }
+    }
+
+    return reviewsWithUsers;
   }
 
   async createReview(insertReview: InsertReview): Promise<Review> {

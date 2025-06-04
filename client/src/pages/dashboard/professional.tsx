@@ -1,219 +1,204 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Star, Eye, MessageSquare, Settings, Edit, CheckCircle, AlertCircle, Camera, FileText, Shield } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useState } from "react";
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { 
+  User, 
+  Star, 
+  Eye, 
+  MessageSquare, 
+  TrendingUp, 
+  Calendar,
+  Edit,
+  Camera,
+  Shield,
+  CheckCircle,
+  AlertCircle,
+  Mail,
+  Phone,
+  MapPin
+} from 'lucide-react';
+
+interface ProfessionalData {
+  id: number;
+  businessName: string;
+  description: string;
+  phone: string;
+  address: string;
+  email: string;
+  isVerified: boolean;
+  rating: number;
+  reviewCount: number;
+  priceRangeMin: string;
+  priceRangeMax: string;
+  profileViews: number;
+}
+
+interface ReviewData {
+  id: number;
+  rating: number;
+  title: string;
+  content: string;
+  createdAt: string;
+  user: {
+    id: number;
+    name: string;
+  };
+}
+
+interface UserData {
+  id: number;
+  name: string;
+  email: string;
+}
 
 export default function ProfessionalDashboard() {
-  const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
-    businessName: "",
-    description: "",
-    phone: "",
-    address: "",
+    businessName: '',
+    description: '',
+    phone: '',
+    address: ''
   });
 
-  const { data: professionalData, isLoading } = useQuery({
-    queryKey: ["/api/professional/profile"],
+  // Fetch user data
+  const { data: user, isLoading: userLoading } = useQuery<UserData>({
+    queryKey: ['/api/auth/user'],
+    retry: false,
+  });
+
+  // Fetch professional profile
+  const { data: professionalData, isLoading: profileLoading } = useQuery<ProfessionalData>({
+    queryKey: ['/api/professional/profile'],
     enabled: !!user,
   });
 
-  const { data: reviews } = useQuery({
-    queryKey: ["/api/professional/reviews"],
+  // Fetch reviews
+  const { data: reviews = [], isLoading: reviewsLoading } = useQuery<ReviewData[]>({
+    queryKey: ['/api/professional/reviews'],
     enabled: !!user,
   });
 
-  // Mutations for professional actions
+  // Update profile mutation
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return apiRequest("PUT", "/api/professional/profile", data);
+    mutationFn: async (data: typeof editFormData) => {
+      const response = await apiRequest('PUT', '/api/professional/profile', data);
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/professional/profile"] });
-      setIsEditDialogOpen(false);
       toast({
         title: "Profilo aggiornato",
-        description: "Le informazioni del profilo sono state aggiornate con successo",
+        description: "Le informazioni del profilo sono state salvate con successo",
       });
+      queryClient.invalidateQueries({ queryKey: ['/api/professional/profile'] });
+      setIsEditDialogOpen(false);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: "Errore",
-        description: error.message || "Errore durante l'aggiornamento del profilo",
+        description: "Si è verificato un errore durante l'aggiornamento del profilo",
         variant: "destructive",
       });
-    },
+    }
   });
 
-  const requestVerificationMutation = useMutation({
-    mutationFn: async () => {
-      return apiRequest("POST", "/api/professional/request-verification");
+  // Upload photo mutation
+  const uploadPhotoMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await apiRequest('POST', '/api/professional/upload-photo', formData);
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/professional/profile"] });
+      toast({
+        title: "Foto caricata",
+        description: "La foto del profilo è stata aggiornata con successo",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/professional/profile'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Errore",
+        description: "Si è verificato un errore durante il caricamento della foto",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Request verification mutation
+  const requestVerificationMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/professional/request-verification', {});
+      return response.json();
+    },
+    onSuccess: () => {
       toast({
         title: "Richiesta inviata",
         description: "La richiesta di verifica è stata inviata all'amministrazione",
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: "Errore",
-        description: error.message || "Errore durante l'invio della richiesta",
+        description: "Si è verificato un errore durante l'invio della richiesta",
         variant: "destructive",
       });
-    },
-  });
-
-  const uploadPhotoMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      return apiRequest("POST", "/api/professional/upload-photo", formData);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/professional/profile"] });
-      toast({
-        title: "Foto caricata",
-        description: "La foto del profilo è stata caricata con successo",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Errore",
-        description: error.message || "Errore durante il caricamento della foto",
-        variant: "destructive",
-      });
-    },
+    }
   });
 
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const formData = new FormData();
-      formData.append("photo", file);
+      formData.append('photo', file);
       uploadPhotoMutation.mutate(formData);
     }
   };
 
-  // Calculate profile completion based on actual data
-  const getProfileCompletionStatus = () => {
-    if (!professionalData) return {};
-    
-    return {
-      basicInfo: professionalData.businessName && professionalData.email,
-      description: professionalData.description && professionalData.description.length > 50,
-      verification: professionalData.isVerified,
-      pricing: professionalData.priceRangeMin || professionalData.priceRangeMax
-    };
-  };
-
-  const profileStatus = getProfileCompletionStatus();
-
-  if (isLoading) {
+  if (userLoading || profileLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!user || !professionalData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Accesso negato</h2>
+          <p className="text-gray-600">Non hai un profilo professionale registrato.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-12 w-12">
-              <AvatarFallback className="bg-blue-600 text-white">
-                {user?.name?.charAt(0).toUpperCase() || "P"}
-              </AvatarFallback>
-            </Avatar>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Dashboard Professionista
-              </h1>
-              <p className="text-gray-600">Benvenuto, {user?.name || "Professionista"}</p>
+              <h1 className="text-3xl font-bold text-gray-900">Dashboard Professionista</h1>
+              <p className="text-gray-600 mt-1">Benvenuto, {user.name}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-500">Ultimo accesso</p>
+              <p className="text-sm font-medium">Oggi</p>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4 mr-2" />
-              Impostazioni
-            </Button>
-            <Button size="sm">
-              <Edit className="h-4 w-4 mr-2" />
-              Modifica Profilo
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Stats Overview - Only Real Data */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Visualizzazioni</CardTitle>
-              <Eye className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{professionalData?.profileViews || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Visualizzazioni totali profilo
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Recensioni</CardTitle>
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{professionalData?.reviewCount || 0}</div>
-              <div className="flex items-center mt-1">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span className="text-sm ml-1">{professionalData?.rating ? Number(professionalData.rating).toFixed(1) : "0.0"}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Contatti</CardTitle>
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                Contatti ricevuti
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Posizione</CardTitle>
-              <Eye className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">-</div>
-              <p className="text-xs text-muted-foreground">
-                Nella tua categoria
-              </p>
-            </CardContent>
-          </Card>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
@@ -223,223 +208,273 @@ export default function ProfessionalDashboard() {
             <TabsTrigger value="profile">Profilo</TabsTrigger>
           </TabsList>
 
+          {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Profile Status */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Profile Views */}
               <Card>
-                <CardHeader>
-                  <CardTitle>Stato del Profilo</CardTitle>
-                  <CardDescription>
-                    Completa il tuo profilo per aumentare la visibilità
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <FileText className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">Informazioni di base</span>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <Eye className="h-8 w-8 text-blue-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Visualizzazioni Profilo</p>
+                      <p className="text-2xl font-bold">{professionalData.profileViews || 0}</p>
                     </div>
-                    {profileStatus.basicInfo ? (
-                      <Badge variant="default" className="bg-green-100 text-green-800">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Completato
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        Incompleto
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <FileText className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">Descrizione servizi</span>
-                    </div>
-                    {profileStatus.description ? (
-                      <Badge variant="default" className="bg-green-100 text-green-800">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Completato
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        Incompleto
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Shield className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">Verifica identità</span>
-                    </div>
-                    {profileStatus.verification ? (
-                      <Badge variant="default" className="bg-green-100 text-green-800">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Verificato
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        In attesa
-                      </Badge>
-                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Quick Actions */}
+              {/* Reviews */}
               <Card>
-                <CardHeader>
-                  <CardTitle>Azioni Rapide</CardTitle>
-                  <CardDescription>
-                    Strumenti per migliorare la tua presenza online
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => {
-                      toast({
-                        title: "Funzionalità in sviluppo",
-                        description: "Sarà disponibile nella prossima versione",
-                      });
-                    }}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Aggiorna informazioni profilo
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => {
-                      toast({
-                        title: "Funzionalità in sviluppo",
-                        description: "Sarà disponibile nella prossima versione",
-                      });
-                    }}
-                  >
-                    <Camera className="h-4 w-4 mr-2" />
-                    Carica foto profilo
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => {
-                      toast({
-                        title: "Contatta l'amministrazione",
-                        description: "Per avviare il processo di verifica, contatta l'amministrazione",
-                      });
-                    }}
-                  >
-                    <Shield className="h-4 w-4 mr-2" />
-                    Richiedi verifica
-                  </Button>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <MessageSquare className="h-8 w-8 text-green-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Recensioni</p>
+                      <p className="text-2xl font-bold">{professionalData.reviewCount || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Rating */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <Star className="h-8 w-8 text-yellow-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Valutazione Media</p>
+                      <p className="text-2xl font-bold">{professionalData.rating || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Verification Status */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <Shield className="h-8 w-8 text-purple-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Stato Verifica</p>
+                      {professionalData.isVerified ? (
+                        <Badge variant="default">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Verificato
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          In attesa
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
 
-          <TabsContent value="reviews" className="space-y-6">
+            {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle>Recensioni Ricevute</CardTitle>
+                <CardTitle>Azioni Rapide</CardTitle>
                 <CardDescription>
-                  Le recensioni autentiche ricevute dai tuoi clienti
+                  Strumenti per migliorare la tua presenza online
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => {
+                        setEditFormData({
+                          businessName: professionalData.businessName || "",
+                          description: professionalData.description || "",
+                          phone: professionalData.phone || "",
+                          address: professionalData.address || "",
+                        });
+                      }}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Aggiorna informazioni profilo
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Modifica Profilo</DialogTitle>
+                      <DialogDescription>
+                        Aggiorna le informazioni del tuo profilo professionale
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="businessName">Nome Studio/Attività</Label>
+                        <Input
+                          id="businessName"
+                          value={editFormData.businessName}
+                          onChange={(e) => setEditFormData({...editFormData, businessName: e.target.value})}
+                          placeholder="Es. Studio Legale Rossi"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="description">Descrizione</Label>
+                        <Textarea
+                          id="description"
+                          value={editFormData.description}
+                          onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
+                          placeholder="Descrivi i tuoi servizi e la tua esperienza"
+                          rows={4}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="phone">Telefono</Label>
+                        <Input
+                          id="phone"
+                          value={editFormData.phone}
+                          onChange={(e) => setEditFormData({...editFormData, phone: e.target.value})}
+                          placeholder="Es. 0532 123456"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="address">Indirizzo</Label>
+                        <Input
+                          id="address"
+                          value={editFormData.address}
+                          onChange={(e) => setEditFormData({...editFormData, address: e.target.value})}
+                          placeholder="Es. Via Roma 123"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={() => updateProfileMutation.mutate(editFormData)}
+                          disabled={updateProfileMutation.isPending}
+                          className="flex-1"
+                        >
+                          {updateProfileMutation.isPending ? "Aggiornamento..." : "Salva Modifiche"}
+                        </Button>
+                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                          Annulla
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                
+                <div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                    id="photo-upload"
+                  />
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => document.getElementById('photo-upload')?.click()}
+                    disabled={uploadPhotoMutation.isPending}
+                  >
+                    <Camera className="h-4 w-4 mr-2" />
+                    {uploadPhotoMutation.isPending ? "Caricamento..." : "Carica foto profilo"}
+                  </Button>
+                </div>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => requestVerificationMutation.mutate()}
+                  disabled={requestVerificationMutation.isPending || professionalData.isVerified}
+                >
+                  <Shield className="h-4 w-4 mr-2" />
+                  {requestVerificationMutation.isPending ? "Invio richiesta..." : 
+                   professionalData.isVerified ? "Già verificato" : "Richiedi verifica"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Reviews Tab */}
+          <TabsContent value="reviews">
+            <Card>
+              <CardHeader>
+                <CardTitle>Le tue recensioni</CardTitle>
+                <CardDescription>
+                  Recensioni ricevute dai clienti
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {reviews && Array.isArray(reviews) && reviews.length > 0 ? (
-                  <div className="space-y-4">
-                    {reviews.map((review: any) => (
-                      <div key={review.id} className="border-b pb-4 last:border-b-0">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback>
-                                  {review.user?.name?.charAt(0) || "U"}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="font-medium text-sm">{review.user?.name || "Utente"}</p>
-                                <div className="flex items-center">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`h-4 w-4 ${
-                                        i < review.rating
-                                          ? "fill-yellow-400 text-yellow-400"
-                                          : "text-gray-300"
-                                      }`}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                            <p className="text-sm text-gray-600">{review.content}</p>
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            {new Date(review.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                {reviewsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin w-6 h-6 border-4 border-primary border-t-transparent rounded-full" />
+                  </div>
+                ) : reviews.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Nessuna recensione ricevuta</p>
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">Nessuna recensione ancora ricevuta</p>
-                    <p className="text-sm text-gray-400 mt-2">Le recensioni appariranno qui una volta ricevute dai clienti</p>
+                  <div className="space-y-4">
+                    {reviews.map((review) => (
+                      <div key={review.id} className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center">
+                            <div className="flex">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-4 w-4 ${
+                                    i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="ml-2 font-medium">{review.user.name}</span>
+                          </div>
+                          <span className="text-sm text-gray-500">
+                            {new Date(review.createdAt).toLocaleDateString('it-IT')}
+                          </span>
+                        </div>
+                        <h4 className="font-medium mb-1">{review.title}</h4>
+                        <p className="text-gray-600">{review.content}</p>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="profile" className="space-y-6">
+          {/* Profile Tab */}
+          <TabsContent value="profile">
             <Card>
               <CardHeader>
                 <CardTitle>Informazioni Profilo</CardTitle>
                 <CardDescription>
-                  Dati del tuo profilo professionale dal database
+                  Dettagli del tuo profilo professionale
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Nome</label>
-                    <p className="text-sm text-gray-600">{user?.name || "Non specificato"}</p>
-                  </div>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="text-sm font-medium">Email</label>
-                    <p className="text-sm text-gray-600">{user?.email || "Non specificata"}</p>
+                    <p className="text-sm text-gray-600">{user.email || "Non specificata"}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Nome Attività</label>
-                    <p className="text-sm text-gray-600">{professionalData?.businessName || "Non specificato"}</p>
+                    <p className="text-sm text-gray-600">{professionalData.businessName || "Non specificato"}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Stato Verifica</label>
-                    <Badge variant={professionalData?.isVerified ? "default" : "secondary"}>
-                      {professionalData?.isVerified ? "Verificato" : "Non verificato"}
+                    <Badge variant={professionalData.isVerified ? "default" : "secondary"}>
+                      {professionalData.isVerified ? "Verificato" : "Non verificato"}
                     </Badge>
                   </div>
                   <div className="md:col-span-2">
                     <label className="text-sm font-medium">Descrizione</label>
-                    <p className="text-sm text-gray-600">{professionalData?.description || "Nessuna descrizione fornita"}</p>
+                    <p className="text-sm text-gray-600">{professionalData.description || "Nessuna descrizione fornita"}</p>
                   </div>
-                </div>
-                <div className="pt-4">
-                  <Button onClick={() => {
-                    toast({
-                      title: "Funzionalità in sviluppo",
-                      description: "La modifica del profilo sarà disponibile nella prossima versione",
-                    });
-                  }}>Modifica Informazioni</Button>
                 </div>
               </CardContent>
             </Card>
