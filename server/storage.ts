@@ -66,6 +66,7 @@ export interface IStorage {
   claimProfile(professionalId: number, userId: number, token: string): Promise<boolean>;
   getUnclaimedProfessionals(): Promise<Professional[]>;
   updateProfessionalClaimStatus(professionalId: number, claimed: boolean, userId?: number): Promise<void>;
+  createProfessionalWithoutUser(professionalData: any): Promise<Professional>;
 
   // Reviews
   getReviewsByProfessional(professionalId: number): Promise<(Review & { user: User })[]>;
@@ -795,6 +796,66 @@ export class DatabaseStorage implements IStorage {
     }
 
     await db.delete(categories).where(eq(categories.id, id));
+  }
+
+  // Create professional without user account (admin function)
+  async createProfessionalWithoutUser(professionalData: any): Promise<Professional> {
+    const [newProfessional] = await db
+      .insert(professionals)
+      .values({
+        userId: null, // No user account initially
+        categoryId: professionalData.categoryId,
+        businessName: professionalData.businessName,
+        description: professionalData.description,
+        phone: professionalData.phone || null,
+        email: professionalData.email,
+        website: professionalData.website || null,
+        address: professionalData.address,
+        city: professionalData.city,
+        province: professionalData.province,
+        postalCode: professionalData.postalCode,
+        priceRangeMin: professionalData.priceRangeMin ? professionalData.priceRangeMin.toString() : null,
+        priceRangeMax: professionalData.priceRangeMax ? professionalData.priceRangeMax.toString() : null,
+        priceUnit: professionalData.priceUnit || null,
+        isVerified: false,
+        verificationStatus: "pending",
+        verificationNotes: null,
+        verificationDate: null,
+        verifiedBy: null,
+        isPremium: false,
+        rating: "0",
+        reviewCount: 0,
+        profileCompleteness: "60",
+        lastActivityAt: null,
+        profileViews: 0,
+        clickThroughRate: "0",
+        responseRate: "0",
+        averageResponseTime: null,
+        tags: null,
+        socialLinks: null,
+        businessHours: null,
+        certifications: null,
+        languages: null,
+        yearsExperience: null,
+        education: null,
+        awards: null,
+        specializations: null,
+        serviceAreas: null,
+        emergencyAvailable: false,
+        freeConsultation: false,
+        onlineServices: false,
+        adminNotes: null,
+        isClaimed: false,
+        claimedAt: null,
+        claimedBy: null,
+        profileClaimToken: professionalData.profileClaimToken,
+        claimTokenExpiresAt: professionalData.claimTokenExpiresAt,
+        autoNotificationEnabled: true,
+        lastNotificationSent: null,
+      })
+      .returning();
+
+    return newProfessional;
   }
 
   async getRecentActivity(): Promise<any[]> {

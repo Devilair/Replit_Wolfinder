@@ -448,6 +448,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create professional manually (admin only)
+  app.post("/api/admin/professionals", async (req, res) => {
+    try {
+      const professionalData = req.body;
+      
+      // Valida dati richiesti
+      if (!professionalData.businessName || !professionalData.email || !professionalData.categoryId) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Genera token di reclamo automaticamente
+      const claimToken = "CLAIM_" + Math.random().toString(36).substr(2, 16).toUpperCase();
+      const claimTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 giorni
+
+      const newProfessional = await storage.createProfessionalWithoutUser({
+        ...professionalData,
+        isClaimed: false,
+        isVerified: false,
+        verificationStatus: "pending",
+        profileClaimToken: claimToken,
+        claimTokenExpiresAt: claimTokenExpires,
+        autoNotificationEnabled: true,
+        rating: "0",
+        reviewCount: 0,
+        profileViews: 0,
+        profileCompleteness: "60", // Base completeness for admin-created profiles
+      });
+
+      res.status(201).json(newProfessional);
+    } catch (error) {
+      console.error("Error creating professional:", error);
+      res.status(500).json({ message: "Failed to create professional" });
+    }
+  });
+
   // Admin Routes
   
   // Admin Stats

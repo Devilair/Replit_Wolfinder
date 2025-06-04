@@ -224,9 +224,11 @@ export default function AdminProfessionalsAdvanced() {
             <Download className="h-4 w-4 mr-2" />
             Esporta Dati
           </Button>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Aggiungi Professionista
+          <Button asChild>
+            <a href="/admin/add-professional">
+              <Plus className="h-4 w-4 mr-2" />
+              Aggiungi Professionista
+            </a>
           </Button>
         </div>
       </div>
