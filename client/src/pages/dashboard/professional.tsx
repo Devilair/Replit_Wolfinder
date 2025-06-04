@@ -168,7 +168,7 @@ export default function ProfessionalDashboard() {
               <Eye className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.views || 0}</div>
+              <div className="text-2xl font-bold">{professionalData?.profileViews || 0}</div>
               <p className="text-xs text-muted-foreground">
                 Visualizzazioni totali profilo
               </p>
@@ -181,10 +181,10 @@ export default function ProfessionalDashboard() {
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.reviews || 0}</div>
+              <div className="text-2xl font-bold">{professionalData?.reviewCount || 0}</div>
               <div className="flex items-center mt-1">
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span className="text-sm ml-1">{stats?.rating || "N/A"}</span>
+                <span className="text-sm ml-1">{professionalData?.rating ? Number(professionalData.rating).toFixed(1) : "0.0"}</span>
               </div>
             </CardContent>
           </Card>
@@ -195,7 +195,7 @@ export default function ProfessionalDashboard() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.contacts || 0}</div>
+              <div className="text-2xl font-bold">0</div>
               <p className="text-xs text-muted-foreground">
                 Contatti ricevuti
               </p>
@@ -208,7 +208,7 @@ export default function ProfessionalDashboard() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">#{stats?.ranking || "N/A"}</div>
+              <div className="text-2xl font-bold">-</div>
               <p className="text-xs text-muted-foreground">
                 Nella tua categoria
               </p>

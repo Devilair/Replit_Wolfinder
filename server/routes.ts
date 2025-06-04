@@ -484,6 +484,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Professional Dashboard Routes
+  
+  // Get professional profile data
+  app.get("/api/professional/profile", authService.authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const professional = await storage.getProfessionalByUserId(userId);
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+      
+      res.json(professional);
+    } catch (error) {
+      console.error("Error fetching professional profile:", error);
+      res.status(500).json({ message: "Failed to fetch professional profile" });
+    }
+  });
+
+  // Get professional reviews
+  app.get("/api/professional/reviews", authService.authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const professional = await storage.getProfessionalByUserId(userId);
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+      
+      const reviews = await storage.getReviewsByProfessional(professional.id);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching professional reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
   // Admin Routes
   
   // Admin Stats
