@@ -379,6 +379,15 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  async getProfessionalByUserId(userId: number): Promise<Professional | undefined> {
+    const [professional] = await db
+      .select()
+      .from(professionals)
+      .where(eq(professionals.userId, userId));
+    
+    return professional || undefined;
+  }
+
   async getProfessionalsByCategory(categoryId: number): Promise<ProfessionalSummary[]> {
     const results = await db
       .select({

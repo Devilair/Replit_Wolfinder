@@ -1,16 +1,30 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Star, Eye, MessageSquare, Settings, Edit, CheckCircle, AlertCircle, Camera, FileText, Shield } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Star, Eye, MessageSquare, Calendar, Settings, Edit, TrendingUp, CheckCircle, AlertCircle, Camera, FileText, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [editingBasicInfo, setEditingBasicInfo] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [basicInfoForm, setBasicInfoForm] = useState({
+    businessName: "",
+    phone: "",
+    address: ""
+  });
+  const [descriptionForm, setDescriptionForm] = useState("");
 
   const { data: professionalData, isLoading } = useQuery({
     queryKey: ["/api/professional/profile"],
@@ -20,6 +34,49 @@ export default function ProfessionalDashboard() {
   const { data: reviews } = useQuery({
     queryKey: ["/api/professional/reviews"],
     enabled: !!user,
+  });
+
+  // Update profile mutations
+  const updateBasicInfo = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("PUT", "/api/professional/profile", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Informazioni aggiornate",
+        description: "Le tue informazioni di base sono state salvate",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/profile"] });
+      setEditingBasicInfo(false);
+    },
+    onError: () => {
+      toast({
+        title: "Errore nell'aggiornamento",
+        description: "Riprova più tardi",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateDescription = useMutation({
+    mutationFn: async (description: string) => {
+      return await apiRequest("PUT", "/api/professional/profile", { description });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Descrizione aggiornata",
+        description: "La tua descrizione professionale è stata salvata",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/profile"] });
+      setEditingDescription(false);
+    },
+    onError: () => {
+      toast({
+        title: "Errore nell'aggiornamento",
+        description: "Riprova più tardi",
+        variant: "destructive",
+      });
+    },
   });
 
   // Calculate profile completion based on actual data
@@ -161,62 +218,10 @@ export default function ProfessionalDashboard() {
                         Completato
                       </Badge>
                     ) : (
-                      <Dialog open={editingBasicInfo} onOpenChange={setEditingBasicInfo}>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <AlertCircle className="h-3 w-3 mr-1" />
-                            Completa
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Completa Informazioni di Base</DialogTitle>
-                            <DialogDescription>
-                              Inserisci le informazioni principali del tuo profilo professionale
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="businessName">Nome Attività</Label>
-                              <Input
-                                id="businessName"
-                                value={basicInfoForm.businessName}
-                                onChange={(e) => setBasicInfoForm({...basicInfoForm, businessName: e.target.value})}
-                                placeholder="es. Studio Rossi & Associati"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="phone">Telefono</Label>
-                              <Input
-                                id="phone"
-                                value={basicInfoForm.phone}
-                                onChange={(e) => setBasicInfoForm({...basicInfoForm, phone: e.target.value})}
-                                placeholder="es. +39 333 123 4567"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="address">Indirizzo</Label>
-                              <Input
-                                id="address"
-                                value={basicInfoForm.address}
-                                onChange={(e) => setBasicInfoForm({...basicInfoForm, address: e.target.value})}
-                                placeholder="es. Via Roma 123, Ferrara"
-                              />
-                            </div>
-                            <div className="flex justify-end space-x-2">
-                              <Button variant="outline" onClick={() => setEditingBasicInfo(false)}>
-                                Annulla
-                              </Button>
-                              <Button 
-                                onClick={() => updateBasicInfo.mutate(basicInfoForm)}
-                                disabled={updateBasicInfo.isPending}
-                              >
-                                {updateBasicInfo.isPending ? "Salvando..." : "Salva"}
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                      <Badge variant="secondary">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Incompleto
+                      </Badge>
                     )}
                   </div>
                   
@@ -231,75 +236,10 @@ export default function ProfessionalDashboard() {
                         Completato
                       </Badge>
                     ) : (
-                      <Dialog open={editingDescription} onOpenChange={setEditingDescription}>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <AlertCircle className="h-3 w-3 mr-1" />
-                            Completa
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Descrizione Professionale</DialogTitle>
-                            <DialogDescription>
-                              Descrivi i tuoi servizi professionali per attirare più clienti
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="description">Descrizione</Label>
-                              <Textarea
-                                id="description"
-                                value={descriptionForm}
-                                onChange={(e) => setDescriptionForm(e.target.value)}
-                                placeholder="Descrivi la tua esperienza, specializzazioni e servizi offerti..."
-                                rows={6}
-                              />
-                              <p className="text-xs text-gray-500 mt-1">
-                                Minimo 50 caratteri per completare il profilo
-                              </p>
-                            </div>
-                            <div className="flex justify-end space-x-2">
-                              <Button variant="outline" onClick={() => setEditingDescription(false)}>
-                                Annulla
-                              </Button>
-                              <Button 
-                                onClick={() => updateDescription.mutate(descriptionForm)}
-                                disabled={updateDescription.isPending || descriptionForm.length < 50}
-                              >
-                                {updateDescription.isPending ? "Salvando..." : "Salva"}
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Camera className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">Foto profilo</span>
-                    </div>
-                    {profileStatus.profilePhoto ? (
-                      <Badge variant="default" className="bg-green-100 text-green-800">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Completato
-                      </Badge>
-                    ) : (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          toast({
-                            title: "Funzionalità in sviluppo",
-                            description: "Il caricamento delle foto profilo sarà disponibile a breve",
-                          });
-                        }}
-                      >
+                      <Badge variant="secondary">
                         <AlertCircle className="h-3 w-3 mr-1" />
-                        Aggiungi
-                      </Button>
+                        Incompleto
+                      </Badge>
                     )}
                   </div>
 
@@ -314,60 +254,63 @@ export default function ProfessionalDashboard() {
                         Verificato
                       </Badge>
                     ) : (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          toast({
-                            title: "Processo di verifica",
-                            description: "Contatta l'amministrazione per avviare il processo di verifica",
-                          });
-                        }}
-                      >
+                      <Badge variant="secondary">
                         <AlertCircle className="h-3 w-3 mr-1" />
-                        Verifica
-                      </Button>
+                        In attesa
+                      </Badge>
                     )}
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Subscription Upgrade */}
-              <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+              {/* Quick Actions */}
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-blue-900">Potenzia la tua Visibilità</CardTitle>
-                  <CardDescription className="text-blue-700">
-                    Passa al piano Premium per ottenere più clienti
+                  <CardTitle>Azioni Rapide</CardTitle>
+                  <CardDescription>
+                    Strumenti per migliorare la tua presenza online
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      <span className="text-sm text-blue-800">Profilo in evidenza nelle ricerche</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      <span className="text-sm text-blue-800">Badge "Professionista Verificato"</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      <span className="text-sm text-blue-800">Analytics dettagliate sui clienti</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      <span className="text-sm text-blue-800">Contatti diretti illimitati</span>
-                    </div>
-                  </div>
-                  <div className="pt-2">
-                    <Button 
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                      onClick={() => upgradeSubscription.mutate()}
-                      disabled={upgradeSubscription.isPending}
-                    >
-                      {upgradeSubscription.isPending ? "Elaborazione..." : "Upgrade a Premium - €29/mese"}
-                    </Button>
-                  </div>
+                <CardContent className="space-y-3">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => {
+                      toast({
+                        title: "Funzionalità in sviluppo",
+                        description: "Sarà disponibile nella prossima versione",
+                      });
+                    }}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Aggiorna informazioni profilo
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => {
+                      toast({
+                        title: "Funzionalità in sviluppo",
+                        description: "Sarà disponibile nella prossima versione",
+                      });
+                    }}
+                  >
+                    <Camera className="h-4 w-4 mr-2" />
+                    Carica foto profilo
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => {
+                      toast({
+                        title: "Contatta l'amministrazione",
+                        description: "Per avviare il processo di verifica, contatta l'amministrazione",
+                      });
+                    }}
+                  >
+                    <Shield className="h-4 w-4 mr-2" />
+                    Richiedi verifica
+                  </Button>
                 </CardContent>
               </Card>
             </div>
@@ -382,7 +325,7 @@ export default function ProfessionalDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {reviews && reviews.length > 0 ? (
+                {reviews && Array.isArray(reviews) && reviews.length > 0 ? (
                   <div className="space-y-4">
                     {reviews.map((review: any) => (
                       <div key={review.id} className="border-b pb-4 last:border-b-0">
@@ -395,7 +338,7 @@ export default function ProfessionalDashboard() {
                                 </AvatarFallback>
                               </Avatar>
                               <div>
-                                <p className="font-medium text-sm">{review.user?.name}</p>
+                                <p className="font-medium text-sm">{review.user?.name || "Utente"}</p>
                                 <div className="flex items-center">
                                   {[...Array(5)].map((_, i) => (
                                     <Star
@@ -454,8 +397,8 @@ export default function ProfessionalDashboard() {
                   </div>
                   <div>
                     <label className="text-sm font-medium">Stato Verifica</label>
-                    <Badge variant={user?.isVerified ? "default" : "secondary"}>
-                      {user?.isVerified ? "Verificato" : "Non verificato"}
+                    <Badge variant={professionalData?.isVerified ? "default" : "secondary"}>
+                      {professionalData?.isVerified ? "Verificato" : "Non verificato"}
                     </Badge>
                   </div>
                   <div className="md:col-span-2">
@@ -464,7 +407,12 @@ export default function ProfessionalDashboard() {
                   </div>
                 </div>
                 <div className="pt-4">
-                  <Button>Modifica Informazioni</Button>
+                  <Button onClick={() => {
+                    toast({
+                      title: "Funzionalità in sviluppo",
+                      description: "La modifica del profilo sarà disponibile nella prossima versione",
+                    });
+                  }}>Modifica Informazioni</Button>
                 </div>
               </CardContent>
             </Card>
