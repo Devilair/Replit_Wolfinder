@@ -763,6 +763,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/admin/professionals/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid professional ID" });
+      }
+
+      await storage.updateProfessional(id, req.body);
+      
+      // Return the updated professional
+      const updatedProfessional = await storage.getProfessional(id);
+      res.json(updatedProfessional);
+    } catch (error) {
+      console.error("Error updating professional:", error);
+      res.status(500).json({ message: "Failed to update professional" });
+    }
+  });
+
   app.patch("/api/admin/professionals/:id/verify", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
