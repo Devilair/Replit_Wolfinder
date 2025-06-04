@@ -190,13 +190,29 @@ export default function ProfessionalProfile() {
                     Verificato
                   </Badge>
                 )}
+                {!professional.isClaimed && (
+                  <Badge variant="outline" className="mb-2 ml-2">
+                    Profilo non reclamato
+                  </Badge>
+                )}
                 <div className="flex items-center justify-end mb-1">
                   <StarRating rating={Number(professional.rating)} size="sm" />
                   <span className="ml-2 font-semibold">{Number(professional.rating).toFixed(1)}</span>
                 </div>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 mb-3">
                   {professional.reviewCount} recensioni
                 </p>
+                {!professional.isClaimed && (
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => window.location.href = `/reclama-profilo/${professionalId}`}
+                    className="w-full"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Reclama Profilo
+                  </Button>
+                )}
               </div>
             </div>
 

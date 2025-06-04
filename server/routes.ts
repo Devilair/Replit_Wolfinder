@@ -326,10 +326,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid review data", errors: result.error.errors });
       }
 
+      // Get professional details to check if profile is claimed
+      const professional = await storage.getProfessional(professionalId);
+      if (!professional) {
+        return res.status(404).json({ message: "Professional not found" });
+      }
+
+      // Create the review
       const review = await storage.createReview(result.data);
+
+      // Get reviewer details for email notification
+      const reviewer = await storage.getUser(result.data.userId);
+      
+      // Send automatic email notification if profile is unclaimed and has email
+      if (!professional.isClaimed && professional.email && professional.autoNotificationEnabled && reviewer) {
+        try {
+          const { emailService } = await import('./email-service');
+          await emailService.sendNewReviewNotification(
+            professionalId,
+            review.id,
+            professional.email,
+            professional.businessName,
+            reviewer.name,
+            result.data.rating
+          );
+          
+          // Update last notification sent timestamp
+          await storage.updateProfessional(professionalId, {
+            lastNotificationSent: new Date()
+          });
+          
+          console.log(`Email notification sent to unclaimed profile: ${professional.email}`);
+        } catch (emailError) {
+          console.error("Failed to send email notification:", emailError);
+          // Don't fail the review creation if email fails
+        }
+      }
+
       res.status(201).json(review);
     } catch (error) {
+      console.error("Error creating review:", error);
       res.status(500).json({ message: "Failed to create review" });
+    }
+  });
+
+  // Claim Profile Routes
+  
+  // Validate claim token
+  app.post("/api/professionals/:id/validate-claim-token", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      if (isNaN(professionalId)) {
+        return res.status(400).json({ message: "Invalid professional ID" });
+      }
+
+      const { token } = req.body;
+      if (!token) {
+        return res.status(400).json({ message: "Token is required" });
+      }
+
+      const isValid = await storage.validateClaimToken(professionalId, token);
+      res.json({ valid: isValid });
+    } catch (error) {
+      console.error("Error validating claim token:", error);
+      res.status(500).json({ message: "Failed to validate token" });
+    }
+  });
+
+  // Claim professional profile
+  app.post("/api/professionals/:id/claim", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      if (isNaN(professionalId)) {
+        return res.status(400).json({ message: "Invalid professional ID" });
+      }
+
+      const { token } = req.body;
+      if (!token) {
+        return res.status(400).json({ message: "Token is required" });
+      }
+
+      // For demo purposes, using a fixed user ID. In production, this would come from authentication
+      const userId = 1;
+
+      const success = await storage.claimProfile(professionalId, userId, token);
+      if (!success) {
+        return res.status(400).json({ message: "Invalid token or profile already claimed" });
+      }
+
+      res.json({ message: "Profile claimed successfully" });
+    } catch (error) {
+      console.error("Error claiming profile:", error);
+      res.status(500).json({ message: "Failed to claim profile" });
+    }
+  });
+
+  // Generate claim token (admin only)
+  app.post("/api/professionals/:id/generate-claim-token", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      if (isNaN(professionalId)) {
+        return res.status(400).json({ message: "Invalid professional ID" });
+      }
+
+      const token = await storage.generateClaimToken(professionalId);
+      res.json({ token });
+    } catch (error) {
+      console.error("Error generating claim token:", error);
+      res.status(500).json({ message: "Failed to generate claim token" });
+    }
+  });
+
+  // Get unclaimed professionals (admin only)
+  app.get("/api/admin/unclaimed-professionals", async (req, res) => {
+    try {
+      const unclaimedProfessionals = await storage.getUnclaimedProfessionals();
+      res.json(unclaimedProfessionals);
+    } catch (error) {
+      console.error("Error fetching unclaimed professionals:", error);
+      res.status(500).json({ message: "Failed to fetch unclaimed professionals" });
     }
   });
 

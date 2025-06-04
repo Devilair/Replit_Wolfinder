@@ -9,6 +9,7 @@ import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import Professionals from "@/pages/professionals";
 import ProfessionalProfile from "@/pages/professional-profile";
+import ClaimProfile from "@/pages/claim-profile";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdvancedDashboard from "@/pages/admin/advanced-dashboard";
 import AdminProfessionals from "@/pages/admin/professionals-advanced";
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/" component={Landing} />
       <Route path="/professionals" component={Professionals} />
       <Route path="/professionals/:id" component={ProfessionalProfile} />
+      <Route path="/reclama-profilo/:id" component={ClaimProfile} />
       <Route path="/demo/subscription-limits" component={ProfessionalSubscriptionDemo} />
       <Route path="/professional-subscription-demo" component={ProfessionalSubscriptionDemo} />
       
