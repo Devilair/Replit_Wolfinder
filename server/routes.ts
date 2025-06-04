@@ -771,10 +771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await storage.updateProfessional(id, req.body);
-      
-      // Return the updated professional
-      const updatedProfessional = await storage.getProfessional(id);
-      res.json(updatedProfessional);
+      res.json({ message: "Professional updated successfully" });
     } catch (error) {
       console.error("Error updating professional:", error);
       res.status(500).json({ message: "Failed to update professional" });
