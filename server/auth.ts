@@ -62,10 +62,16 @@ export class AuthService {
     categoryId?: number;
   }): Promise<LoginResult> {
     try {
-      // Controlla se l'utente esiste già
-      const existingUser = await db.select().from(users).where(eq(users.email, data.email)).limit(1);
-      if (existingUser.length > 0) {
+      // Controlla se l'email esiste già
+      const existingEmail = await db.select().from(users).where(eq(users.email, data.email)).limit(1);
+      if (existingEmail.length > 0) {
         return { success: false, error: "Email già registrata" };
+      }
+
+      // Controlla se l'username esiste già
+      const existingUsername = await db.select().from(users).where(eq(users.username, data.username)).limit(1);
+      if (existingUsername.length > 0) {
+        return { success: false, error: "Username già in uso" };
       }
 
       const passwordHash = await this.hashPassword(data.password);

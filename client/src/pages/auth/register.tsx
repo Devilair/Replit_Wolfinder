@@ -79,10 +79,28 @@ export default function Register() {
       });
       navigate("/auth/login");
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      let errorMessage = "Si è verificato un errore durante la registrazione";
+      
+      // Estrai il messaggio di errore dal response
+      if (error.message) {
+        const msg = error.message.toLowerCase();
+        if (msg.includes("email già registrata")) {
+          errorMessage = "L'email inserita è già associata a un account esistente. Prova con un'email diversa.";
+        } else if (msg.includes("username già in uso")) {
+          errorMessage = "L'username scelto è già in uso. Scegline uno diverso.";
+        } else if (msg.includes("duplicate key") || msg.includes("already exists")) {
+          errorMessage = "Alcuni dati inseriti sono già presenti nel sistema. Verifica email e username.";
+        } else if (msg.includes("tutti i campi obbligatori")) {
+          errorMessage = "Compila tutti i campi obbligatori per completare la registrazione.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
-        title: "Errore registrazione",
-        description: error.message,
+        title: "Registrazione non completata",
+        description: errorMessage,
         variant: "destructive",
       });
     },
