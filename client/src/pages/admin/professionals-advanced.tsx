@@ -947,37 +947,10 @@ export default function AdminProfessionalsAdvanced() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <Shield className="h-5 w-5 text-green-500" />
-                            <div>
-                              <p className="font-medium">Documento d'Identità</p>
-                              <p className="text-sm text-gray-500">Verificato il 15/03/2024</p>
-                            </div>
-                          </div>
-                          <Badge variant="default">Verificato</Badge>
-                        </div>
-                        <div className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <FileText className="h-5 w-5 text-green-500" />
-                            <div>
-                              <p className="font-medium">Iscrizione Albo</p>
-                              <p className="text-sm text-gray-500">Verificato il 15/03/2024</p>
-                            </div>
-                          </div>
-                          <Badge variant="default">Verificato</Badge>
-                        </div>
-                        <div className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <CreditCard className="h-5 w-5 text-orange-500" />
-                            <div>
-                              <p className="font-medium">Partita IVA</p>
-                              <p className="text-sm text-gray-500">In attesa di verifica</p>
-                            </div>
-                          </div>
-                          <Badge variant="secondary">Pendente</Badge>
-                        </div>
+                      <div className="text-center py-8">
+                        <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500">Nessun documento di verifica caricato</p>
+                        <p className="text-sm text-gray-400 mt-2">I documenti di verifica appariranno qui quando caricati</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -992,42 +965,10 @@ export default function AdminProfessionalsAdvanced() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-6">
-                        {/* Piano attuale */}
-                        <div className="p-4 border rounded-lg bg-purple-50">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h3 className="font-semibold text-purple-800">Piano Premium</h3>
-                              <p className="text-sm text-purple-600">Attivo fino al 15/06/2024</p>
-                            </div>
-                            <Badge className="bg-purple-600">€29,99/mese</Badge>
-                          </div>
-                          <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                            <div>✓ Profilo in evidenza</div>
-                            <div>✓ Statistiche avanzate</div>
-                            <div>✓ Risposte illimitate</div>
-                            <div>✓ Badge verificato</div>
-                          </div>
-                        </div>
-
-                        {/* Storico pagamenti */}
-                        <div>
-                          <h4 className="font-medium mb-3">Storico Pagamenti</h4>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between p-3 border rounded">
-                              <span>Marzo 2024</span>
-                              <span className="font-medium">€29,99</span>
-                            </div>
-                            <div className="flex items-center justify-between p-3 border rounded">
-                              <span>Febbraio 2024</span>
-                              <span className="font-medium">€29,99</span>
-                            </div>
-                            <div className="flex items-center justify-between p-3 border rounded">
-                              <span>Gennaio 2024</span>
-                              <span className="font-medium">€29,99</span>
-                            </div>
-                          </div>
-                        </div>
+                      <div className="text-center py-8">
+                        <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500">Nessun abbonamento attivo</p>
+                        <p className="text-sm text-gray-400 mt-2">Il professionista utilizza il piano gratuito</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -1042,28 +983,10 @@ export default function AdminProfessionalsAdvanced() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-4">
-                        <div className="flex items-center space-x-4 text-sm">
-                          <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                          <div className="flex-1">
-                            <p><strong>15:30 - Oggi</strong> • Profilo aggiornato</p>
-                            <p className="text-gray-500">Modificate informazioni di contatto</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-4 text-sm">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                          <div className="flex-1">
-                            <p><strong>10:15 - Oggi</strong> • Login effettuato</p>
-                            <p className="text-gray-500">Accesso da Chrome (Windows)</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-4 text-sm">
-                          <div className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0"></div>
-                          <div className="flex-1">
-                            <p><strong>16:45 - Ieri</strong> • Nuova recensione</p>
-                            <p className="text-gray-500">Ricevuta recensione 5 stelle</p>
-                          </div>
-                        </div>
+                      <div className="text-center py-8">
+                        <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500">Nessuna attività registrata</p>
+                        <p className="text-sm text-gray-400 mt-2">Le attività del professionista appariranno qui</p>
                       </div>
                     </CardContent>
                   </Card>
