@@ -26,6 +26,8 @@ import ChiSiamo from "@/pages/about/chi-siamo";
 import LaNostraStoria from "@/pages/about/la-nostra-storia";
 import Privacy from "@/pages/about/privacy";
 import Terms from "@/pages/about/terms";
+import LineeGuidaRecensioni from "@/pages/about/linee-guida-recensioni";
+import CentroAssistenza from "@/pages/about/centro-assistenza";
 
 function Router() {
   return (
@@ -41,6 +43,8 @@ function Router() {
       <Route path="/la-nostra-storia" component={LaNostraStoria} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
+      <Route path="/linee-guida-recensioni" component={LineeGuidaRecensioni} />
+      <Route path="/centro-assistenza" component={CentroAssistenza} />
       
       {/* Authentication Routes */}
       <Route path="/auth/register" component={Register} />

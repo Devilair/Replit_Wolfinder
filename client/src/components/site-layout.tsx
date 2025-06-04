@@ -91,6 +91,7 @@ export default function SiteLayout({ children }: SiteLayoutProps) {
                 <Link href="/la-nostra-storia" className="block text-gray-600 hover:text-gray-900 transition-colors">La Nostra Storia</Link>
                 <Link href="/professionals" className="block text-gray-600 hover:text-gray-900 transition-colors">Professionisti</Link>
                 <Link href="/auth/register" className="block text-gray-600 hover:text-gray-900 transition-colors">Per i Professionisti</Link>
+                <Link href="/centro-assistenza" className="block text-gray-600 hover:text-gray-900 transition-colors">Centro Assistenza</Link>
               </div>
             </div>
             
@@ -115,6 +116,7 @@ export default function SiteLayout({ children }: SiteLayoutProps) {
                 <p className="text-gray-600">info@wolfinder.com</p>
                 <p className="text-gray-600">Ferrara & Livorno</p>
                 <p className="text-gray-600">Italia</p>
+                <Link href="/linee-guida-recensioni" className="block text-gray-600 hover:text-gray-900 transition-colors">Linee Guida Recensioni</Link>
                 <Link href="/privacy" className="block text-gray-600 hover:text-gray-900 transition-colors">Privacy Policy</Link>
                 <Link href="/terms" className="block text-gray-600 hover:text-gray-900 transition-colors">Termini e Condizioni</Link>
               </div>
