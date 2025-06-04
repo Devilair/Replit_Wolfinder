@@ -200,6 +200,25 @@ export const professionalNotifications = pgTable("professional_notifications", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Tabella per le richieste di reclamo profili
+export const claimRequests = pgTable("claim_requests", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").notNull().references(() => professionals.id, { onDelete: "cascade" }),
+  requesterName: text("requester_name").notNull(),
+  requesterEmail: text("requester_email").notNull(),
+  requesterPhone: text("requester_phone"),
+  verificationDocuments: text("verification_documents"), // JSON array of document info
+  personalMessage: text("personal_message"),
+  status: text("status").default("pending").notNull(), // 'pending', 'approved', 'rejected', 'needs_verification'
+  adminNotes: text("admin_notes"),
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Tabelle per il sistema di abbonamenti
 export const subscriptionPlans = pgTable("subscription_plans", {
   id: serial("id").primaryKey(),
@@ -481,6 +500,10 @@ export type ReviewHelpfulVote = typeof reviewHelpfulVotes.$inferSelect;
 export type InsertReviewHelpfulVote = z.infer<typeof insertReviewHelpfulVoteSchema>;
 export type ReviewFlag = typeof reviewFlags.$inferSelect;
 export type InsertReviewFlag = z.infer<typeof insertReviewFlagSchema>;
+
+// Tipi per richieste di reclamo
+export type ClaimRequest = typeof claimRequests.$inferSelect;
+export type InsertClaimRequest = typeof claimRequests.$inferInsert;
 
 // Subscription types
 export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;

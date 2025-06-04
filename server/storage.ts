@@ -5,6 +5,7 @@ import {
   reviews,
   reviewHelpfulVotes,
   reviewFlags,
+  claimRequests,
   subscriptionPlans,
   subscriptions,
   transactions,
@@ -16,6 +17,8 @@ import {
   type InsertProfessional,
   type Review,
   type InsertReview,
+  type ClaimRequest,
+  type InsertClaimRequest,
   type SubscriptionPlan,
   type InsertSubscriptionPlan,
   type Subscription,
@@ -129,6 +132,14 @@ export interface IStorage {
     duplicateIPs: string[];
     rapidReviews: Review[];
   }>;
+
+  // Claim Profile Management
+  createClaimRequest(request: InsertClaimRequest): Promise<ClaimRequest>;
+  getClaimRequests(status?: string): Promise<(ClaimRequest & { professional: Professional & { category: Category } })[]>;
+  getClaimRequest(id: number): Promise<ClaimRequest | undefined>;
+  updateClaimRequestStatus(id: number, status: string, adminNotes?: string, reviewedBy?: number): Promise<void>;
+  deleteClaimRequest(id: number): Promise<void>;
+  approveClaimRequest(id: number, userId: number): Promise<boolean>;
 
   // Subscription Plans
   getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
