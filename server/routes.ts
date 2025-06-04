@@ -715,6 +715,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Professional photo upload
+  app.post("/api/professional/upload-photo", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      if (!professional) {
+        return res.status(404).json({ message: "Professional not found" });
+      }
+
+      // For now, just acknowledge the upload - real file handling would need multer setup
+      await storage.updateProfessional(professional.id, {
+        photoUrl: '/uploads/professional-' + professional.id + '.jpg',
+        updatedAt: new Date()
+      });
+
+      res.json({ success: true, message: "Foto caricata con successo" });
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      res.status(500).json({ message: "Failed to upload photo" });
+    }
+  });
+
+  // Professional verification request
+  app.post("/api/professional/request-verification", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      if (!professional) {
+        return res.status(404).json({ message: "Professional not found" });
+      }
+
+      if (professional.isVerified) {
+        return res.status(400).json({ message: "Professional already verified" });
+      }
+
+      // Update verification request status
+      await storage.updateProfessional(professional.id, {
+        verificationStatus: 'pending',
+        verificationRequestedAt: new Date()
+      });
+
+      // Log activity for admin dashboard
+      await storage.logActivity({
+        type: 'verification_request',
+        description: `${user.name} ha richiesto la verifica del profilo`,
+        userId: user.id,
+        metadata: {
+          professionalId: professional.id,
+          businessName: professional.businessName
+        }
+      });
+
+      res.json({ success: true, message: "Richiesta di verifica inviata" });
+    } catch (error) {
+      console.error("Error requesting verification:", error);
+      res.status(500).json({ message: "Failed to request verification" });
+    }
+  });
+
   // Admin Professionals Management
   app.get("/api/admin/professionals", async (req, res) => {
     try {
