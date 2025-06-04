@@ -520,9 +520,14 @@ export default function AdminProfessionals() {
                             Non verificato
                           </Badge>
                         )}
-                        {professional.subscription?.status === 'active' && (
-                          <Badge className="bg-amber-100 text-amber-700">
-                            {professional.subscription.plan?.name || 'Abbonamento Attivo'}
+                        {professional.subscription?.status === 'active' ? (
+                          <Badge className="bg-purple-100 text-purple-700">
+                            <Crown className="w-3 h-3 mr-1" />
+                            {professional.subscription.plan?.name || 'Piano Premium'}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-gray-600 border-gray-300">
+                            Piano Gratuito
                           </Badge>
                         )}
                       </div>
