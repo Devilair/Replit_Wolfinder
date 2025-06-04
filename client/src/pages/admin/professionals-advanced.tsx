@@ -78,7 +78,7 @@ export default function AdminProfessionalsAdvanced() {
   // Mutazioni per azioni sui professionisti
   const verifyMutation = useMutation({
     mutationFn: async ({ id, verified }: { id: number; verified: boolean }) => {
-      return apiRequest(`/api/admin/professionals/${id}`, "PATCH", { isVerified: verified });
+      return apiRequest("PATCH", `/api/admin/professionals/${id}/verify`, { verified });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/professionals"] });
