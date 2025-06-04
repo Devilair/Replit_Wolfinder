@@ -19,6 +19,7 @@ import AdminCategories from "@/pages/admin/categories";
 import AdminSubscriptions from "@/pages/admin/subscriptions";
 import AdminUsers from "@/pages/admin/users";
 import AdminSettings from "@/pages/admin/settings";
+import ClaimRequests from "@/pages/admin/claim-requests";
 import AdminLogin from "@/pages/admin-login";
 import ProfessionalSubscriptionDemo from "@/pages/professional-subscription-demo";
 import Register from "@/pages/auth/register";
@@ -36,7 +37,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Landing} />
       <Route path="/professionals" component={Professionals} />
-      <Route path="/professionals/:id" component={ProfessionalProfile} />
+      <Route path="/professional/:id" component={ProfessionalProfile} />
       <Route path="/reclama-profilo/:id" component={ClaimProfile} />
       <Route path="/demo/subscription-limits" component={ProfessionalSubscriptionDemo} />
       <Route path="/professional-subscription-demo" component={ProfessionalSubscriptionDemo} />
@@ -108,6 +109,11 @@ function Router() {
       <Route path="/admin/settings" component={() => (
         <AdminLayout>
           <AdminSettings />
+        </AdminLayout>
+      )} />
+      <Route path="/admin/claim-requests" component={() => (
+        <AdminLayout>
+          <ClaimRequests />
         </AdminLayout>
       )} />
       
