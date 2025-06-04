@@ -81,6 +81,11 @@ function Router() {
           <AdminProfessionals />
         </AdminLayout>
       )} />
+      <Route path="/admin/professionals-advanced" component={() => (
+        <AdminLayout>
+          <AdminProfessionals />
+        </AdminLayout>
+      )} />
       <Route path="/admin/add-professional" component={() => (
         <AdminLayout>
           <AddProfessional />
