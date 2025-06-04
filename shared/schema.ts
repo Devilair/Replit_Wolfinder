@@ -140,7 +140,7 @@ export const categories = pgTable("categories", {
 
 export const professionals = pgTable("professionals", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  userId: integer("user_id").references(() => users.id),
   categoryId: integer("category_id").references(() => categories.id).notNull(),
   businessName: text("business_name").notNull(),
   description: text("description").notNull(),
@@ -171,8 +171,33 @@ export const professionals = pgTable("professionals", {
   isProblematic: boolean("is_problematic").default(false).notNull(),
   problematicReason: text("problematic_reason"),
   adminNotes: text("admin_notes"),
+  // Campi per gestione profili non reclamati
+  isClaimed: boolean("is_claimed").default(false).notNull(),
+  claimedAt: timestamp("claimed_at"),
+  claimedBy: integer("claimed_by").references(() => users.id),
+  profileClaimToken: text("profile_claim_token"), // Token per reclamo profilo
+  claimTokenExpiresAt: timestamp("claim_token_expires_at"),
+  autoNotificationEnabled: boolean("auto_notification_enabled").default(true).notNull(),
+  lastNotificationSent: timestamp("last_notification_sent"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Tabella per tracciare le notifiche inviate ai professionisti
+export const professionalNotifications = pgTable("professional_notifications", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").notNull().references(() => professionals.id, { onDelete: "cascade" }),
+  reviewId: integer("review_id").references(() => reviews.id, { onDelete: "set null" }),
+  notificationType: text("notification_type").notNull(), // 'new_review', 'claim_reminder', 'profile_update'
+  recipientEmail: text("recipient_email").notNull(),
+  subject: text("subject").notNull(),
+  content: text("content").notNull(),
+  status: text("status").default("pending").notNull(), // 'pending', 'sent', 'failed', 'bounced'
+  sentAt: timestamp("sent_at"),
+  failureReason: text("failure_reason"),
+  retryCount: integer("retry_count").default(0).notNull(),
+  metadata: jsonb("metadata"), // Additional context data
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Tabelle per il sistema di abbonamenti
@@ -637,6 +662,17 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
   }),
 }));
 
+export const professionalNotificationsRelations = relations(professionalNotifications, ({ one }) => ({
+  professional: one(professionals, {
+    fields: [professionalNotifications.professionalId],
+    references: [professionals.id],
+  }),
+  review: one(reviews, {
+    fields: [professionalNotifications.reviewId],
+    references: [reviews.id],
+  }),
+}));
+
 // Administrative types
 export type AdminActivity = typeof adminActivity.$inferSelect;
 export type SystemAlert = typeof systemAlerts.$inferSelect;
@@ -646,3 +682,5 @@ export type PerformanceMetric = typeof performanceMetrics.$inferSelect;
 export type EmailCampaign = typeof emailCampaigns.$inferSelect;
 export type ApiKey = typeof apiKeys.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
+export type ProfessionalNotification = typeof professionalNotifications.$inferSelect;
+export type InsertProfessionalNotification = typeof professionalNotifications.$inferInsert;
