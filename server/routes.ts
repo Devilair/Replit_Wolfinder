@@ -1435,6 +1435,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== UNCLAIMED PROFILES MANAGEMENT API ROUTES =====
+
+  // Get all unclaimed professionals
+  app.get("/api/admin/unclaimed-profiles", async (req, res) => {
+    try {
+      const unclaimedProfiles = await storage.getUnclaimedProfessionals();
+      res.json(unclaimedProfiles);
+    } catch (error) {
+      console.error("Error fetching unclaimed profiles:", error);
+      res.status(500).json({ message: "Failed to fetch unclaimed profiles" });
+    }
+  });
+
+  // Generate claim token for a professional
+  app.post("/api/professionals/:id/generate-claim-token", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      if (isNaN(professionalId)) {
+        return res.status(400).json({ message: "Invalid professional ID" });
+      }
+
+      const token = await storage.generateClaimToken(professionalId);
+      res.json({ token, professionalId });
+    } catch (error) {
+      console.error("Error generating claim token:", error);
+      res.status(500).json({ message: "Failed to generate claim token" });
+    }
+  });
+
+  // Validate claim token
+  app.post("/api/professionals/:id/validate-claim-token", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      const { token } = req.body;
+
+      if (isNaN(professionalId) || !token) {
+        return res.status(400).json({ message: "Invalid parameters" });
+      }
+
+      const isValid = await storage.validateClaimToken(professionalId, token);
+      res.json({ valid: isValid });
+    } catch (error) {
+      console.error("Error validating claim token:", error);
+      res.status(500).json({ message: "Failed to validate claim token" });
+    }
+  });
+
+  // Claim profile (requires authentication)
+  app.post("/api/professionals/:id/claim", authService.authenticateToken, async (req: any, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      const { token } = req.body;
+      const userId = req.user.id;
+
+      if (isNaN(professionalId) || !token) {
+        return res.status(400).json({ message: "Invalid parameters" });
+      }
+
+      const success = await storage.claimProfile(professionalId, userId, token);
+      
+      if (!success) {
+        return res.status(400).json({ message: "Invalid or expired claim token" });
+      }
+
+      // Log the successful claim
+      await storage.logActivity({
+        type: "profile_claimed",
+        description: `Professional profile ${professionalId} claimed by user ${userId}`,
+        userId: userId,
+        metadata: { professionalId }
+      });
+
+      res.json({ success: true, message: "Profile successfully claimed" });
+    } catch (error) {
+      console.error("Error claiming profile:", error);
+      res.status(500).json({ message: "Failed to claim profile" });
+    }
+  });
+
+  // Send claim reminder email (admin only)
+  app.post("/api/admin/professionals/:id/send-claim-reminder", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      if (isNaN(professionalId)) {
+        return res.status(400).json({ message: "Invalid professional ID" });
+      }
+
+      const professional = await storage.getProfessional(professionalId);
+      if (!professional) {
+        return res.status(404).json({ message: "Professional not found" });
+      }
+
+      // Generate claim token
+      const token = await storage.generateClaimToken(professionalId);
+
+      // Send email reminder
+      const { emailService } = await import('./email-service');
+      const success = await emailService.sendClaimReminderNotification(
+        professionalId,
+        professional.email,
+        professional.businessName,
+        token
+      );
+
+      if (success) {
+        res.json({ success: true, message: "Claim reminder sent successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to send claim reminder email" });
+      }
+    } catch (error) {
+      console.error("Error sending claim reminder:", error);
+      res.status(500).json({ message: "Failed to send claim reminder" });
+    }
+  });
+
+  // Update professional claim status (admin only)
+  app.patch("/api/admin/professionals/:id/claim-status", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      const { claimed, userId } = req.body;
+
+      if (isNaN(professionalId) || typeof claimed !== 'boolean') {
+        return res.status(400).json({ message: "Invalid parameters" });
+      }
+
+      await storage.updateProfessionalClaimStatus(professionalId, claimed, userId);
+      res.json({ success: true, message: "Claim status updated successfully" });
+    } catch (error) {
+      console.error("Error updating claim status:", error);
+      res.status(500).json({ message: "Failed to update claim status" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

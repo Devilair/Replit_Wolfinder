@@ -3,6 +3,8 @@ import {
   categories, 
   professionals, 
   reviews,
+  reviewHelpfulVotes,
+  reviewFlags,
   subscriptionPlans,
   subscriptions,
   transactions,
@@ -57,6 +59,13 @@ export interface IStorage {
   createProfessional(professional: InsertProfessional): Promise<Professional>;
   updateProfessionalRating(id: number): Promise<void>;
   logActivity(activity: { type: string; description: string; userId: number; metadata?: any }): Promise<void>;
+  
+  // Unclaimed profiles management
+  generateClaimToken(professionalId: number): Promise<string>;
+  validateClaimToken(professionalId: number, token: string): Promise<boolean>;
+  claimProfile(professionalId: number, userId: number, token: string): Promise<boolean>;
+  getUnclaimedProfessionals(): Promise<Professional[]>;
+  updateProfessionalClaimStatus(professionalId: number, claimed: boolean, userId?: number): Promise<void>;
 
   // Reviews
   getReviewsByProfessional(professionalId: number): Promise<(Review & { user: User })[]>;
@@ -1333,6 +1342,90 @@ export class DatabaseStorage implements IStorage {
       duplicateIPs,
       rapidReviews: rapidReviews.length > 3 ? rapidReviews : [],
     };
+  }
+
+  // Unclaimed profiles management methods
+  async generateClaimToken(professionalId: number): Promise<string> {
+    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // Token expires in 7 days
+
+    await db
+      .update(professionals)
+      .set({
+        profileClaimToken: token,
+        claimTokenExpiresAt: expiresAt,
+        updatedAt: new Date(),
+      })
+      .where(eq(professionals.id, professionalId));
+
+    return token;
+  }
+
+  async validateClaimToken(professionalId: number, token: string): Promise<boolean> {
+    const [professional] = await db
+      .select()
+      .from(professionals)
+      .where(eq(professionals.id, professionalId));
+
+    if (!professional || !professional.profileClaimToken || !professional.claimTokenExpiresAt) {
+      return false;
+    }
+
+    const now = new Date();
+    return professional.profileClaimToken === token && professional.claimTokenExpiresAt > now;
+  }
+
+  async claimProfile(professionalId: number, userId: number, token: string): Promise<boolean> {
+    const isValidToken = await this.validateClaimToken(professionalId, token);
+    if (!isValidToken) {
+      return false;
+    }
+
+    await db
+      .update(professionals)
+      .set({
+        userId: userId,
+        isClaimed: true,
+        claimedAt: new Date(),
+        claimedBy: userId,
+        profileClaimToken: null,
+        claimTokenExpiresAt: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(professionals.id, professionalId));
+
+    return true;
+  }
+
+  async getUnclaimedProfessionals(): Promise<Professional[]> {
+    return await db
+      .select()
+      .from(professionals)
+      .where(eq(professionals.isClaimed, false))
+      .orderBy(desc(professionals.createdAt));
+  }
+
+  async updateProfessionalClaimStatus(professionalId: number, claimed: boolean, userId?: number): Promise<void> {
+    const updateData: any = {
+      isClaimed: claimed,
+      updatedAt: new Date(),
+    };
+
+    if (claimed && userId) {
+      updateData.claimedAt = new Date();
+      updateData.claimedBy = userId;
+      updateData.userId = userId;
+    } else if (!claimed) {
+      updateData.claimedAt = null;
+      updateData.claimedBy = null;
+      updateData.userId = null;
+    }
+
+    await db
+      .update(professionals)
+      .set(updateData)
+      .where(eq(professionals.id, professionalId));
   }
 }
 
