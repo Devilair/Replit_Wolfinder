@@ -24,6 +24,7 @@ import Login from "@/pages/auth/login";
 import ProfessionalDashboard from "@/pages/dashboard/professional";
 import ChiSiamo from "@/pages/about/chi-siamo";
 import LaNostraStoria from "@/pages/about/la-nostra-storia";
+import Privacy from "@/pages/about/privacy";
 
 function Router() {
   return (
@@ -37,6 +38,7 @@ function Router() {
       {/* About Pages */}
       <Route path="/chi-siamo" component={ChiSiamo} />
       <Route path="/la-nostra-storia" component={LaNostraStoria} />
+      <Route path="/privacy" component={Privacy} />
       
       {/* Authentication Routes */}
       <Route path="/auth/register" component={Register} />

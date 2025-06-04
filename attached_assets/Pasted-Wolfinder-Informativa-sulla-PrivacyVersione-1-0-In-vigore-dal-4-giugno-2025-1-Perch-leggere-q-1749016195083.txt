@@ -1,0 +1,210 @@
+Wolfinder – Informativa sulla PrivacyVersione 1.0 – In vigore dal 4 giugno 2025
+
+1. Perché leggere questa informativa
+
+La presente informativa descrive in modo chiaro e trasparente come Wolfinder S.r.l.s. (di seguito “Wolfinder”, “noi”, “nostro”) raccoglie, utilizza, condivide e protegge i dati personali degli utenti che accedono alla nostra piattaforma online per cercare o offrire servizi professionali.La piattaforma di Wolfinder è fondata su un principio di merito e trasparenza; di conseguenza la tutela dei dati personali dei nostri utenti è un impegno prioritario e parte integrante del servizio.
+
+2. Chi siamo
+
+Titolare del trattamento: Wolfinder S.r.l.s.Via Ludovico Antonio Muratori 42, 57124 Livorno (LI) – ItaliaC.F./P. IVA 02027540380
+
+Responsabile della Protezione dei Dati (DPO): Mirko Collinie‑mail: privacy@wolfinder.it
+
+3. Termini utilizzati in questa informativa
+
+Termine
+
+Significato
+
+Piattaforma/Sito/Servizio
+
+Il portale web, le web‑app e le eventuali app mobile di Wolfinder, comprese API e widget proprietari.
+
+Dati personali pubblici
+
+Le informazioni rese pubbliche su Wolfinder (p. es. recensioni, profilo pubblico, risposta del professionista).
+
+Dati personali privati
+
+Le informazioni non pubblicate sulla piattaforma (p. es. documenti di verifica, e‑mail, log di accesso).
+
+Utente Consumatore
+
+Persona fisica che consulta o pubblica recensioni di professionisti.
+
+Utente Professionista
+
+Avvocati, commercialisti e altri professionisti che creano un profilo per offrire i propri servizi.
+
+4. Collegamenti a siti di terzi
+
+La piattaforma può contenere link a siti esterni di terze parti. Tali siti operano in autonomia e non sono coperti dalla presente informativa. Invitiamo gli utenti a consultare le rispettive privacy policy prima di fornire dati personali.
+
+5. Una piattaforma aperta
+
+Le recensioni pubblicate da un Utente Consumatore, nonché i profili e le eventuali risposte degli Utenti Professionisti, sono visibili a chiunque navighi su Internet. Al momento della creazione del profilo l’utente può scegliere quante informazioni personali rendere pubbliche.
+
+6. Quali dati trattiamo
+
+6.1 Dati personali pubblici
+
+Categoria
+
+Esempi
+
+Informazioni di account (consumatori)
+
+Nome utente (reale o pseudonimo), foto profilo, località (facoltativa).
+
+Contenuto delle recensioni
+
+Testo, valutazione in stelle, categoria/specializzazione del professionista, data dell’esperienza, eventuali foto o allegati.
+
+Interazioni social
+
+Conteggio “Recensione utile”, like ad altre recensioni.
+
+Profili professionisti
+
+Nome e cognome o ragione sociale, specializzazione, città, descrizione studio, risposte a recensioni, eventuale logo.
+
+6.2 Dati personali privati
+
+Categoria
+
+Esempi
+
+Credenziali di accesso
+
+Indirizzo e‑mail, password cifrata, lingua preferita.
+
+Documenti di verifica
+
+Copia fatture PDF/JPG, numero ordine, ID pratica, ulteriori prove di servizio conservate integralmente dal nostro team.
+
+Dati di pagamento (professionisti)
+
+IBAN / dati fiscali per fatturazione dei piani a pagamento.
+
+Dati di utilizzo e log
+
+Indirizzo IP, user‑agent browser, fuso orario, dati evento, tempo di permanenza, cronologia ricerche interne.
+
+Comunicazioni
+
+Ticket di assistenza, e‑mail, registrazioni di chiamate VoIP (se il contatto avviene tramite il nostro centralino).
+
+7. Come raccogliamo i dati
+
+Direttamente dall’utente: registrazione account, pubblicazione recensioni, creazione profilo professionista, caricamento documenti di verifica.
+
+Indirettamente: inviti a recensire inviati dal Professionista (marketing diretto), dati di log raccolti automaticamente.
+
+Cookie e tecnologie simili: utilizziamo cookie tecnici e, previo consenso, cookie di analisi e profilazione. La lista completa è disponibile nella Cookie Policy (in fase di redazione; verrà pubblicata e aggiornata sul sito).
+
+Nota: al momento non utilizziamo terze parti per advertising personalizzato; qualsiasi integrazione futura verrà preventivamente documentata nella Cookie Policy e soggetta a consenso.
+
+8. Chi è il titolare del trattamento
+
+Per la maggior parte delle operazioni di trattamento Wolfinder S.r.l.s. è titolare.Quando un professionista invia un invito a recensire a un proprio cliente tramite la piattaforma, il Professionista è titolare per quell’operazione specifica; Wolfinder agisce come responsabile esterno ex art. 28 GDPR.
+
+9. Finalità e basi giuridiche del trattamento
+
+Finalità
+
+Base giuridica
+
+Fornire e gestire il servizio (creazione account, pubblicazione recensioni, visualizzazione profili)
+
+Art. 6 (1)(b) GDPR – esecuzione di un contratto
+
+Inviare inviti a recensire da parte dei Professionisti
+
+Art. 6 (1)(f) – legittimo interesse del professionista (marketing diretto)
+
+Verificare autenticità delle recensioni
+
+Art. 6 (1)(f) – legittimo interesse di Wolfinder a mantenere integrità della piattaforma
+
+Fatturazione dei piani a pagamento
+
+Art. 6 (1)(c) – obbligo legale contabile
+
+Attività di analisi interna e miglioramento prodotto
+
+Art. 6 (1)(f) – legittimo interesse
+
+Comunicazioni di servizio e newsletter
+
+Art. 6 (1)(b) o (a) – contratto / consenso
+
+Conservazione log e sicurezza IT
+
+Art. 6 (1)(c) e (f) – obbligo legale / interesse legittimo
+
+10. Con chi condividiamo i dati
+
+Utenti della piattaforma: i dati personali pubblici sono visibili a chiunque.
+
+Responsabili del trattamento: fornitori di hosting situati in Italia (data center Milano) e fornitori di servizi funzionali (es. provider e‑mail). Tutti i responsabili agiscono sulla base di accordo ex art. 28.
+
+Autorità competenti: ove richiesto da legge o provvedimento.
+
+Terze parti indipendenti: al momento non condividiamo dati con motori di comparazione o API pubbliche; eventuali future condivisioni saranno rese note e soggette a opt‑out.
+
+11. Trasferimenti extra‑SEE
+
+Tutti i server principali risiedono nell’area SEE (Milano, Italia). Qualora in futuro fosse necessario trasferire dati verso Paesi terzi, Wolfinder adotterà Clausole Contrattuali Standard o altre garanzie adeguate ai sensi del Capo V GDPR.
+
+12. Conservazione dei dati
+
+Categoria
+
+Periodo di conservazione
+
+Recensioni e profili
+
+Fintanto che l’account rimane attivo + 12 mesi; quindi anonimizzati.
+
+Documenti di verifica
+
+5 anni dalla data di caricamento, salvo contestazioni in corso.
+
+Log di accesso e sicurezza
+
+24 mesi salvo necessità di investigazione.
+
+Dati di fatturazione
+
+10 anni ai sensi di normativa fiscale.
+
+L’utente può richiedere la cancellazione anticipata; alcuni dati potranno essere trattenuti per obblighi legali o per difesa di diritti in sede giudiziaria.
+
+13. Sicurezza
+
+Wolfinder adotta misure tecniche e organizzative adeguate, tra cui crittografia dei dati in transito (TLS 1.3), accesso role‑based, backup giornalieri e vulnerability scanning periodico.Tuttavia la trasmissione via Internet non può garantire sicurezza assoluta; si invita a non inviare informazioni particolarmente sensibili via e‑mail.
+
+14. Cookie e tecnologie simili
+
+Utilizziamo cookie tecnici indispensabili per il funzionamento del sito e, previo consenso esplicito, cookie di analisi (es. Google Analytics 4 in modalità IP‑Anonymization).La configurazione dettagliata dei cookie sarà disponibile in tempo reale nel Cookie Management Platform (CMP) integrato e nella Cookie Policy dedicata.
+
+15. Diritti dell’interessato
+
+Gli utenti possono esercitare in qualsiasi momento i diritti previsti dagli artt. 15‑22 GDPR (accesso, rettifica, cancellazione, limitazione, opposizione, portabilità, revoca del consenso) scrivendo a privacy@wolfinder.it.È possibile presentare reclamo al Garante per la Protezione dei Dati Personali (www.garanteprivacy.it) o all’autorità locale competente.
+
+16. Minori di 18 anni
+
+La piattaforma è vietata ai minori di 18 anni. Non raccogliamo consapevolmente dati da minori; qualora ne fossimo a conoscenza, provvederemo alla cancellazione immediata.
+
+17. Modifiche alla presente informativa
+
+Eventuali aggiornamenti sostanziali saranno pubblicati su questa pagina e, se opportuno, comunicati via e‑mail almeno 30 giorni prima dell’entrata in vigore. L’uso continuato dei servizi dopo tale data comporta l’accettazione delle modifiche.
+
+18. Contatti
+
+Wolfinder S.r.l.s. – Via Ludovico Antonio Muratori 42, 57124 Livorno (LI)E‑mail: privacy@wolfinder.itDPO: Mirko Collini
+
+Se ritieni che il trattamento dei tuoi dati violi la normativa, hai diritto di proporre reclamo al Garante Privacy o all’autorità di controllo dello Stato UE in cui risiedi.
+
+(Ultima revisione: 4 giugno 2025)
+
