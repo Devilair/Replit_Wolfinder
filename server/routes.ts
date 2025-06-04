@@ -610,7 +610,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/professional/profile", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
     try {
       const user = req.user as any;
-      const professional = await storage.getProfessional(user.id);
+      const professional = await storage.getProfessionalByUserId(user.id);
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
       res.json(professional);
     } catch (error) {
       console.error("Error fetching professional profile:", error);

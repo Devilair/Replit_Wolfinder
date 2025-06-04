@@ -1,16 +1,29 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Star, Eye, MessageSquare, Settings, Edit, CheckCircle, AlertCircle, Camera, FileText, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useState } from "react";
 
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    businessName: "",
+    description: "",
+    phone: "",
+    address: "",
+  });
 
   const { data: professionalData, isLoading } = useQuery({
     queryKey: ["/api/professional/profile"],
@@ -21,6 +34,77 @@ export default function ProfessionalDashboard() {
     queryKey: ["/api/professional/reviews"],
     enabled: !!user,
   });
+
+  // Mutations for professional actions
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest("PUT", "/api/professional/profile", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/profile"] });
+      setIsEditDialogOpen(false);
+      toast({
+        title: "Profilo aggiornato",
+        description: "Le informazioni del profilo sono state aggiornate con successo",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Errore durante l'aggiornamento del profilo",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const requestVerificationMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/professional/request-verification");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/profile"] });
+      toast({
+        title: "Richiesta inviata",
+        description: "La richiesta di verifica è stata inviata all'amministrazione",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Errore durante l'invio della richiesta",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const uploadPhotoMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      return apiRequest("POST", "/api/professional/upload-photo", formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/profile"] });
+      toast({
+        title: "Foto caricata",
+        description: "La foto del profilo è stata caricata con successo",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Errore durante il caricamento della foto",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append("photo", file);
+      uploadPhotoMutation.mutate(formData);
+    }
+  };
 
   // Calculate profile completion based on actual data
   const getProfileCompletionStatus = () => {
@@ -57,9 +141,9 @@ export default function ProfessionalDashboard() {
             </Avatar>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Dashboard Professionale
+                Dashboard Professionista
               </h1>
-              <p className="text-gray-600">Benvenuto, {user?.name}</p>
+              <p className="text-gray-600">Benvenuto, {user?.name || "Professionista"}</p>
             </div>
           </div>
           <div className="flex items-center space-x-3">
