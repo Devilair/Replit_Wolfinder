@@ -61,6 +61,8 @@ export default function AdminProfessionalsAdvanced() {
   const [selectedProfessionals, setSelectedProfessionals] = useState<number[]>([]);
   const [selectedProfessional, setSelectedProfessional] = useState<any>(null);
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState<any>({});
   const [currentPage, setCurrentPage] = useState(1);
   const professionalsPerPage = 10;
 
@@ -123,6 +125,49 @@ export default function AdminProfessionalsAdvanced() {
       });
     },
   });
+
+  const editMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest(`/api/admin/professionals/${data.id}`, "PATCH", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/professionals"] });
+      setIsEditDialogOpen(false);
+      setSelectedProfessional(null);
+      toast({
+        title: "Successo", 
+        description: "Professionista aggiornato con successo",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Errore",
+        description: "Impossibile aggiornare il professionista",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Funzioni helper
+  const handleEditProfessional = (professional: any) => {
+    setEditFormData({
+      id: professional.id,
+      businessName: professional.businessName || '',
+      description: professional.description || '',
+      email: professional.email || '',
+      phone: professional.phone || '',
+      website: professional.website || '',
+      address: professional.address || '',
+      city: professional.city || '',
+      province: professional.province || '',
+      categoryId: professional.categoryId || '',
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    editMutation.mutate(editFormData);
+  };
 
   // Filtraggio e paginazione
   const filteredProfessionals = (professionals as any[]).filter((professional: any) => {
@@ -766,7 +811,11 @@ export default function AdminProfessionalsAdvanced() {
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleEditProfessional(selectedProfessional)}
+                    >
                       <Edit className="h-4 w-4 mr-2" />
                       Modifica
                     </Button>
@@ -1034,6 +1083,125 @@ export default function AdminProfessionalsAdvanced() {
               </Tabs>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialogo di Modifica Professionista */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Modifica Professionista</DialogTitle>
+            <DialogDescription>
+              Modifica le informazioni del professionista
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="businessName">Nome Attività</Label>
+                <Input
+                  id="businessName"
+                  value={editFormData.businessName || ''}
+                  onChange={(e) => setEditFormData({...editFormData, businessName: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={editFormData.email || ''}
+                  onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefono</Label>
+                <Input
+                  id="phone"
+                  value={editFormData.phone || ''}
+                  onChange={(e) => setEditFormData({...editFormData, phone: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="website">Sito Web</Label>
+                <Input
+                  id="website"
+                  value={editFormData.website || ''}
+                  onChange={(e) => setEditFormData({...editFormData, website: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Descrizione</Label>
+              <Input
+                id="description"
+                value={editFormData.description || ''}
+                onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Indirizzo</Label>
+              <Input
+                id="address"
+                value={editFormData.address || ''}
+                onChange={(e) => setEditFormData({...editFormData, address: e.target.value})}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="city">Città</Label>
+                <Input
+                  id="city"
+                  value={editFormData.city || ''}
+                  onChange={(e) => setEditFormData({...editFormData, city: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="province">Provincia</Label>
+                <Input
+                  id="province"
+                  value={editFormData.province || ''}
+                  onChange={(e) => setEditFormData({...editFormData, province: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="categoryId">Categoria</Label>
+              <Select
+                value={editFormData.categoryId?.toString() || ''}
+                onValueChange={(value) => setEditFormData({...editFormData, categoryId: parseInt(value)})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleziona categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category: any) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Annulla
+            </Button>
+            <Button 
+              onClick={handleSaveEdit}
+              disabled={editMutation.isPending}
+            >
+              {editMutation.isPending ? "Salvando..." : "Salva Modifiche"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
