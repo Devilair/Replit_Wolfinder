@@ -128,7 +128,7 @@ export default function AdminProfessionalsAdvanced() {
 
   const editMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest(`/api/admin/professionals/${data.id}`, "PATCH", data);
+      return apiRequest("PUT", `/api/admin/professionals/${data.id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/professionals"] });
