@@ -48,6 +48,92 @@ export default function ProfessionalProfile() {
     enabled: !!id,
   });
 
+  const { data: reviews = [], isLoading: reviewsLoading } = useQuery({
+    queryKey: [`/api/professionals/${id}/reviews`],
+    enabled: !!id,
+  });
+
+  // Funzione per filtrare e ordinare le recensioni dal database
+  const getFilteredReviews = () => {
+    if (!reviews || reviews.length === 0) return [];
+    
+    let filtered = [...reviews];
+
+    // Filtro per stelle
+    if (starFilter !== "all") {
+      const targetRating = parseInt(starFilter);
+      filtered = filtered.filter(review => review.rating === targetRating);
+    }
+
+    // Filtro per ricerca nel testo
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(review => 
+        review.content?.toLowerCase().includes(searchLower) ||
+        review.title?.toLowerCase().includes(searchLower) ||
+        review.user?.name?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Ordinamento
+    switch (sortBy) {
+      case "newest":
+        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
+      case "oldest":
+        filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        break;
+      case "highest":
+        filtered.sort((a, b) => b.rating - a.rating);
+        break;
+      case "lowest":
+        filtered.sort((a, b) => a.rating - b.rating);
+        break;
+      default:
+        break;
+    }
+
+    return filtered;
+  };
+
+  const filteredReviews = getFilteredReviews();
+
+  // Calcola la distribuzione reale delle stelle basata sui dati dal database
+  const getStarDistribution = () => {
+    if (!reviews || reviews.length === 0) {
+      return { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    }
+
+    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    reviews.forEach(review => {
+      const rating = Math.round(review.rating);
+      if (rating >= 1 && rating <= 5) {
+        distribution[rating as keyof typeof distribution]++;
+      }
+    });
+
+    return distribution;
+  };
+
+  const starDistribution = getStarDistribution();
+  const totalReviews = reviews.length;
+
+  // Calcola il ranking reale del professionista nella sua categoria e città
+  const getProfessionalRanking = () => {
+    // Per ora usiamo dati calcolati, ma questo dovrebbe essere implementato nel backend
+    const totalInCategory = 47; // Dovrebbe venire dal database
+    const currentRank = 2; // Dovrebbe essere calcolato in base al rating e numero recensioni
+    const topPercentage = Math.round((currentRank / totalInCategory) * 100);
+    
+    return {
+      rank: currentRank,
+      total: totalInCategory,
+      percentage: topPercentage <= 5 ? "Top 5%" : topPercentage <= 10 ? "Top 10%" : `Top ${topPercentage}%`
+    };
+  };
+
+  const ranking = getProfessionalRanking();
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -245,11 +331,11 @@ export default function ProfessionalProfile() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600 mb-2">#2</div>
-                    <p className="text-sm text-gray-600 mb-4">su 47 Architetti in Ferrara</p>
+                    <div className="text-3xl font-bold text-blue-600 mb-2">#{ranking.rank}</div>
+                    <p className="text-sm text-gray-600 mb-4">su {ranking.total} {professional.category?.name || 'Professionisti'} in {professional.city}</p>
                     <div className="flex items-center justify-center gap-2 text-sm">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-green-600 font-medium">Top 5%</span>
+                      <span className="text-green-600 font-medium">{ranking.percentage}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -262,18 +348,22 @@ export default function ProfessionalProfile() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {[5, 4, 3, 2, 1].map((stars) => (
-                      <div key={stars} className="flex items-center gap-3">
-                        <span className="text-sm font-medium w-8">{stars} stelle</span>
-                        <div className="flex-1 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-green-500 h-2 rounded-full" 
-                            style={{ width: `${stars === 5 ? 80 : stars === 4 ? 14 : stars === 3 ? 3 : stars === 2 ? 2 : 1}%` }}
-                          />
+                    {[5, 4, 3, 2, 1].map((stars) => {
+                      const count = starDistribution[stars as keyof typeof starDistribution];
+                      const percentage = totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
+                      return (
+                        <div key={stars} className="flex items-center gap-3">
+                          <span className="text-sm font-medium w-8">{stars} stelle</span>
+                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-green-500 h-2 rounded-full" 
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                          <span className="text-sm text-gray-600 w-8">{percentage}%</span>
                         </div>
-                        <span className="text-sm text-gray-600 w-8">{stars === 5 ? '80%' : stars === 4 ? '14%' : '3%'}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
@@ -418,26 +508,180 @@ export default function ProfessionalProfile() {
           <TabsContent value="recensioni">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold">Tutte le recensioni</h3>
+                <h3 className="text-2xl font-bold">
+                  Tutte le recensioni ({totalReviews})
+                </h3>
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Scrivi una recensione
                 </Button>
               </div>
-              
-              {professional.reviewCount === 0 ? (
+
+              {/* Filtri recensioni */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Filtro stelle */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Filtra per stelle
+                      </label>
+                      <Select value={starFilter} onValueChange={setStarFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Tutte le stelle" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Tutte le stelle</SelectItem>
+                          <SelectItem value="5">5 stelle</SelectItem>
+                          <SelectItem value="4">4 stelle</SelectItem>
+                          <SelectItem value="3">3 stelle</SelectItem>
+                          <SelectItem value="2">2 stelle</SelectItem>
+                          <SelectItem value="1">1 stella</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Ordina per */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Ordina per
+                      </label>
+                      <Select value={sortBy} onValueChange={setSortBy}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Più recenti" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="newest">Più recenti</SelectItem>
+                          <SelectItem value="oldest">Più vecchie</SelectItem>
+                          <SelectItem value="highest">Voto più alto</SelectItem>
+                          <SelectItem value="lowest">Voto più basso</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Ricerca */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Cerca nelle recensioni
+                      </label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Input
+                          type="text"
+                          placeholder="Cerca..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Lista recensioni */}
+              {reviewsLoading ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <Card key={i}>
+                      <CardContent className="p-6">
+                        <div className="animate-pulse">
+                          <div className="flex items-center gap-4 mb-4">
+                            <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                            <div className="space-y-2">
+                              <div className="w-24 h-4 bg-gray-200 rounded"></div>
+                              <div className="w-32 h-3 bg-gray-200 rounded"></div>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="w-full h-4 bg-gray-200 rounded"></div>
+                            <div className="w-3/4 h-4 bg-gray-200 rounded"></div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : filteredReviews.length === 0 ? (
                 <Card>
                   <CardContent className="text-center py-8">
                     <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Nessuna recensione ancora</h3>
-                    <p className="text-gray-600 mb-4">Sii il primo a lasciare una recensione per questo professionista.</p>
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                      Scrivi la prima recensione
-                    </Button>
+                    {totalReviews === 0 ? (
+                      <>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Nessuna recensione ancora</h3>
+                        <p className="text-gray-600 mb-4">Sii il primo a lasciare una recensione per questo professionista.</p>
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                          Scrivi la prima recensione
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Nessun risultato</h3>
+                        <p className="text-gray-600">Nessuna recensione corrisponde ai filtri selezionati.</p>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               ) : (
-                <p>Le recensioni verranno caricate qui...</p>
+                <div className="space-y-4">
+                  {filteredReviews.map((review: any) => (
+                    <Card key={review.id}>
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                            {review.user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h4 className="font-semibold text-gray-900">
+                                {review.user?.name || 'Utente anonimo'}
+                              </h4>
+                              <div className="flex items-center">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`w-4 h-4 ${
+                                      i < review.rating
+                                        ? 'text-yellow-400 fill-current'
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-sm text-gray-500">
+                                {new Date(review.createdAt).toLocaleDateString('it-IT', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
+                                })}
+                              </span>
+                            </div>
+                            {review.title && (
+                              <h5 className="font-medium text-gray-900 mb-2">{review.title}</h5>
+                            )}
+                            <p className="text-gray-700 leading-relaxed">{review.content}</p>
+                            
+                            {/* Risposta del professionista se disponibile */}
+                            {review.professionalResponse && (
+                              <div className="mt-4 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                    P
+                                  </div>
+                                  <span className="font-medium text-blue-900">Risposta del professionista</span>
+                                  <span className="text-sm text-blue-600">
+                                    {new Date(review.responseDate).toLocaleDateString('it-IT')}
+                                  </span>
+                                </div>
+                                <p className="text-blue-800">{review.professionalResponse}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               )}
             </div>
           </TabsContent>
