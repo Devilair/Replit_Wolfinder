@@ -124,6 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create user first
       const userResult = await authService.registerUser({
         name: `${validatedData.firstName} ${validatedData.lastName}`,
+        username: validatedData.email, // Use email as username for professionals
         email: validatedData.email,
         password: validatedData.password,
         userType: "professional"
@@ -143,7 +144,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phoneMobile: validatedData.phoneMobile,
         email: validatedData.email,
         address: validatedData.address,
-        city: validatedData.city
+        city: validatedData.city,
+        province: "IT", // Default province for Italy
+        postalCode: "00000" // Default postal code, can be updated later
       });
 
       res.status(201).json({
