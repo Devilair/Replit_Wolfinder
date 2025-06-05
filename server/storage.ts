@@ -492,186 +492,208 @@ export class DatabaseStorage implements IStorage {
 
   // Professional Advanced Dashboard Methods
   async getProfessionalSubscription(professionalId: number): Promise<any> {
-    // Return mock subscription data for now
+    const results = await db
+      .select({
+        subscription: subscriptions,
+        plan: subscriptionPlans
+      })
+      .from(subscriptions)
+      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
+      .where(eq(subscriptions.professionalId, professionalId));
+
+    if (results.length === 0) {
+      return null;
+    }
+
+    const result = results[0];
     return {
-      id: 1,
-      status: 'active',
-      currentPeriodEnd: '2025-07-04',
-      cancelAtPeriodEnd: false,
-      plan: {
-        id: 1,
-        name: 'Professionale',
-        description: 'Piano completo per professionisti',
-        priceMonthly: 29,
-        features: [
-          'Profilo professionale completo',
-          'Risposte illimitate alle recensioni',
-          'Analytics avanzati',
-          'Portfolio progetti',
-          'Gestione servizi'
-        ],
-        hasAdvancedAnalytics: true,
-        hasExportData: false,
-        hasPrioritySupport: false,
-        maxResponses: -1
-      }
+      ...result.subscription,
+      plan: result.plan
     };
   }
 
   async getProfessionalAnalytics(professionalId: number): Promise<any> {
-    // Return mock analytics data
+    const [analytics] = await db
+      .select({
+        profileViews: sql<number>`COALESCE(SUM(${professionals.profileViews}), 0)`,
+        totalReviews: sql<number>`COUNT(${reviews.id})`,
+        averageRating: sql<number>`COALESCE(AVG(${reviews.rating}), 0)`
+      })
+      .from(professionals)
+      .leftJoin(reviews, eq(reviews.professionalId, professionals.id))
+      .where(eq(professionals.id, professionalId))
+      .groupBy(professionals.id);
+
+    const chartData = await db
+      .select({
+        date: sql<string>`DATE(${reviews.createdAt})`,
+        views: sql<number>`COUNT(DISTINCT ${reviews.id})`,
+        clicks: sql<number>`0`,
+        reviews: sql<number>`COUNT(${reviews.id})`
+      })
+      .from(reviews)
+      .where(eq(reviews.professionalId, professionalId))
+      .groupBy(sql`DATE(${reviews.createdAt})`)
+      .orderBy(sql`DATE(${reviews.createdAt})`)
+      .limit(30);
+
     return {
-      profileViews: 156,
-      contactClicks: 23,
-      conversionRate: 14.7,
-      averageRating: 4.8,
-      totalReviews: 12,
-      responseRate: 95,
-      chartData: [
-        { date: '2025-05-01', views: 12, clicks: 2, reviews: 1 },
-        { date: '2025-05-02', views: 18, clicks: 3, reviews: 0 },
-        { date: '2025-05-03', views: 15, clicks: 1, reviews: 1 },
-        { date: '2025-05-04', views: 22, clicks: 4, reviews: 2 },
-        { date: '2025-05-05', views: 19, clicks: 2, reviews: 0 }
-      ]
+      profileViews: analytics?.profileViews || 0,
+      contactClicks: 0, // Will be tracked when contact tracking is implemented
+      conversionRate: 0, // Will be calculated when conversion tracking is implemented
+      averageRating: Number(analytics?.averageRating || 0).toFixed(1),
+      totalReviews: analytics?.totalReviews || 0,
+      responseRate: 0, // Will be calculated when response tracking is implemented
+      chartData: chartData || []
     };
   }
 
   async getReviewsWithResponses(professionalId: number): Promise<any[]> {
-    // Return mock reviews with response capability
-    return [
-      {
-        id: 1,
-        rating: 5,
-        title: 'Servizio eccellente',
-        content: 'Molto professionale e competente. Ha risolto il mio problema legale in tempi rapidi.',
-        createdAt: '2025-05-15T10:30:00.000Z',
-        user: {
-          id: 201,
-          name: 'Marco Bianchi'
-        },
-        response: {
-          id: 1,
-          responseText: 'Grazie Marco per la fiducia. È stato un piacere aiutarti.',
-          createdAt: '2025-05-16T09:15:00.000Z'
-        },
-        canRespond: false
+    const results = await db
+      .select({
+        review: reviews,
+        user: users,
+        response: reviewResponses
+      })
+      .from(reviews)
+      .leftJoin(users, eq(reviews.userId, users.id))
+      .leftJoin(reviewResponses, eq(reviewResponses.reviewId, reviews.id))
+      .where(eq(reviews.professionalId, professionalId))
+      .orderBy(desc(reviews.createdAt));
+
+    return results.map(result => ({
+      id: result.review.id,
+      rating: result.review.rating,
+      title: result.review.title,
+      content: result.review.content,
+      createdAt: result.review.createdAt,
+      user: {
+        id: result.user?.id || 0,
+        name: result.user?.name || 'Utente Anonimo'
       },
-      {
-        id: 2,
-        rating: 4,
-        title: 'Buon servizio',
-        content: 'Competente e disponibile, anche se i tempi potrebbero essere migliorati.',
-        createdAt: '2025-05-10T14:20:00.000Z',
-        user: {
-          id: 202,
-          name: 'Laura Verdi'
-        },
-        canRespond: true
-      }
-    ];
+      response: result.response ? {
+        id: result.response.id,
+        responseText: result.response.responseText,
+        createdAt: result.response.createdAt
+      } : null,
+      canRespond: !result.response // Can respond only if no response exists yet
+    }));
   }
 
   async createReviewResponse(data: { reviewId: number; professionalId: number; responseText: string }): Promise<any> {
-    // Mock creation of review response
-    return {
-      id: Math.floor(Math.random() * 1000),
-      reviewId: data.reviewId,
-      professionalId: data.professionalId,
-      responseText: data.responseText,
-      isPublic: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    const [response] = await db
+      .insert(reviewResponses)
+      .values({
+        reviewId: data.reviewId,
+        professionalId: data.professionalId,
+        responseText: data.responseText,
+        isPublic: true
+      })
+      .returning();
+    
+    return response;
   }
 
   async getMonthlyResponseCount(professionalId: number): Promise<number> {
-    // Return mock response count
-    return 3;
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const [result] = await db
+      .select({
+        count: sql<number>`COUNT(*)`
+      })
+      .from(reviewResponses)
+      .where(
+        and(
+          eq(reviewResponses.professionalId, professionalId),
+          sql`${reviewResponses.createdAt} >= ${firstDayOfMonth}`
+        )
+      );
+    
+    return result?.count || 0;
   }
 
   async getProfessionalOrderMemberships(professionalId: number): Promise<any[]> {
-    // Return mock order memberships
-    return [
-      {
-        id: 1,
-        order: {
-          name: 'Ordine degli Avvocati di Ferrara',
-          province: 'Ferrara',
-          category: 'avvocati'
-        },
-        membershipNumber: 'AV-FE-1234',
-        membershipYear: 2018,
-        status: 'active',
-        verifiedAt: '2024-01-15T10:00:00.000Z'
-      }
-    ];
+    const results = await db
+      .select({
+        membership: professionalOrderMemberships,
+        order: professionalOrders
+      })
+      .from(professionalOrderMemberships)
+      .leftJoin(professionalOrders, eq(professionalOrderMemberships.orderId, professionalOrders.id))
+      .where(eq(professionalOrderMemberships.professionalId, professionalId));
+
+    return results.map(result => ({
+      id: result.membership.id,
+      order: result.order ? {
+        name: result.order.name,
+        province: result.order.province,
+        category: result.order.category
+      } : null,
+      membershipNumber: result.membership.membershipNumber,
+      membershipYear: result.membership.membershipYear,
+      status: result.membership.status,
+      verifiedAt: result.membership.verifiedAt
+    }));
   }
 
   async getProfessionalSpecializations(professionalId: number): Promise<any[]> {
-    // Return mock specializations
-    return [
-      {
-        id: 1,
-        name: 'Diritto Civile',
-        experienceYears: 8,
-        verifiedAt: '2024-01-15T10:00:00.000Z'
-      },
-      {
-        id: 2,
-        name: 'Diritto di Famiglia',
-        experienceYears: 5,
-        verifiedAt: null
-      }
-    ];
+    const results = await db
+      .select({
+        specialization: professionalSpecializations,
+        spec: specializations
+      })
+      .from(professionalSpecializations)
+      .leftJoin(specializations, eq(professionalSpecializations.specializationId, specializations.id))
+      .where(eq(professionalSpecializations.professionalId, professionalId));
+
+    return results.map(result => ({
+      id: result.specialization.id,
+      name: result.spec?.name || '',
+      experienceYears: result.specialization.experienceYears,
+      verifiedAt: result.specialization.verifiedAt
+    }));
   }
 
   async getProfessionalServices(professionalId: number): Promise<any[]> {
-    // Return mock services
-    return [
-      {
-        id: 1,
-        name: 'Consulenza Legale',
-        description: 'Consulenza legale generale per privati e aziende',
-        priceFrom: 80,
-        priceTo: 120,
-        priceUnit: 'ora',
-        isActive: true
-      },
-      {
-        id: 2,
-        name: 'Redazione Contratti',
-        description: 'Redazione e revisione contratti commerciali',
-        priceFrom: 200,
-        priceTo: 500,
-        priceUnit: 'progetto',
-        isActive: true
-      }
-    ];
+    const results = await db
+      .select()
+      .from(professionalServices)
+      .where(eq(professionalServices.professionalId, professionalId))
+      .orderBy(professionalServices.displayOrder, professionalServices.name);
+
+    return results.map(service => ({
+      id: service.id,
+      name: service.name,
+      description: service.description,
+      priceFrom: Number(service.priceFrom),
+      priceTo: Number(service.priceTo),
+      priceUnit: service.priceUnit,
+      isActive: service.isActive
+    }));
   }
 
   async getProfessionalPortfolio(professionalId: number): Promise<any[]> {
-    // Return mock portfolio items
-    return [
-      {
-        id: 1,
-        title: 'Caso Controversia Commerciale',
-        description: 'Risoluzione di una complessa controversia commerciale tra due aziende del settore manifatturiero',
-        projectType: 'Diritto Commerciale',
-        completionDate: '2024-12-15T00:00:00.000Z',
-        images: [],
-        isPublic: true
-      },
-      {
-        id: 2,
-        title: 'Separazione Consensuale',
-        description: 'Gestione pratica di separazione consensuale con accordi patrimoniali',
-        projectType: 'Diritto di Famiglia',
-        completionDate: '2024-11-28T00:00:00.000Z',
-        images: [],
-        isPublic: true
-      }
-    ];
+    const results = await db
+      .select()
+      .from(professionalPortfolio)
+      .where(
+        and(
+          eq(professionalPortfolio.professionalId, professionalId),
+          eq(professionalPortfolio.isPublic, true)
+        )
+      )
+      .orderBy(desc(professionalPortfolio.completionDate));
+
+    return results.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      projectType: item.projectType,
+      completionDate: item.completionDate,
+      images: item.images ? JSON.parse(item.images) : [],
+      isPublic: item.isPublic
+    }));
   }
 
   async updateProfessionalRating(id: number): Promise<void> {
