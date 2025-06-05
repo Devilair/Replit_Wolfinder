@@ -698,12 +698,24 @@ export default function ProfessionalAdvancedDashboard() {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-6">
-                      <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-500">Nessuna specializzazione registrata</p>
-                      <Button size="sm" className="mt-2">
-                        <Plus className="w-4 h-4 mr-1" />
-                        Aggiungi Specializzazione
+                    <div className="text-center py-12">
+                      <div className="bg-green-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <Award className="w-8 h-8 text-green-600" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Mostra le tue competenze</h3>
+                      <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                        Aggiungi le tue specializzazioni per distinguerti dalla concorrenza. I professionisti specializzati ricevono il 180% in più di richieste.
+                      </p>
+                      <div className="bg-gray-50 rounded-lg p-4 max-w-sm mx-auto mb-4">
+                        <div className="text-sm text-gray-700 space-y-1">
+                          <div>• Diritto civile - 8 anni esperienza</div>
+                          <div>• Diritto penale - 5 anni esperienza</div>
+                          <div>• Diritto societario - 12 anni esperienza</div>
+                        </div>
+                      </div>
+                      <Button className="mt-2">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Aggiungi le tue specializzazioni
                       </Button>
                     </div>
                   )}
