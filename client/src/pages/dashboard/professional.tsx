@@ -712,35 +712,338 @@ export default function ProfessionalDashboard() {
           </TabsContent>
 
           {/* Profile Tab */}
-          <TabsContent value="profile">
+          <TabsContent value="profile" className="space-y-6">
+            {/* Informazioni Aziendali */}
             <Card>
               <CardHeader>
-                <CardTitle>Informazioni Profilo</CardTitle>
+                <CardTitle>Informazioni Aziendali</CardTitle>
                 <CardDescription>
-                  Dettagli del tuo profilo professionale
+                  Dati principali del tuo profilo
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-sm font-medium">Email</label>
-                    <p className="text-sm text-gray-600">{user.email || "Non specificata"}</p>
-                  </div>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium">Nome Attività</label>
-                    <p className="text-sm text-gray-600">{professionalData.businessName || "Non specificato"}</p>
+                    <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                      {professionalData?.businessName || "Non specificato"}
+                    </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Stato Verifica</label>
-                    <Badge variant={professionalData.isVerified ? "default" : "secondary"}>
-                      {professionalData.isVerified ? "Verificato" : "Non verificato"}
-                    </Badge>
+                    <label className="text-sm font-medium">Email</label>
+                    <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                      {professionalData?.email || "Non specificata"}
+                    </p>
                   </div>
-                  <div className="md:col-span-2">
-                    <label className="text-sm font-medium">Descrizione</label>
-                    <p className="text-sm text-gray-600">{professionalData.description || "Nessuna descrizione fornita"}</p>
+                  <div>
+                    <label className="text-sm font-medium">Telefono</label>
+                    <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                      {professionalData?.phoneFixed || "Non specificato"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Sito Web</label>
+                    <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                      {professionalData?.website || "Non specificato"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Email PEC</label>
+                    <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                      {professionalData?.pec || "Non specificata"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Partita IVA</label>
+                    <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                      {professionalData?.vatNumber || "Non specificata"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Codice Fiscale</label>
+                    <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                      {professionalData?.fiscalCode || "Non specificato"}
+                    </p>
                   </div>
                 </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Indirizzo</label>
+                  <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                    {professionalData?.address || "Non specificato"}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Descrizione</label>
+                  <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                    {professionalData?.description || "Nessuna descrizione fornita"}
+                  </p>
+                </div>
+
+                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => {
+                        setEditFormData({
+                          businessName: professionalData?.businessName || "",
+                          description: professionalData?.description || "",
+                          phoneFixed: professionalData?.phoneFixed || "",
+                          phoneMobile: professionalData?.phoneMobile || "",
+                          email: professionalData?.email || "",
+                          website: professionalData?.website || "",
+                          address: professionalData?.address || "",
+                          city: professionalData?.city || "",
+                          additionalCities: professionalData?.additionalCities?.join(", ") || "",
+                          province: professionalData?.province || "",
+                          postalCode: professionalData?.postalCode || "",
+                          pec: professionalData?.pec || "",
+                          vatNumber: professionalData?.vatNumber || "",
+                          fiscalCode: professionalData?.fiscalCode || "",
+                          facebookUrl: professionalData?.facebookUrl || "",
+                          instagramUrl: professionalData?.instagramUrl || "",
+                          linkedinUrl: professionalData?.linkedinUrl || "",
+                          twitterUrl: professionalData?.twitterUrl || "",
+                          whatsappNumber: professionalData?.whatsappNumber || ""
+                        });
+                      }}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Modifica Informazioni
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                      <DialogTitle>Modifica Profilo Professionale</DialogTitle>
+                      <DialogDescription>
+                        Aggiorna le informazioni del tuo profilo professionale
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-6 max-h-[70vh] overflow-y-auto">
+                      {/* Informazioni Base */}
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-lg">Informazioni Base</h4>
+                        <div>
+                          <Label htmlFor="businessName">Nome Studio/Attività</Label>
+                          <Input
+                            id="businessName"
+                            value={editFormData.businessName}
+                            onChange={(e) => setEditFormData({...editFormData, businessName: e.target.value})}
+                            placeholder="Es. Studio Legale Rossi"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="description">Descrizione</Label>
+                          <Textarea
+                            id="description"
+                            value={editFormData.description}
+                            onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
+                            placeholder="Descrivi i tuoi servizi e la tua esperienza"
+                            rows={4}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Contatti */}
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-lg">Contatti</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="phoneFixed">Telefono Fisso</Label>
+                            <Input
+                              id="phoneFixed"
+                              value={editFormData.phoneFixed}
+                              onChange={(e) => setEditFormData({...editFormData, phoneFixed: e.target.value})}
+                              placeholder="Es. 0532 123456"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="phoneMobile">Cellulare</Label>
+                            <Input
+                              id="phoneMobile"
+                              value={editFormData.phoneMobile}
+                              onChange={(e) => setEditFormData({...editFormData, phoneMobile: e.target.value})}
+                              placeholder="Es. 335 1234567"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={editFormData.email}
+                            onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                            placeholder="Es. info@studiolegale.it"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="website">Sito Web</Label>
+                          <Input
+                            id="website"
+                            value={editFormData.website}
+                            onChange={(e) => setEditFormData({...editFormData, website: e.target.value})}
+                            placeholder="Es. https://www.studiolegale.it"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Informazioni Aziendali */}
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-lg">Informazioni Aziendali</h4>
+                        <div>
+                          <Label htmlFor="pec">Email PEC</Label>
+                          <Input
+                            id="pec"
+                            value={editFormData.pec}
+                            onChange={(e) => setEditFormData({...editFormData, pec: e.target.value})}
+                            placeholder="Es. studio@pec.it"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="vatNumber">Partita IVA</Label>
+                            <Input
+                              id="vatNumber"
+                              value={editFormData.vatNumber}
+                              onChange={(e) => setEditFormData({...editFormData, vatNumber: e.target.value})}
+                              placeholder="Es. IT12345678901"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="fiscalCode">Codice Fiscale</Label>
+                            <Input
+                              id="fiscalCode"
+                              value={editFormData.fiscalCode}
+                              onChange={(e) => setEditFormData({...editFormData, fiscalCode: e.target.value})}
+                              placeholder="Es. RSSMRA80A01F257K"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Localizzazione */}
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-lg">Localizzazione</h4>
+                        <div>
+                          <Label htmlFor="address">Indirizzo</Label>
+                          <Input
+                            id="address"
+                            value={editFormData.address}
+                            onChange={(e) => setEditFormData({...editFormData, address: e.target.value})}
+                            placeholder="Es. Via Roma 123"
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <Label htmlFor="city">Città Principale</Label>
+                            <Input
+                              id="city"
+                              value={editFormData.city}
+                              onChange={(e) => setEditFormData({...editFormData, city: e.target.value})}
+                              placeholder="Es. Ferrara"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="province">Provincia</Label>
+                            <Input
+                              id="province"
+                              value={editFormData.province}
+                              onChange={(e) => setEditFormData({...editFormData, province: e.target.value})}
+                              placeholder="Es. FE"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="postalCode">CAP</Label>
+                            <Input
+                              id="postalCode"
+                              value={editFormData.postalCode}
+                              onChange={(e) => setEditFormData({...editFormData, postalCode: e.target.value})}
+                              placeholder="Es. 44121"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="additionalCities">Altre Città di Servizio</Label>
+                          <Input
+                            id="additionalCities"
+                            value={editFormData.additionalCities}
+                            onChange={(e) => setEditFormData({...editFormData, additionalCities: e.target.value})}
+                            placeholder="Es. Bologna, Modena, Ravenna (separate da virgola)"
+                          />
+                          <p className="text-sm text-gray-500 mt-1">Queste città non influenzeranno la ricerca principale</p>
+                        </div>
+                      </div>
+
+                      {/* Social Media */}
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-lg">Social Media</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="facebookUrl">Facebook</Label>
+                            <Input
+                              id="facebookUrl"
+                              value={editFormData.facebookUrl}
+                              onChange={(e) => setEditFormData({...editFormData, facebookUrl: e.target.value})}
+                              placeholder="Es. https://facebook.com/studiolegale"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="instagramUrl">Instagram</Label>
+                            <Input
+                              id="instagramUrl"
+                              value={editFormData.instagramUrl}
+                              onChange={(e) => setEditFormData({...editFormData, instagramUrl: e.target.value})}
+                              placeholder="Es. https://instagram.com/studiolegale"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="linkedinUrl">LinkedIn</Label>
+                            <Input
+                              id="linkedinUrl"
+                              value={editFormData.linkedinUrl}
+                              onChange={(e) => setEditFormData({...editFormData, linkedinUrl: e.target.value})}
+                              placeholder="Es. https://linkedin.com/in/avvocato"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="twitterUrl">X (Twitter)</Label>
+                            <Input
+                              id="twitterUrl"
+                              value={editFormData.twitterUrl}
+                              onChange={(e) => setEditFormData({...editFormData, twitterUrl: e.target.value})}
+                              placeholder="Es. https://x.com/studiolegale"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="whatsappNumber">WhatsApp</Label>
+                          <Input
+                            id="whatsappNumber"
+                            value={editFormData.whatsappNumber}
+                            onChange={(e) => setEditFormData({...editFormData, whatsappNumber: e.target.value})}
+                            placeholder="Es. +39 335 1234567"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 pt-4 border-t">
+                        <Button 
+                          onClick={() => updateProfileMutation.mutate(editFormData)}
+                          disabled={updateProfileMutation.isPending}
+                          className="flex-1"
+                        >
+                          {updateProfileMutation.isPending ? "Aggiornamento..." : "Salva Modifiche"}
+                        </Button>
+                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                          Annulla
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </CardContent>
             </Card>
           </TabsContent>
