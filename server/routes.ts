@@ -320,6 +320,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get individual professional profile (public, no auth required)
+  app.get("/api/professionals/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid professional ID" });
+      }
+
+      const professional = await storage.getProfessional(id);
+      if (!professional) {
+        return res.status(404).json({ message: "Professional not found" });
+      }
+
+      // Increment profile views count
+      try {
+        await storage.incrementProfileViews(id);
+      } catch (viewError) {
+        console.log("Could not increment profile views:", viewError);
+      }
+
+      res.json(professional);
+    } catch (error) {
+      console.error("Error fetching professional profile:", error);
+      res.status(500).json({ message: "Failed to fetch professional profile" });
+    }
+  });
+
   // Get featured professionals
   app.get("/api/professionals/featured", async (req, res) => {
     try {

@@ -68,6 +68,7 @@ export interface IStorage {
   getFeaturedProfessionals(): Promise<ProfessionalSummary[]>;
   createProfessional(professional: InsertProfessional): Promise<Professional>;
   updateProfessionalRating(id: number): Promise<void>;
+  incrementProfileViews(professionalId: number): Promise<void>;
   logActivity(activity: { type: string; description: string; userId: number; metadata?: any }): Promise<void>;
   
   // Unclaimed profiles management
@@ -488,6 +489,20 @@ export class DatabaseStorage implements IStorage {
       .from(professionals)
       .where(eq(professionals.userId, userId));
     return professional || undefined;
+  }
+
+  async incrementProfileViews(professionalId: number): Promise<void> {
+    try {
+      await db
+        .update(professionals)
+        .set({ 
+          profileViews: sql`COALESCE(${professionals.profileViews}, 0) + 1`,
+          lastActivityAt: new Date()
+        })
+        .where(eq(professionals.id, professionalId));
+    } catch (error) {
+      console.log("Could not increment profile views:", error);
+    }
   }
 
   async logActivity(activity: { type: string; description: string; userId: number; metadata?: any }): Promise<void> {
