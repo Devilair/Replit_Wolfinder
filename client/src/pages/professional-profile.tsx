@@ -15,7 +15,9 @@ import {
   Clock,
   Shield,
   User,
-  Building
+  Building,
+  CheckCircle,
+  AlertCircle
 } from "lucide-react";
 import { useState } from "react";
 import ClaimProfileDialog from "@/components/claim-profile-dialog";
@@ -116,10 +118,16 @@ export default function ProfessionalProfile() {
                       Verificato
                     </Badge>
                   )}
-                  {!professional.isClaimed && (
+                  {!professional.isClaimed && !professional.userId && (
                     <Badge variant="outline" className="border-orange-300 text-orange-600">
                       <User className="w-3 h-3 mr-1" />
                       Non reclamato
+                    </Badge>
+                  )}
+                  {professional.userId && (
+                    <Badge variant="default" className="bg-green-100 text-green-800">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Profilo gestito
                     </Badge>
                   )}
                 </div>
@@ -143,7 +151,7 @@ export default function ProfessionalProfile() {
               </div>
 
               {/* Claim Button */}
-              {!professional.isClaimed && (
+              {!professional.isClaimed && !professional.userId && (
                 <Button 
                   onClick={() => setShowClaimDialog(true)}
                   className="bg-blue-600 hover:bg-blue-700"
