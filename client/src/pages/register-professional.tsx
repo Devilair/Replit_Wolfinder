@@ -48,8 +48,7 @@ export default function RegisterProfessional() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: ProfessionalRegistrationData) => {
-      const response = await apiRequest("POST", "/api/auth/register-professional", data);
-      return response.json();
+      return await apiRequest("POST", "/api/auth/register-professional", data);
     },
     onSuccess: () => {
       toast({
