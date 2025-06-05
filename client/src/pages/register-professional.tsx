@@ -323,9 +323,60 @@ export default function RegisterProfessional() {
                         </FormItem>
                       )}
                     />
+
+                    {/* Termini di servizio e privacy alla fine del processo */}
+                    <div className="space-y-4 pt-6 border-t">
+                      <FormField
+                        control={form.control}
+                        name="privacyConsent"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                Accetto i{" "}
+                                <Link href="/privacy" className="text-blue-600 hover:underline">
+                                  Termini di Servizio
+                                </Link>{" "}
+                                e l'{" "}
+                                <Link href="/privacy" className="text-blue-600 hover:underline">
+                                  Informativa sulla Privacy
+                                </Link>
+                              </FormLabel>
+                              <FormMessage />
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="marketingConsent"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                Accetto di ricevere comunicazioni commerciali (opzionale)
+                              </FormLabel>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                     
                     {/* Pulsanti di navigazione per il secondo tab */}
-                    <div className="flex justify-between pt-6 border-t">
+                    <div className="flex justify-between pt-4">
                       <Button 
                         type="button" 
                         variant="outline"
@@ -344,56 +395,6 @@ export default function RegisterProfessional() {
                     </div>
                   </TabsContent>
                 </Tabs>
-
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="privacyConsent"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>
-                            Accetto i{" "}
-                            <Link href="/privacy" className="text-blue-600 hover:underline">
-                              Termini di Servizio
-                            </Link>{" "}
-                            e l'{" "}
-                            <Link href="/privacy" className="text-blue-600 hover:underline">
-                              Informativa sulla Privacy
-                            </Link>
-                          </FormLabel>
-                          <FormMessage />
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="marketingConsent"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>
-                            Accetto di ricevere comunicazioni commerciali (opzionale)
-                          </FormLabel>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                </div>
 
                 <div className="text-center pt-4">
                   <p className="text-sm text-gray-600">
