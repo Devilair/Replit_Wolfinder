@@ -277,7 +277,7 @@ export default function ProfessionalProfile() {
                 <div className="flex items-center gap-3">
                   <Clock className="w-4 h-4 text-gray-500" />
                   <span className="text-sm">
-                    Su Wolfinder dal {new Date(professional.createdAt).toLocaleDateString()}
+                    Su Wolfinder dal {professional.createdAt ? new Date(professional.createdAt).toLocaleDateString('it-IT') : 'Data non disponibile'}
                   </span>
                 </div>
                 {professional.yearsOfExperience && (
