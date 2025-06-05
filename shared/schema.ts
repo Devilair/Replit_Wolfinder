@@ -147,8 +147,20 @@ export const professionals = pgTable("professionals", {
   phoneMobile: text("phone_mobile"),
   email: text("email").notNull(),
   website: text("website"),
+  // Informazioni aziendali aggiuntive
+  pec: text("pec"), // Email PEC
+  vatNumber: text("vat_number"), // Partita IVA
+  fiscalCode: text("fiscal_code"), // Codice fiscale
+  // Social media
+  facebookUrl: text("facebook_url"),
+  instagramUrl: text("instagram_url"),
+  linkedinUrl: text("linkedin_url"),
+  twitterUrl: text("twitter_url"),
+  whatsappNumber: text("whatsapp_number"),
+  // Località di servizio
   address: text("address").notNull(),
-  city: text("city").notNull(),
+  city: text("city").notNull(), // Città principale
+  additionalCities: text("additional_cities").array(), // Città aggiuntive (non influenzano ricerca)
   province: text("province").notNull(),
   postalCode: text("postal_code").notNull(),
   priceRangeMin: decimal("price_range_min", { precision: 10, scale: 2 }),
