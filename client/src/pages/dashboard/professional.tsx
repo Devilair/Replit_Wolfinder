@@ -79,9 +79,10 @@ export default function ProfessionalDashboard() {
   });
 
   // Fetch professional profile
-  const { data: professionalData, isLoading: profileLoading } = useQuery<ProfessionalData>({
+  const { data: professionalData, isLoading: profileLoading, error: profileError } = useQuery<ProfessionalData>({
     queryKey: ['/api/professional/profile'],
     enabled: !!user,
+    retry: false,
   });
 
   // Fetch reviews
@@ -173,12 +174,15 @@ export default function ProfessionalDashboard() {
     );
   }
 
-  if (!user || !professionalData) {
+  if (!user || (!professionalData && !profileLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">Accesso negato</h2>
           <p className="text-gray-600">Non hai un profilo professionale registrato.</p>
+          {profileError && (
+            <p className="text-red-600 mt-2">Errore: {profileError.message}</p>
+          )}
         </div>
       </div>
     );
