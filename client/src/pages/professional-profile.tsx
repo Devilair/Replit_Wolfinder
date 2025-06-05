@@ -26,7 +26,7 @@ export default function ProfessionalProfile() {
   const [showClaimDialog, setShowClaimDialog] = useState(false);
 
   const { data: professional, isLoading } = useQuery({
-    queryKey: ["/api/professionals", id],
+    queryKey: [`/api/professionals/${id}`],
     enabled: !!id,
   });
 
@@ -104,11 +104,11 @@ export default function ProfessionalProfile() {
                 
                 <div className="flex-1">
                   <CardTitle className="text-2xl font-bold text-gray-900 mb-2">
-                    {professional.businessName || professional.user?.name || 'Professionista'}
+                    {professional.businessName || (professional.user && professional.user.name) || 'Professionista'}
                   </CardTitle>
                 <div className="flex items-center gap-2 mb-3">
                   <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                    {professional.category?.name || 'Categoria non specificata'}
+                    {(professional.category && professional.category.name) || 'Categoria non specificata'}
                   </Badge>
                   {professional.isVerified && (
                     <Badge variant="default" className="bg-green-100 text-green-800">
