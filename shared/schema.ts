@@ -836,18 +836,8 @@ export type AuditLog = typeof auditLogs.$inferSelect;
 export type ProfessionalNotification = typeof professionalNotifications.$inferSelect;
 export type InsertProfessionalNotification = typeof professionalNotifications.$inferInsert;
 
-// Aggiorna i tipi base
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
-export type Professional = typeof professionals.$inferSelect;
-export type InsertProfessional = typeof professionals.$inferInsert;
-export type Category = typeof categories.$inferSelect;
-export type InsertCategory = typeof categories.$inferInsert;
-export type Review = typeof reviews.$inferSelect;
-export type InsertReview = typeof reviews.$inferInsert;
-
-// Schema Zod aggiornati per la registrazione (rimuovo duplicati)
-// Gli schemi insertUserSchema e insertProfessionalSchema sono già definiti sopra
+// Schema Zod aggiornati per la registrazione
+// (Nota: insertUserSchema e insertProfessionalSchema esistenti saranno estesi)
 
 // Schema per la registrazione professionale completa
 export const professionalRegistrationSchema = z.object({

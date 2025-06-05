@@ -112,6 +112,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Professional registration route
+  app.post("/api/auth/register-professional", async (req, res) => {
+    try {
+      const validatedData = req.body;
+      
+      if (!validatedData.privacyConsent) {
+        return res.status(400).json({ error: "Devi accettare i termini di servizio e la privacy policy" });
+      }
+
+      // Create user first
+      const userResult = await authService.registerUser({
+        name: `${validatedData.firstName} ${validatedData.lastName}`,
+        email: validatedData.email,
+        password: validatedData.password,
+        userType: "professional"
+      });
+      
+      if (!userResult.success) {
+        return res.status(400).json({ error: userResult.error });
+      }
+
+      // Create professional profile
+      const professional = await storage.createProfessional({
+        userId: userResult.user!.id,
+        categoryId: validatedData.categoryId,
+        businessName: validatedData.businessName,
+        description: validatedData.description,
+        phoneFixed: validatedData.phoneFixed,
+        phoneMobile: validatedData.phoneMobile,
+        email: validatedData.email,
+        address: validatedData.address,
+        city: validatedData.city
+      });
+
+      res.status(201).json({
+        message: "Registrazione professionale completata con successo",
+        user: userResult.user,
+        professional,
+        token: userResult.token
+      });
+    } catch (error) {
+      console.error('Professional registration error:', error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email, password } = req.body;
