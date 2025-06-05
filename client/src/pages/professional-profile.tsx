@@ -59,10 +59,19 @@ export default function ProfessionalProfile() {
 
   // Funzione per gestire il back navigation intelligente
   const handleBackNavigation = () => {
+    console.log("Navigation debug:", {
+      isAuthenticated,
+      user: user?.id,
+      professional: professional?.userId,
+      comparison: professional?.userId === user?.id
+    });
+    
     // Se l'utente è autenticato e sta visualizzando il proprio profilo, torna alla dashboard
     if (isAuthenticated && user && professional && professional.userId === user.id) {
+      console.log("Redirecting to dashboard");
       setLocation("/dashboard");
     } else {
+      console.log("Redirecting to homepage");
       // Altrimenti torna alla homepage per la ricerca
       setLocation("/");
     }
