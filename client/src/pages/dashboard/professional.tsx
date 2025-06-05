@@ -188,21 +188,44 @@ export default function ProfessionalDashboard() {
     );
   }
 
-  if (!user || (!professionalData && !profileLoading)) {
+  // Show access denied only if we're sure there's no user and we're not loading
+  if (!userLoading && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">Accesso negato</h2>
+          <p className="text-gray-600">Devi effettuare il login per accedere a questa pagina.</p>
+          <button 
+            onClick={() => window.location.href = '/auth/login'}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Vai al Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied for professional data only if we're sure there's no professional profile
+  if (user && !profileLoading && !professionalData && profileError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Profilo non trovato</h2>
           <p className="text-gray-600">Non hai un profilo professionale registrato.</p>
-          {profileError && (
-            <p className="text-red-600 mt-2">Errore: {profileError.message}</p>
-          )}
-          <div className="mt-4 text-xs text-gray-500">
-            <p>Debug Info:</p>
-            <p>User: {user ? 'Found' : 'Not found'}</p>
-            <p>Professional Data: {professionalData ? 'Found' : 'Not found'}</p>
-            <p>Token: {localStorage.getItem('authToken') ? 'Present' : 'Missing'}</p>
-          </div>
+          <p className="text-red-600 mt-2">Errore: {profileError.message}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If we have user but no professional data yet and still loading, show loading
+  if (user && !professionalData && profileLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-gray-600">Caricamento profilo professionale...</p>
         </div>
       </div>
     );
