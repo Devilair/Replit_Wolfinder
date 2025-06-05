@@ -375,7 +375,7 @@ export default function ProfessionalAdvancedDashboard() {
                 size="sm"
                 onClick={() => {
                   localStorage.removeItem('userToken');
-                  window.location.href = '/api/auth/logout';
+                  window.location.href = '/';
                 }}
               >
                 <LogOut className="w-4 h-4 mr-2" />
