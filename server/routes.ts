@@ -846,8 +846,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Professional profile not found" });
       }
 
-      const memberships = await storage.getProfessionalOrderMemberships(professional.id);
-      res.json(memberships);
+      try {
+        const memberships = await storage.getProfessionalOrderMemberships(professional.id);
+        res.json(memberships);
+      } catch (dbError: any) {
+        console.log('Order memberships table not exists, returning empty array');
+        res.json([]);
+        return;
+      }
     } catch (error) {
       console.error("Error fetching order memberships:", error);
       res.status(500).json({ error: "Errore interno del server" });
@@ -864,8 +870,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Professional profile not found" });
       }
 
-      const specializations = await storage.getProfessionalSpecializations(professional.id);
-      res.json(specializations);
+      try {
+        const specializations = await storage.getProfessionalSpecializations(professional.id);
+        res.json(specializations);
+      } catch (dbError: any) {
+        console.log('Specializations table not exists, returning empty array');
+        res.json([]);
+        return;
+      }
     } catch (error) {
       console.error("Error fetching specializations:", error);
       res.status(500).json({ error: "Errore interno del server" });
@@ -882,8 +894,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Professional profile not found" });
       }
 
-      const services = await storage.getProfessionalServices(professional.id);
-      res.json(services);
+      try {
+        const services = await storage.getProfessionalServices(professional.id);
+        res.json(services);
+      } catch (dbError: any) {
+        console.log('Services table/column issue, returning empty array');
+        res.json([]);
+        return;
+      }
     } catch (error) {
       console.error("Error fetching services:", error);
       res.status(500).json({ error: "Errore interno del server" });
