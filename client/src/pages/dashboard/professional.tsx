@@ -1,28 +1,33 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ProfileTab } from '@/components/ProfileTab';
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
-  User, 
   Star, 
-  Eye, 
-  MessageSquare, 
+  MapPin, 
+  Phone, 
+  Mail, 
+  Calendar, 
   TrendingUp, 
-  Calendar,
+  Users, 
+  MessageSquare, 
+  Eye,
+  Award,
+  Clock,
+  DollarSign,
+  Target,
+  BarChart3,
+  Settings,
+  Upload,
   Edit,
-  Camera,
-  Shield,
-  CheckCircle,
-  AlertCircle,
-  Mail,
-  Phone,
-  MapPin
-} from 'lucide-react';
+  Plus
+} from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { ProfileTab } from "@/components/ProfileTab";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfessionalData {
   id: number;
@@ -37,11 +42,9 @@ interface ProfessionalData {
   postalCode: string;
   email: string;
   website: string;
-  // Informazioni aziendali aggiuntive
   pec: string;
   vatNumber: string;
   fiscalCode: string;
-  // Social media
   facebookUrl: string;
   instagramUrl: string;
   linkedinUrl: string;
@@ -74,636 +77,288 @@ interface UserData {
 }
 
 export default function ProfessionalDashboard() {
+  const { user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editFormData, setEditFormData] = useState({
-    businessName: '',
-    description: '',
-    phoneFixed: '',
-    phoneMobile: '',
-    email: '',
-    website: '',
-    address: '',
-    city: '',
-    additionalCities: '',
-    province: '',
-    postalCode: '',
-    // Informazioni aziendali aggiuntive
-    pec: '',
-    vatNumber: '',
-    fiscalCode: '',
-    // Social media
-    facebookUrl: '',
-    instagramUrl: '',
-    linkedinUrl: '',
-    twitterUrl: '',
-    whatsappNumber: ''
-  });
+  const [activeTab, setActiveTab] = useState("overview");
 
-  // Fetch user data
-  const { data: user, isLoading: userLoading } = useQuery<UserData>({
-    queryKey: ['/api/auth/user'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/auth/user');
-      return response;
-    },
-    retry: false,
-  });
-
-  // Fetch professional profile
-  const { data: professionalData, isLoading: profileLoading, error: profileError } = useQuery<ProfessionalData>({
-    queryKey: ['/api/professional/profile'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/professional/profile');
-      return response;
-    },
+  // Fetch professional data
+  const { data: professionalData, isLoading: isLoadingProfessional } = useQuery<ProfessionalData>({
+    queryKey: ["/api/professional/profile-complete"],
     enabled: !!user,
-    retry: false,
   });
 
   // Fetch reviews
-  const { data: reviews = [], isLoading: reviewsLoading } = useQuery<ReviewData[]>({
-    queryKey: ['/api/professional/reviews'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/professional/reviews');
-      return response;
-    },
+  const { data: reviews = [], isLoading: isLoadingReviews } = useQuery<ReviewData[]>({
+    queryKey: ["/api/professional/reviews-complete"],
     enabled: !!user,
   });
 
-  // Update profile mutation
-  const updateProfileMutation = useMutation({
-    mutationFn: async (data: typeof editFormData) => {
-      const response = await apiRequest('PUT', '/api/professional/profile', data);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Profilo aggiornato",
-        description: "Le informazioni del profilo sono state salvate con successo",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/professional/profile'] });
-      setIsEditDialogOpen(false);
-    },
-    onError: (error) => {
-      toast({
-        title: "Errore",
-        description: "Si è verificato un errore durante l'aggiornamento del profilo",
-        variant: "destructive",
-      });
-    }
+  // Fetch analytics data
+  const { data: analyticsData } = useQuery({
+    queryKey: ["/api/professional/analytics"],
+    enabled: !!user,
   });
 
-  // Upload photo mutation
-  const uploadPhotoMutation = useMutation({
+  // Fetch services
+  const { data: services = [] } = useQuery({
+    queryKey: ["/api/professional/services"],
+    enabled: !!user,
+  });
+
+  // Fetch specializations
+  const { data: specializations = [] } = useQuery({
+    queryKey: ["/api/professional/specializations"],
+    enabled: !!user,
+  });
+
+  // Fetch portfolio
+  const { data: portfolio } = useQuery({
+    queryKey: ["/api/professional/portfolio"],
+    enabled: !!user,
+  });
+
+  // Fetch order memberships
+  const { data: orderMemberships = [] } = useQuery({
+    queryKey: ["/api/professional/order-memberships"],
+    enabled: !!user,
+  });
+
+  const uploadImageMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await apiRequest('POST', '/api/professional/upload-photo', formData);
+      const response = await fetch('/api/professional/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error('Errore durante il caricamento');
+      }
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Foto caricata",
-        description: "La foto del profilo è stata aggiornata con successo",
+        title: "Successo",
+        description: "Immagine caricata con successo",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/professional/profile'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/profile-complete"] });
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Errore",
-        description: "Si è verificato un errore durante il caricamento della foto",
+        description: "Errore durante il caricamento dell'immagine",
         variant: "destructive",
       });
-    }
+    },
   });
 
-  // Request verification mutation
-  const requestVerificationMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/professional/request-verification', {});
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Richiesta inviata",
-        description: "La richiesta di verifica è stata inviata all'amministrazione",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Errore",
-        description: "Si è verificato un errore durante l'invio della richiesta",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const formData = new FormData();
-      formData.append('photo', file);
-      uploadPhotoMutation.mutate(formData);
-    }
-  };
-
-
-
-  if (userLoading || profileLoading) {
+  if (isLoadingProfessional) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
       </div>
     );
   }
 
-  // Show access denied only if we're sure there's no user and we're not loading
-  if (!userLoading && !user) {
+  if (!professionalData) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Accesso negato</h2>
-          <p className="text-gray-600">Devi effettuare il login per accedere a questa pagina.</p>
-          <button 
-            onClick={() => window.location.href = '/auth/login'}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Vai al Login
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Show access denied for professional data only if we're sure there's no professional profile
-  if (user && !profileLoading && !professionalData && profileError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Profilo non trovato</h2>
-          <p className="text-gray-600">Non hai un profilo professionale registrato.</p>
-          <p className="text-red-600 mt-2">Errore: {profileError.message}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If we have user but no professional data yet and still loading, show loading
-  if (user && !professionalData && profileLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-gray-600">Caricamento profilo professionale...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <Card className="p-6">
+          <CardContent>
+            <p className="text-center text-gray-600">Nessun profilo professionale trovato</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard Professionista</h1>
-              <p className="text-gray-600 mt-1">Benvenuto, {user.name}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Ultimo accesso</p>
-              <p className="text-sm font-medium">Oggi</p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header with Professional Info */}
+        <div className="mb-8">
+          <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row md:items-center gap-6">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h1 className="text-2xl font-bold text-gray-900">
+                      {professionalData.businessName}
+                    </h1>
+                    {professionalData.isVerified && (
+                      <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+                        <Award className="w-3 h-3 mr-1" />
+                        Verificato
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-4 h-4" />
+                      <span>{professionalData.city}, {professionalData.province}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="font-medium">{professionalData.rating}</span>
+                      <span>({professionalData.reviewCount} recensioni)</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Eye className="w-4 h-4" />
+                      <span>{professionalData.profileViews} visualizzazioni</span>
+                    </div>
+                  </div>
+
+                  <p className="text-gray-700 leading-relaxed">
+                    {professionalData.description}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <Button variant="outline" className="w-full">
+                    <Edit className="w-4 h-4 mr-2" />
+                    Modifica Profilo
+                  </Button>
+                  <Button variant="outline" className="w-full">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Carica Foto
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="overview">Panoramica</TabsTrigger>
-            <TabsTrigger value="reviews">Recensioni</TabsTrigger>
-            <TabsTrigger value="profile">Profilo</TabsTrigger>
+        {/* Dashboard Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 bg-white/90 backdrop-blur-sm">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Panoramica</span>
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Profilo</span>
+            </TabsTrigger>
+            <TabsTrigger value="reviews" className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              <span className="hidden sm:inline">Recensioni</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              <span className="hidden sm:inline">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="services" className="flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              <span className="hidden sm:inline">Servizi</span>
+            </TabsTrigger>
+            <TabsTrigger value="portfolio" className="flex items-center gap-2">
+              <Award className="w-4 h-4" />
+              <span className="hidden sm:inline">Portfolio</span>
+            </TabsTrigger>
+            <TabsTrigger value="subscription" className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              <span className="hidden sm:inline">Abbonamento</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* Profile Views */}
-              <Card>
+              {/* KPI Cards */}
+              <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
                 <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <Eye className="h-8 w-8 text-blue-600" />
-                    <div className="ml-4">
+                  <div className="flex items-center justify-between">
+                    <div>
                       <p className="text-sm font-medium text-gray-600">Visualizzazioni Profilo</p>
-                      <p className="text-2xl font-bold">{professionalData.profileViews || 0}</p>
+                      <p className="text-2xl font-bold text-gray-900">{professionalData.profileViews}</p>
                     </div>
+                    <Eye className="w-8 h-8 text-blue-600" />
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Reviews */}
-              <Card>
+              <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
                 <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <MessageSquare className="h-8 w-8 text-green-600" />
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Recensioni</p>
-                      <p className="text-2xl font-bold">{professionalData.reviewCount || 0}</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Recensioni Totali</p>
+                      <p className="text-2xl font-bold text-gray-900">{professionalData.reviewCount}</p>
                     </div>
+                    <MessageSquare className="w-8 h-8 text-green-600" />
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Rating */}
-              <Card>
+              <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
                 <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <Star className="h-8 w-8 text-yellow-600" />
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Valutazione Media</p>
-                      <p className="text-2xl font-bold">{professionalData.rating || 0}</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Rating Medio</p>
+                      <p className="text-2xl font-bold text-gray-900">{professionalData.rating}</p>
                     </div>
+                    <Star className="w-8 h-8 text-yellow-600" />
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Verification Status */}
-              <Card>
+              <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
                 <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <Shield className="h-8 w-8 text-purple-600" />
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Stato Verifica</p>
-                      {professionalData.isVerified ? (
-                        <Badge variant="default">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Verificato
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">
-                          <AlertCircle className="h-3 w-3 mr-1" />
-                          In attesa
-                        </Badge>
-                      )}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Stato Profilo</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {professionalData.isVerified ? "Verificato" : "In verifica"}
+                      </p>
                     </div>
+                    <Award className="w-8 h-8 text-purple-600" />
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Quick Actions */}
-            <Card>
+            {/* Recent Activity */}
+            <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>Azioni Rapide</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  Attività Recente
+                </CardTitle>
                 <CardDescription>
-                  Strumenti per migliorare la tua presenza online
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => {
-                        setEditFormData({
-                          businessName: professionalData?.businessName || "",
-                          description: professionalData?.description || "",
-                          phoneFixed: professionalData?.phoneFixed || "",
-                          phoneMobile: professionalData?.phoneMobile || "",
-                          email: professionalData?.email || "",
-                          website: professionalData?.website || "",
-                          address: professionalData?.address || "",
-                          city: professionalData?.city || "",
-                          additionalCities: professionalData?.additionalCities?.join(", ") || "",
-                          province: professionalData?.province || "",
-                          postalCode: professionalData?.postalCode || "",
-                          pec: professionalData?.pec || "",
-                          vatNumber: professionalData?.vatNumber || "",
-                          fiscalCode: professionalData?.fiscalCode || "",
-                          facebookUrl: professionalData?.facebookUrl || "",
-                          instagramUrl: professionalData?.instagramUrl || "",
-                          linkedinUrl: professionalData?.linkedinUrl || "",
-                          twitterUrl: professionalData?.twitterUrl || "",
-                          whatsappNumber: professionalData?.whatsappNumber || ""
-                        });
-                      }}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Aggiorna informazioni profilo
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Modifica Profilo</DialogTitle>
-                      <DialogDescription>
-                        Aggiorna le informazioni del tuo profilo professionale
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-6 max-h-[70vh] overflow-y-auto">
-                      {/* Informazioni Base */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-lg">Informazioni Base</h4>
-                        <div>
-                          <Label htmlFor="businessName">Nome Studio/Attività</Label>
-                          <Input
-                            id="businessName"
-                            value={editFormData.businessName}
-                            onChange={(e) => setEditFormData({...editFormData, businessName: e.target.value})}
-                            placeholder="Es. Studio Legale Rossi"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="description">Descrizione</Label>
-                          <Textarea
-                            id="description"
-                            value={editFormData.description}
-                            onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
-                            placeholder="Descrivi i tuoi servizi e la tua esperienza"
-                            rows={4}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Contatti */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-lg">Contatti</h4>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="phoneFixed">Telefono Fisso</Label>
-                            <Input
-                              id="phoneFixed"
-                              value={editFormData.phoneFixed}
-                              onChange={(e) => setEditFormData({...editFormData, phoneFixed: e.target.value})}
-                              placeholder="Es. 0532 123456"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="phoneMobile">Cellulare</Label>
-                            <Input
-                              id="phoneMobile"
-                              value={editFormData.phoneMobile}
-                              onChange={(e) => setEditFormData({...editFormData, phoneMobile: e.target.value})}
-                              placeholder="Es. 335 1234567"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            value={editFormData.email}
-                            onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
-                            placeholder="Es. info@studiolegale.it"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="website">Sito Web</Label>
-                          <Input
-                            id="website"
-                            value={editFormData.website}
-                            onChange={(e) => setEditFormData({...editFormData, website: e.target.value})}
-                            placeholder="Es. https://www.studiolegale.it"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Informazioni Aziendali */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-lg">Informazioni Aziendali</h4>
-                        <div>
-                          <Label htmlFor="pec">Email PEC</Label>
-                          <Input
-                            id="pec"
-                            value={editFormData.pec}
-                            onChange={(e) => setEditFormData({...editFormData, pec: e.target.value})}
-                            placeholder="Es. studio@pec.it"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="vatNumber">Partita IVA</Label>
-                            <Input
-                              id="vatNumber"
-                              value={editFormData.vatNumber}
-                              onChange={(e) => setEditFormData({...editFormData, vatNumber: e.target.value})}
-                              placeholder="Es. IT12345678901"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="fiscalCode">Codice Fiscale</Label>
-                            <Input
-                              id="fiscalCode"
-                              value={editFormData.fiscalCode}
-                              onChange={(e) => setEditFormData({...editFormData, fiscalCode: e.target.value})}
-                              placeholder="Es. RSSMRA80A01F257K"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Localizzazione */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-lg">Localizzazione</h4>
-                        <div>
-                          <Label htmlFor="address">Indirizzo</Label>
-                          <Input
-                            id="address"
-                            value={editFormData.address}
-                            onChange={(e) => setEditFormData({...editFormData, address: e.target.value})}
-                            placeholder="Es. Via Roma 123"
-                          />
-                        </div>
-                        <div className="grid grid-cols-3 gap-4">
-                          <div>
-                            <Label htmlFor="city">Città Principale</Label>
-                            <Input
-                              id="city"
-                              value={editFormData.city}
-                              onChange={(e) => setEditFormData({...editFormData, city: e.target.value})}
-                              placeholder="Es. Ferrara"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="province">Provincia</Label>
-                            <Input
-                              id="province"
-                              value={editFormData.province}
-                              onChange={(e) => setEditFormData({...editFormData, province: e.target.value})}
-                              placeholder="Es. FE"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="postalCode">CAP</Label>
-                            <Input
-                              id="postalCode"
-                              value={editFormData.postalCode}
-                              onChange={(e) => setEditFormData({...editFormData, postalCode: e.target.value})}
-                              placeholder="Es. 44121"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <Label htmlFor="additionalCities">Altre Città di Servizio</Label>
-                          <Input
-                            id="additionalCities"
-                            value={editFormData.additionalCities}
-                            onChange={(e) => setEditFormData({...editFormData, additionalCities: e.target.value})}
-                            placeholder="Es. Bologna, Modena, Ravenna (separate da virgola)"
-                          />
-                          <p className="text-sm text-gray-500 mt-1">Queste città non influenzeranno la ricerca principale</p>
-                        </div>
-                      </div>
-
-                      {/* Social Media */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-lg">Social Media</h4>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="facebookUrl">Facebook</Label>
-                            <Input
-                              id="facebookUrl"
-                              value={editFormData.facebookUrl}
-                              onChange={(e) => setEditFormData({...editFormData, facebookUrl: e.target.value})}
-                              placeholder="Es. https://facebook.com/studiolegale"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="instagramUrl">Instagram</Label>
-                            <Input
-                              id="instagramUrl"
-                              value={editFormData.instagramUrl}
-                              onChange={(e) => setEditFormData({...editFormData, instagramUrl: e.target.value})}
-                              placeholder="Es. https://instagram.com/studiolegale"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="linkedinUrl">LinkedIn</Label>
-                            <Input
-                              id="linkedinUrl"
-                              value={editFormData.linkedinUrl}
-                              onChange={(e) => setEditFormData({...editFormData, linkedinUrl: e.target.value})}
-                              placeholder="Es. https://linkedin.com/in/avvocato"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="twitterUrl">X (Twitter)</Label>
-                            <Input
-                              id="twitterUrl"
-                              value={editFormData.twitterUrl}
-                              onChange={(e) => setEditFormData({...editFormData, twitterUrl: e.target.value})}
-                              placeholder="Es. https://x.com/studiolegale"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <Label htmlFor="whatsappNumber">WhatsApp</Label>
-                          <Input
-                            id="whatsappNumber"
-                            value={editFormData.whatsappNumber}
-                            onChange={(e) => setEditFormData({...editFormData, whatsappNumber: e.target.value})}
-                            placeholder="Es. +39 335 1234567"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2 pt-4 border-t">
-                        <Button 
-                          onClick={() => updateProfileMutation.mutate(editFormData)}
-                          disabled={updateProfileMutation.isPending}
-                          className="flex-1"
-                        >
-                          {updateProfileMutation.isPending ? "Aggiornamento..." : "Salva Modifiche"}
-                        </Button>
-                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                          Annulla
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-                
-                <div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    className="hidden"
-                    id="photo-upload"
-                  />
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => document.getElementById('photo-upload')?.click()}
-                    disabled={uploadPhotoMutation.isPending}
-                  >
-                    <Camera className="h-4 w-4 mr-2" />
-                    {uploadPhotoMutation.isPending ? "Caricamento..." : "Carica foto profilo"}
-                  </Button>
-                </div>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => requestVerificationMutation.mutate()}
-                  disabled={requestVerificationMutation.isPending || professionalData.isVerified}
-                >
-                  <Shield className="h-4 w-4 mr-2" />
-                  {requestVerificationMutation.isPending ? "Invio richiesta..." : 
-                   professionalData.isVerified ? "Già verificato" : "Richiedi verifica"}
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Reviews Tab */}
-          <TabsContent value="reviews">
-            <Card>
-              <CardHeader>
-                <CardTitle>Le tue recensioni</CardTitle>
-                <CardDescription>
-                  Recensioni ricevute dai clienti
+                  Le ultime attività sul tuo profilo professionale
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {reviewsLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin w-6 h-6 border-4 border-primary border-t-transparent rounded-full" />
-                  </div>
-                ) : reviews.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Nessuna recensione ricevuta</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {reviews.map((review) => (
-                      <div key={review.id} className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center">
-                            <div className="flex">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`h-4 w-4 ${
-                                    i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                            <span className="ml-2 font-medium">{review.user.name}</span>
+                <div className="space-y-4">
+                  {reviews.slice(0, 3).map((review) => (
+                    <div key={review.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium text-gray-900">{review.user.name}</p>
+                          <div className="flex">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-4 h-4 ${
+                                  i < review.rating
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "text-gray-300"
+                                }`}
+                              />
+                            ))}
                           </div>
-                          <span className="text-sm text-gray-500">
-                            {new Date(review.createdAt).toLocaleDateString('it-IT')}
-                          </span>
                         </div>
-                        <h4 className="font-medium mb-1">{review.title}</h4>
-                        <p className="text-gray-600">{review.content}</p>
+                        <p className="text-gray-700 text-sm">{review.content}</p>
+                        <p className="text-gray-500 text-xs mt-2">
+                          {new Date(review.createdAt).toLocaleDateString('it-IT')}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  ))}
+                  {reviews.length === 0 && (
+                    <p className="text-center text-gray-500 py-8">
+                      Nessuna recensione ancora disponibile
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -711,340 +366,226 @@ export default function ProfessionalDashboard() {
           {/* Profile Tab */}
           <TabsContent value="profile">
             <ProfileTab professionalData={professionalData} />
-        </Tabs>
-      </div>
-    </div>
-  );
-}
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-800">Nome Attività</label>
-                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
-                      {professionalData?.businessName || "Non specificato"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-800">Email</label>
-                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
-                      {professionalData?.email || "Non specificata"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-800">Telefono Fisso</label>
-                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
-                      {professionalData?.phoneFixed || "Non specificato"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-800">Cellulare</label>
-                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
-                      {professionalData?.phoneMobile || "Non specificato"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-800">Sito Web</label>
-                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
-                      {professionalData?.website || "Non specificato"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-800">Email PEC</label>
-                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
-                      {professionalData?.pec || "Non specificata"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-800">Partita IVA</label>
-                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
-                      {professionalData?.vatNumber || "Non specificata"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-800">Codice Fiscale</label>
-                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
-                      {professionalData?.fiscalCode || "Non specificato"}
-                    </p>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium">Indirizzo</label>
-                  <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
-                    {professionalData?.address || "Non specificato"}
-                  </p>
-                </div>
+          </TabsContent>
 
-                <div>
-                  <label className="text-sm font-medium">Descrizione</label>
-                  <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
-                    {professionalData?.description || "Nessuna descrizione fornita"}
-                  </p>
-                </div>
-
-                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => {
-                        setEditFormData({
-                          businessName: professionalData?.businessName || "",
-                          description: professionalData?.description || "",
-                          phoneFixed: professionalData?.phoneFixed || "",
-                          phoneMobile: professionalData?.phoneMobile || "",
-                          email: professionalData?.email || "",
-                          website: professionalData?.website || "",
-                          address: professionalData?.address || "",
-                          city: professionalData?.city || "",
-                          additionalCities: professionalData?.additionalCities?.join(", ") || "",
-                          province: professionalData?.province || "",
-                          postalCode: professionalData?.postalCode || "",
-                          pec: professionalData?.pec || "",
-                          vatNumber: professionalData?.vatNumber || "",
-                          fiscalCode: professionalData?.fiscalCode || "",
-                          facebookUrl: professionalData?.facebookUrl || "",
-                          instagramUrl: professionalData?.instagramUrl || "",
-                          linkedinUrl: professionalData?.linkedinUrl || "",
-                          twitterUrl: professionalData?.twitterUrl || "",
-                          whatsappNumber: professionalData?.whatsappNumber || ""
-                        });
-                      }}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Modifica Informazioni
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl">
-                    <DialogHeader>
-                      <DialogTitle>Modifica Profilo Professionale</DialogTitle>
-                      <DialogDescription>
-                        Aggiorna le informazioni del tuo profilo professionale
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-6 max-h-[70vh] overflow-y-auto">
-                      {/* Informazioni Base */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-lg">Informazioni Base</h4>
-                        <div>
-                          <Label htmlFor="businessName">Nome Studio/Attività</Label>
-                          <Input
-                            id="businessName"
-                            value={editFormData.businessName}
-                            onChange={(e) => setEditFormData({...editFormData, businessName: e.target.value})}
-                            placeholder="Es. Studio Legale Rossi"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="description">Descrizione</Label>
-                          <Textarea
-                            id="description"
-                            value={editFormData.description}
-                            onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
-                            placeholder="Descrivi i tuoi servizi e la tua esperienza"
-                            rows={4}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Contatti */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-lg">Contatti</h4>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="phoneFixed">Telefono Fisso</Label>
-                            <Input
-                              id="phoneFixed"
-                              value={editFormData.phoneFixed}
-                              onChange={(e) => setEditFormData({...editFormData, phoneFixed: e.target.value})}
-                              placeholder="Es. 0532 123456"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="phoneMobile">Cellulare</Label>
-                            <Input
-                              id="phoneMobile"
-                              value={editFormData.phoneMobile}
-                              onChange={(e) => setEditFormData({...editFormData, phoneMobile: e.target.value})}
-                              placeholder="Es. 335 1234567"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            value={editFormData.email}
-                            onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
-                            placeholder="Es. info@studiolegale.it"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="website">Sito Web</Label>
-                          <Input
-                            id="website"
-                            value={editFormData.website}
-                            onChange={(e) => setEditFormData({...editFormData, website: e.target.value})}
-                            placeholder="Es. https://www.studiolegale.it"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Informazioni Aziendali */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-lg">Informazioni Aziendali</h4>
-                        <div>
-                          <Label htmlFor="pec">Email PEC</Label>
-                          <Input
-                            id="pec"
-                            value={editFormData.pec}
-                            onChange={(e) => setEditFormData({...editFormData, pec: e.target.value})}
-                            placeholder="Es. studio@pec.it"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="vatNumber">Partita IVA</Label>
-                            <Input
-                              id="vatNumber"
-                              value={editFormData.vatNumber}
-                              onChange={(e) => setEditFormData({...editFormData, vatNumber: e.target.value})}
-                              placeholder="Es. IT12345678901"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="fiscalCode">Codice Fiscale</Label>
-                            <Input
-                              id="fiscalCode"
-                              value={editFormData.fiscalCode}
-                              onChange={(e) => setEditFormData({...editFormData, fiscalCode: e.target.value})}
-                              placeholder="Es. RSSMRA80A01F257K"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Localizzazione */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-lg">Localizzazione</h4>
-                        <div>
-                          <Label htmlFor="address">Indirizzo</Label>
-                          <Input
-                            id="address"
-                            value={editFormData.address}
-                            onChange={(e) => setEditFormData({...editFormData, address: e.target.value})}
-                            placeholder="Es. Via Roma 123"
-                          />
-                        </div>
-                        <div className="grid grid-cols-3 gap-4">
-                          <div>
-                            <Label htmlFor="city">Città Principale</Label>
-                            <Input
-                              id="city"
-                              value={editFormData.city}
-                              onChange={(e) => setEditFormData({...editFormData, city: e.target.value})}
-                              placeholder="Es. Ferrara"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="province">Provincia</Label>
-                            <Input
-                              id="province"
-                              value={editFormData.province}
-                              onChange={(e) => setEditFormData({...editFormData, province: e.target.value})}
-                              placeholder="Es. FE"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="postalCode">CAP</Label>
-                            <Input
-                              id="postalCode"
-                              value={editFormData.postalCode}
-                              onChange={(e) => setEditFormData({...editFormData, postalCode: e.target.value})}
-                              placeholder="Es. 44121"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <Label htmlFor="additionalCities">Altre Città di Servizio</Label>
-                          <Input
-                            id="additionalCities"
-                            value={editFormData.additionalCities}
-                            onChange={(e) => setEditFormData({...editFormData, additionalCities: e.target.value})}
-                            placeholder="Es. Bologna, Modena, Ravenna (separate da virgola)"
-                          />
-                          <p className="text-sm text-gray-500 mt-1">Queste città non influenzeranno la ricerca principale</p>
-                        </div>
-                      </div>
-
-                      {/* Social Media */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-lg">Social Media</h4>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="facebookUrl">Facebook</Label>
-                            <Input
-                              id="facebookUrl"
-                              value={editFormData.facebookUrl}
-                              onChange={(e) => setEditFormData({...editFormData, facebookUrl: e.target.value})}
-                              placeholder="Es. https://facebook.com/studiolegale"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="instagramUrl">Instagram</Label>
-                            <Input
-                              id="instagramUrl"
-                              value={editFormData.instagramUrl}
-                              onChange={(e) => setEditFormData({...editFormData, instagramUrl: e.target.value})}
-                              placeholder="Es. https://instagram.com/studiolegale"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="linkedinUrl">LinkedIn</Label>
-                            <Input
-                              id="linkedinUrl"
-                              value={editFormData.linkedinUrl}
-                              onChange={(e) => setEditFormData({...editFormData, linkedinUrl: e.target.value})}
-                              placeholder="Es. https://linkedin.com/in/avvocato"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="twitterUrl">X (Twitter)</Label>
-                            <Input
-                              id="twitterUrl"
-                              value={editFormData.twitterUrl}
-                              onChange={(e) => setEditFormData({...editFormData, twitterUrl: e.target.value})}
-                              placeholder="Es. https://x.com/studiolegale"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <Label htmlFor="whatsappNumber">WhatsApp</Label>
-                          <Input
-                            id="whatsappNumber"
-                            value={editFormData.whatsappNumber}
-                            onChange={(e) => setEditFormData({...editFormData, whatsappNumber: e.target.value})}
-                            placeholder="Es. +39 335 1234567"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2 pt-4 border-t">
-                        <Button 
-                          onClick={() => updateProfileMutation.mutate(editFormData)}
-                          disabled={updateProfileMutation.isPending}
-                          className="flex-1"
-                        >
-                          {updateProfileMutation.isPending ? "Aggiornamento..." : "Salva Modifiche"}
-                        </Button>
-                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                          Annulla
-                        </Button>
-                      </div>
+          {/* Reviews Tab */}
+          <TabsContent value="reviews" className="space-y-6">
+            <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  Gestione Recensioni
+                </CardTitle>
+                <CardDescription>
+                  Visualizza e gestisci tutte le recensioni ricevute
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {isLoadingReviews ? (
+                    <div className="flex justify-center py-8">
+                      <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
                     </div>
-                  </DialogContent>
-                </Dialog>
+                  ) : reviews.length > 0 ? (
+                    reviews.map((review) => (
+                      <div key={review.id} className="p-6 bg-gray-50 rounded-lg border">
+                        <div className="flex items-start justify-between mb-4">
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{review.title}</h3>
+                            <p className="text-sm text-gray-600">di {review.user.name}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${
+                                    i < review.rating
+                                      ? "fill-yellow-400 text-yellow-400"
+                                      : "text-gray-300"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-sm text-gray-500">
+                              {new Date(review.createdAt).toLocaleDateString('it-IT')}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-gray-700 leading-relaxed">{review.content}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12">
+                      <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        Nessuna recensione ancora
+                      </h3>
+                      <p className="text-gray-600">
+                        Le recensioni dei clienti appariranno qui una volta ricevute
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  Analytics e Statistiche
+                </CardTitle>
+                <CardDescription>
+                  Monitora le performance del tuo profilo professionale
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Analytics Avanzati
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Le statistiche dettagliate sono disponibili con i piani Professional ed Expert
+                  </p>
+                  <Button>
+                    Aggiorna Piano
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Services Tab */}
+          <TabsContent value="services" className="space-y-6">
+            <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="w-5 h-5" />
+                  Gestione Servizi
+                </CardTitle>
+                <CardDescription>
+                  Gestisci i servizi che offri ai tuoi clienti
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Gestione Servizi
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Aggiungi e gestisci i servizi che offri ai tuoi clienti
+                  </p>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Aggiungi Servizio
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Portfolio Tab */}
+          <TabsContent value="portfolio" className="space-y-6">
+            <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="w-5 h-5" />
+                  Portfolio Progetti
+                </CardTitle>
+                <CardDescription>
+                  Mostra i tuoi migliori lavori e progetti completati
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <Award className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Portfolio Progetti
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Carica immagini e descrizioni dei tuoi progetti più significativi
+                  </p>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Aggiungi Progetto
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Subscription Tab */}
+          <TabsContent value="subscription" className="space-y-6">
+            <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5" />
+                  Gestione Abbonamento
+                </CardTitle>
+                <CardDescription>
+                  Gestisci il tuo piano di abbonamento e le funzionalità
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Piano Attuale */}
+                  <Card className="border-2 border-green-200 bg-green-50">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Piano Essentials</CardTitle>
+                      <CardDescription>Piano attuale</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold mb-4">Gratuito</div>
+                      <ul className="space-y-2 text-sm">
+                        <li>✓ Profilo base</li>
+                        <li>✓ Recensioni clienti</li>
+                        <li>✓ Contatti diretti</li>
+                      </ul>
+                    </CardContent>
+                  </Card>
+
+                  {/* Piano Professional */}
+                  <Card className="border-2 border-blue-200">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Professional</CardTitle>
+                      <CardDescription>Più visibilità</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold mb-4">€39/mese</div>
+                      <ul className="space-y-2 text-sm mb-4">
+                        <li>✓ Tutto di Essentials</li>
+                        <li>✓ Analytics avanzati</li>
+                        <li>✓ Portfolio progetti</li>
+                        <li>✓ Priorità nei risultati</li>
+                      </ul>
+                      <Button className="w-full">Aggiorna</Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Piano Expert */}
+                  <Card className="border-2 border-purple-200">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Expert</CardTitle>
+                      <CardDescription>Massima visibilità</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold mb-4">€120/mese</div>
+                      <ul className="space-y-2 text-sm mb-4">
+                        <li>✓ Tutto di Professional</li>
+                        <li>✓ Badge "Expert"</li>
+                        <li>✓ Supporto prioritario</li>
+                        <li>✓ Gestione avanzata lead</li>
+                      </ul>
+                      <Button className="w-full">Aggiorna</Button>
+                    </CardContent>
+                  </Card>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
