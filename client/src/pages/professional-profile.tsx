@@ -118,17 +118,22 @@ export default function ProfessionalProfile() {
   const starDistribution = getStarDistribution();
   const totalReviews = reviews.length;
 
-  // Calcola il ranking reale del professionista nella sua categoria e città
+  // Ottieni il ranking reale dal backend
+  const { data: rankingData } = useQuery({
+    queryKey: [`/api/professionals/${id}/ranking`],
+    enabled: !!id,
+  });
+
   const getProfessionalRanking = () => {
-    // Per ora usiamo dati calcolati, ma questo dovrebbe essere implementato nel backend
-    const totalInCategory = 47; // Dovrebbe venire dal database
-    const currentRank = 2; // Dovrebbe essere calcolato in base al rating e numero recensioni
-    const topPercentage = Math.round((currentRank / totalInCategory) * 100);
+    if (rankingData) {
+      return rankingData;
+    }
     
+    // Fallback solo se non ci sono dati dal database
     return {
-      rank: currentRank,
-      total: totalInCategory,
-      percentage: topPercentage <= 5 ? "Top 5%" : topPercentage <= 10 ? "Top 10%" : `Top ${topPercentage}%`
+      rank: 'N/A',
+      total: 'N/A',
+      percentage: 'Non disponibile'
     };
   };
 
@@ -159,22 +164,8 @@ export default function ProfessionalProfile() {
 
   // Funzione per gestire il back navigation intelligente
   const handleBackNavigation = () => {
-    console.log("Navigation debug:", {
-      isAuthenticated,
-      user: user?.id,
-      professional: professional?.userId,
-      comparison: professional?.userId === user?.id
-    });
-    
-    // Se l'utente è autenticato e sta visualizzando il proprio profilo, torna alla dashboard
-    if (isAuthenticated && user && professional && professional.userId === user.id) {
-      console.log("Redirecting to dashboard");
-      setLocation("/dashboard");
-    } else {
-      console.log("Redirecting to homepage");
-      // Altrimenti torna alla homepage per la ricerca
-      setLocation("/");
-    }
+    // Sempre torna alla homepage per la ricerca
+    setLocation("/");
   };
 
   const renderStars = (rating: number) => {
