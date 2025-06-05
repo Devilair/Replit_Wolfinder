@@ -178,14 +178,14 @@ export default function ProfessionalAdvancedDashboard() {
     retry: false,
   });
 
-  // Fetch analytics data (only for premium users)
+  // Fetch analytics data (only for professional/premium users)
   const { data: analytics, isLoading: analyticsLoading } = useQuery<Analytics>({
     queryKey: ['/api/professional/analytics'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/professional/analytics');
       return response;
     },
-    enabled: !!user && professionalData?.subscription?.plan.hasAdvancedAnalytics,
+    enabled: !!user && professionalData?.subscription?.plan?.hasAdvancedAnalytics,
   });
 
   // Fetch reviews with responses
@@ -312,9 +312,10 @@ export default function ProfessionalAdvancedDashboard() {
     );
   }
 
-  const currentPlan = professionalData?.subscription?.plan;
-  const isBasicPlan = !currentPlan || currentPlan.name === 'Basic';
-  const isPremiumPlan = currentPlan?.hasAdvancedAnalytics;
+  const subscription = professionalData?.subscription;
+  const currentPlan = subscription?.plan;
+  const isBasicPlan = !currentPlan || currentPlan.name === 'Base';
+  const isPremiumPlan = currentPlan?.hasAdvancedAnalytics || false;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -732,7 +733,7 @@ export default function ProfessionalAdvancedDashboard() {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
-            {subscription?.plan.has_advanced_analytics ? (
+            {subscription?.plan?.hasAdvancedAnalytics ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <Card>
