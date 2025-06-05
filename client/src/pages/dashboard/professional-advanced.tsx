@@ -955,12 +955,17 @@ export default function ProfessionalAdvancedDashboard() {
                     <div>
                       <Label>Funzionalità incluse</Label>
                       <ul className="mt-2 space-y-1">
-                        {currentPlan.features.map((feature, index) => (
+                        {Array.isArray(currentPlan?.features) ? currentPlan.features.map((feature, index) => (
                           <li key={index} className="flex items-center text-sm">
                             <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
                             {feature}
                           </li>
-                        ))}
+                        )) : (
+                          <li className="flex items-center text-sm">
+                            <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                            Piano attivo
+                          </li>
+                        )}
                       </ul>
                     </div>
                   </div>
