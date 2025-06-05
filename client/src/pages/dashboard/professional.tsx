@@ -364,8 +364,181 @@ export default function ProfessionalDashboard() {
           </TabsContent>
 
           {/* Profile Tab */}
-          <TabsContent value="profile">
-            <ProfileTab professionalData={professionalData} />
+          <TabsContent value="profile" className="space-y-6">
+            <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="w-5 h-5" />
+                  Profilo Professionale Completo
+                </CardTitle>
+                <CardDescription>
+                  Gestisci tutte le informazioni del tuo profilo professionale
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                
+                {/* Informazioni Base */}
+                <div className="bg-gray-50 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">📋 Informazioni Base</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Nome Attività</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.businessName || "Non specificato"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Email</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.email || "Non specificato"}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-sm font-medium text-gray-700">Descrizione</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border min-h-[80px]">
+                        {professionalData.description || "Non specificato"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contatti */}
+                <div className="bg-blue-50 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">📞 Contatti</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Telefono Fisso</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.phoneFixed || "Non specificato"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Cellulare</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.phoneMobile || "Non specificato"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">WhatsApp</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.whatsappNumber || "Non specificato"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Sito Web</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.website || "Non specificato"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Indirizzo */}
+                <div className="bg-green-50 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">📍 Indirizzo</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Indirizzo</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.address || "Non specificato"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Città</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.city || "Non specificato"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Provincia</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.province || "Non specificato"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">CAP</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.postalCode || "Non specificato"}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-sm font-medium text-gray-700">Città Aggiuntive</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.additionalCities?.length > 0 
+                          ? professionalData.additionalCities.join(", ") 
+                          : "Nessuna città aggiuntiva"
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Informazioni Aziendali */}
+                <div className="bg-yellow-50 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">🏢 Informazioni Aziendali</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">PEC</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.pec || "Non specificato"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Partita IVA</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.vatNumber || "Non specificato"}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-sm font-medium text-gray-700">Codice Fiscale</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.fiscalCode || "Non specificato"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Social Media */}
+                <div className="bg-purple-50 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">📱 Social Media</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Facebook</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.facebookUrl || "Non specificato"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Instagram</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.instagramUrl || "Non specificato"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">LinkedIn</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.linkedinUrl || "Non specificato"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Twitter</label>
+                      <p className="text-sm text-gray-900 p-3 bg-white rounded border">
+                        {professionalData.twitterUrl || "Non specificato"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pulsante Modifica */}
+                <div className="flex justify-center pt-6">
+                  <Button size="lg" className="w-full md:w-auto">
+                    <Edit className="w-4 h-4 mr-2" />
+                    Modifica Informazioni Profilo
+                  </Button>
+                </div>
+
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Reviews Tab */}
