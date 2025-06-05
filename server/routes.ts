@@ -686,10 +686,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Professional profile not found" });
       }
 
-      // Check if user has premium subscription
+      // Check if user has analytics feature in subscription
       const subscription = await storage.getProfessionalSubscription(professional.id);
-      if (!subscription || !subscription.plan.hasAdvancedAnalytics) {
-        return res.status(403).json({ message: "Premium subscription required" });
+      if (!subscription || !subscription.plan.has_advanced_analytics) {
+        return res.status(403).json({ 
+          message: "Analytics feature requires Professional or Premium subscription",
+          requiredFeature: "advanced_analytics",
+          currentPlan: subscription?.plan?.name || "Base"
+        });
       }
 
       const analytics = await storage.getProfessionalAnalytics(professional.id);
@@ -737,6 +741,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check subscription limits
       const subscription = await storage.getProfessionalSubscription(professional.id);
       const currentResponses = await storage.getMonthlyResponseCount(professional.id);
+      
+      // Check if user has reached response limit for Base plan
+      if (subscription?.plan?.max_responses && subscription.plan.max_responses > 0) {
+        if (currentResponses >= subscription.plan.max_responses) {
+          return res.status(403).json({ 
+            message: `Monthly response limit reached (${subscription.plan.max_responses}). Upgrade to Professional plan for unlimited responses.`,
+            limit: subscription.plan.max_responses,
+            used: currentResponses,
+            currentPlan: subscription.plan.name
+          });
+        }
+      }
       
       if (!subscription || (subscription.plan.maxResponses !== -1 && currentResponses >= subscription.plan.maxResponses)) {
         return res.status(403).json({ message: "Response limit reached. Upgrade your plan." });
@@ -809,7 +825,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get portfolio
+  // Get portfolio (Professional/Premium feature)
   app.get("/api/professional/portfolio", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
     try {
       const user = req.user as any;
@@ -817,6 +833,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!professional) {
         return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      // Check if user has portfolio feature in subscription
+      const subscription = await storage.getProfessionalSubscription(professional.id);
+      if (!subscription || subscription.plan.name === 'Base') {
+        return res.status(403).json({ 
+          message: "Portfolio feature requires Professional or Premium subscription",
+          requiredFeature: "portfolio",
+          currentPlan: subscription?.plan?.name || "Base"
+        });
       }
 
       const portfolio = await storage.getProfessionalPortfolio(professional.id);

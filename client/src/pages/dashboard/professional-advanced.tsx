@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { 
   User, 
   Star, 
@@ -731,7 +732,7 @@ export default function ProfessionalAdvancedDashboard() {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
-            {isPremiumPlan ? (
+            {subscription?.plan.has_advanced_analytics ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <Card>
@@ -800,18 +801,12 @@ export default function ProfessionalAdvancedDashboard() {
                 </Card>
               </>
             ) : (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Analytics Premium</h3>
-                  <p className="text-gray-600 mb-6">
-                    Sblocca analytics dettagliati per monitorare le performance del tuo profilo
-                  </p>
-                  <Button onClick={() => setActiveTab('subscription')}>
-                    Upgrade al Piano Premium
-                  </Button>
-                </CardContent>
-              </Card>
+              <UpgradePrompt
+                feature="Analytics Avanzati"
+                requiredPlan="Professionale"
+                currentPlan={subscription?.plan?.name || "Base"}
+                description="Monitora le performance del tuo profilo con analytics dettagliati e reportistica avanzata"
+              />
             )}
           </TabsContent>
 
