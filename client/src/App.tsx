@@ -36,6 +36,8 @@ import LineeGuidaRecensioni from "@/pages/about/linee-guida-recensioni";
 import CentroAssistenza from "@/pages/about/centro-assistenza";
 
 function Router() {
+  useAuthPersistence();
+  
   return (
     <Switch>
       <Route path="/" component={Landing} />
@@ -133,8 +135,6 @@ function Router() {
 }
 
 function App() {
-  useAuthPersistence();
-  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
