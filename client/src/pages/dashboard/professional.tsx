@@ -6,10 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { ProfileTab } from '@/components/ProfileTab';
 import { 
   User, 
   Star, 
@@ -712,15 +709,13 @@ export default function ProfessionalDashboard() {
           </TabsContent>
 
           {/* Profile Tab */}
-          <TabsContent value="profile" className="space-y-6">
-            {/* Informazioni Aziendali */}
-            <Card>
-              <CardHeader>
-                <CardTitle>🏢 Informazioni Aziendali Complete</CardTitle>
-                <CardDescription>
-                  Tutti i dati del tuo profilo professionale
-                </CardDescription>
-              </CardHeader>
+          <TabsContent value="profile">
+            <ProfileTab professionalData={professionalData} />
+        </Tabs>
+      </div>
+    </div>
+  );
+}
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
