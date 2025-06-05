@@ -75,6 +75,10 @@ export default function ProfessionalDashboard() {
   // Fetch user data
   const { data: user, isLoading: userLoading } = useQuery<UserData>({
     queryKey: ['/api/auth/user'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/auth/user');
+      return response;
+    },
     retry: false,
   });
 
@@ -174,6 +178,8 @@ export default function ProfessionalDashboard() {
     }
   };
 
+
+
   if (userLoading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -191,6 +197,12 @@ export default function ProfessionalDashboard() {
           {profileError && (
             <p className="text-red-600 mt-2">Errore: {profileError.message}</p>
           )}
+          <div className="mt-4 text-xs text-gray-500">
+            <p>Debug Info:</p>
+            <p>User: {user ? 'Found' : 'Not found'}</p>
+            <p>Professional Data: {professionalData ? 'Found' : 'Not found'}</p>
+            <p>Token: {localStorage.getItem('authToken') ? 'Present' : 'Missing'}</p>
+          </div>
         </div>
       </div>
     );

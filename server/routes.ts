@@ -35,6 +35,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Authentication Routes
   
+  // Get current user (for React Query compatibility)
+  app.get("/api/auth/user", authService.authenticateToken, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      
+      res.json({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        name: user.name,
+        role: user.role,
+        isVerified: user.isVerified
+      });
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
   // Get current user profile
   app.get("/api/auth/profile", authService.authenticateToken, async (req: any, res) => {
     try {
