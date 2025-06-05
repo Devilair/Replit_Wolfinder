@@ -412,19 +412,19 @@ export default function ProfessionalDashboard() {
                         <div>
                           <label className="text-sm font-medium text-gray-600">Nome Attività</label>
                           <div className="mt-1 p-3 bg-white rounded border">
-                            {professionalData.businessName || "Non disponibile"}
+                            {(professionalData as any).businessName || (professionalData as any).business_name || "Non disponibile"}
                           </div>
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-600">Email</label>
                           <div className="mt-1 p-3 bg-white rounded border">
-                            {professionalData.email || "Non disponibile"}
+                            {(professionalData as any).email || "Non disponibile"}
                           </div>
                         </div>
                         <div className="col-span-2">
                           <label className="text-sm font-medium text-gray-600">Descrizione</label>
                           <div className="mt-1 p-3 bg-white rounded border min-h-[100px]">
-                            {professionalData.description || "Non disponibile"}
+                            {(professionalData as any).description || "Non disponibile"}
                           </div>
                         </div>
                       </div>
@@ -437,25 +437,25 @@ export default function ProfessionalDashboard() {
                         <div>
                           <label className="text-sm font-medium text-gray-600">Telefono Fisso</label>
                           <div className="mt-1 p-3 bg-white rounded border">
-                            {professionalData.phoneFixed || "Non disponibile"}
+                            {(professionalData as any).phone_fixed || (professionalData as any).phoneFixed || "Non disponibile"}
                           </div>
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-600">Cellulare</label>
                           <div className="mt-1 p-3 bg-white rounded border">
-                            {professionalData.phoneMobile || "Non disponibile"}
+                            {(professionalData as any).phone_mobile || (professionalData as any).phoneMobile || "Non disponibile"}
                           </div>
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-600">Website</label>
                           <div className="mt-1 p-3 bg-white rounded border">
-                            {professionalData.website || "Non disponibile"}
+                            {(professionalData as any).website || "Non disponibile"}
                           </div>
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-600">WhatsApp</label>
                           <div className="mt-1 p-3 bg-white rounded border">
-                            {professionalData.whatsappNumber || "Non disponibile"}
+                            {(professionalData as any).whatsapp_number || (professionalData as any).whatsappNumber || "Non disponibile"}
                           </div>
                         </div>
                       </div>
@@ -468,19 +468,19 @@ export default function ProfessionalDashboard() {
                         <div className="col-span-2">
                           <label className="text-sm font-medium text-gray-600">Indirizzo</label>
                           <div className="mt-1 p-3 bg-white rounded border">
-                            {professionalData.address || "Non disponibile"}
+                            {(professionalData as any).address || "Non disponibile"}
                           </div>
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-600">Città</label>
                           <div className="mt-1 p-3 bg-white rounded border">
-                            {professionalData.city || "Non disponibile"}
+                            {(professionalData as any).city || "Non disponibile"}
                           </div>
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-600">Provincia</label>
                           <div className="mt-1 p-3 bg-white rounded border">
-                            {professionalData.province || "Non disponibile"}
+                            {(professionalData as any).province || "Non disponibile"}
                           </div>
                         </div>
                       </div>
@@ -493,19 +493,19 @@ export default function ProfessionalDashboard() {
                         <div>
                           <label className="text-sm font-medium text-gray-600">Partita IVA</label>
                           <div className="mt-1 p-3 bg-white rounded border">
-                            {professionalData.vatNumber || "Non disponibile"}
+                            {(professionalData as any).vat_number || (professionalData as any).vatNumber || "Non disponibile"}
                           </div>
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-600">Codice Fiscale</label>
                           <div className="mt-1 p-3 bg-white rounded border">
-                            {professionalData.fiscalCode || "Non disponibile"}
+                            {(professionalData as any).fiscal_code || (professionalData as any).fiscalCode || "Non disponibile"}
                           </div>
                         </div>
                         <div className="col-span-2">
                           <label className="text-sm font-medium text-gray-600">PEC</label>
                           <div className="mt-1 p-3 bg-white rounded border">
-                            {professionalData.pec || "Non disponibile"}
+                            {(professionalData as any).pec || "Non disponibile"}
                           </div>
                         </div>
                       </div>
@@ -518,13 +518,13 @@ export default function ProfessionalDashboard() {
                         <div>
                           <label className="text-sm font-medium text-gray-600">Verificato</label>
                           <div className="mt-1 p-3 bg-white rounded border">
-                            {professionalData.isVerified ? "Si" : "No"}
+                            {(professionalData as any).isVerified ? "Si" : "No"}
                           </div>
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-600">Rating</label>
                           <div className="mt-1 p-3 bg-white rounded border">
-                            {professionalData.rating || "Non disponibile"}
+                            {(professionalData as any).rating || "Non disponibile"}
                           </div>
                         </div>
                       </div>
