@@ -5,10 +5,17 @@ import {
   reviews,
   reviewHelpfulVotes,
   reviewFlags,
+  reviewResponses,
   claimRequests,
   subscriptionPlans,
   subscriptions,
   transactions,
+  professionalSpecializations,
+  specializations,
+  professionalOrderMemberships,
+  professionalOrders,
+  professionalServices,
+  professionalPortfolio,
   type User, 
   type InsertUser,
   type Category,
@@ -499,10 +506,28 @@ export class DatabaseStorage implements IStorage {
       })
       .from(subscriptions)
       .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
-      .where(eq(subscriptions.professionalId, professionalId));
+      .where(
+        and(
+          eq(subscriptions.professionalId, professionalId),
+          eq(subscriptions.status, 'active')
+        )
+      );
 
     if (results.length === 0) {
-      return null;
+      // Return default Base plan if no subscription found
+      const [basePlan] = await db
+        .select()
+        .from(subscriptionPlans)
+        .where(eq(subscriptionPlans.name, 'Base'))
+        .limit(1);
+
+      return basePlan ? {
+        id: null,
+        professionalId: professionalId,
+        planId: basePlan.id,
+        status: 'active',
+        plan: basePlan
+      } : null;
     }
 
     const result = results[0];
