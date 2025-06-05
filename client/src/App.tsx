@@ -62,6 +62,7 @@ function Router() {
       <Route path="/register-professional" component={RegisterProfessional} />
       
       {/* Professional Dashboard */}
+      <Route path="/dashboard" component={ProfessionalAdvancedDashboard} />
       <Route path="/dashboard/professional" component={ProfessionalAdvancedDashboard} />
       <Route path="/dashboard/professional-advanced" component={ProfessionalAdvancedDashboard} />
       
