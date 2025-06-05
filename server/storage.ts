@@ -338,54 +338,43 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProfessional(id: number): Promise<ProfessionalWithDetails | undefined> {
-    const [result] = await db
-      .select({
-        id: professionals.id,
-        userId: professionals.userId,
-        categoryId: professionals.categoryId,
-        businessName: professionals.businessName,
-        description: professionals.description,
-        phone: professionals.phone,
-        email: professionals.email,
-        website: professionals.website,
-        address: professionals.address,
-        city: professionals.city,
-        province: professionals.province,
-        postalCode: professionals.postalCode,
-        priceRangeMin: professionals.priceRangeMin,
-        priceRangeMax: professionals.priceRangeMax,
-        priceUnit: professionals.priceUnit,
-        isVerified: professionals.isVerified,
-        isPremium: professionals.isPremium,
-        isClaimed: professionals.isClaimed,
-        claimedAt: professionals.claimedAt,
-        claimedBy: professionals.claimedBy,
-        profileClaimToken: professionals.profileClaimToken,
-        claimTokenExpiresAt: professionals.claimTokenExpiresAt,
-        autoNotificationEnabled: professionals.autoNotificationEnabled,
-        lastNotificationSent: professionals.lastNotificationSent,
-        rating: professionals.rating,
-        reviewCount: professionals.reviewCount,
-        createdAt: professionals.createdAt,
-        updatedAt: professionals.updatedAt,
-        user: users,
-        category: categories,
-      })
-      .from(professionals)
-      .leftJoin(users, eq(professionals.userId, users.id))
-      .leftJoin(categories, eq(professionals.categoryId, categories.id))
-      .where(eq(professionals.id, id));
+    try {
+      const [professionalResult] = await db
+        .select()
+        .from(professionals)
+        .where(eq(professionals.id, id));
 
-    if (!result) return undefined;
+      if (!professionalResult) return undefined;
 
-    const professionalReviews = await this.getReviewsByProfessional(id);
+      // Get user data if professional is claimed
+      let userData = null;
+      if (professionalResult.userId) {
+        const [userResult] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, professionalResult.userId));
+        userData = userResult;
+      }
 
-    return {
-      ...result,
-      user: result.user!,
-      category: result.category!,
-      reviews: professionalReviews,
-    };
+      // Get category data
+      const [categoryResult] = await db
+        .select()
+        .from(categories)
+        .where(eq(categories.id, professionalResult.categoryId));
+
+      // Get reviews
+      const professionalReviews = await this.getReviewsByProfessional(id);
+
+      return {
+        ...professionalResult,
+        user: userData,
+        category: categoryResult,
+        reviews: professionalReviews,
+      } as ProfessionalWithDetails;
+    } catch (error) {
+      console.error("Error in getProfessional:", error);
+      return undefined;
+    }
   }
 
   async getProfessionalByUserId(userId: number): Promise<Professional | undefined> {
@@ -757,28 +746,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getReviewsByProfessional(professionalId: number): Promise<(Review & { user: User })[]> {
-    const reviewsResult = await db
-      .select()
-      .from(reviews)
-      .where(eq(reviews.professionalId, professionalId))
-      .orderBy(desc(reviews.createdAt));
-
-    const reviewsWithUsers = [];
-    for (const review of reviewsResult) {
-      const [user] = await db
+    try {
+      const reviewsResult = await db
         .select()
-        .from(users)
-        .where(eq(users.id, review.userId));
-      
-      if (user) {
-        reviewsWithUsers.push({
-          ...review,
-          user
-        });
-      }
-    }
+        .from(reviews)
+        .where(eq(reviews.professionalId, professionalId))
+        .orderBy(desc(reviews.createdAt));
 
-    return reviewsWithUsers;
+      const reviewsWithUsers = [];
+      for (const review of reviewsResult) {
+        if (review.userId) {
+          const [user] = await db
+            .select()
+            .from(users)
+            .where(eq(users.id, review.userId));
+          
+          if (user) {
+            reviewsWithUsers.push({
+              ...review,
+              user
+            });
+          }
+        }
+      }
+
+      return reviewsWithUsers;
+    } catch (error) {
+      console.error("Error in getReviewsByProfessional:", error);
+      return [];
+    }
   }
 
   async createReview(insertReview: InsertReview): Promise<Review> {
