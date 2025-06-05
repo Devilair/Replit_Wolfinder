@@ -348,8 +348,52 @@ export default function ProfessionalAdvancedDashboard() {
   const hasPortfolio = currentPlan?.name && ['Expert', 'Enterprise'].includes(currentPlan.name);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation Header */}
+      <div className="bg-white border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-xl font-bold text-gray-900">Wolfinder</h1>
+              <nav className="hidden md:flex space-x-6">
+                <a href="/" className="text-gray-600 hover:text-gray-900">Home</a>
+                <span className="text-blue-600 font-medium">Dashboard</span>
+                <a href="/professionals" className="text-gray-600 hover:text-gray-900">Trova Professionisti</a>
+              </nav>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => window.open(`/professional/${professionalData?.id}`, '_blank')}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Vedi Profilo Pubblico
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  localStorage.removeItem('userToken');
+                  window.location.href = '/api/auth/logout';
+                }}
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        {/* Breadcrumb */}
+        <div className="flex items-center space-x-2 text-sm text-gray-600">
+          <a href="/" className="hover:text-gray-900">Home</a>
+          <span>/</span>
+          <span className="text-gray-900 font-medium">Dashboard Professionista</span>
+        </div>
+
         {/* Header with plan status */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center justify-between">
@@ -357,53 +401,23 @@ export default function ProfessionalAdvancedDashboard() {
               <h1 className="text-3xl font-bold text-gray-900">Dashboard Professionista</h1>
               <p className="text-gray-600 mt-1">Benvenuto, {user?.name}</p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant={currentPlan ? "default" : "secondary"}>
-                    {currentPlan?.name || 'Piano Base'}
+            <div className="text-right">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant={currentPlan ? "default" : "secondary"}>
+                  {currentPlan?.name || 'Piano Base'}
+                </Badge>
+                {professionalData?.isVerified && (
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Verificato
                   </Badge>
-                  {professionalData?.isVerified && (
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      Verificato
-                    </Badge>
-                  )}
-                </div>
-                <div className="text-sm text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <Eye className="w-4 h-4" />
-                    <span>{professionalData?.profileViews || 0} visualizzazioni</span>
-                  </div>
-                </div>
+                )}
               </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => window.open(`/professional/${professionalData?.id}`, '_blank')}
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Vedi Profilo Pubblico
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    localStorage.removeItem('userToken');
-                    window.location.href = '/api/auth/logout';
-                  }}
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Impostazioni
-                </Button>
+              <div className="text-sm text-gray-500">
+                <div className="flex items-center gap-1">
+                  <Eye className="w-4 h-4" />
+                  <span>{professionalData?.profileViews || 0} visualizzazioni</span>
+                </div>
               </div>
             </div>
           </div>
@@ -415,6 +429,35 @@ export default function ProfessionalAdvancedDashboard() {
               <span className="text-sm text-gray-600">{professionalData?.profileCompleteness || 0}%</span>
             </div>
             <Progress value={professionalData?.profileCompleteness || 0} className="h-2" />
+            
+            {/* Profile completion wizard */}
+            {(professionalData?.profileCompleteness || 0) < 100 && (
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-yellow-800">Completa il tuo profilo</h4>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      Un profilo completo riceve il 300% in più di visualizzazioni e contatti.
+                    </p>
+                    <div className="mt-2 space-y-1">
+                      {!professionalData?.address && (
+                        <div className="text-xs text-yellow-700">• Aggiungi indirizzo completo</div>
+                      )}
+                      {(!specializations || specializations.length === 0) && (
+                        <div className="text-xs text-yellow-700">• Indica le tue specializzazioni</div>
+                      )}
+                      {(!services || services.length === 0) && (
+                        <div className="text-xs text-yellow-700">• Elenca i tuoi servizi e prezzi</div>
+                      )}
+                      {(!orderMemberships || orderMemberships.length === 0) && (
+                        <div className="text-xs text-yellow-700">• Verifica l'iscrizione all'ordine professionale</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -917,12 +960,21 @@ export default function ProfessionalAdvancedDashboard() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Nessun servizio</h3>
-                    <p className="text-gray-600 mb-6">
-                      Aggiungi i servizi che offri per attirare più clienti
+                    <div className="bg-blue-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                      <Briefcase className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Aggiungi i tuoi servizi</h3>
+                    <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                      Elenca i servizi che offri con prezzi trasparenti. I professionisti con servizi ben definiti ricevono il 250% in più di contatti.
                     </p>
-                    <Button>
+                    <div className="bg-gray-50 rounded-lg p-4 max-w-sm mx-auto mb-4">
+                      <div className="text-sm text-gray-700 space-y-1">
+                        <div>• Consulenza legale - €150/ora</div>
+                        <div>• Stesura contratti - €300/documento</div>
+                        <div>• Assistenza tribunale - €500/udienza</div>
+                      </div>
+                    </div>
+                    <Button className="mt-2">
                       <Plus className="w-4 h-4 mr-2" />
                       Aggiungi il tuo primo servizio
                     </Button>
