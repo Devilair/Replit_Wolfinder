@@ -389,11 +389,20 @@ export default function ProfessionalAdvancedDashboard() {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => logoutMutation.mutate()}
-                  disabled={logoutMutation.isPending}
+                  onClick={() => {
+                    localStorage.removeItem('userToken');
+                    window.location.href = '/api/auth/logout';
+                  }}
                 >
                   <LogOut className="w-4 h-4 mr-2" />
-                  {logoutMutation.isPending ? 'Disconnessione...' : 'Logout'}
+                  Logout
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Impostazioni
                 </Button>
               </div>
             </div>
