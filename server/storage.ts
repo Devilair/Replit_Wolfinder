@@ -490,6 +490,190 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Professional Advanced Dashboard Methods
+  async getProfessionalSubscription(professionalId: number): Promise<any> {
+    // Return mock subscription data for now
+    return {
+      id: 1,
+      status: 'active',
+      currentPeriodEnd: '2025-07-04',
+      cancelAtPeriodEnd: false,
+      plan: {
+        id: 1,
+        name: 'Professionale',
+        description: 'Piano completo per professionisti',
+        priceMonthly: 29,
+        features: [
+          'Profilo professionale completo',
+          'Risposte illimitate alle recensioni',
+          'Analytics avanzati',
+          'Portfolio progetti',
+          'Gestione servizi'
+        ],
+        hasAdvancedAnalytics: true,
+        hasExportData: false,
+        hasPrioritySupport: false,
+        maxResponses: -1
+      }
+    };
+  }
+
+  async getProfessionalAnalytics(professionalId: number): Promise<any> {
+    // Return mock analytics data
+    return {
+      profileViews: 156,
+      contactClicks: 23,
+      conversionRate: 14.7,
+      averageRating: 4.8,
+      totalReviews: 12,
+      responseRate: 95,
+      chartData: [
+        { date: '2025-05-01', views: 12, clicks: 2, reviews: 1 },
+        { date: '2025-05-02', views: 18, clicks: 3, reviews: 0 },
+        { date: '2025-05-03', views: 15, clicks: 1, reviews: 1 },
+        { date: '2025-05-04', views: 22, clicks: 4, reviews: 2 },
+        { date: '2025-05-05', views: 19, clicks: 2, reviews: 0 }
+      ]
+    };
+  }
+
+  async getReviewsWithResponses(professionalId: number): Promise<any[]> {
+    // Return mock reviews with response capability
+    return [
+      {
+        id: 1,
+        rating: 5,
+        title: 'Servizio eccellente',
+        content: 'Molto professionale e competente. Ha risolto il mio problema legale in tempi rapidi.',
+        createdAt: '2025-05-15T10:30:00.000Z',
+        user: {
+          id: 201,
+          name: 'Marco Bianchi'
+        },
+        response: {
+          id: 1,
+          responseText: 'Grazie Marco per la fiducia. È stato un piacere aiutarti.',
+          createdAt: '2025-05-16T09:15:00.000Z'
+        },
+        canRespond: false
+      },
+      {
+        id: 2,
+        rating: 4,
+        title: 'Buon servizio',
+        content: 'Competente e disponibile, anche se i tempi potrebbero essere migliorati.',
+        createdAt: '2025-05-10T14:20:00.000Z',
+        user: {
+          id: 202,
+          name: 'Laura Verdi'
+        },
+        canRespond: true
+      }
+    ];
+  }
+
+  async createReviewResponse(data: { reviewId: number; professionalId: number; responseText: string }): Promise<any> {
+    // Mock creation of review response
+    return {
+      id: Math.floor(Math.random() * 1000),
+      reviewId: data.reviewId,
+      professionalId: data.professionalId,
+      responseText: data.responseText,
+      isPublic: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  async getMonthlyResponseCount(professionalId: number): Promise<number> {
+    // Return mock response count
+    return 3;
+  }
+
+  async getProfessionalOrderMemberships(professionalId: number): Promise<any[]> {
+    // Return mock order memberships
+    return [
+      {
+        id: 1,
+        order: {
+          name: 'Ordine degli Avvocati di Ferrara',
+          province: 'Ferrara',
+          category: 'avvocati'
+        },
+        membershipNumber: 'AV-FE-1234',
+        membershipYear: 2018,
+        status: 'active',
+        verifiedAt: '2024-01-15T10:00:00.000Z'
+      }
+    ];
+  }
+
+  async getProfessionalSpecializations(professionalId: number): Promise<any[]> {
+    // Return mock specializations
+    return [
+      {
+        id: 1,
+        name: 'Diritto Civile',
+        experienceYears: 8,
+        verifiedAt: '2024-01-15T10:00:00.000Z'
+      },
+      {
+        id: 2,
+        name: 'Diritto di Famiglia',
+        experienceYears: 5,
+        verifiedAt: null
+      }
+    ];
+  }
+
+  async getProfessionalServices(professionalId: number): Promise<any[]> {
+    // Return mock services
+    return [
+      {
+        id: 1,
+        name: 'Consulenza Legale',
+        description: 'Consulenza legale generale per privati e aziende',
+        priceFrom: 80,
+        priceTo: 120,
+        priceUnit: 'ora',
+        isActive: true
+      },
+      {
+        id: 2,
+        name: 'Redazione Contratti',
+        description: 'Redazione e revisione contratti commerciali',
+        priceFrom: 200,
+        priceTo: 500,
+        priceUnit: 'progetto',
+        isActive: true
+      }
+    ];
+  }
+
+  async getProfessionalPortfolio(professionalId: number): Promise<any[]> {
+    // Return mock portfolio items
+    return [
+      {
+        id: 1,
+        title: 'Caso Controversia Commerciale',
+        description: 'Risoluzione di una complessa controversia commerciale tra due aziende del settore manifatturiero',
+        projectType: 'Diritto Commerciale',
+        completionDate: '2024-12-15T00:00:00.000Z',
+        images: [],
+        isPublic: true
+      },
+      {
+        id: 2,
+        title: 'Separazione Consensuale',
+        description: 'Gestione pratica di separazione consensuale con accordi patrimoniali',
+        projectType: 'Diritto di Famiglia',
+        completionDate: '2024-11-28T00:00:00.000Z',
+        images: [],
+        isPublic: true
+      }
+    ];
+  }
+
   async updateProfessionalRating(id: number): Promise<void> {
     const [stats] = await db
       .select({
