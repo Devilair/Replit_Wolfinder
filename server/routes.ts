@@ -742,8 +742,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const subscription = await storage.getProfessionalSubscription(professional.id);
       const currentResponses = await storage.getMonthlyResponseCount(professional.id);
       
-      // Check if user has reached response limit for Base plan
-      if (subscription?.plan?.max_responses && subscription.plan.max_responses > 0) {
+      // Check if user has reached response limit for Essentials plan
+      if (subscription?.plan?.name === 'Essentials' && subscription.plan.max_responses && subscription.plan.max_responses > 0) {
         if (currentResponses >= subscription.plan.max_responses) {
           return res.status(403).json({ 
             message: `Monthly response limit reached (${subscription.plan.max_responses}). Upgrade to Professional plan for unlimited responses.`,
