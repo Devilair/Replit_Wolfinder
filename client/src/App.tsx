@@ -24,7 +24,7 @@ import AdminLogin from "@/pages/admin-login";
 import ProfessionalSubscriptionDemo from "@/pages/professional-subscription-demo";
 import Register from "@/pages/auth/register";
 import Login from "@/pages/auth/login";
-import ProfessionalDashboard from "@/pages/dashboard/professional";
+import ProfessionalAdvancedDashboard from "@/pages/dashboard/professional-advanced";
 import ChiSiamo from "@/pages/about/chi-siamo";
 import LaNostraStoria from "@/pages/about/la-nostra-storia";
 import Privacy from "@/pages/about/privacy";
@@ -55,7 +55,7 @@ function Router() {
       <Route path="/auth/login" component={Login} />
       
       {/* Professional Dashboard */}
-      <Route path="/dashboard/professional" component={ProfessionalDashboard} />
+      <Route path="/dashboard/professional" component={ProfessionalAdvancedDashboard} />
       
       {/* Admin Login */}
       <Route path="/admin-login" component={AdminLogin} />

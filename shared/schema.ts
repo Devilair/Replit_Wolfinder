@@ -252,6 +252,134 @@ export const subscriptions = pgTable("subscriptions", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Ordini professionali e specializzazioni
+export const professionalOrders = pgTable("professional_orders", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(), // "Ordine degli Avvocati", "Ordine dei Commercialisti", etc.
+  category: text("category").notNull(), // "avvocati", "commercialisti", "architetti", etc.
+  province: text("province").notNull(),
+  city: text("city").notNull(),
+  website: text("website"),
+  contactInfo: text("contact_info"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const professionalOrderMemberships = pgTable("professional_order_memberships", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  orderId: integer("order_id").references(() => professionalOrders.id).notNull(),
+  membershipNumber: text("membership_number").notNull(),
+  membershipYear: integer("membership_year").notNull(),
+  status: text("status").default("active").notNull(), // 'active', 'suspended', 'expired'
+  verificationDocument: text("verification_document"), // File path
+  verifiedAt: timestamp("verified_at"),
+  verifiedBy: integer("verified_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const specializations = pgTable("specializations", {
+  id: serial("id").primaryKey(),
+  categoryId: integer("category_id").references(() => categories.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const professionalSpecializations = pgTable("professional_specializations", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  specializationId: integer("specialization_id").references(() => specializations.id).notNull(),
+  experienceYears: integer("experience_years"),
+  certificationDocument: text("certification_document"), // File path
+  verifiedAt: timestamp("verified_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Certificazioni e documenti
+export const professionalCertifications = pgTable("professional_certifications", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  name: text("name").notNull(),
+  issuingOrganization: text("issuing_organization").notNull(),
+  issueDate: timestamp("issue_date"),
+  expiryDate: timestamp("expiry_date"),
+  certificationNumber: text("certification_number"),
+  documentPath: text("document_path"),
+  verificationStatus: text("verification_status").default("pending"), // 'pending', 'verified', 'rejected'
+  verifiedAt: timestamp("verified_at"),
+  verifiedBy: integer("verified_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Servizi offerti dal professionista
+export const professionalServices = pgTable("professional_services", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  priceFrom: decimal("price_from", { precision: 10, scale: 2 }),
+  priceTo: decimal("price_to", { precision: 10, scale: 2 }),
+  priceUnit: text("price_unit"), // "ora", "progetto", "visita"
+  estimatedDuration: text("estimated_duration"),
+  isActive: boolean("is_active").default(true),
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Portfolio lavori
+export const professionalPortfolio = pgTable("professional_portfolio", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  projectType: text("project_type"),
+  completionDate: timestamp("completion_date"),
+  clientName: text("client_name"), // Anonimizzato se necessario
+  images: text("images"), // JSON array of image paths
+  documents: text("documents"), // JSON array of document paths
+  projectValue: decimal("project_value", { precision: 12, scale: 2 }),
+  isPublic: boolean("is_public").default(true),
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Analytics avanzati
+export const professionalAnalytics = pgTable("professional_analytics", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  date: timestamp("date").notNull(),
+  profileViews: integer("profile_views").default(0),
+  contactClicks: integer("contact_clicks").default(0),
+  phoneClicks: integer("phone_clicks").default(0),
+  emailClicks: integer("email_clicks").default(0),
+  websiteClicks: integer("website_clicks").default(0),
+  reviewsReceived: integer("reviews_received").default(0),
+  averageRating: decimal("average_rating", { precision: 3, scale: 2 }),
+  responseRate: decimal("response_rate", { precision: 5, scale: 2 }),
+  conversionRate: decimal("conversion_rate", { precision: 5, scale: 2 }),
+  searchImpressions: integer("search_impressions").default(0),
+  searchClicks: integer("search_clicks").default(0),
+  referralSource: jsonb("referral_source"), // Social, organic, etc.
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Risposte alle recensioni
+export const reviewResponses = pgTable("review_responses", {
+  id: serial("id").primaryKey(),
+  reviewId: integer("review_id").references(() => reviews.id).notNull(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  responseText: text("response_text").notNull(),
+  isPublic: boolean("is_public").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
   subscriptionId: integer("subscription_id").references(() => subscriptions.id).notNull(),
