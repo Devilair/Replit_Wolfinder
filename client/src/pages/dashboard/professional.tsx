@@ -103,6 +103,17 @@ export default function ProfessionalDashboard() {
     enabled: !!user,
   });
 
+  // Debug logging to identify data structure
+  console.log("Professional data received:", professionalData);
+
+  // Handler for edit button
+  const handleEditProfile = () => {
+    toast({
+      title: "Modifica Profilo",
+      description: "Funzionalità di modifica profilo in sviluppo",
+    });
+  };
+
   // Fetch reviews
   const { data: reviews = [], isLoading: isLoadingReviews } = useQuery<ReviewData[]>({
     queryKey: ["/api/professional/reviews-complete"],
@@ -400,7 +411,7 @@ export default function ProfessionalDashboard() {
                     <div>
                       <label className="text-sm font-medium text-gray-700">Nome Attività</label>
                       <p className="text-sm text-gray-900 p-3 bg-white rounded border">
-                        {professionalData.businessName || "Non specificato"}
+                        {(professionalData as any).business_name || professionalData.businessName || "Non specificato"}
                       </p>
                     </div>
                     <div>
@@ -547,7 +558,11 @@ export default function ProfessionalDashboard() {
 
                 {/* Pulsante Modifica */}
                 <div className="flex justify-center pt-6">
-                  <Button size="lg" className="w-full md:w-auto">
+                  <Button 
+                    size="lg" 
+                    className="w-full md:w-auto"
+                    onClick={handleEditProfile}
+                  >
                     <Edit className="w-4 h-4 mr-2" />
                     Modifica Informazioni Profilo
                   </Button>
