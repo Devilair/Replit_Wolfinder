@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { Eye, EyeOff, User, Briefcase } from "lucide-react";
+import { Eye, EyeOff, User, Briefcase, ChevronRight, ChevronLeft } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { professionalRegistrationSchema, type ProfessionalRegistrationData, type Category } from "@shared/schema";
@@ -20,6 +20,7 @@ export default function RegisterProfessional() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState("personal");
 
   const form = useForm<ProfessionalRegistrationData>({
     resolver: zodResolver(professionalRegistrationSchema),
@@ -96,7 +97,7 @@ export default function RegisterProfessional() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <Tabs defaultValue="personal" className="w-full">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="personal">Dati Personali</TabsTrigger>
                     <TabsTrigger value="professional">Informazioni Professionali</TabsTrigger>
@@ -182,6 +183,18 @@ export default function RegisterProfessional() {
                         </FormItem>
                       )}
                     />
+                    
+                    {/* Pulsante di navigazione per il primo tab */}
+                    <div className="flex justify-end pt-6 border-t">
+                      <Button 
+                        type="button" 
+                        onClick={() => setActiveTab("professional")}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        Avanti: Informazioni Professionali
+                        <ChevronRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
                   </TabsContent>
 
                   <TabsContent value="professional" className="space-y-4">
