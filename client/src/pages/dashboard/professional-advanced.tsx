@@ -359,8 +359,8 @@ export default function ProfessionalAdvancedDashboard() {
           </div>
         </div>
 
-        {/* Plan upgrade banner for basic users */}
-        {isBasicPlan && (
+        {/* Plan upgrade banner for Essentials users */}
+        {isEssentialsPlan && (
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
@@ -383,8 +383,8 @@ export default function ProfessionalAdvancedDashboard() {
             <TabsTrigger value="overview">Panoramica</TabsTrigger>
             <TabsTrigger value="profile">Profilo</TabsTrigger>
             <TabsTrigger value="reviews">Recensioni</TabsTrigger>
-            <TabsTrigger value="analytics" disabled={isBasicPlan}>
-              Analytics {isBasicPlan && <Badge variant="secondary" className="ml-1 text-xs">Pro</Badge>}
+            <TabsTrigger value="analytics" disabled={!hasAnalytics}>
+              Analytics {!hasAnalytics && <Badge variant="secondary" className="ml-1 text-xs">Pro+</Badge>}
             </TabsTrigger>
             <TabsTrigger value="services">Servizi</TabsTrigger>
             <TabsTrigger value="subscription">Abbonamento</TabsTrigger>
@@ -627,7 +627,7 @@ export default function ProfessionalAdvancedDashboard() {
                     <Shield className="w-4 h-4 mr-2" />
                     Richiedi Verifica
                   </Button>
-                  {isPremiumPlan && (
+                  {hasAnalytics && (
                     <Button className="w-full" variant="outline">
                       <Download className="w-4 h-4 mr-2" />
                       Esporta Dati
@@ -645,7 +645,7 @@ export default function ProfessionalAdvancedDashboard() {
                 <CardTitle>Gestione Recensioni</CardTitle>
                 <CardDescription>
                   Visualizza e rispondi alle recensioni dei tuoi clienti
-                  {isBasicPlan && " (Piano Premium richiesto per risposte illimitate)"}
+                  {isEssentialsPlan && " (Piano Professional richiesto per risposte illimitate)"}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -706,12 +706,12 @@ export default function ProfessionalAdvancedDashboard() {
                               respondToReviewMutation.mutate({ reviewId: review.id, response })
                             }
                             isSubmitting={respondToReviewMutation.isPending}
-                            isPremium={isPremiumPlan}
+                            isPremium={hasAnalytics || false}
                           />
                         ) : (
                           <div className="mt-4 p-3 bg-gray-50 rounded text-sm text-gray-600">
-                            {isBasicPlan 
-                              ? "Upgrade al piano Premium per rispondere alle recensioni"
+                            {isEssentialsPlan 
+                              ? "Upgrade al piano Professional per rispondere alle recensioni"
                               : "Non puoi rispondere a questa recensione"
                             }
                           </div>
