@@ -81,6 +81,10 @@ export default function ProfessionalDashboard() {
   // Fetch professional profile
   const { data: professionalData, isLoading: profileLoading, error: profileError } = useQuery<ProfessionalData>({
     queryKey: ['/api/professional/profile'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/professional/profile');
+      return response;
+    },
     enabled: !!user,
     retry: false,
   });
@@ -88,6 +92,10 @@ export default function ProfessionalDashboard() {
   // Fetch reviews
   const { data: reviews = [], isLoading: reviewsLoading } = useQuery<ReviewData[]>({
     queryKey: ['/api/professional/reviews'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/professional/reviews');
+      return response;
+    },
     enabled: !!user,
   });
 
