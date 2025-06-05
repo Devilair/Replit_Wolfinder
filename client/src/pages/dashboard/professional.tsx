@@ -716,52 +716,58 @@ export default function ProfessionalDashboard() {
             {/* Informazioni Aziendali */}
             <Card>
               <CardHeader>
-                <CardTitle>Informazioni Aziendali</CardTitle>
+                <CardTitle>🏢 Informazioni Aziendali Complete</CardTitle>
                 <CardDescription>
-                  Dati principali del tuo profilo
+                  Tutti i dati del tuo profilo professionale
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium">Nome Attività</label>
-                    <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                    <label className="text-sm font-medium text-gray-800">Nome Attività</label>
+                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
                       {professionalData?.businessName || "Non specificato"}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Email</label>
-                    <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                    <label className="text-sm font-medium text-gray-800">Email</label>
+                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
                       {professionalData?.email || "Non specificata"}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Telefono</label>
-                    <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                    <label className="text-sm font-medium text-gray-800">Telefono Fisso</label>
+                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
                       {professionalData?.phoneFixed || "Non specificato"}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Sito Web</label>
-                    <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                    <label className="text-sm font-medium text-gray-800">Cellulare</label>
+                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
+                      {professionalData?.phoneMobile || "Non specificato"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-800">Sito Web</label>
+                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
                       {professionalData?.website || "Non specificato"}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Email PEC</label>
-                    <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                    <label className="text-sm font-medium text-gray-800">Email PEC</label>
+                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
                       {professionalData?.pec || "Non specificata"}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Partita IVA</label>
-                    <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                    <label className="text-sm font-medium text-gray-800">Partita IVA</label>
+                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
                       {professionalData?.vatNumber || "Non specificata"}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Codice Fiscale</label>
-                    <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+                    <label className="text-sm font-medium text-gray-800">Codice Fiscale</label>
+                    <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded border">
                       {professionalData?.fiscalCode || "Non specificato"}
                     </p>
                   </div>
