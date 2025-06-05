@@ -68,37 +68,32 @@ export class AuthService {
         return { success: false, error: "Email già registrata" };
       }
 
-      // Controlla se l'username esiste già
-      const existingUsername = await db.select().from(users).where(eq(users.username, data.username)).limit(1);
-      if (existingUsername.length > 0) {
-        return { success: false, error: "Username già in uso" };
-      }
-
       const passwordHash = await this.hashPassword(data.password);
 
       // Crea l'utente con solo i campi esistenti nello schema
       const [newUser] = await db.insert(users).values({
-        username: data.username,
         email: data.email,
         password: passwordHash,
         name: data.name,
         role: data.userType,
-        isVerified: false
+        isVerified: false,
+        privacyConsent: data.privacyConsent || false,
+        marketingConsent: data.marketingConsent || false
       }).returning();
 
       // Se è un professionista, crea il record professional
-      if (data.userType === 'professional' && data.businessName && data.categoryId) {
+      if (data.userType === 'professional' && data.categoryId) {
         await db.insert(professionals).values({
           userId: newUser.id,
-          businessName: data.businessName,
+          businessName: data.businessName || "",
           categoryId: data.categoryId,
           email: data.email,
-          description: 'Professionista registrato su Wolfinder',
-          isVerified: false,
-          address: 'Via principale, 1',
-          city: 'Ferrara',
-          province: 'FE',
-          postalCode: '44121'
+          phoneFixed: data.phoneFixed || null,
+          phoneMobile: data.phoneMobile || null,
+          city: data.city || "",
+          address: data.address || "",
+          description: data.description || "",
+          isVerified: false
         });
       }
 

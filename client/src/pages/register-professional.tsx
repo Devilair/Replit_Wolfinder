@@ -203,9 +203,9 @@ export default function RegisterProfessional() {
                       name="businessName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nome Studio/Attività</FormLabel>
+                          <FormLabel>Nome Studio/Attività (opzionale)</FormLabel>
                           <FormControl>
-                            <Input placeholder="Studio Legale Rossi" {...field} />
+                            <Input placeholder="Studio Legale Rossi (opzionale)" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

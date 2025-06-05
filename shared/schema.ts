@@ -853,7 +853,7 @@ export const professionalRegistrationSchema = z.object({
     .regex(/[@$!%*?&]/, "La password deve contenere almeno un carattere speciale"),
   
   // Informazioni professionali
-  businessName: z.string().min(2, "Il nome studio/attività deve avere almeno 2 caratteri"),
+  businessName: z.string().optional(),
   categoryId: z.number().min(1, "Seleziona una categoria professionale"),
   phoneFixed: z.string().optional(),
   phoneMobile: z.string().optional(),
