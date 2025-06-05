@@ -63,6 +63,7 @@ function Router() {
       
       {/* Professional Dashboard */}
       <Route path="/dashboard/professional" component={ProfessionalAdvancedDashboard} />
+      <Route path="/dashboard/professional-advanced" component={ProfessionalAdvancedDashboard} />
       
       {/* Admin Login */}
       <Route path="/admin-login" component={AdminLogin} />
