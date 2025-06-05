@@ -186,6 +186,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Logout endpoint
+  app.post('/api/auth/logout', (req, res) => {
+    try {
+      // Clear any server-side session if needed
+      res.clearCookie('userToken');
+      res.clearCookie('sessionId');
+      res.json({ message: 'Logout effettuato con successo' });
+    } catch (error) {
+      console.error('Logout error:', error);
+      res.status(500).json({ error: 'Errore durante il logout' });
+    }
+  });
+
   app.get("/api/auth/profile", authService.authenticateToken, async (req, res) => {
     try {
       const user = req.user;

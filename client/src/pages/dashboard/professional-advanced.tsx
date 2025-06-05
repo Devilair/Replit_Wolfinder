@@ -41,7 +41,9 @@ import {
   Plus,
   Reply,
   Download,
-  Upload
+  Upload,
+  LogOut,
+  ExternalLink
 } from 'lucide-react';
 
 interface SubscriptionPlan {
@@ -156,6 +158,33 @@ export default function ProfessionalAdvancedDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Logout mutation
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.clear();
+      localStorage.removeItem('userToken');
+      toast({
+        title: "Logout effettuato",
+        description: "Sei stato disconnesso con successo",
+      });
+      window.location.href = '/';
+    },
+    onError: () => {
+      toast({
+        title: "Errore",
+        description: "Errore durante il logout",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Fetch user data
   const { data: user, isLoading: userLoading } = useQuery({
@@ -328,23 +357,44 @@ export default function ProfessionalAdvancedDashboard() {
               <h1 className="text-3xl font-bold text-gray-900">Dashboard Professionista</h1>
               <p className="text-gray-600 mt-1">Benvenuto, {user?.name}</p>
             </div>
-            <div className="text-right">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant={currentPlan ? "default" : "secondary"}>
-                  {currentPlan?.name || 'Piano Base'}
-                </Badge>
-                {professionalData?.isVerified && (
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Verificato
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant={currentPlan ? "default" : "secondary"}>
+                    {currentPlan?.name || 'Piano Base'}
                   </Badge>
-                )}
-              </div>
-              <div className="text-sm text-gray-500">
-                <div className="flex items-center gap-1">
-                  <Eye className="w-4 h-4" />
-                  <span>{professionalData?.profileViews || 0} visualizzazioni</span>
+                  {professionalData?.isVerified && (
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Verificato
+                    </Badge>
+                  )}
                 </div>
+                <div className="text-sm text-gray-500">
+                  <div className="flex items-center gap-1">
+                    <Eye className="w-4 h-4" />
+                    <span>{professionalData?.profileViews || 0} visualizzazioni</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => window.open(`/professional/${professionalData?.id}`, '_blank')}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Vedi Profilo Pubblico
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => logoutMutation.mutate()}
+                  disabled={logoutMutation.isPending}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  {logoutMutation.isPending ? 'Disconnessione...' : 'Logout'}
+                </Button>
               </div>
             </div>
           </div>
