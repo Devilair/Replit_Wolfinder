@@ -688,11 +688,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if user has analytics feature in subscription
       const subscription = await storage.getProfessionalSubscription(professional.id);
-      if (!subscription || !subscription.plan.has_advanced_analytics) {
+      const planName = subscription?.plan?.name || "Essentials";
+      
+      // Analytics disponibili per Professional, Expert ed Enterprise
+      if (planName === "Essentials") {
         return res.status(403).json({ 
-          message: "Analytics feature requires Professional or Premium subscription",
+          message: "Analytics feature requires Professional plan or higher",
           requiredFeature: "advanced_analytics",
-          currentPlan: subscription?.plan?.name || "Base"
+          currentPlan: planName
         });
       }
 
@@ -837,11 +840,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if user has portfolio feature in subscription
       const subscription = await storage.getProfessionalSubscription(professional.id);
-      if (!subscription || subscription.plan.name === 'Base') {
+      const planName = subscription?.plan?.name || "Essentials";
+      
+      // Portfolio disponibile solo per Expert ed Enterprise
+      if (planName === "Essentials" || planName === "Professional") {
         return res.status(403).json({ 
-          message: "Portfolio feature requires Professional or Premium subscription",
+          message: "Portfolio feature requires Expert plan or higher",
           requiredFeature: "portfolio",
-          currentPlan: subscription?.plan?.name || "Base"
+          currentPlan: planName
         });
       }
 

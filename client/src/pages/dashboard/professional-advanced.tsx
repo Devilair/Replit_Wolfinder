@@ -314,8 +314,9 @@ export default function ProfessionalAdvancedDashboard() {
 
   const subscription = professionalData?.subscription;
   const currentPlan = subscription?.plan;
-  const isBasicPlan = !currentPlan || currentPlan.name === 'Base';
-  const isPremiumPlan = currentPlan?.hasAdvancedAnalytics || false;
+  const isEssentialsPlan = !currentPlan || currentPlan.name === 'Essentials';
+  const hasAnalytics = currentPlan?.name && ['Professional', 'Expert', 'Enterprise'].includes(currentPlan.name);
+  const hasPortfolio = currentPlan?.name && ['Expert', 'Enterprise'].includes(currentPlan.name);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
