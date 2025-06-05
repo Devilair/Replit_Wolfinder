@@ -323,6 +323,25 @@ export default function RegisterProfessional() {
                         </FormItem>
                       )}
                     />
+                    
+                    {/* Pulsanti di navigazione per il secondo tab */}
+                    <div className="flex justify-between pt-6 border-t">
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={() => setActiveTab("personal")}
+                      >
+                        <ChevronLeft className="mr-2 h-4 w-4" />
+                        Indietro: Dati Personali
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={registerMutation.isPending}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {registerMutation.isPending ? "Registrazione..." : "Completa Registrazione"}
+                      </Button>
+                    </div>
                   </TabsContent>
                 </Tabs>
 
@@ -376,15 +395,7 @@ export default function RegisterProfessional() {
                   />
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={registerMutation.isPending}
-                >
-                  {registerMutation.isPending ? "Registrazione in corso..." : "Registrati"}
-                </Button>
-
-                <div className="text-center">
+                <div className="text-center pt-4">
                   <p className="text-sm text-gray-600">
                     Hai già un account?{" "}
                     <Link href="/login" className="text-blue-600 hover:underline font-medium">
