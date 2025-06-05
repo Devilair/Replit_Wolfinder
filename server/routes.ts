@@ -758,6 +758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscription
       };
       
+      console.log("PROFILE DATA DEBUG:", JSON.stringify(profileData, null, 2));
       res.json(profileData);
     } catch (error) {
       console.error("Error fetching complete professional profile:", error);
