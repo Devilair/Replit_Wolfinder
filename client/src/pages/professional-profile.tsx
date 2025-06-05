@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { 
   MapPin, 
   Phone, 
@@ -29,8 +30,6 @@ import {
   TrendingUp
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ClaimProfileDialog from "@/components/claim-profile-dialog";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -400,16 +399,43 @@ export default function ProfessionalProfile() {
         </div>
       </div>
 
-      {/* Main Content with Tabs */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <Tabs defaultValue="riepilogo" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
-            <TabsTrigger value="riepilogo">Riepilogo</TabsTrigger>
-            <TabsTrigger value="chi-siamo">Chi siamo</TabsTrigger>
-            <TabsTrigger value="recensioni">Recensioni</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="riepilogo" className="space-y-8">
+      {/* Main Content - Vertical Scroll Layout */}
+      <div className="max-w-6xl mx-auto px-4 py-8 space-y-12">
+        
+        {/* Navigation Menu */}
+        <div className="bg-white rounded-lg border p-4 sticky top-4 z-10 shadow-sm">
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Button
+              variant="outline"
+              onClick={() => document.getElementById('riepilogo')?.scrollIntoView({ behavior: 'smooth' })}
+              className="flex items-center gap-2"
+            >
+              <Building className="w-4 h-4" />
+              Riepilogo
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => document.getElementById('chi-siamo')?.scrollIntoView({ behavior: 'smooth' })}
+              className="flex items-center gap-2"
+            >
+              <User className="w-4 h-4" />
+              Chi siamo
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => document.getElementById('recensioni')?.scrollIntoView({ behavior: 'smooth' })}
+              className="flex items-center gap-2"
+            >
+              <MessageSquare className="w-4 h-4" />
+              Recensioni ({totalReviews})
+            </Button>
+          </div>
+        </div>
+
+        {/* Riepilogo Section */}
+        <section id="riepilogo" className="scroll-mt-24">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">Riepilogo</h2>
+          <div className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
                 {/* Descrizione */}
@@ -481,32 +507,37 @@ export default function ProfessionalProfile() {
                 )}
               </div>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="chi-siamo">
-            <Card>
-              <CardHeader>
-                <CardTitle>Chi siamo</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 leading-relaxed">
-                  {professional.description || "Informazioni dettagliate non disponibili."}
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="recensioni">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold">
-                  Tutte le recensioni ({totalReviews})
-                </h3>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  Scrivi una recensione
-                </Button>
-              </div>
+          </div>
+        </section>
+
+        {/* Chi siamo Section */}
+        <section id="chi-siamo" className="scroll-mt-24">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">Chi siamo</h2>
+          <Card>
+            <CardHeader>
+              <CardTitle>Informazioni dettagliate</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700 leading-relaxed">
+                {professional.description || "Informazioni dettagliate non disponibili."}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Recensioni Section */}
+        <section id="recensioni" className="scroll-mt-24">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">Recensioni ({totalReviews})</h2>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-semibold">
+                Tutte le recensioni ({totalReviews})
+              </h3>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Scrivi una recensione
+              </Button>
+            </div>
 
               {/* Filtri recensioni */}
               <Card>
@@ -675,8 +706,7 @@ export default function ProfessionalProfile() {
                 </div>
               )}
             </div>
-          </TabsContent>
-        </Tabs>
+        </section>
       </div>
 
       {/* Claim Profile Dialog */}
