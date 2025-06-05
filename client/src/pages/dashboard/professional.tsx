@@ -25,7 +25,7 @@ import {
   Plus
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { ProfileTab } from "@/components/ProfileTab";
+
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
