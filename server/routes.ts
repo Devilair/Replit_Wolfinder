@@ -643,6 +643,190 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get professional profile with subscription details
+  app.get("/api/professional/profile-complete", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      // Get subscription data
+      const subscription = await storage.getProfessionalSubscription(professional.id);
+      
+      // Calculate profile completeness
+      let completeness = 30; // Base points for having a profile
+      if (professional.description) completeness += 20;
+      if (professional.phone) completeness += 10;
+      if (professional.isVerified) completeness += 30;
+      if (subscription) completeness += 10;
+      
+      const profileData = {
+        ...professional,
+        profileCompleteness: Math.min(100, completeness),
+        subscription
+      };
+      
+      res.json(profileData);
+    } catch (error) {
+      console.error("Error fetching complete professional profile:", error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  // Get professional analytics (premium feature)
+  app.get("/api/professional/analytics", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      // Check if user has premium subscription
+      const subscription = await storage.getProfessionalSubscription(professional.id);
+      if (!subscription || !subscription.plan.hasAdvancedAnalytics) {
+        return res.status(403).json({ message: "Premium subscription required" });
+      }
+
+      const analytics = await storage.getProfessionalAnalytics(professional.id);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  // Get reviews with responses
+  app.get("/api/professional/reviews-complete", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      const reviews = await storage.getReviewsWithResponses(professional.id);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  // Respond to review
+  app.post("/api/professional/reviews/:reviewId/respond", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { reviewId } = req.params;
+      const { response } = req.body;
+      
+      if (!response || response.trim().length === 0) {
+        return res.status(400).json({ message: "Response text is required" });
+      }
+
+      const professional = await storage.getProfessionalByUserId(user.id);
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      // Check subscription limits
+      const subscription = await storage.getProfessionalSubscription(professional.id);
+      const currentResponses = await storage.getMonthlyResponseCount(professional.id);
+      
+      if (!subscription || (subscription.plan.maxResponses !== -1 && currentResponses >= subscription.plan.maxResponses)) {
+        return res.status(403).json({ message: "Response limit reached. Upgrade your plan." });
+      }
+
+      const reviewResponse = await storage.createReviewResponse({
+        reviewId: parseInt(reviewId),
+        professionalId: professional.id,
+        responseText: response.trim()
+      });
+
+      res.json(reviewResponse);
+    } catch (error) {
+      console.error("Error creating review response:", error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  // Get order memberships
+  app.get("/api/professional/order-memberships", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      const memberships = await storage.getProfessionalOrderMemberships(professional.id);
+      res.json(memberships);
+    } catch (error) {
+      console.error("Error fetching order memberships:", error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  // Get specializations
+  app.get("/api/professional/specializations", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      const specializations = await storage.getProfessionalSpecializations(professional.id);
+      res.json(specializations);
+    } catch (error) {
+      console.error("Error fetching specializations:", error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  // Get services
+  app.get("/api/professional/services", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      const services = await storage.getProfessionalServices(professional.id);
+      res.json(services);
+    } catch (error) {
+      console.error("Error fetching services:", error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  // Get portfolio
+  app.get("/api/professional/portfolio", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      const portfolio = await storage.getProfessionalPortfolio(professional.id);
+      res.json(portfolio);
+    } catch (error) {
+      console.error("Error fetching portfolio:", error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
   app.get("/api/professional/stats", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
     try {
       const user = req.user as any;
