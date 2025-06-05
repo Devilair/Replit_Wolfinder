@@ -24,6 +24,7 @@ import AdminLogin from "@/pages/admin-login";
 import ProfessionalSubscriptionDemo from "@/pages/professional-subscription-demo";
 import Register from "@/pages/auth/register";
 import Login from "@/pages/auth/login";
+import LoginPage from "@/pages/login";
 import RegisterProfessional from "@/pages/register-professional";
 import ProfessionalAdvancedDashboard from "@/pages/dashboard/professional-advanced";
 import ChiSiamo from "@/pages/about/chi-siamo";
@@ -54,6 +55,7 @@ function Router() {
       {/* Authentication Routes */}
       <Route path="/auth/register" component={Register} />
       <Route path="/auth/login" component={Login} />
+      <Route path="/login" component={LoginPage} />
       <Route path="/register-professional" component={RegisterProfessional} />
       
       {/* Professional Dashboard */}
