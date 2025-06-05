@@ -85,10 +85,24 @@ export default function ProfessionalProfile() {
         <Card className="mb-6">
           <CardHeader>
             <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <CardTitle className="text-2xl font-bold text-gray-900 mb-2">
-                  {professional.businessName}
-                </CardTitle>
+              <div className="flex items-start gap-4 flex-1">
+                {/* Profile Image */}
+                <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                  {professional.profileImage ? (
+                    <img 
+                      src={professional.profileImage} 
+                      alt={professional.businessName || professional.user?.name || 'Professionista'}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-8 h-8 text-gray-400" />
+                  )}
+                </div>
+                
+                <div className="flex-1">
+                  <CardTitle className="text-2xl font-bold text-gray-900 mb-2">
+                    {professional.businessName || professional.user?.name || professional.category?.name || 'Professionista'}
+                  </CardTitle>
                 <div className="flex items-center gap-2 mb-3">
                   <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                     {professional.category?.name}
@@ -117,10 +131,11 @@ export default function ProfessionalProfile() {
                   </div>
                 )}
 
-                {/* Location */}
-                <div className="flex items-center gap-2 text-gray-600">
-                  <MapPin className="w-4 h-4" />
-                  <span>{professional.address}, {professional.city} ({professional.province})</span>
+                  {/* Location */}
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <MapPin className="w-4 h-4" />
+                    <span>{professional.address}, {professional.city} ({professional.province})</span>
+                  </div>
                 </div>
               </div>
 
@@ -221,11 +236,11 @@ export default function ProfessionalProfile() {
                 <CardTitle>Contatti</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {professional.phone && (
+                {(professional.phoneFixed || professional.phoneMobile) && (
                   <div className="flex items-center gap-3">
                     <Phone className="w-4 h-4 text-gray-500" />
-                    <a href={`tel:${professional.phone}`} className="text-blue-600 hover:underline">
-                      {professional.phone}
+                    <a href={`tel:${professional.phoneFixed || professional.phoneMobile}`} className="text-blue-600 hover:underline">
+                      {professional.phoneFixed || professional.phoneMobile}
                     </a>
                   </div>
                 )}
