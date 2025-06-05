@@ -5,7 +5,6 @@ import { relations } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   name: text("name").notNull(),
@@ -144,7 +143,8 @@ export const professionals = pgTable("professionals", {
   categoryId: integer("category_id").references(() => categories.id).notNull(),
   businessName: text("business_name").notNull(),
   description: text("description").notNull(),
-  phone: text("phone"),
+  phoneFixed: text("phone_fixed"),
+  phoneMobile: text("phone_mobile"),
   email: text("email").notNull(),
   website: text("website"),
   address: text("address").notNull(),
@@ -835,3 +835,45 @@ export type ApiKey = typeof apiKeys.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type ProfessionalNotification = typeof professionalNotifications.$inferSelect;
 export type InsertProfessionalNotification = typeof professionalNotifications.$inferInsert;
+
+// Aggiorna i tipi base
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+export type Professional = typeof professionals.$inferSelect;
+export type InsertProfessional = typeof professionals.$inferInsert;
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = typeof categories.$inferInsert;
+export type Review = typeof reviews.$inferSelect;
+export type InsertReview = typeof reviews.$inferInsert;
+
+// Schema Zod aggiornati per la registrazione (rimuovo duplicati)
+// Gli schemi insertUserSchema e insertProfessionalSchema sono già definiti sopra
+
+// Schema per la registrazione professionale completa
+export const professionalRegistrationSchema = z.object({
+  // Dati personali
+  firstName: z.string().min(2, "Il nome deve avere almeno 2 caratteri"),
+  lastName: z.string().min(2, "Il cognome deve avere almeno 2 caratteri"),
+  email: z.string().email("Email non valida"),
+  password: z.string()
+    .min(8, "La password deve avere almeno 8 caratteri")
+    .regex(/[A-Z]/, "La password deve contenere almeno una lettera maiuscola")
+    .regex(/[a-z]/, "La password deve contenere almeno una lettera minuscola")
+    .regex(/\d/, "La password deve contenere almeno un numero")
+    .regex(/[@$!%*?&]/, "La password deve contenere almeno un carattere speciale"),
+  
+  // Informazioni professionali
+  businessName: z.string().min(2, "Il nome studio/attività deve avere almeno 2 caratteri"),
+  categoryId: z.number().min(1, "Seleziona una categoria professionale"),
+  phoneFixed: z.string().optional(),
+  phoneMobile: z.string().optional(),
+  city: z.string().min(2, "La città deve avere almeno 2 caratteri"),
+  address: z.string().min(5, "L'indirizzo deve avere almeno 5 caratteri"),
+  description: z.string().min(10, "La descrizione deve avere almeno 10 caratteri"),
+  
+  // Consensi
+  privacyConsent: z.boolean().refine(val => val === true, "Devi accettare i termini di servizio"),
+  marketingConsent: z.boolean().optional()
+});
+
+export type ProfessionalRegistrationData = z.infer<typeof professionalRegistrationSchema>;
