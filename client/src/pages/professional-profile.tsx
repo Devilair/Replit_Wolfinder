@@ -19,13 +19,15 @@ import {
   CheckCircle,
   AlertCircle
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ClaimProfileDialog from "@/components/claim-profile-dialog";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ProfessionalProfile() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
   const [showClaimDialog, setShowClaimDialog] = useState(false);
+  const { user, isAuthenticated } = useAuth();
 
   const { data: professional, isLoading } = useQuery({
     queryKey: [`/api/professionals/${id}`],
@@ -55,6 +57,17 @@ export default function ProfessionalProfile() {
   // Debug log per verificare i dati
   console.log("Professional data:", professional);
 
+  // Funzione per gestire il back navigation intelligente
+  const handleBackNavigation = () => {
+    // Se l'utente è autenticato e sta visualizzando il proprio profilo, torna alla dashboard
+    if (isAuthenticated && user && professional && professional.userId === user.id) {
+      setLocation("/dashboard");
+    } else {
+      // Altrimenti torna alla homepage per la ricerca
+      setLocation("/");
+    }
+  };
+
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
@@ -80,7 +93,7 @@ export default function ProfessionalProfile() {
         {/* Back Button */}
         <Button 
           variant="ghost" 
-          onClick={() => setLocation("/")}
+          onClick={handleBackNavigation}
           className="mb-6"
         >
           ← Torna ai risultati
