@@ -32,30 +32,46 @@ import { useToast } from "@/hooks/use-toast";
 interface ProfessionalData {
   id: number;
   businessName: string;
+  business_name?: string;
   description: string;
-  phoneFixed: string;
-  phoneMobile: string;
+  phoneFixed?: string;
+  phone_fixed?: string;
+  phoneMobile?: string;
+  phone_mobile?: string;
   address: string;
   city: string;
-  additionalCities: string[];
+  additionalCities?: string[];
+  additional_cities?: string[];
   province: string;
-  postalCode: string;
+  postalCode?: string;
+  postal_code?: string;
   email: string;
-  website: string;
-  pec: string;
-  vatNumber: string;
-  fiscalCode: string;
-  facebookUrl: string;
-  instagramUrl: string;
-  linkedinUrl: string;
-  twitterUrl: string;
-  whatsappNumber: string;
+  website?: string;
+  pec?: string;
+  vatNumber?: string;
+  vat_number?: string;
+  fiscalCode?: string;
+  fiscal_code?: string;
+  facebookUrl?: string;
+  facebook_url?: string;
+  instagramUrl?: string;
+  instagram_url?: string;
+  linkedinUrl?: string;
+  linkedin_url?: string;
+  twitterUrl?: string;
+  twitter_url?: string;
+  whatsappNumber?: string;
+  whatsapp_number?: string;
   isVerified: boolean;
   rating: number;
-  reviewCount: number;
-  priceRangeMin: string;
-  priceRangeMax: string;
-  profileViews: number;
+  reviewCount?: number;
+  review_count?: number;
+  priceRangeMin?: string;
+  price_range_min?: string;
+  priceRangeMax?: string;
+  price_range_max?: string;
+  profileViews?: number;
+  profile_views?: number;
 }
 
 interface ReviewData {
@@ -409,19 +425,19 @@ export default function ProfessionalDashboard() {
                     <div>
                       <label className="text-sm font-medium text-gray-700">Telefono Fisso</label>
                       <p className="text-sm text-gray-900 p-3 bg-white rounded border">
-                        {professionalData.phoneFixed || professionalData.phone_fixed || "Non specificato"}
+                        {(professionalData as any).phone_fixed || professionalData.phoneFixed || "Non specificato"}
                       </p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700">Cellulare</label>
                       <p className="text-sm text-gray-900 p-3 bg-white rounded border">
-                        {professionalData.phoneMobile || professionalData.phone_mobile || "Non specificato"}
+                        {(professionalData as any).phone_mobile || professionalData.phoneMobile || "Non specificato"}
                       </p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700">WhatsApp</label>
                       <p className="text-sm text-gray-900 p-3 bg-white rounded border">
-                        {professionalData.whatsappNumber || professionalData.whatsapp_number || "Non specificato"}
+                        {(professionalData as any).whatsapp_number || professionalData.whatsappNumber || "Non specificato"}
                       </p>
                     </div>
                     <div>
@@ -486,13 +502,13 @@ export default function ProfessionalDashboard() {
                     <div>
                       <label className="text-sm font-medium text-gray-700">Partita IVA</label>
                       <p className="text-sm text-gray-900 p-3 bg-white rounded border">
-                        {professionalData.vatNumber || professionalData.vat_number || "Non specificato"}
+                        {(professionalData as any).vat_number || professionalData.vatNumber || "Non specificato"}
                       </p>
                     </div>
                     <div className="md:col-span-2">
                       <label className="text-sm font-medium text-gray-700">Codice Fiscale</label>
                       <p className="text-sm text-gray-900 p-3 bg-white rounded border">
-                        {professionalData.fiscalCode || professionalData.fiscal_code || "Non specificato"}
+                        {(professionalData as any).fiscal_code || professionalData.fiscalCode || "Non specificato"}
                       </p>
                     </div>
                   </div>
@@ -505,25 +521,25 @@ export default function ProfessionalDashboard() {
                     <div>
                       <label className="text-sm font-medium text-gray-700">Facebook</label>
                       <p className="text-sm text-gray-900 p-3 bg-white rounded border">
-                        {professionalData.facebookUrl || professionalData.facebook_url || "Non specificato"}
+                        {(professionalData as any).facebook_url || professionalData.facebookUrl || "Non specificato"}
                       </p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700">Instagram</label>
                       <p className="text-sm text-gray-900 p-3 bg-white rounded border">
-                        {professionalData.instagramUrl || professionalData.instagram_url || "Non specificato"}
+                        {(professionalData as any).instagram_url || professionalData.instagramUrl || "Non specificato"}
                       </p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700">LinkedIn</label>
                       <p className="text-sm text-gray-900 p-3 bg-white rounded border">
-                        {professionalData.linkedinUrl || professionalData.linkedin_url || "Non specificato"}
+                        {(professionalData as any).linkedin_url || professionalData.linkedinUrl || "Non specificato"}
                       </p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700">Twitter</label>
                       <p className="text-sm text-gray-900 p-3 bg-white rounded border">
-                        {professionalData.twitterUrl || professionalData.twitter_url || "Non specificato"}
+                        {(professionalData as any).twitter_url || professionalData.twitterUrl || "Non specificato"}
                       </p>
                     </div>
                   </div>
