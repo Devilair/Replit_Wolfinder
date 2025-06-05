@@ -965,6 +965,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateProfessional(id: number, data: any): Promise<void> {
+    // Process additional cities if provided as string
+    if (data.additionalCities && typeof data.additionalCities === 'string') {
+      data.additionalCities = data.additionalCities
+        .split(',')
+        .map((city: string) => city.trim())
+        .filter((city: string) => city.length > 0);
+    }
+
     await db
       .update(professionals)
       .set({ ...data, updatedAt: new Date() })
