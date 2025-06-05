@@ -23,9 +23,14 @@ import {
   ExternalLink,
   Users,
   Calendar,
-  Award
+  Award,
+  Filter,
+  Search,
+  TrendingUp
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ClaimProfileDialog from "@/components/claim-profile-dialog";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -33,6 +38,9 @@ export default function ProfessionalProfile() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
   const [showClaimDialog, setShowClaimDialog] = useState(false);
+  const [starFilter, setStarFilter] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<string>("newest");
   const { user, isAuthenticated } = useAuth();
 
   const { data: professional, isLoading } = useQuery({
@@ -227,6 +235,26 @@ export default function ProfessionalProfile() {
 
             {/* Sidebar con statistiche - stile Trustpilot */}
             <div className="space-y-6">
+              {/* Ranking Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Award className="w-5 h-5 text-yellow-500" />
+                    Posizione nella categoria
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-blue-600 mb-2">#2</div>
+                    <p className="text-sm text-gray-600 mb-4">su 47 Architetti in Ferrara</p>
+                    <div className="flex items-center justify-center gap-2 text-sm">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-green-600 font-medium">Top 5%</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Rating Distribution */}
               <Card>
                 <CardHeader>
