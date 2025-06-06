@@ -1,31 +1,27 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Star, 
   MapPin, 
   Phone, 
-  Mail, 
-  Calendar, 
-  TrendingUp, 
-  Users, 
-  MessageSquare, 
   Eye,
   Award,
   Clock,
   DollarSign,
-  Target,
-  BarChart3,
   Settings,
-  Upload,
   Edit,
-  Plus
+  MessageSquare
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { EditProfileModal } from "@/components/EditProfileModal";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfessionalData {
   id: number;
@@ -42,10 +38,6 @@ interface ProfessionalData {
   pec?: string;
   vatNumber?: string;
   fiscalCode?: string;
-  facebookUrl?: string;
-  instagramUrl?: string;
-  linkedinUrl?: string;
-  twitterUrl?: string;
   whatsappNumber?: string;
   isVerified: boolean;
   rating: string;
@@ -53,34 +45,84 @@ interface ProfessionalData {
   profileViews: number;
 }
 
-interface ReviewData {
-  id: number;
-  rating: number;
-  content: string;
-  createdAt: string;
-  user: {
-    name: string;
-  };
-}
-
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    businessName: "",
+    description: "",
+    phoneFixed: "",
+    phoneMobile: "",
+    website: "",
+    whatsappNumber: "",
+    address: "",
+    city: "",
+    postalCode: "",
+    pec: "",
+    vatNumber: "",
+    fiscalCode: "",
+  });
 
   // Fetch professional data
-  const { data: professionalData, isLoading: isLoadingProfessional } = useQuery<ProfessionalData>({
+  const { data: professionalData, isLoading } = useQuery<ProfessionalData>({
     queryKey: ["/api/professional/profile-complete"],
     enabled: !!user,
   });
 
-  // Fetch reviews
-  const { data: reviews = [], isLoading: isLoadingReviews } = useQuery<ReviewData[]>({
-    queryKey: ["/api/professional/reviews-complete"],
-    enabled: !!user,
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("PUT", "/api/professional/profile", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Profilo aggiornato",
+        description: "Le informazioni sono state salvate con successo",
+      });
+      setIsModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/profile-complete"] });
+    },
+    onError: () => {
+      toast({
+        title: "Errore",
+        description: "Errore durante l'aggiornamento",
+        variant: "destructive",
+      });
+    },
   });
 
-  if (isLoadingProfessional) {
+  const openModal = () => {
+    if (professionalData) {
+      setFormData({
+        businessName: professionalData.businessName || "",
+        description: professionalData.description || "",
+        phoneFixed: professionalData.phoneFixed || "",
+        phoneMobile: professionalData.phoneMobile || "",
+        website: professionalData.website || "",
+        whatsappNumber: professionalData.whatsappNumber || "",
+        address: professionalData.address || "",
+        city: professionalData.city || "",
+        postalCode: professionalData.postalCode || "",
+        pec: professionalData.pec || "",
+        vatNumber: professionalData.vatNumber || "",
+        fiscalCode: professionalData.fiscalCode || "",
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleSave = () => {
+    updateMutation.mutate(formData);
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -91,17 +133,11 @@ export default function ProfessionalDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Dashboard Professionale
-          </h1>
-          <p className="text-gray-600">
-            Gestisci il tuo profilo e monitora le tue performance
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Professionale</h1>
+          <p className="text-gray-600">Gestisci il tuo profilo e monitora le tue performance</p>
         </div>
 
-        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-6 bg-white/50 backdrop-blur-sm border">
             <TabsTrigger value="overview">Panoramica</TabsTrigger>
@@ -115,8 +151,7 @@ export default function ProfessionalDashboard() {
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* KPI Cards */}
-              <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+              <Card className="border-0 shadow-lg bg-white/90">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -128,7 +163,7 @@ export default function ProfessionalDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+              <Card className="border-0 shadow-lg bg-white/90">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -140,7 +175,7 @@ export default function ProfessionalDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+              <Card className="border-0 shadow-lg bg-white/90">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -152,7 +187,7 @@ export default function ProfessionalDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+              <Card className="border-0 shadow-lg bg-white/90">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -166,60 +201,13 @@ export default function ProfessionalDashboard() {
                 </CardContent>
               </Card>
             </div>
-
-            {/* Recent Activity */}
-            <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
-                  Attività Recente
-                </CardTitle>
-                <CardDescription>
-                  Le ultime attività sul tuo profilo professionale
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {reviews.slice(0, 3).map((review) => (
-                    <div key={review.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium text-gray-900">{review.user.name}</p>
-                          <div className="flex">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-4 h-4 ${
-                                  i < review.rating
-                                    ? "fill-yellow-400 text-yellow-400"
-                                    : "text-gray-300"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-gray-700 text-sm">{review.content}</p>
-                        <p className="text-gray-500 text-xs mt-2">
-                          {new Date(review.createdAt).toLocaleDateString('it-IT')}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  {reviews.length === 0 && (
-                    <p className="text-center text-gray-500 py-8">
-                      Nessuna recensione ancora disponibile
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* Profile Tab */}
           <TabsContent value="profile" className="space-y-6">
             {professionalData ? (
               <div className="space-y-6">
-                {/* Header con pulsante modifica */}
+                {/* Header */}
                 <Card className="border-0 shadow-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
@@ -230,11 +218,7 @@ export default function ProfessionalDashboard() {
                       <Button 
                         size="lg" 
                         className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-6"
-                        onClick={() => {
-                          console.log("Pulsante cliccato!");
-                          setIsEditModalOpen(true);
-                          console.log("Modal stato impostato a true");
-                        }}
+                        onClick={openModal}
                       >
                         <Edit className="w-4 h-4 mr-2" />
                         Modifica Informazioni
@@ -243,7 +227,7 @@ export default function ProfessionalDashboard() {
                   </CardContent>
                 </Card>
 
-                {/* Sezioni informative */}
+                {/* Profile Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Informazioni Aziendali */}
                   <Card className="shadow-md">
@@ -347,11 +331,167 @@ export default function ProfessionalDashboard() {
                 </div>
 
                 {/* Modal di modifica */}
-                <EditProfileModal 
-                  isOpen={isEditModalOpen}
-                  onClose={() => setIsEditModalOpen(false)}
-                  professionalData={professionalData}
-                />
+                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle className="text-xl font-bold">Modifica Profilo Professionale</DialogTitle>
+                    </DialogHeader>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                      {/* Informazioni Base */}
+                      <Card className="p-4 border-blue-200">
+                        <h3 className="text-lg font-semibold mb-4 text-blue-800">Informazioni Base</h3>
+                        <div className="space-y-3">
+                          <div>
+                            <Label htmlFor="businessName">Nome Attività</Label>
+                            <Input
+                              id="businessName"
+                              value={formData.businessName}
+                              onChange={(e) => handleInputChange('businessName', e.target.value)}
+                              placeholder="Es. Studio Legale Rossi"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="description">Descrizione</Label>
+                            <Textarea
+                              id="description"
+                              value={formData.description}
+                              onChange={(e) => handleInputChange('description', e.target.value)}
+                              placeholder="Breve descrizione della tua attività..."
+                              rows={3}
+                            />
+                          </div>
+                        </div>
+                      </Card>
+
+                      {/* Contatti */}
+                      <Card className="p-4 border-green-200">
+                        <h3 className="text-lg font-semibold mb-4 text-green-800">Contatti</h3>
+                        <div className="space-y-3">
+                          <div>
+                            <Label htmlFor="phoneFixed">Telefono Fisso</Label>
+                            <Input
+                              id="phoneFixed"
+                              value={formData.phoneFixed}
+                              onChange={(e) => handleInputChange('phoneFixed', e.target.value)}
+                              placeholder="0532123456"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="phoneMobile">Cellulare</Label>
+                            <Input
+                              id="phoneMobile"
+                              value={formData.phoneMobile}
+                              onChange={(e) => handleInputChange('phoneMobile', e.target.value)}
+                              placeholder="333-1234567"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="website">Website</Label>
+                            <Input
+                              id="website"
+                              value={formData.website}
+                              onChange={(e) => handleInputChange('website', e.target.value)}
+                              placeholder="https://esempio.it"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="whatsappNumber">WhatsApp</Label>
+                            <Input
+                              id="whatsappNumber"
+                              value={formData.whatsappNumber}
+                              onChange={(e) => handleInputChange('whatsappNumber', e.target.value)}
+                              placeholder="333-1234567"
+                            />
+                          </div>
+                        </div>
+                      </Card>
+
+                      {/* Indirizzo */}
+                      <Card className="p-4 border-orange-200">
+                        <h3 className="text-lg font-semibold mb-4 text-orange-800">Indirizzo</h3>
+                        <div className="space-y-3">
+                          <div>
+                            <Label htmlFor="address">Via/Piazza</Label>
+                            <Input
+                              id="address"
+                              value={formData.address}
+                              onChange={(e) => handleInputChange('address', e.target.value)}
+                              placeholder="Via Roma 123"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label htmlFor="city">Città</Label>
+                              <Input
+                                id="city"
+                                value={formData.city}
+                                onChange={(e) => handleInputChange('city', e.target.value)}
+                                placeholder="Ferrara"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="postalCode">CAP</Label>
+                              <Input
+                                id="postalCode"
+                                value={formData.postalCode}
+                                onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                                placeholder="44121"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+
+                      {/* Dati Fiscali */}
+                      <Card className="p-4 border-yellow-200">
+                        <h3 className="text-lg font-semibold mb-4 text-yellow-800">Dati Fiscali</h3>
+                        <div className="space-y-3">
+                          <div>
+                            <Label htmlFor="pec">PEC</Label>
+                            <Input
+                              id="pec"
+                              value={formData.pec}
+                              onChange={(e) => handleInputChange('pec', e.target.value)}
+                              placeholder="esempio@pec.it"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="vatNumber">Partita IVA</Label>
+                            <Input
+                              id="vatNumber"
+                              value={formData.vatNumber}
+                              onChange={(e) => handleInputChange('vatNumber', e.target.value)}
+                              placeholder="12345678901"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="fiscalCode">Codice Fiscale</Label>
+                            <Input
+                              id="fiscalCode"
+                              value={formData.fiscalCode}
+                              onChange={(e) => handleInputChange('fiscalCode', e.target.value)}
+                              placeholder="RSSMRA80A01H501Z"
+                            />
+                          </div>
+                        </div>
+                      </Card>
+                    </div>
+                    
+                    <div className="flex justify-end gap-3 pt-4 border-t">
+                      <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                        Annulla
+                      </Button>
+                      <Button 
+                        onClick={handleSave}
+                        disabled={updateMutation.isPending}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        {updateMutation.isPending ? "Salvataggio..." : "Salva Modifiche"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             ) : (
               <div className="flex items-center justify-center h-32">
