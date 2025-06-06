@@ -766,6 +766,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update professional profile
+  app.put("/api/professional/profile", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      // Update professional data
+      const updateData = {
+        businessName: req.body.businessName,
+        description: req.body.description,
+        phoneFixed: req.body.phoneFixed,
+        phoneMobile: req.body.phoneMobile,
+        website: req.body.website,
+        pec: req.body.pec,
+        vatNumber: req.body.vatNumber,
+        fiscalCode: req.body.fiscalCode,
+        address: req.body.address,
+        city: req.body.city,
+        postalCode: req.body.postalCode,
+        whatsappNumber: req.body.whatsappNumber,
+        facebookUrl: req.body.facebookUrl,
+        instagramUrl: req.body.instagramUrl,
+        linkedinUrl: req.body.linkedinUrl,
+        twitterUrl: req.body.twitterUrl
+      };
+
+      await storage.updateProfessional(professional.id, updateData);
+      
+      // Return updated profile
+      const updatedProfessional = await storage.getProfessionalByUserId(user.id);
+      res.json(updatedProfessional);
+    } catch (error) {
+      console.error("Error updating professional profile:", error);
+      res.status(500).json({ error: "Errore durante l'aggiornamento del profilo" });
+    }
+  });
+
   // Get professional analytics (premium feature)
   app.get("/api/professional/analytics", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
     try {

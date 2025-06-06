@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -127,7 +127,7 @@ export default function ProfessionalDashboard() {
   });
 
   // Update form data when professional data loads
-  React.useEffect(() => {
+  useEffect(() => {
     if (professionalData) {
       setEditFormData({
         businessName: professionalData.businessName || "",
@@ -626,14 +626,208 @@ export default function ProfessionalDashboard() {
 
                     {/* Pulsante Modifica */}
                     <div className="flex justify-center pt-4">
-                      <Button 
-                        size="lg" 
-                        className="w-full md:w-auto"
-                        onClick={handleEditProfile}
-                      >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Modifica Profilo
-                      </Button>
+                      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                        <DialogTrigger asChild>
+                          <Button 
+                            size="lg" 
+                            className="w-full md:w-auto"
+                            onClick={handleEditProfile}
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Modifica Informazioni
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Modifica Profilo Professionale</DialogTitle>
+                          </DialogHeader>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                            {/* Informazioni Base */}
+                            <div className="space-y-4">
+                              <h3 className="text-lg font-semibold">Informazioni Base</h3>
+                              <div>
+                                <Label htmlFor="businessName">Nome Attività</Label>
+                                <Input
+                                  id="businessName"
+                                  value={editFormData.businessName}
+                                  onChange={(e) => handleInputChange('businessName', e.target.value)}
+                                  placeholder="Es. Studio Legale Rossi"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="description">Descrizione</Label>
+                                <Textarea
+                                  id="description"
+                                  value={editFormData.description}
+                                  onChange={(e) => handleInputChange('description', e.target.value)}
+                                  placeholder="Breve descrizione della tua attività..."
+                                  rows={3}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Contatti */}
+                            <div className="space-y-4">
+                              <h3 className="text-lg font-semibold">Contatti</h3>
+                              <div>
+                                <Label htmlFor="phoneFixed">Telefono Fisso</Label>
+                                <Input
+                                  id="phoneFixed"
+                                  value={editFormData.phoneFixed}
+                                  onChange={(e) => handleInputChange('phoneFixed', e.target.value)}
+                                  placeholder="0532123456"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="phoneMobile">Cellulare</Label>
+                                <Input
+                                  id="phoneMobile"
+                                  value={editFormData.phoneMobile}
+                                  onChange={(e) => handleInputChange('phoneMobile', e.target.value)}
+                                  placeholder="333-1234567"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="website">Website</Label>
+                                <Input
+                                  id="website"
+                                  value={editFormData.website}
+                                  onChange={(e) => handleInputChange('website', e.target.value)}
+                                  placeholder="https://esempio.it"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="whatsappNumber">WhatsApp</Label>
+                                <Input
+                                  id="whatsappNumber"
+                                  value={editFormData.whatsappNumber}
+                                  onChange={(e) => handleInputChange('whatsappNumber', e.target.value)}
+                                  placeholder="333-1234567"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Indirizzo */}
+                            <div className="space-y-4">
+                              <h3 className="text-lg font-semibold">Indirizzo</h3>
+                              <div>
+                                <Label htmlFor="address">Via/Piazza</Label>
+                                <Input
+                                  id="address"
+                                  value={editFormData.address}
+                                  onChange={(e) => handleInputChange('address', e.target.value)}
+                                  placeholder="Via Roma 123"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="city">Città</Label>
+                                <Input
+                                  id="city"
+                                  value={editFormData.city}
+                                  onChange={(e) => handleInputChange('city', e.target.value)}
+                                  placeholder="Ferrara"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="postalCode">CAP</Label>
+                                <Input
+                                  id="postalCode"
+                                  value={editFormData.postalCode}
+                                  onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                                  placeholder="44121"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Dati Fiscali */}
+                            <div className="space-y-4">
+                              <h3 className="text-lg font-semibold">Dati Fiscali</h3>
+                              <div>
+                                <Label htmlFor="pec">PEC</Label>
+                                <Input
+                                  id="pec"
+                                  value={editFormData.pec}
+                                  onChange={(e) => handleInputChange('pec', e.target.value)}
+                                  placeholder="esempio@pec.it"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="vatNumber">Partita IVA</Label>
+                                <Input
+                                  id="vatNumber"
+                                  value={editFormData.vatNumber}
+                                  onChange={(e) => handleInputChange('vatNumber', e.target.value)}
+                                  placeholder="12345678901"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="fiscalCode">Codice Fiscale</Label>
+                                <Input
+                                  id="fiscalCode"
+                                  value={editFormData.fiscalCode}
+                                  onChange={(e) => handleInputChange('fiscalCode', e.target.value)}
+                                  placeholder="RSSMRA80A01H501Z"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Social Media */}
+                            <div className="space-y-4 md:col-span-2">
+                              <h3 className="text-lg font-semibold">Social Media</h3>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <Label htmlFor="facebookUrl">Facebook</Label>
+                                  <Input
+                                    id="facebookUrl"
+                                    value={editFormData.facebookUrl}
+                                    onChange={(e) => handleInputChange('facebookUrl', e.target.value)}
+                                    placeholder="https://facebook.com/nomeutente"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="instagramUrl">Instagram</Label>
+                                  <Input
+                                    id="instagramUrl"
+                                    value={editFormData.instagramUrl}
+                                    onChange={(e) => handleInputChange('instagramUrl', e.target.value)}
+                                    placeholder="https://instagram.com/nomeutente"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="linkedinUrl">LinkedIn</Label>
+                                  <Input
+                                    id="linkedinUrl"
+                                    value={editFormData.linkedinUrl}
+                                    onChange={(e) => handleInputChange('linkedinUrl', e.target.value)}
+                                    placeholder="https://linkedin.com/in/nomeutente"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="twitterUrl">Twitter</Label>
+                                  <Input
+                                    id="twitterUrl"
+                                    value={editFormData.twitterUrl}
+                                    onChange={(e) => handleInputChange('twitterUrl', e.target.value)}
+                                    placeholder="https://twitter.com/nomeutente"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-end gap-4 pt-4 border-t">
+                            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                              Annulla
+                            </Button>
+                            <Button 
+                              onClick={handleSaveProfile}
+                              disabled={updateProfileMutation.isPending}
+                            >
+                              {updateProfileMutation.isPending ? "Salvataggio..." : "Salva Modifiche"}
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </>
                 ) : (
