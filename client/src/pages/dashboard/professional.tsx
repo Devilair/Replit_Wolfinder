@@ -4,6 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Star, 
   MapPin, 
@@ -96,6 +100,25 @@ export default function ProfessionalDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    businessName: "",
+    description: "",
+    phoneFixed: "",
+    phoneMobile: "",
+    website: "",
+    pec: "",
+    vatNumber: "",
+    fiscalCode: "",
+    address: "",
+    city: "",
+    postalCode: "",
+    whatsappNumber: "",
+    facebookUrl: "",
+    instagramUrl: "",
+    linkedinUrl: "",
+    twitterUrl: ""
+  });
 
   // Fetch professional data
   const { data: professionalData, isLoading: isLoadingProfessional } = useQuery<ProfessionalData>({
@@ -103,15 +126,86 @@ export default function ProfessionalDashboard() {
     enabled: !!user,
   });
 
-  // Debug logging to identify data structure
-  console.log("Professional data received:", professionalData);
+  // Update form data when professional data loads
+  React.useEffect(() => {
+    if (professionalData) {
+      setEditFormData({
+        businessName: professionalData.businessName || "",
+        description: professionalData.description || "",
+        phoneFixed: professionalData.phoneFixed || "",
+        phoneMobile: professionalData.phoneMobile || "",
+        website: professionalData.website || "",
+        pec: professionalData.pec || "",
+        vatNumber: professionalData.vatNumber || "",
+        fiscalCode: professionalData.fiscalCode || "",
+        address: professionalData.address || "",
+        city: professionalData.city || "",
+        postalCode: professionalData.postalCode || "",
+        whatsappNumber: professionalData.whatsappNumber || "",
+        facebookUrl: professionalData.facebookUrl || "",
+        instagramUrl: professionalData.instagramUrl || "",
+        linkedinUrl: professionalData.linkedinUrl || "",
+        twitterUrl: professionalData.twitterUrl || ""
+      });
+    }
+  }, [professionalData]);
+
+  // Mutation for updating profile
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: typeof editFormData) => {
+      return await apiRequest("PUT", "/api/professional/profile", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Profilo aggiornato",
+        description: "Le informazioni del profilo sono state aggiornate con successo",
+      });
+      setIsEditModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/profile-complete"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Errore",
+        description: "Errore durante l'aggiornamento del profilo",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Handler for edit button
   const handleEditProfile = () => {
-    toast({
-      title: "Modifica Profilo",
-      description: "Funzionalità di modifica profilo in sviluppo",
-    });
+    if (professionalData) {
+      setEditFormData({
+        businessName: professionalData.businessName || "",
+        description: professionalData.description || "",
+        phoneFixed: professionalData.phoneFixed || "",
+        phoneMobile: professionalData.phoneMobile || "",
+        website: professionalData.website || "",
+        pec: professionalData.pec || "",
+        vatNumber: professionalData.vatNumber || "",
+        fiscalCode: professionalData.fiscalCode || "",
+        address: professionalData.address || "",
+        city: professionalData.city || "",
+        postalCode: professionalData.postalCode || "",
+        whatsappNumber: professionalData.whatsappNumber || "",
+        facebookUrl: professionalData.facebookUrl || "",
+        instagramUrl: professionalData.instagramUrl || "",
+        linkedinUrl: professionalData.linkedinUrl || "",
+        twitterUrl: professionalData.twitterUrl || ""
+      });
+    }
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveProfile = () => {
+    updateProfileMutation.mutate(editFormData);
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setEditFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   // Fetch reviews
