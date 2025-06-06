@@ -230,7 +230,11 @@ export default function ProfessionalDashboard() {
                       <Button 
                         size="lg" 
                         className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-6"
-                        onClick={() => setIsEditModalOpen(true)}
+                        onClick={() => {
+                          console.log("Pulsante cliccato!");
+                          setIsEditModalOpen(true);
+                          console.log("Modal stato impostato a true");
+                        }}
                       >
                         <Edit className="w-4 h-4 mr-2" />
                         Modifica Informazioni
