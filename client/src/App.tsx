@@ -27,7 +27,7 @@ import Register from "@/pages/auth/register";
 import Login from "@/pages/auth/login";
 import LoginPage from "@/pages/login";
 import RegisterProfessional from "@/pages/register-professional";
-import ProfessionalAdvancedDashboard from "@/pages/dashboard/professional-advanced";
+import ProfessionalDashboard from "@/pages/dashboard/professional";
 import ChiSiamo from "@/pages/about/chi-siamo";
 import LaNostraStoria from "@/pages/about/la-nostra-storia";
 import Privacy from "@/pages/about/privacy";
@@ -62,9 +62,9 @@ function Router() {
       <Route path="/register-professional" component={RegisterProfessional} />
       
       {/* Professional Dashboard */}
-      <Route path="/dashboard" component={ProfessionalAdvancedDashboard} />
-      <Route path="/dashboard/professional" component={ProfessionalAdvancedDashboard} />
-      <Route path="/dashboard/professional-advanced" component={ProfessionalAdvancedDashboard} />
+      <Route path="/dashboard" component={ProfessionalDashboard} />
+      <Route path="/dashboard/professional" component={ProfessionalDashboard} />
+      <Route path="/dashboard/professional-advanced" component={ProfessionalDashboard} />
       
       {/* Admin Login */}
       <Route path="/admin-login" component={AdminLogin} />
