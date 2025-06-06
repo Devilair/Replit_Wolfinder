@@ -485,343 +485,206 @@ export default function ProfessionalDashboard() {
           </TabsContent>
 
           {/* Profile Tab */}
-          <TabsContent value="profile" className="space-y-6">
-            <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="w-5 h-5" />
-                  Profilo Professionale
-                </CardTitle>
-                <CardDescription>
-                  Informazioni complete del tuo profilo professionale
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {professionalData ? (
-                  <>
-                    {/* Informazioni Base */}
-                    <div className="border rounded-lg p-6 bg-gray-50">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-900">Informazioni Base</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Nome Attività</label>
-                          <div className="mt-1 p-3 bg-white rounded border">
-                            {(professionalData as any).businessName || "Non specificato"}
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Email</label>
-                          <div className="mt-1 p-3 bg-white rounded border">
-                            {(professionalData as any).email || "Non disponibile"}
-                          </div>
-                        </div>
-                        <div className="col-span-2">
-                          <label className="text-sm font-medium text-gray-600">Descrizione</label>
-                          <div className="mt-1 p-3 bg-white rounded border min-h-[100px]">
-                            {(professionalData as any).description || "Non disponibile"}
-                          </div>
-                        </div>
+          <TabsContent value="profile" className="space-y-8">
+            {professionalData ? (
+              <div className="space-y-8">
+                {/* Header Card */}
+                <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                  <CardContent className="p-8">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-3xl font-bold mb-2">Il Tuo Profilo Professionale</h2>
+                        <p className="text-blue-100 text-lg">Gestisci le tue informazioni professionali</p>
                       </div>
-                    </div>
-
-                    {/* Contatti */}
-                    <div className="border rounded-lg p-6 bg-blue-50">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-900">Contatti</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Telefono Fisso</label>
-                          <div className="mt-1 p-3 bg-white rounded border">
-                            {(professionalData as any).phoneFixed || "Non disponibile"}
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Cellulare</label>
-                          <div className="mt-1 p-3 bg-white rounded border">
-                            {(professionalData as any).phoneMobile || "Non disponibile"}
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Website</label>
-                          <div className="mt-1 p-3 bg-white rounded border">
-                            {(professionalData as any).website || "Non disponibile"}
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">WhatsApp</label>
-                          <div className="mt-1 p-3 bg-white rounded border">
-                            {(professionalData as any).whatsappNumber || "Non disponibile"}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Indirizzo */}
-                    <div className="border rounded-lg p-6 bg-green-50">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-900">Ubicazione</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2">
-                          <label className="text-sm font-medium text-gray-600">Indirizzo</label>
-                          <div className="mt-1 p-3 bg-white rounded border">
-                            {(professionalData as any).address || "Non disponibile"}
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Città</label>
-                          <div className="mt-1 p-3 bg-white rounded border">
-                            {(professionalData as any).city || "Non disponibile"}
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Provincia</label>
-                          <div className="mt-1 p-3 bg-white rounded border">
-                            {(professionalData as any).province || "Non disponibile"}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Dati Fiscali */}
-                    <div className="border rounded-lg p-6 bg-yellow-50">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-900">Dati Fiscali</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Partita IVA</label>
-                          <div className="mt-1 p-3 bg-white rounded border">
-                            {(professionalData as any).vatNumber || "Non disponibile"}
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Codice Fiscale</label>
-                          <div className="mt-1 p-3 bg-white rounded border">
-                            {(professionalData as any).fiscalCode || "Non disponibile"}
-                          </div>
-                        </div>
-                        <div className="col-span-2">
-                          <label className="text-sm font-medium text-gray-600">PEC</label>
-                          <div className="mt-1 p-3 bg-white rounded border">
-                            {(professionalData as any).pec || "Non disponibile"}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Status */}
-                    <div className="border rounded-lg p-6 bg-purple-50">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-900">Status</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Verificato</label>
-                          <div className="mt-1 p-3 bg-white rounded border">
-                            {(professionalData as any).isVerified ? "Si" : "No"}
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Rating</label>
-                          <div className="mt-1 p-3 bg-white rounded border">
-                            {(professionalData as any).rating || "Non disponibile"}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Pulsante Modifica */}
-                    <div className="flex justify-center pt-4">
                       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
                         <DialogTrigger asChild>
                           <Button 
                             size="lg" 
-                            className="w-full md:w-auto"
+                            className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8"
                             onClick={handleEditProfile}
                           >
-                            <Edit className="w-4 h-4 mr-2" />
-                            Modifica Informazioni
+                            <Edit className="w-5 h-5 mr-2" />
+                            Modifica Profilo
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
                           <DialogHeader>
-                            <DialogTitle>Modifica Profilo Professionale</DialogTitle>
+                            <DialogTitle className="text-2xl font-bold">Modifica Profilo Professionale</DialogTitle>
                           </DialogHeader>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-6">
                             {/* Informazioni Base */}
-                            <div className="space-y-4">
-                              <h3 className="text-lg font-semibold">Informazioni Base</h3>
-                              <div>
-                                <Label htmlFor="businessName">Nome Attività</Label>
-                                <Input
-                                  id="businessName"
-                                  value={editFormData.businessName}
-                                  onChange={(e) => handleInputChange('businessName', e.target.value)}
-                                  placeholder="Es. Studio Legale Rossi"
-                                />
+                            <Card className="p-6 border-2 border-blue-100">
+                              <h3 className="text-lg font-bold mb-4 text-blue-800 flex items-center">
+                                <Settings className="w-5 h-5 mr-2" />
+                                Informazioni Base
+                              </h3>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="businessName" className="text-sm font-medium">Nome Attività</Label>
+                                  <Input
+                                    id="businessName"
+                                    value={editFormData.businessName}
+                                    onChange={(e) => handleInputChange('businessName', e.target.value)}
+                                    placeholder="Es. Studio Legale Rossi"
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="description" className="text-sm font-medium">Descrizione</Label>
+                                  <Textarea
+                                    id="description"
+                                    value={editFormData.description}
+                                    onChange={(e) => handleInputChange('description', e.target.value)}
+                                    placeholder="Breve descrizione della tua attività..."
+                                    rows={4}
+                                    className="mt-1"
+                                  />
+                                </div>
                               </div>
-                              <div>
-                                <Label htmlFor="description">Descrizione</Label>
-                                <Textarea
-                                  id="description"
-                                  value={editFormData.description}
-                                  onChange={(e) => handleInputChange('description', e.target.value)}
-                                  placeholder="Breve descrizione della tua attività..."
-                                  rows={3}
-                                />
-                              </div>
-                            </div>
+                            </Card>
 
                             {/* Contatti */}
-                            <div className="space-y-4">
-                              <h3 className="text-lg font-semibold">Contatti</h3>
-                              <div>
-                                <Label htmlFor="phoneFixed">Telefono Fisso</Label>
-                                <Input
-                                  id="phoneFixed"
-                                  value={editFormData.phoneFixed}
-                                  onChange={(e) => handleInputChange('phoneFixed', e.target.value)}
-                                  placeholder="0532123456"
-                                />
+                            <Card className="p-6 border-2 border-green-100">
+                              <h3 className="text-lg font-bold mb-4 text-green-800 flex items-center">
+                                <Phone className="w-5 h-5 mr-2" />
+                                Contatti
+                              </h3>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="phoneFixed" className="text-sm font-medium">Telefono Fisso</Label>
+                                  <Input
+                                    id="phoneFixed"
+                                    value={editFormData.phoneFixed}
+                                    onChange={(e) => handleInputChange('phoneFixed', e.target.value)}
+                                    placeholder="0532123456"
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="phoneMobile" className="text-sm font-medium">Cellulare</Label>
+                                  <Input
+                                    id="phoneMobile"
+                                    value={editFormData.phoneMobile}
+                                    onChange={(e) => handleInputChange('phoneMobile', e.target.value)}
+                                    placeholder="333-1234567"
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="website" className="text-sm font-medium">Website</Label>
+                                  <Input
+                                    id="website"
+                                    value={editFormData.website}
+                                    onChange={(e) => handleInputChange('website', e.target.value)}
+                                    placeholder="https://esempio.it"
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="whatsappNumber" className="text-sm font-medium">WhatsApp</Label>
+                                  <Input
+                                    id="whatsappNumber"
+                                    value={editFormData.whatsappNumber}
+                                    onChange={(e) => handleInputChange('whatsappNumber', e.target.value)}
+                                    placeholder="333-1234567"
+                                    className="mt-1"
+                                  />
+                                </div>
                               </div>
-                              <div>
-                                <Label htmlFor="phoneMobile">Cellulare</Label>
-                                <Input
-                                  id="phoneMobile"
-                                  value={editFormData.phoneMobile}
-                                  onChange={(e) => handleInputChange('phoneMobile', e.target.value)}
-                                  placeholder="333-1234567"
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="website">Website</Label>
-                                <Input
-                                  id="website"
-                                  value={editFormData.website}
-                                  onChange={(e) => handleInputChange('website', e.target.value)}
-                                  placeholder="https://esempio.it"
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="whatsappNumber">WhatsApp</Label>
-                                <Input
-                                  id="whatsappNumber"
-                                  value={editFormData.whatsappNumber}
-                                  onChange={(e) => handleInputChange('whatsappNumber', e.target.value)}
-                                  placeholder="333-1234567"
-                                />
-                              </div>
-                            </div>
+                            </Card>
 
                             {/* Indirizzo */}
-                            <div className="space-y-4">
-                              <h3 className="text-lg font-semibold">Indirizzo</h3>
-                              <div>
-                                <Label htmlFor="address">Via/Piazza</Label>
-                                <Input
-                                  id="address"
-                                  value={editFormData.address}
-                                  onChange={(e) => handleInputChange('address', e.target.value)}
-                                  placeholder="Via Roma 123"
-                                />
+                            <Card className="p-6 border-2 border-orange-100">
+                              <h3 className="text-lg font-bold mb-4 text-orange-800 flex items-center">
+                                <MapPin className="w-5 h-5 mr-2" />
+                                Indirizzo
+                              </h3>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="address" className="text-sm font-medium">Via/Piazza</Label>
+                                  <Input
+                                    id="address"
+                                    value={editFormData.address}
+                                    onChange={(e) => handleInputChange('address', e.target.value)}
+                                    placeholder="Via Roma 123"
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <Label htmlFor="city" className="text-sm font-medium">Città</Label>
+                                    <Input
+                                      id="city"
+                                      value={editFormData.city}
+                                      onChange={(e) => handleInputChange('city', e.target.value)}
+                                      placeholder="Ferrara"
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="postalCode" className="text-sm font-medium">CAP</Label>
+                                    <Input
+                                      id="postalCode"
+                                      value={editFormData.postalCode}
+                                      onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                                      placeholder="44121"
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                </div>
                               </div>
-                              <div>
-                                <Label htmlFor="city">Città</Label>
-                                <Input
-                                  id="city"
-                                  value={editFormData.city}
-                                  onChange={(e) => handleInputChange('city', e.target.value)}
-                                  placeholder="Ferrara"
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="postalCode">CAP</Label>
-                                <Input
-                                  id="postalCode"
-                                  value={editFormData.postalCode}
-                                  onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                                  placeholder="44121"
-                                />
-                              </div>
-                            </div>
+                            </Card>
 
                             {/* Dati Fiscali */}
-                            <div className="space-y-4">
-                              <h3 className="text-lg font-semibold">Dati Fiscali</h3>
-                              <div>
-                                <Label htmlFor="pec">PEC</Label>
-                                <Input
-                                  id="pec"
-                                  value={editFormData.pec}
-                                  onChange={(e) => handleInputChange('pec', e.target.value)}
-                                  placeholder="esempio@pec.it"
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="vatNumber">Partita IVA</Label>
-                                <Input
-                                  id="vatNumber"
-                                  value={editFormData.vatNumber}
-                                  onChange={(e) => handleInputChange('vatNumber', e.target.value)}
-                                  placeholder="12345678901"
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="fiscalCode">Codice Fiscale</Label>
-                                <Input
-                                  id="fiscalCode"
-                                  value={editFormData.fiscalCode}
-                                  onChange={(e) => handleInputChange('fiscalCode', e.target.value)}
-                                  placeholder="RSSMRA80A01H501Z"
-                                />
-                              </div>
-                            </div>
-
-                            {/* Social Media */}
-                            <div className="space-y-4 md:col-span-2">
-                              <h3 className="text-lg font-semibold">Social Media</h3>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Card className="p-6 border-2 border-yellow-100">
+                              <h3 className="text-lg font-bold mb-4 text-yellow-800 flex items-center">
+                                <DollarSign className="w-5 h-5 mr-2" />
+                                Dati Fiscali
+                              </h3>
+                              <div className="space-y-4">
                                 <div>
-                                  <Label htmlFor="facebookUrl">Facebook</Label>
+                                  <Label htmlFor="pec" className="text-sm font-medium">PEC</Label>
                                   <Input
-                                    id="facebookUrl"
-                                    value={editFormData.facebookUrl}
-                                    onChange={(e) => handleInputChange('facebookUrl', e.target.value)}
-                                    placeholder="https://facebook.com/nomeutente"
+                                    id="pec"
+                                    value={editFormData.pec}
+                                    onChange={(e) => handleInputChange('pec', e.target.value)}
+                                    placeholder="esempio@pec.it"
+                                    className="mt-1"
                                   />
                                 </div>
                                 <div>
-                                  <Label htmlFor="instagramUrl">Instagram</Label>
+                                  <Label htmlFor="vatNumber" className="text-sm font-medium">Partita IVA</Label>
                                   <Input
-                                    id="instagramUrl"
-                                    value={editFormData.instagramUrl}
-                                    onChange={(e) => handleInputChange('instagramUrl', e.target.value)}
-                                    placeholder="https://instagram.com/nomeutente"
+                                    id="vatNumber"
+                                    value={editFormData.vatNumber}
+                                    onChange={(e) => handleInputChange('vatNumber', e.target.value)}
+                                    placeholder="12345678901"
+                                    className="mt-1"
                                   />
                                 </div>
                                 <div>
-                                  <Label htmlFor="linkedinUrl">LinkedIn</Label>
+                                  <Label htmlFor="fiscalCode" className="text-sm font-medium">Codice Fiscale</Label>
                                   <Input
-                                    id="linkedinUrl"
-                                    value={editFormData.linkedinUrl}
-                                    onChange={(e) => handleInputChange('linkedinUrl', e.target.value)}
-                                    placeholder="https://linkedin.com/in/nomeutente"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="twitterUrl">Twitter</Label>
-                                  <Input
-                                    id="twitterUrl"
-                                    value={editFormData.twitterUrl}
-                                    onChange={(e) => handleInputChange('twitterUrl', e.target.value)}
-                                    placeholder="https://twitter.com/nomeutente"
+                                    id="fiscalCode"
+                                    value={editFormData.fiscalCode}
+                                    onChange={(e) => handleInputChange('fiscalCode', e.target.value)}
+                                    placeholder="RSSMRA80A01H501Z"
+                                    className="mt-1"
                                   />
                                 </div>
                               </div>
-                            </div>
+                            </Card>
                           </div>
                           
-                          <div className="flex justify-end gap-4 pt-4 border-t">
-                            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                          <div className="flex justify-end gap-4 pt-6 border-t">
+                            <Button variant="outline" onClick={() => setIsEditModalOpen(false)} size="lg">
                               Annulla
                             </Button>
                             <Button 
                               onClick={handleSaveProfile}
                               disabled={updateProfileMutation.isPending}
+                              size="lg"
+                              className="bg-blue-600 hover:bg-blue-700"
                             >
                               {updateProfileMutation.isPending ? "Salvataggio..." : "Salva Modifiche"}
                             </Button>
@@ -829,14 +692,207 @@ export default function ProfessionalDashboard() {
                         </DialogContent>
                       </Dialog>
                     </div>
-                  </>
-                ) : (
-                  <div className="text-center p-8">
-                    <div className="text-gray-500">Caricamento dati profilo...</div>
+                  </CardContent>
+                </Card>
+
+                {/* Profile Info Cards Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Informazioni Aziendali */}
+                  <Card className="shadow-lg border-0 overflow-hidden">
+                    <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4">
+                      <h3 className="text-white font-bold text-lg flex items-center">
+                        <Settings className="w-5 h-5 mr-2" />
+                        Informazioni Aziendali
+                      </h3>
+                    </div>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span className="font-medium text-gray-600">Nome Attività</span>
+                        <span className="text-gray-900 font-semibold">
+                          {professionalData.businessName || "Non specificato"}
+                        </span>
+                      </div>
+                      <div className="flex items-start justify-between py-3 border-b border-gray-100">
+                        <span className="font-medium text-gray-600">Email</span>
+                        <span className="text-gray-900 font-semibold">
+                          {professionalData.email}
+                        </span>
+                      </div>
+                      <div className="py-3">
+                        <span className="font-medium text-gray-600 block mb-2">Descrizione</span>
+                        <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
+                          {professionalData.description || "Nessuna descrizione disponibile"}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Contatti */}
+                  <Card className="shadow-lg border-0 overflow-hidden">
+                    <div className="bg-gradient-to-r from-green-500 to-green-600 p-4">
+                      <h3 className="text-white font-bold text-lg flex items-center">
+                        <Phone className="w-5 h-5 mr-2" />
+                        Contatti
+                      </h3>
+                    </div>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span className="font-medium text-gray-600">Telefono</span>
+                        <span className="text-gray-900 font-semibold">
+                          {professionalData.phoneFixed || "Non disponibile"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span className="font-medium text-gray-600">Cellulare</span>
+                        <span className="text-gray-900 font-semibold">
+                          {professionalData.phoneMobile || "Non disponibile"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span className="font-medium text-gray-600">Website</span>
+                        <span className="text-blue-600 font-semibold hover:underline">
+                          {professionalData.website ? (
+                            <a href={professionalData.website} target="_blank" rel="noopener noreferrer">
+                              {professionalData.website}
+                            </a>
+                          ) : "Non disponibile"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-3">
+                        <span className="font-medium text-gray-600">WhatsApp</span>
+                        <span className="text-green-600 font-semibold">
+                          {professionalData.whatsappNumber || "Non disponibile"}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Indirizzo */}
+                  <Card className="shadow-lg border-0 overflow-hidden">
+                    <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-4">
+                      <h3 className="text-white font-bold text-lg flex items-center">
+                        <MapPin className="w-5 h-5 mr-2" />
+                        Indirizzo
+                      </h3>
+                    </div>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span className="font-medium text-gray-600">Via/Piazza</span>
+                        <span className="text-gray-900 font-semibold">
+                          {professionalData.address || "Non disponibile"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span className="font-medium text-gray-600">Città</span>
+                        <span className="text-gray-900 font-semibold">
+                          {professionalData.city || "Non disponibile"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span className="font-medium text-gray-600">Provincia</span>
+                        <span className="text-gray-900 font-semibold">
+                          {professionalData.province || "Non disponibile"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-3">
+                        <span className="font-medium text-gray-600">CAP</span>
+                        <span className="text-gray-900 font-semibold">
+                          {professionalData.postalCode || "Non disponibile"}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Dati Fiscali */}
+                  <Card className="shadow-lg border-0 overflow-hidden">
+                    <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 p-4">
+                      <h3 className="text-white font-bold text-lg flex items-center">
+                        <DollarSign className="w-5 h-5 mr-2" />
+                        Dati Fiscali
+                      </h3>
+                    </div>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span className="font-medium text-gray-600">PEC</span>
+                        <span className="text-gray-900 font-semibold">
+                          {professionalData.pec || "Non disponibile"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span className="font-medium text-gray-600">Partita IVA</span>
+                        <span className="text-gray-900 font-semibold">
+                          {professionalData.vatNumber || "Non disponibile"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-3">
+                        <span className="font-medium text-gray-600">Codice Fiscale</span>
+                        <span className="text-gray-900 font-semibold">
+                          {professionalData.fiscalCode || "Non disponibile"}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Social Media - Full Width */}
+                <Card className="shadow-lg border-0 overflow-hidden">
+                  <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4">
+                    <h3 className="text-white font-bold text-lg flex items-center">
+                      <Users className="w-5 h-5 mr-2" />
+                      Social Media
+                    </h3>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                      <div className="text-center p-4 bg-blue-50 rounded-lg">
+                        <div className="text-blue-600 font-semibold mb-2">Facebook</div>
+                        <div className="text-sm text-gray-600 break-words">
+                          {professionalData.facebookUrl ? (
+                            <a href={professionalData.facebookUrl} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">
+                              {professionalData.facebookUrl}
+                            </a>
+                          ) : "Non configurato"}
+                        </div>
+                      </div>
+                      <div className="text-center p-4 bg-pink-50 rounded-lg">
+                        <div className="text-pink-600 font-semibold mb-2">Instagram</div>
+                        <div className="text-sm text-gray-600 break-words">
+                          {professionalData.instagramUrl ? (
+                            <a href={professionalData.instagramUrl} target="_blank" rel="noopener noreferrer" className="hover:text-pink-600">
+                              {professionalData.instagramUrl}
+                            </a>
+                          ) : "Non configurato"}
+                        </div>
+                      </div>
+                      <div className="text-center p-4 bg-blue-50 rounded-lg">
+                        <div className="text-blue-700 font-semibold mb-2">LinkedIn</div>
+                        <div className="text-sm text-gray-600 break-words">
+                          {professionalData.linkedinUrl ? (
+                            <a href={professionalData.linkedinUrl} target="_blank" rel="noopener noreferrer" className="hover:text-blue-700">
+                              {professionalData.linkedinUrl}
+                            </a>
+                          ) : "Non configurato"}
+                        </div>
+                      </div>
+                      <div className="text-center p-4 bg-sky-50 rounded-lg">
+                        <div className="text-sky-600 font-semibold mb-2">Twitter</div>
+                        <div className="text-sm text-gray-600 break-words">
+                          {professionalData.twitterUrl ? (
+                            <a href={professionalData.twitterUrl} target="_blank" rel="noopener noreferrer" className="hover:text-sky-600">
+                              {professionalData.twitterUrl}
+                            </a>
+                          ) : "Non configurato"}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+              </div>
+            )}
           </TabsContent>
 
           {/* Reviews Tab */}
