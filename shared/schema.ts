@@ -625,6 +625,8 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
   createdAt: true 
 });
 
+
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -634,6 +636,8 @@ export type Professional = typeof professionals.$inferSelect;
 export type InsertProfessional = z.infer<typeof insertProfessionalSchema>;
 export type Review = typeof reviews.$inferSelect;
 export type InsertReview = z.infer<typeof insertReviewSchema>;
+
+// Types per nuove tabelle - spostati alla fine del file
 
 // Tipi per le nuove tabelle recensioni
 export type ReviewHelpfulVote = typeof reviewHelpfulVotes.$inferSelect;
@@ -782,6 +786,201 @@ export const auditLogs = pgTable("audit_logs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Tabelle per sistema badge
+export const badges = pgTable("badges", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  description: text("description").notNull(),
+  type: text("type").notNull(), // 'automatic', 'verified', 'achievement'
+  icon: text("icon"), // Nome icona o SVG
+  color: text("color").default("#3B82F6"), // Colore hex
+  requirements: jsonb("requirements"), // Criteri per badge automatici
+  isActive: boolean("is_active").default(true).notNull(),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const professionalBadges = pgTable("professional_badges", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id, { onDelete: "cascade" }).notNull(),
+  badgeId: integer("badge_id").references(() => badges.id, { onDelete: "cascade" }).notNull(),
+  awardedAt: timestamp("awarded_at").defaultNow().notNull(),
+  awardedBy: integer("awarded_by").references(() => users.id), // Per badge verificati manualmente
+  expiresAt: timestamp("expires_at"), // Per badge che scadono
+  metadata: jsonb("metadata"), // Dati aggiuntivi (punteggio, note)
+  isVisible: boolean("is_visible").default(true).notNull(),
+  revokedAt: timestamp("revoked_at"),
+  revokedBy: integer("revoked_by").references(() => users.id),
+  revokeReason: text("revoke_reason"),
+});
+
+export const badgeAuditLog = pgTable("badge_audit_log", {
+  id: serial("id").primaryKey(),
+  professionalBadgeId: integer("professional_badge_id").references(() => professionalBadges.id).notNull(),
+  action: text("action").notNull(), // 'awarded', 'revoked', 'expired', 'renewed'
+  performedBy: integer("performed_by").references(() => users.id),
+  reason: text("reason"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Tabella per utenti consumer (clienti finali)
+export const consumers = pgTable("consumers", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull().unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  dateOfBirth: timestamp("date_of_birth"),
+  gender: text("gender"), // 'male', 'female', 'other', 'prefer_not_to_say'
+  city: text("city"),
+  province: text("province"),
+  postalCode: text("postal_code"),
+  country: text("country").default("IT"),
+  
+  // Preferenze comunicazione
+  emailNotifications: boolean("email_notifications").default(true),
+  smsNotifications: boolean("sms_notifications").default(false),
+  marketingEmails: boolean("marketing_emails").default(false),
+  
+  // Statistiche engagement
+  reviewsWritten: integer("reviews_written").default(0),
+  profilesViewed: integer("profiles_viewed").default(0),
+  searchesPerformed: integer("searches_performed").default(0),
+  
+  // Verifiche opzionali
+  isPhoneVerified: boolean("is_phone_verified").default(false),
+  phoneVerifiedAt: timestamp("phone_verified_at"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Tabella piani abbonamento (rinominata e semplificata)
+export const plans = pgTable("plans", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(), // 'Gratuito', 'Start', 'Pro', 'Elite'
+  slug: text("slug").notNull().unique(), // 'free', 'start', 'pro', 'elite'
+  description: text("description").notNull(),
+  priceMonthly: decimal("price_monthly", { precision: 10, scale: 2 }).notNull(),
+  priceYearly: decimal("price_yearly", { precision: 10, scale: 2 }),
+  features: jsonb("features").notNull(), // Array delle funzionalità
+  limits: jsonb("limits").notNull(), // Limiti (foto, servizi, etc.)
+  isActive: boolean("is_active").default(true).notNull(),
+  sortOrder: integer("sort_order").default(0),
+  stripeProductId: text("stripe_product_id"),
+  stripePriceIdMonthly: text("stripe_price_id_monthly"),
+  stripePriceIdYearly: text("stripe_price_id_yearly"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Aggiorna campo professional per collegamento al piano
+export const professionalPlans = pgTable("professional_plans", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id, { onDelete: "cascade" }).notNull().unique(),
+  planId: integer("plan_id").references(() => plans.id).notNull(),
+  status: text("status").default("active").notNull(), // 'active', 'cancelled', 'past_due', 'unpaid'
+  billingCycle: text("billing_cycle").default("monthly").notNull(), // 'monthly', 'yearly'
+  currentPeriodStart: timestamp("current_period_start").notNull(),
+  currentPeriodEnd: timestamp("current_period_end").notNull(),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  cancelledAt: timestamp("cancelled_at"),
+  trialStart: timestamp("trial_start"),
+  trialEnd: timestamp("trial_end"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  stripeCustomerId: text("stripe_customer_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Eventi di sistema per analytics e tracciamento
+export const events = pgTable("events", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // 'page_view', 'profile_view', 'search', 'contact_click', 'review_submit'
+  userId: integer("user_id").references(() => users.id),
+  professionalId: integer("professional_id").references(() => professionals.id),
+  sessionId: text("session_id"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  metadata: jsonb("metadata"), // Dati specifici dell'evento
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Relations per badge
+export const badgesRelations = relations(badges, ({ many }) => ({
+  professionalBadges: many(professionalBadges),
+}));
+
+export const professionalBadgesRelations = relations(professionalBadges, ({ one, many }) => ({
+  professional: one(professionals, {
+    fields: [professionalBadges.professionalId],
+    references: [professionals.id],
+  }),
+  badge: one(badges, {
+    fields: [professionalBadges.badgeId],
+    references: [badges.id],
+  }),
+  awardedBy: one(users, {
+    fields: [professionalBadges.awardedBy],
+    references: [users.id],
+  }),
+  revokedBy: one(users, {
+    fields: [professionalBadges.revokedBy],
+    references: [users.id],
+  }),
+  auditLogs: many(badgeAuditLog),
+}));
+
+export const badgeAuditLogRelations = relations(badgeAuditLog, ({ one }) => ({
+  professionalBadge: one(professionalBadges, {
+    fields: [badgeAuditLog.professionalBadgeId],
+    references: [professionalBadges.id],
+  }),
+  performedBy: one(users, {
+    fields: [badgeAuditLog.performedBy],
+    references: [users.id],
+  }),
+}));
+
+// Relations per consumers
+export const consumersRelations = relations(consumers, ({ one, many }) => ({
+  user: one(users, {
+    fields: [consumers.userId],
+    references: [users.id],
+  }),
+  reviews: many(reviews),
+}));
+
+// Relations per plans
+export const plansRelations = relations(plans, ({ many }) => ({
+  professionalPlans: many(professionalPlans),
+}));
+
+export const professionalPlansRelations = relations(professionalPlans, ({ one }) => ({
+  professional: one(professionals, {
+    fields: [professionalPlans.professionalId],
+    references: [professionals.id],
+  }),
+  plan: one(plans, {
+    fields: [professionalPlans.planId],
+    references: [plans.id],
+  }),
+}));
+
+// Relations per events
+export const eventsRelations = relations(events, ({ one }) => ({
+  user: one(users, {
+    fields: [events.userId],
+    references: [users.id],
+  }),
+  professional: one(professionals, {
+    fields: [events.professionalId],
+    references: [professionals.id],
+  }),
+}));
+
 // Relations for administrative tables
 export const adminActivityRelations = relations(adminActivity, ({ one }) => ({
   admin: one(users, {
@@ -879,3 +1078,41 @@ export const professionalRegistrationSchema = z.object({
 });
 
 export type ProfessionalRegistrationData = z.infer<typeof professionalRegistrationSchema>;
+
+// Insert schemas per nuove tabelle
+export const insertBadgeSchema = createInsertSchema(badges).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertProfessionalBadgeSchema = createInsertSchema(professionalBadges).omit({ 
+  id: true, 
+  awardedAt: true 
+});
+
+export const insertConsumerSchema = createInsertSchema(consumers).omit({ 
+  id: true, 
+  reviewsWritten: true,
+  profilesViewed: true,
+  searchesPerformed: true,
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertPlanSchema = createInsertSchema(plans).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertProfessionalPlanSchema = createInsertSchema(professionalPlans).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertEventSchema = createInsertSchema(events).omit({ 
+  id: true, 
+  createdAt: true 
+});

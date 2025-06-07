@@ -1,0 +1,110 @@
+Wolfinder – Piano di azione definitivo
+(versione integrata con tutte le tue osservazioni: “no-mock”, test condotti da te, micro-correzioni DB/UI, fasi B1/B2, badge split, checklist GDPR & QA, buffer post-pagamenti)
+
+0. Premesse operative
+Solo dati reali
+
+Popolazione iniziale tramite import pubblico (Ferrara + Livorno).
+
+Niente record sintetici; per i test userai i profili presenti nel DB.
+
+Tester unico → Mirko
+
+Tutti i flussi end-to-end saranno validati da te con account reali.
+
+Ogni fase chiude solo quando i KPI (qui sotto) sono verificati da te in staging.
+
+Schema DB completo fin da subito
+
+Tabelle utenti consumer, professionisti, recensioni, piani, badge, pagamenti, eventi.
+
+Eviti migrazioni invasive in fasi C/D.
+
+1. Stato attuale – Audit & micro-correzioni
+Sezione	Osservazione	Azione immediata
+PostgreSQL	Mancano tabelle consumers, plans, badges.	Disegna schema definitivo + chiavi esterne prima di Fase A.
+Dashboard pro	Dipende da claim e ruoli non definiti.	Aggiungi flag is_claimed + endpoint placeholder /api/claim/:id.
+Tab Analytics	Vuota oggi.	Nascondila se il piano non la include; placeholder “Sblocca con Start”.
+
+2. Roadmap (5 mesi) – fasi & dipendenze reali
+Mese	Fase	Contenuto chiave	KPI di uscita
+0-0,5	Bootstrap dati (Fase 0)	• Schema DB definitivo
+• Import 300 professionisti reali
+• Ambiente dev/staging/prod
+• Mailcatcher in dev+stag	≥ 200 profili in DB
+Login admin OK
+0,5-1,5	Fase A – Stabilizzazione base	• Registrazione/login consumer+pro
+• Ricerca + filtri
+• Profilo pubblico
+• Form recensione live	Da consumer: login → ricerca → recensione senza errori 500
+≥ 20 recensioni
+1,5-2,5	Fase B1 – Reputazione	• Claim profilo + upload doc
+• Notifiche e-mail + reminder 48 h
+• Replica recensioni	≥ 70 % recensioni con risposta
+Tempo medio risposta < 72 h
+2,5-3,5	Fase B2 – Analytics base	• Event tracking (visite, ricerche, CTR)
+• Dashboard Start (gratis per test)
+• Placeholder Pro/Elite	≥ 10 pro che consultano analytics/sett.
+3,5-4	Fase C – Monetizzazione	• Stripe sandbox→live
+• Feature flags piani
+• Grace period 7 gg
+• PDF fattura con IVA	≥ 5 upgrade paganti
+Fail-rate pagamenti < 5 %
+4-4,5	Fase D1 – Badge automatici	• Cron giornaliero calcolo badge (TopPerformer, MoltoAttivo, …)
+• Log audit badge	≥ 20 badge assegnati corretti
+4,5-5	Fase D2 – Verifiche documenti	• Workflow admin verifica doc
+• Badge Verificato/Certificato
+• Pag. “Cosa significano i badge”	≥ 10 verifiche concluse
+0 badge contestati
+
+Buffer post-C (½ mese) già incluso (3 → 3,5) per fix tipici dei pagamenti.
+
+3. Checklist “Plus” (da iniziare in Fase A)
+Tema	Attività essenziale	Timing
+GDPR / Privacy	• Registro trattamenti
+• DPA cloud
+• Checkbox consensi	Fase A
+Accessibilità WCAG AA	Alt-text, contrasto colori, focus visibile	Fase A, revisione ogni feature
+Error tracking	Sentry + LogRocket in dev/staging/prod	Fine Fase A
+Backup & migrazioni	Dump nightly staging, script idempotenti	Fase 0
+E2E tests minimi	Playwright: login, review, upgrade	Fine Fase B1
+
+4. Deliverable di ciascuna fase (dettaglio)
+Fase 0 – Bootstrap
+Script Node “import-open-data” + CSV di log falliti.
+
+Checklist sicurezza DB (role readonly per staging).
+
+Fase A – Stabilizzazione
+Ricerca precede profilo pubblico (debug più rapido).
+
+UI mobile first; smoke test su Chrome + Safari.
+
+Fase B1 – Reputazione
+Email via SendGrid free (1 K mail/giorno).
+
+Claim flow: flag is_claim_pending→admin panel toggle.
+
+Fase B2 – Analytics
+Tab Analytics mostrata solo se plan >= Start.
+
+Event table schema: event_id, user_id, type, meta, ts.
+
+Fase C – Billing
+Feature flags: open-source Unleash o LaunchDarkly OSS.
+
+Cron “downgrade X days after fail” con email avviso.
+
+Fase D1/D2 – Badge
+Cron badge 03:00 UTC daily; revoca se metriche scendono.
+
+Log audit: badge_log (who, when, action, reason).
+
+5. KPI di qualità trasversali
+Bug critici aperti per fase: 0 prima di chiudere.
+
+API p95 < 400 ms in staging.
+
+Copertura E2E: > 60 % dei flussi core (login, ricerca, recensione, risposta, upgrade).
+
+Tasso successo login ≥ 99 %.
