@@ -21,7 +21,7 @@ interface AuditLog {
   reason?: string;
   ipAddress?: string;
   userAgent?: string;
-  createdAt: Date;
+  createdAt: string;
   user?: {
     firstName: string;
     lastName: string;

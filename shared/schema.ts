@@ -707,8 +707,8 @@ export const auditLogs = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
   action: text("action").notNull(), // 'approve_verification', 'reject_review', 'extend_grace', etc.
-  targetType: text("target_type").notNull(), // 'professional', 'review', 'subscription', etc.
-  targetId: integer("target_id").notNull(),
+  entityType: text("entity_type").notNull(), // 'professional', 'review', 'subscription', etc.
+  entityId: integer("entity_id").notNull(),
   oldValues: text("old_values"), // JSON with previous state
   newValues: text("new_values"), // JSON with new state
   reason: text("reason"), // Motivo dell'azione
