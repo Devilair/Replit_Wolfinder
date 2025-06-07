@@ -106,13 +106,13 @@ export default function ProfessionalDashboard() {
   // Check automatic badges mutation
   const checkBadgesMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/professional/badges/check");
+      return await apiRequest("POST", "/api/professional/badges/check-automatic");
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/professional/badges"] });
       toast({
         title: "Badge controllati",
-        description: "I tuoi badge sono stati aggiornati con successo!",
+        description: data.message || "I tuoi badge sono stati aggiornati con successo!",
       });
     },
     onError: () => {
