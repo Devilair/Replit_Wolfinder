@@ -2,6 +2,14 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { stripeService } from "./stripe-service";
+import Stripe from "stripe";
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2024-12-18.acacia",
+});
 import { 
   loadSubscription, 
   requireFeature, 
@@ -12,6 +20,7 @@ import {
 
 import { authService } from "./auth";
 import multer from "multer";
+import express from "express";
 import { 
   insertProfessionalSchema, 
   insertReviewSchema, 
@@ -3124,6 +3133,384 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Errore interno del server" });
     }
   });
+
+  // Create Stripe subscription for professional
+  app.post("/api/create-subscription", 
+    authService.authenticateToken,
+    authService.requireRole(['professional']),
+    loadSubscription,
+    async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const professional = (req as any).professional;
+      const currentSubscription = (req as any).subscription;
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      const { planId } = req.body;
+      
+      if (!planId) {
+        return res.status(400).json({ message: "Plan ID is required" });
+      }
+
+      // Get the target plan
+      const targetPlan = await storage.getSubscriptionPlan(planId);
+      if (!targetPlan) {
+        return res.status(404).json({ message: "Subscription plan not found" });
+      }
+
+      // Check if already has this plan
+      if (currentSubscription?.planId === planId) {
+        return res.status(400).json({ 
+          message: "Professional already has this subscription plan",
+          currentPlan: currentSubscription.plan?.name
+        });
+      }
+
+      let stripeCustomerId = professional.stripeCustomerId;
+      
+      // Create Stripe customer if doesn't exist
+      if (!stripeCustomerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: professional.businessName,
+          metadata: {
+            professionalId: professional.id.toString(),
+            userId: user.id.toString()
+          }
+        });
+        
+        stripeCustomerId = customer.id;
+        await storage.updateProfessionalStripeInfo(professional.id, stripeCustomerId);
+      }
+
+      // Create price for the plan if not exists
+      let stripePriceId = targetPlan.stripePriceId;
+      if (!stripePriceId) {
+        const product = await stripe.products.create({
+          name: `Wolfinder ${targetPlan.name}`,
+          description: targetPlan.description,
+          metadata: {
+            planId: targetPlan.id.toString(),
+            planType: targetPlan.name.toLowerCase()
+          }
+        });
+
+        const price = await stripe.prices.create({
+          unit_amount: Math.round(targetPlan.price * 100), // Convert to cents
+          currency: 'eur',
+          recurring: {
+            interval: 'month'
+          },
+          product: product.id,
+          metadata: {
+            planId: targetPlan.id.toString()
+          }
+        });
+
+        stripePriceId = price.id;
+        
+        // Update plan with Stripe price ID
+        await storage.updateSubscriptionPlan(targetPlan.id, {
+          stripePriceId: stripePriceId
+        });
+      }
+
+      // Cancel existing subscription if exists
+      if (currentSubscription?.stripeSubscriptionId) {
+        await stripe.subscriptions.cancel(currentSubscription.stripeSubscriptionId);
+        await storage.cancelSubscription(currentSubscription.id);
+      }
+
+      // Create new subscription
+      const subscription = await stripe.subscriptions.create({
+        customer: stripeCustomerId,
+        items: [{
+          price: stripePriceId
+        }],
+        payment_behavior: 'default_incomplete',
+        payment_settings: {
+          save_default_payment_method: 'on_subscription'
+        },
+        expand: ['latest_invoice.payment_intent'],
+        metadata: {
+          professionalId: professional.id.toString(),
+          planId: targetPlan.id.toString()
+        }
+      });
+
+      // Create subscription record in database
+      const dbSubscription = await storage.createSubscription({
+        professionalId: professional.id,
+        planId: targetPlan.id,
+        status: 'pending',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        stripeSubscriptionId: subscription.id,
+        stripeCustomerId: stripeCustomerId
+      });
+
+      const invoice = subscription.latest_invoice as any;
+      const paymentIntent = invoice?.payment_intent;
+
+      res.json({
+        success: true,
+        subscriptionId: subscription.id,
+        clientSecret: paymentIntent?.client_secret,
+        status: subscription.status,
+        plan: targetPlan,
+        dbSubscriptionId: dbSubscription.id
+      });
+
+    } catch (error: any) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ 
+        error: "Failed to create subscription",
+        message: error.message 
+      });
+    }
+  });
+
+  // Get current subscription details for professional
+  app.get("/api/subscription/current", 
+    authService.authenticateToken,
+    authService.requireRole(['professional']),
+    loadSubscription,
+    async (req, res) => {
+    try {
+      const professional = (req as any).professional;
+      const subscription = (req as any).subscription;
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      if (!subscription) {
+        // Return free plan details
+        const freePlan = await storage.getSubscriptionPlans().then(plans => 
+          plans.find(p => p.name === 'Gratuito')
+        );
+        
+        return res.json({
+          subscription: null,
+          plan: freePlan,
+          status: 'free',
+          canUpgrade: true,
+          availablePlans: await storage.getSubscriptionPlans()
+        });
+      }
+
+      // Get Stripe subscription details
+      let stripeSubscription = null;
+      if (subscription.stripeSubscriptionId) {
+        try {
+          stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripeSubscriptionId);
+        } catch (error) {
+          console.error("Error retrieving Stripe subscription:", error);
+        }
+      }
+
+      const availablePlans = await storage.getSubscriptionPlans();
+      const currentPlanIndex = availablePlans.findIndex(p => p.id === subscription.planId);
+      
+      res.json({
+        subscription: {
+          ...subscription,
+          stripeStatus: stripeSubscription?.status,
+          currentPeriodEnd: stripeSubscription?.current_period_end ? 
+            new Date(stripeSubscription.current_period_end * 1000) : subscription.currentPeriodEnd,
+          cancelAtPeriodEnd: stripeSubscription?.cancel_at_period_end || false
+        },
+        plan: subscription.plan,
+        status: subscription.status,
+        canUpgrade: currentPlanIndex < availablePlans.length - 1,
+        canDowngrade: currentPlanIndex > 0,
+        availablePlans: availablePlans
+      });
+
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
+      res.status(500).json({ error: "Failed to fetch subscription details" });
+    }
+  });
+
+  // Cancel subscription
+  app.post("/api/subscription/cancel", 
+    authService.authenticateToken,
+    authService.requireRole(['professional']),
+    loadSubscription,
+    async (req, res) => {
+    try {
+      const subscription = (req as any).subscription;
+      
+      if (!subscription?.stripeSubscriptionId) {
+        return res.status(404).json({ message: "No active subscription found" });
+      }
+
+      // Cancel at period end in Stripe
+      const stripeSubscription = await stripe.subscriptions.update(
+        subscription.stripeSubscriptionId,
+        {
+          cancel_at_period_end: true
+        }
+      );
+
+      // Update database
+      await storage.updateSubscription(subscription.id, {
+        cancelAtPeriodEnd: true,
+        status: 'canceling'
+      });
+
+      res.json({
+        success: true,
+        message: "Subscription will be canceled at the end of the current period",
+        cancelAtPeriodEnd: stripeSubscription.current_period_end
+      });
+
+    } catch (error: any) {
+      console.error("Error canceling subscription:", error);
+      res.status(500).json({ 
+        error: "Failed to cancel subscription",
+        message: error.message 
+      });
+    }
+  });
+
+  // Stripe webhook endpoint
+  app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'] as string;
+    let event;
+
+    try {
+      // For now, we'll process without signature verification in development
+      event = JSON.parse(req.body.toString());
+    } catch (err: any) {
+      console.error('Webhook signature verification failed:', err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    try {
+      switch (event.type) {
+        case 'customer.subscription.created':
+        case 'customer.subscription.updated':
+          const subscription = event.data.object;
+          await handleSubscriptionUpdate(subscription);
+          break;
+
+        case 'customer.subscription.deleted':
+          const deletedSubscription = event.data.object;
+          await handleSubscriptionCancellation(deletedSubscription);
+          break;
+
+        case 'invoice.payment_succeeded':
+          const invoice = event.data.object;
+          await handlePaymentSucceeded(invoice);
+          break;
+
+        case 'invoice.payment_failed':
+          const failedInvoice = event.data.object;
+          await handlePaymentFailed(failedInvoice);
+          break;
+
+        default:
+          console.log(`Unhandled event type: ${event.type}`);
+      }
+
+      res.json({ received: true });
+    } catch (error) {
+      console.error('Error processing webhook:', error);
+      res.status(500).json({ error: 'Webhook processing failed' });
+    }
+  });
+
+  // Helper functions for webhook processing
+  async function handleSubscriptionUpdate(stripeSubscription: any) {
+    try {
+      const professionalId = parseInt(stripeSubscription.metadata.professionalId);
+      const planId = parseInt(stripeSubscription.metadata.planId);
+
+      if (!professionalId || !planId) {
+        console.error('Missing metadata in subscription:', stripeSubscription.id);
+        return;
+      }
+
+      // Find existing subscription
+      const existingSubscription = await storage.getProfessionalSubscription(professionalId);
+
+      if (existingSubscription && existingSubscription.stripeSubscriptionId === stripeSubscription.id) {
+        // Update existing subscription
+        await storage.updateSubscription(existingSubscription.id, {
+          status: stripeSubscription.status === 'active' ? 'active' : stripeSubscription.status,
+          currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+          currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+          cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end || false
+        });
+      } else {
+        // Create new subscription
+        await storage.createSubscription({
+          professionalId,
+          planId,
+          status: stripeSubscription.status === 'active' ? 'active' : stripeSubscription.status,
+          currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+          currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+          stripeSubscriptionId: stripeSubscription.id,
+          stripeCustomerId: stripeSubscription.customer,
+          cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end || false
+        });
+      }
+
+      console.log(`Subscription updated for professional ${professionalId}, plan ${planId}`);
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+    }
+  }
+
+  async function handleSubscriptionCancellation(stripeSubscription: any) {
+    try {
+      const professionalId = parseInt(stripeSubscription.metadata.professionalId);
+      
+      if (!professionalId) {
+        console.error('Missing professionalId in subscription metadata:', stripeSubscription.id);
+        return;
+      }
+
+      const subscription = await storage.getProfessionalSubscription(professionalId);
+      if (subscription && subscription.stripeSubscriptionId === stripeSubscription.id) {
+        await storage.cancelSubscription(subscription.id);
+        console.log(`Subscription canceled for professional ${professionalId}`);
+      }
+    } catch (error) {
+      console.error('Error canceling subscription:', error);
+    }
+  }
+
+  async function handlePaymentSucceeded(invoice: any) {
+    try {
+      if (invoice.subscription) {
+        const stripeSubscription = await stripe.subscriptions.retrieve(invoice.subscription);
+        await handleSubscriptionUpdate(stripeSubscription);
+      }
+      console.log(`Payment succeeded for invoice ${invoice.id}`);
+    } catch (error) {
+      console.error('Error handling payment success:', error);
+    }
+  }
+
+  async function handlePaymentFailed(invoice: any) {
+    try {
+      if (invoice.subscription) {
+        const professionalId = parseInt(invoice.subscription_metadata?.professionalId);
+        if (professionalId) {
+          // Could implement notification logic here
+          console.log(`Payment failed for professional ${professionalId}, invoice ${invoice.id}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error handling payment failure:', error);
+    }
+  }
 
   const httpServer = createServer(app);
   return httpServer;
