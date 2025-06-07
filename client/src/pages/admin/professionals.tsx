@@ -1,574 +1,515 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Search, Shield, ShieldCheck, Edit, Trash2, Plus, Eye, MapPin, Phone, Mail } from "lucide-react";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Search, 
+  Filter, 
+  CheckCircle, 
+  XCircle, 
+  Clock, 
+  Eye, 
+  Edit, 
+  Trash2,
+  Mail,
+  Phone,
+  MapPin,
+  Star,
+  Calendar,
+  AlertTriangle,
+  Download,
+  RefreshCw
+} from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { ProfessionalWithDetails, Category } from "@shared/schema";
 
-const professionalSchema = z.object({
-  userId: z.number().min(1, "Utente richiesto"),
-  categoryId: z.number().min(1, "Categoria richiesta"),
-  businessName: z.string().min(1, "Nome azienda richiesto"),
-  description: z.string().min(10, "Descrizione di almeno 10 caratteri"),
-  phone: z.string().optional(),
-  email: z.string().email("Email non valida"),
-  website: z.string().optional(),
-  address: z.string().min(1, "Indirizzo richiesto"),
-  city: z.string().min(1, "Città richiesta"),
-  province: z.string().min(2, "Provincia richiesta"),
-  postalCode: z.string().min(5, "CAP richiesto"),
-  priceRangeMin: z.string().optional(),
-  priceRangeMax: z.string().optional(),
-  priceUnit: z.string().optional(),
-});
+interface Professional {
+  id: number;
+  businessName: string;
+  email: string;
+  phoneFixed: string;
+  phoneMobile: string;
+  address: string;
+  city: string;
+  category: {
+    id: number;
+    name: string;
+  };
+  isVerified: boolean;
+  verificationStatus: 'pending' | 'approved' | 'rejected';
+  rating: number;
+  reviewCount: number;
+  profileCompleteness: number;
+  lastActivityAt: Date;
+  createdAt: Date;
+  isPremium: boolean;
+  subscription?: {
+    plan: {
+      name: string;
+    };
+    status: string;
+  };
+}
 
 export default function AdminProfessionals() {
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [editingProfessional, setEditingProfessional] = useState<ProfessionalWithDetails | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedProfessionals, setSelectedProfessionals] = useState<number[]>([]);
+  
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const { data: professionals, isLoading } = useQuery({
-    queryKey: ["/api/admin/professionals", { search, category: selectedCategory, status: statusFilter }],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (search) params.append('search', search);
-      if (selectedCategory !== 'all') params.append('categoryId', selectedCategory);
-      if (statusFilter !== 'all') params.append('status', statusFilter);
-      
-      const response = await fetch(`/api/admin/professionals?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch professionals');
-      return response.json();
-    },
+  const { data: professionals, isLoading: professionalsLoading } = useQuery({
+    queryKey: ['/api/admin/professionals', { 
+      search: searchTerm, 
+      status: filterStatus, 
+      category: filterCategory, 
+      sort: sortBy, 
+      page: currentPage 
+    }],
+    refetchInterval: 30000
   });
 
-  const { data: categories } = useQuery<Category[]>({
-    queryKey: ["/api/categories"],
+  const { data: categories } = useQuery({
+    queryKey: ['/api/categories']
   });
 
-  const { data: users } = useQuery({
-    queryKey: ["/api/admin/users"],
-  });
-
-  const form = useForm<z.infer<typeof professionalSchema>>({
-    resolver: zodResolver(professionalSchema),
-    defaultValues: {
-      userId: 0,
-      categoryId: 0,
-      businessName: "",
-      description: "",
-      phone: "",
-      email: "",
-      website: "",
-      address: "",
-      city: "",
-      province: "",
-      postalCode: "",
-      priceRangeMin: "",
-      priceRangeMax: "",
-      priceUnit: "ora",
-    },
-  });
-
-  const createMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof professionalSchema>) => {
-      const payload = {
-        ...data,
-        priceRangeMin: data.priceRangeMin ? parseFloat(data.priceRangeMin) : null,
-        priceRangeMax: data.priceRangeMax ? parseFloat(data.priceRangeMax) : null,
-      };
-      await apiRequest("POST", "/api/admin/professionals", payload);
+  const verifyProfessionalMutation = useMutation({
+    mutationFn: async ({ id, status, notes }: { id: number; status: 'approved' | 'rejected'; notes?: string }) => {
+      return apiRequest("PATCH", `/api/admin/professionals/${id}/verify`, { status, notes });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/professionals"] });
-      form.reset();
-      toast({ title: "Professionista creato con successo" });
+      toast({
+        title: "Professionista aggiornato",
+        description: "Lo stato di verifica è stato modificato con successo",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/professionals'] });
     },
-    onError: () => {
-      toast({ title: "Errore", description: "Impossibile creare il professionista", variant: "destructive" });
-    },
+    onError: (error) => {
+      toast({
+        title: "Errore",
+        description: "Impossibile aggiornare il professionista",
+        variant: "destructive",
+      });
+    }
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<z.infer<typeof professionalSchema>> }) => {
-      await apiRequest("PATCH", `/api/admin/professionals/${id}`, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/professionals"] });
-      setEditingProfessional(null);
-      toast({ title: "Professionista aggiornato con successo" });
-    },
-    onError: () => {
-      toast({ title: "Errore", description: "Impossibile aggiornare il professionista", variant: "destructive" });
-    },
-  });
-
-  const deleteMutation = useMutation({
+  const deleteProfessionalMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/admin/professionals/${id}`);
+      return apiRequest("DELETE", `/api/admin/professionals/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/professionals"] });
-      toast({ title: "Professionista eliminato con successo" });
+      toast({
+        title: "Professionista eliminato",
+        description: "Il professionista è stato rimosso dal sistema",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/professionals'] });
     },
-    onError: () => {
-      toast({ title: "Errore", description: "Impossibile eliminare il professionista", variant: "destructive" });
-    },
+    onError: (error) => {
+      toast({
+        title: "Errore",
+        description: "Impossibile eliminare il professionista",
+        variant: "destructive",
+      });
+    }
   });
 
-  const toggleVerificationMutation = useMutation({
-    mutationFn: async ({ id, verified }: { id: number; verified: boolean }) => {
-      await apiRequest("PATCH", `/api/admin/professionals/${id}/verify`, { verified });
+  const bulkActionMutation = useMutation({
+    mutationFn: async ({ action, ids }: { action: string; ids: number[] }) => {
+      return apiRequest("POST", "/api/admin/professionals/bulk-action", { action, ids });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/professionals"] });
-      toast({ title: verified ? "Professionista verificato" : "Verifica rimossa" });
+      toast({
+        title: "Azione completata",
+        description: "L'azione è stata eseguita sui professionisti selezionati",
+      });
+      setSelectedProfessionals([]);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/professionals'] });
     },
-    onError: () => {
-      toast({ title: "Errore", description: "Impossibile aggiornare la verifica", variant: "destructive" });
-    },
+    onError: (error) => {
+      toast({
+        title: "Errore",
+        description: "Impossibile eseguire l'azione richiesta",
+        variant: "destructive",
+      });
+    }
   });
+
+  const handleVerify = (id: number, status: 'approved' | 'rejected', notes?: string) => {
+    verifyProfessionalMutation.mutate({ id, status, notes });
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Sei sicuro di voler eliminare questo professionista?")) {
+      deleteProfessionalMutation.mutate(id);
+    }
+  };
+
+  const handleBulkAction = (action: string) => {
+    if (selectedProfessionals.length === 0) {
+      toast({
+        title: "Selezione richiesta",
+        description: "Seleziona almeno un professionista",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    bulkActionMutation.mutate({ action, ids: selectedProfessionals });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'approved': return <CheckCircle className="h-4 w-4" />;
+      case 'pending': return <Clock className="h-4 w-4" />;
+      case 'rejected': return <XCircle className="h-4 w-4" />;
+      default: return <AlertTriangle className="h-4 w-4" />;
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('it-IT', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  if (professionalsLoading) {
+    return (
+      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-64 mb-6"></div>
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-20 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const professionalsData = professionals as { data: Professional[]; total: number; pages: number };
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Gestione Professionisti</h1>
-          <p className="text-gray-600 mt-2">Amministra i professionisti registrati sulla piattaforma</p>
+          <p className="text-gray-600 mt-2">
+            {professionalsData?.total || 0} professionisti registrati
+          </p>
         </div>
         
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Nuovo Professionista
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Crea Nuovo Professionista</DialogTitle>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="userId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Utente</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(parseInt(value))}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleziona utente" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {users?.map((user: any) => (
-                              <SelectItem key={user.id} value={user.id.toString()}>
-                                {user.name} ({user.email})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="categoryId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Categoria</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(parseInt(value))}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleziona categoria" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {categories?.map((category) => (
-                              <SelectItem key={category.id} value={category.id.toString()}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="businessName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome Azienda</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Nome dell'attività" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descrizione</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="Descrizione dell'attività" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Telefono</FormLabel>
-                        <FormControl>
-                          <Input placeholder="+39 123 456789" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="email@esempio.it" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="website"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sito Web</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://www.esempio.it" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Indirizzo</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Via Roma 123" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="city"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Città</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Milano" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="province"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Provincia</FormLabel>
-                        <FormControl>
-                          <Input placeholder="MI" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="postalCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CAP</FormLabel>
-                        <FormControl>
-                          <Input placeholder="20100" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="priceRangeMin"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Prezzo Min (€)</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="50" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="priceRangeMax"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Prezzo Max (€)</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="100" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="priceUnit"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Unità</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="ora">Ora</SelectItem>
-                            <SelectItem value="visita">Visita</SelectItem>
-                            <SelectItem value="progetto">Progetto</SelectItem>
-                            <SelectItem value="atto">Atto</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <Button type="submit" className="w-full" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Creazione..." : "Crea Professionista"}
-                </Button>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Esporta
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/professionals'] })}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Aggiorna
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle>Filtri</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Cerca professionisti..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
-              />
+        <CardContent className="p-4">
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex-1 min-w-[300px]">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Cerca per nome, email o città..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
             
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[180px]">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Stato" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tutti gli stati</SelectItem>
+                <SelectItem value="approved">Verificati</SelectItem>
+                <SelectItem value="pending">In attesa</SelectItem>
+                <SelectItem value="rejected">Rifiutati</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tutte le categorie</SelectItem>
-                {categories?.map((category) => (
+                {categories?.map((category: any) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Stato" />
+
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Ordina per" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tutti</SelectItem>
-                <SelectItem value="verified">Verificati</SelectItem>
-                <SelectItem value="unverified">Non verificati</SelectItem>
-                <SelectItem value="premium">Premium</SelectItem>
+                <SelectItem value="newest">Più recenti</SelectItem>
+                <SelectItem value="oldest">Più vecchi</SelectItem>
+                <SelectItem value="rating">Valutazione</SelectItem>
+                <SelectItem value="reviews">Recensioni</SelectItem>
+                <SelectItem value="completeness">Completezza profilo</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Professionals Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Professionisti ({professionals?.length || 0})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">Caricamento...</div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome/Azienda</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Ubicazione</TableHead>
-                  <TableHead>Contatti</TableHead>
-                  <TableHead>Stato</TableHead>
-                  <TableHead>Valutazione</TableHead>
-                  <TableHead>Azioni</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {professionals?.map((professional: any) => (
-                  <TableRow key={professional.id}>
-                    <TableCell>
+      {/* Bulk Actions */}
+      {selectedProfessionals.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">
+                {selectedProfessionals.length} professionisti selezionati
+              </span>
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => handleBulkAction('verify')}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Verifica
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => handleBulkAction('reject')}
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Rifiuta
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => handleBulkAction('email')}
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Invia Email
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="destructive"
+                  onClick={() => handleBulkAction('delete')}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Elimina
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Professionals List */}
+      <div className="space-y-4">
+        {professionalsData?.data?.map((professional) => (
+          <Card key={professional.id} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-4 flex-1">
+                  <input
+                    type="checkbox"
+                    checked={selectedProfessionals.includes(professional.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedProfessionals([...selectedProfessionals, professional.id]);
+                      } else {
+                        setSelectedProfessionals(selectedProfessionals.filter(id => id !== professional.id));
+                      }
+                    }}
+                    className="mt-1"
+                  />
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {professional.businessName}
+                      </h3>
+                      <Badge 
+                        variant="outline" 
+                        className={`${getStatusColor(professional.verificationStatus)} border-0`}
+                      >
+                        {getStatusIcon(professional.verificationStatus)}
+                        <span className="ml-1 capitalize">
+                          {professional.verificationStatus}
+                        </span>
+                      </Badge>
+                      {professional.isPremium && (
+                        <Badge variant="default" className="bg-purple-100 text-purple-800">
+                          Premium
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        {professional.email}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4" />
+                        {professional.phoneMobile || professional.phoneFixed || 'N/A'}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        {professional.city}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-yellow-500" />
+                        <span>{professional.rating}/5</span>
+                        <span className="text-gray-500">({professional.reviewCount} recensioni)</span>
+                      </div>
                       <div>
-                        <p className="font-medium">{professional.businessName}</p>
-                        <p className="text-sm text-gray-500">{professional.user?.name}</p>
+                        <span className="text-gray-500">Categoria:</span> {professional.category.name}
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{professional.category?.name}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center text-sm">
-                        <MapPin className="w-3 h-3 mr-1" />
-                        {professional.city}, {professional.province}
+                      <div>
+                        <span className="text-gray-500">Completezza:</span> {professional.profileCompleteness}%
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1 text-xs">
-                        {professional.phone && (
-                          <div className="flex items-center">
-                            <Phone className="w-3 h-3 mr-1" />
-                            {professional.phone}
-                          </div>
-                        )}
-                        <div className="flex items-center">
-                          <Mail className="w-3 h-3 mr-1" />
-                          {professional.email}
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        {formatDate(professional.createdAt)}
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        {professional.isVerified ? (
-                          <Badge className="bg-green-100 text-green-700">
-                            <ShieldCheck className="w-3 h-3 mr-1" />
-                            Verificato
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">
-                            <Shield className="w-3 h-3 mr-1" />
-                            Non verificato
-                          </Badge>
-                        )}
-                        {professional.subscription?.status === 'active' ? (
-                          <Badge className="bg-purple-100 text-purple-700">
-                            <Crown className="w-3 h-3 mr-1" />
-                            {professional.subscription.plan?.name || 'Piano Premium'}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-gray-600 border-gray-300">
-                            Piano Gratuito
-                          </Badge>
-                        )}
+                    </div>
+
+                    {professional.subscription && (
+                      <div className="mt-2">
+                        <Badge variant="outline" className="text-xs">
+                          Piano {professional.subscription.plan.name} - {professional.subscription.status}
+                        </Badge>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div className="font-medium">{Number(professional.rating).toFixed(1)}/5</div>
-                        <div className="text-gray-500">{professional.reviewCount} recensioni</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => toggleVerificationMutation.mutate({
-                            id: professional.id,
-                            verified: !professional.isVerified
-                          })}
-                        >
-                          {professional.isVerified ? "Rimuovi Verifica" : "Verifica"}
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Edit className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteMutation.mutate(professional.id)}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 ml-4">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => window.open(`/professional/${professional.id}`, '_blank')}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => window.open(`/admin/professionals/${professional.id}/edit`, '_blank')}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  
+                  {professional.verificationStatus === 'pending' && (
+                    <>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="text-green-600 hover:text-green-700"
+                        onClick={() => handleVerify(professional.id, 'approved')}
+                        disabled={verifyProfessionalMutation.isPending}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="text-red-600 hover:text-red-700"
+                        onClick={() => handleVerify(professional.id, 'rejected')}
+                        disabled={verifyProfessionalMutation.isPending}
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                  
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    className="text-red-600 hover:text-red-700"
+                    onClick={() => handleDelete(professional.id)}
+                    disabled={deleteProfessionalMutation.isPending}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Pagination */}
+      {professionalsData && professionalsData.pages > 1 && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">
+                Pagina {currentPage} di {professionalsData.pages}
+              </span>
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                >
+                  Precedente
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  disabled={currentPage === professionalsData.pages}
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                >
+                  Successiva
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

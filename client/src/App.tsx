@@ -13,7 +13,7 @@ import ProfessionalProfile from "@/pages/professional-profile";
 import ClaimProfile from "@/pages/claim-profile";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdvancedDashboard from "@/pages/admin/advanced-dashboard";
-import AdminProfessionals from "@/pages/admin/professionals-advanced";
+import AdminProfessionals from "@/pages/admin/professionals";
 import AddProfessional from "@/pages/admin/add-professional";
 import AdminReviews from "@/pages/admin/reviews-advanced";
 import AdminCategories from "@/pages/admin/categories";

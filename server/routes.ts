@@ -3740,6 +3740,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin dashboard endpoints
+  app.get("/api/admin/dashboard-stats", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const timeRange = (req.query.timeRange as string) || '30d';
+      const now = new Date();
+      let startDate = new Date();
+      
+      switch (timeRange) {
+        case '24h':
+          startDate.setDate(now.getDate() - 1);
+          break;
+        case '7d':
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case '30d':
+          startDate.setDate(now.getDate() - 30);
+          break;
+        case '90d':
+          startDate.setDate(now.getDate() - 90);
+          break;
+      }
+
+      // Active users stats
+      const activeUsersToday = await storage.getActiveUsersCount(new Date(now.getTime() - 24 * 60 * 60 * 1000), now);
+      const activeUsersWeek = await storage.getActiveUsersCount(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), now);
+      const activeUsersMonth = await storage.getActiveUsersCount(startDate, now);
+      const previousPeriod = await storage.getActiveUsersCount(
+        new Date(startDate.getTime() - (now.getTime() - startDate.getTime())), 
+        startDate
+      );
+      
+      // Reviews stats
+      const totalReviews = await storage.getReviewsCount();
+      const verifiedReviews = await storage.getVerifiedReviewsCount();
+      const pendingReviews = await storage.getPendingReviewsCount();
+      const rejectedReviews = await storage.getRejectedReviewsCount();
+      const newReviewsToday = await storage.getNewReviewsCount(new Date(now.getTime() - 24 * 60 * 60 * 1000), now);
+      const avgVerificationTime = await storage.getAverageVerificationTime();
+
+      // Professionals stats
+      const totalProfessionals = await storage.getProfessionalsCount();
+      const verifiedProfessionals = await storage.getVerifiedProfessionalsCount();
+      const pendingProfessionals = await storage.getPendingProfessionalsCount();
+      const newProfessionalsWeek = await storage.getNewProfessionalsCount(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), now);
+      const conversionRate = totalProfessionals > 0 ? (verifiedProfessionals / totalProfessionals * 100) : 0;
+
+      // Revenue stats
+      const monthlyRevenue = await storage.getMonthlyRevenue(now.getMonth() + 1, now.getFullYear());
+      const projectedRevenue = monthlyRevenue * (30 / now.getDate());
+      const activeSubscriptions = await storage.getActiveSubscriptionsCount();
+      const subscriptionConversion = totalProfessionals > 0 ? (activeSubscriptions / totalProfessionals * 100) : 0;
+      const averageRevenue = activeSubscriptions > 0 ? (monthlyRevenue / activeSubscriptions) : 0;
+
+      const stats = {
+        activeUsers: {
+          today: activeUsersToday,
+          week: activeUsersWeek,
+          month: activeUsersMonth,
+          previousPeriod: previousPeriod,
+          changePercent: previousPeriod > 0 ? ((activeUsersMonth - previousPeriod) / previousPeriod * 100) : 0
+        },
+        reviews: {
+          total: totalReviews,
+          verified: verifiedReviews,
+          pending: pendingReviews,
+          rejected: rejectedReviews,
+          newToday: newReviewsToday,
+          averageVerificationTime: avgVerificationTime
+        },
+        professionals: {
+          total: totalProfessionals,
+          verified: verifiedProfessionals,
+          pending: pendingProfessionals,
+          newThisWeek: newProfessionalsWeek,
+          conversionRate: Math.round(conversionRate * 10) / 10
+        },
+        revenue: {
+          monthToDate: monthlyRevenue,
+          projectedMonthly: projectedRevenue,
+          subscriptionConversion: Math.round(subscriptionConversion * 10) / 10,
+          averageRevenue: averageRevenue
+        }
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      res.status(500).json({ error: "Error fetching dashboard statistics" });
+    }
+  });
+
+  app.get("/api/admin/advanced-metrics", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const timeRange = (req.query.timeRange as string) || '30d';
+      
+      // Mock advanced metrics for now - would be implemented with analytics service
+      const metrics = {
+        userEngagement: {
+          averageSessionDuration: 8.5,
+          pagesPerSession: 4.2,
+          bounceRate: 32.1,
+          returnVisitorRate: 64.8
+        },
+        systemPerformance: {
+          averageResponseTime: 120,
+          errorRate: 0.5,
+          uptime: 99.9,
+          apiRequestCount: 125430
+        },
+        businessMetrics: {
+          customerLifetimeValue: 180.50,
+          churnRate: 5.2,
+          mrr: 3250.00,
+          arpu: 45.80
+        }
+      };
+
+      res.json(metrics);
+    } catch (error) {
+      console.error('Error fetching advanced metrics:', error);
+      res.status(500).json({ error: "Error fetching advanced metrics" });
+    }
+  });
+
+  app.get("/api/admin/suspicious-activity", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      // Get recent suspicious activities from database
+      const activities = await storage.getRecentSuspiciousActivities();
+      res.json(activities);
+    } catch (error) {
+      console.error('Error fetching suspicious activities:', error);
+      res.status(500).json({ error: "Error fetching suspicious activities" });
+    }
+  });
+
   // Badge system routes
   app.post("/api/badges/evaluate/:professionalId", authService.requireRole(['admin']), async (req, res) => {
     try {
