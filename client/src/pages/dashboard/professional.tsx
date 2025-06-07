@@ -32,7 +32,8 @@ import {
   CheckCircle,
   AlertCircle,
   Zap,
-  RefreshCw
+  RefreshCw,
+  Building2
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
