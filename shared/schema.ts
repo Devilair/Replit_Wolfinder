@@ -1134,6 +1134,7 @@ export type InsertBadge = z.infer<typeof insertBadgeSchema>;
 export type ProfessionalBadge = typeof professionalBadges.$inferSelect;
 export type InsertProfessionalBadge = z.infer<typeof insertProfessionalBadgeSchema>;
 export type BadgeMetric = typeof badgeMetrics.$inferSelect;
+export type InsertBadgeMetric = typeof badgeMetrics.$inferInsert;
 export type Consumer = typeof consumers.$inferSelect;
 export type InsertConsumer = z.infer<typeof insertConsumerSchema>;
 export type Plan = typeof plans.$inferSelect;
