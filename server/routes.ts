@@ -4102,45 +4102,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { search, action, targetType, limit = 50, offset = 0 } = req.query;
       
-      let query = db.select({
-        id: auditLogs.id,
-        userId: auditLogs.userId,
-        action: auditLogs.action,
-        targetType: auditLogs.entityType,
-        targetId: auditLogs.entityId,
-        oldValues: auditLogs.oldValues,
-        newValues: auditLogs.newValues,
-        ipAddress: auditLogs.ipAddress,
-        userAgent: auditLogs.userAgent,
-        createdAt: auditLogs.createdAt,
+      // Get audit logs with user information
+      const rawLogs = await db
+        .select({
+          id: auditLogs.id,
+          userId: auditLogs.userId,
+          action: auditLogs.action,
+          targetType: auditLogs.entityType,
+          targetId: auditLogs.entityId,
+          oldValues: auditLogs.oldValues,
+          newValues: auditLogs.newValues,
+          ipAddress: auditLogs.ipAddress,
+          userAgent: auditLogs.userAgent,
+          createdAt: auditLogs.createdAt,
+          userName: users.name,
+          userEmail: users.email
+        })
+        .from(auditLogs)
+        .leftJoin(users, eq(auditLogs.userId, users.id))
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(Number(limit))
+        .offset(Number(offset));
+
+      // Transform to match frontend expectations
+      const logs = rawLogs.map(log => ({
+        id: log.id,
+        userId: log.userId,
+        action: log.action,
+        targetType: log.targetType,
+        targetId: log.targetId,
+        oldValues: log.oldValues,
+        newValues: log.newValues,
+        ipAddress: log.ipAddress,
+        userAgent: log.userAgent,
+        createdAt: log.createdAt,
         user: {
-          firstName: users.firstName,
-          lastName: users.lastName,
-          email: users.email
+          firstName: log.userName || 'Unknown',
+          lastName: '',
+          email: log.userEmail || 'Unknown'
         }
-      })
-      .from(auditLogs)
-      .leftJoin(users, eq(auditLogs.userId, users.id))
-      .orderBy(desc(auditLogs.createdAt));
-
-      if (search) {
-        query = query.where(
-          or(
-            ilike(auditLogs.action, `%${search}%`),
-            ilike(users.email, `%${search}%`)
-          )
-        );
-      }
-
-      if (action && action !== 'all') {
-        query = query.where(ilike(auditLogs.action, `%${action}%`));
-      }
-
-      if (targetType && targetType !== 'all') {
-        query = query.where(eq(auditLogs.entityType, targetType as string));
-      }
-
-      const logs = await query.limit(Number(limit)).offset(Number(offset));
+      }));
       
       res.json(logs);
     } catch (error) {
