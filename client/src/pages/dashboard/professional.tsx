@@ -341,6 +341,43 @@ export default function ProfessionalDashboard() {
             </div>
           </TabsContent>
 
+          {/* Badges Tab */}
+          <TabsContent value="badges" className="space-y-6">
+            <Card className="border-0 shadow-lg bg-gradient-to-r from-yellow-500 to-orange-600 text-white">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-1 flex items-center">
+                      <Award className="w-6 h-6 mr-2" />
+                      I Tuoi Badge Professionali
+                    </h2>
+                    <p className="text-yellow-100">Gestisci e visualizza i tuoi badge ottenuti</p>
+                  </div>
+                  <Button 
+                    size="lg" 
+                    className="bg-white text-orange-600 hover:bg-orange-50 font-semibold px-6"
+                    onClick={() => checkBadgesMutation.mutate()}
+                    disabled={checkBadgesMutation.isPending}
+                  >
+                    {checkBadgesMutation.isPending ? (
+                      <div className="animate-spin w-4 h-4 mr-2 border-2 border-orange-600 border-t-transparent rounded-full" />
+                    ) : (
+                      <Shield className="w-4 h-4 mr-2" />
+                    )}
+                    Controlla Badge
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <BadgesList 
+              badges={badges} 
+              isLoading={badgesLoading}
+              onCheckAutomaticBadges={() => checkBadgesMutation.mutate()}
+              canCheckBadges={!checkBadgesMutation.isPending}
+            />
+          </TabsContent>
+
           {/* Profile Tab */}
           <TabsContent value="profile" className="space-y-6">
             {professionalData ? (
