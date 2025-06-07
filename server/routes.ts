@@ -2340,6 +2340,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // =====================================================
+  // PROFESSIONAL BADGE MANAGEMENT ROUTES
+  // =====================================================
+
+  // Get professional's own badges (authenticated)
+  app.get("/api/professional/badges", authService.authenticateToken, authService.requireRole(['professional']), async (req: any, res) => {
+    try {
+      const user = req.user;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      const badges = await storage.getProfessionalBadges(professional.id);
+      res.json(badges);
+    } catch (error) {
+      console.error("Error fetching professional badges:", error);
+      res.status(500).json({ message: "Failed to fetch badges" });
+    }
+  });
+
+  // Check and award automatic badges for professional
+  app.post("/api/professional/badges/check-automatic", authService.authenticateToken, authService.requireRole(['professional']), async (req: any, res) => {
+    try {
+      const user = req.user;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      const newBadges = await storage.checkAutomaticBadges(professional.id);
+      res.json({ 
+        success: true, 
+        message: newBadges.length > 0 ? `${newBadges.length} nuovi badge ottenuti!` : "Nessun nuovo badge disponibile",
+        newBadges: newBadges
+      });
+    } catch (error) {
+      console.error("Error checking automatic badges:", error);
+      res.status(500).json({ message: "Failed to check automatic badges" });
+    }
+  });
+
+  // =====================================================
   // BADGE SYSTEM ROUTES
   // =====================================================
 
