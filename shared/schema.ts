@@ -1116,3 +1116,17 @@ export const insertEventSchema = createInsertSchema(events).omit({
   id: true, 
   createdAt: true 
 });
+
+// Types per nuove tabelle
+export type Badge = typeof badges.$inferSelect;
+export type InsertBadge = z.infer<typeof insertBadgeSchema>;
+export type ProfessionalBadge = typeof professionalBadges.$inferSelect;
+export type InsertProfessionalBadge = z.infer<typeof insertProfessionalBadgeSchema>;
+export type Consumer = typeof consumers.$inferSelect;
+export type InsertConsumer = z.infer<typeof insertConsumerSchema>;
+export type Plan = typeof plans.$inferSelect;
+export type InsertPlan = z.infer<typeof insertPlanSchema>;
+export type ProfessionalPlan = typeof professionalPlans.$inferSelect;
+export type InsertProfessionalPlan = z.infer<typeof insertProfessionalPlanSchema>;
+export type Event = typeof events.$inferSelect;
+export type InsertEvent = z.infer<typeof insertEventSchema>;
