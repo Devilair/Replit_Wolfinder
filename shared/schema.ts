@@ -1035,16 +1035,18 @@ export const badges = pgTable("badges", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   slug: text("slug").notNull().unique(),
-  family: text("family").notNull(), // 'automatic', 'quality', 'growth', 'verification'
-  icon: text("icon").notNull(),
-  color: text("color").notNull(),
   description: text("description").notNull(),
-  requirements: text("requirements").array().notNull(),
-  calculationMethod: text("calculation_method").notNull(), // 'automatic', 'manual', 'hybrid'
-  priority: integer("priority").notNull(),
+  type: text("type").notNull(), // Required column that exists in database
+  icon: text("icon"),
+  color: text("color"),
+  requirements: jsonb("requirements"), // Changed to jsonb to match database
   isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  family: text("family"), // Optional column we added
+  calculationMethod: text("calculation_method"), // Optional column we added
+  priority: integer("priority"), // Optional column we added
 });
 
 export const professionalBadges = pgTable("professional_badges", {

@@ -78,6 +78,7 @@ export interface IStorage {
 
   // Badge System
   getBadges(): Promise<Badge[]>;
+  getAllBadges(): Promise<Badge[]>;
   getBadge(id: number): Promise<Badge | undefined>;
   createBadge(badge: InsertBadge): Promise<Badge>;
   getProfessionalBadges(professionalId: number): Promise<(ProfessionalBadge & { badge: Badge })[]>;
