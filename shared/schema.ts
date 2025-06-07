@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, jsonb, index, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -325,6 +325,52 @@ export const professionalCertifications = pgTable("professional_certifications",
   verifiedBy: integer("verified_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Sistema Badge Meritocratico
+export const badges = pgTable("badges", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  family: text("family").notNull(), // 'automatic', 'quality', 'growth', 'verification'
+  icon: text("icon").notNull(),
+  color: text("color").notNull(),
+  description: text("description").notNull(),
+  requirements: text("requirements").array().notNull(), // Array of requirements
+  calculationMethod: text("calculation_method").notNull(), // 'automatic', 'manual', 'hybrid'
+  decayEnabled: boolean("decay_enabled").default(false),
+  decayPeriod: text("decay_period"), // 'monthly', 'quarterly', 'yearly'
+  decayConditions: text("decay_conditions").array(), // Array of decay conditions
+  priority: integer("priority").notNull(), // Display order
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const professionalBadges = pgTable("professional_badges", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  badgeId: integer("badge_id").references(() => badges.id).notNull(),
+  earnedAt: timestamp("earned_at").defaultNow().notNull(),
+  awardedBy: text("awarded_by").default("system"), // 'system', 'admin', 'peer'
+  metadataSnapshot: jsonb("metadata_snapshot"), // Capture metrics at time of earning
+  isVisible: boolean("is_visible").default(true),
+  revokedAt: timestamp("revoked_at"),
+  revokedBy: integer("revoked_by").references(() => users.id),
+  revokedReason: text("revoked_reason"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueProfessionalBadge: unique().on(table.professionalId, table.badgeId),
+}));
+
+export const badgeMetrics = pgTable("badge_metrics", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  metricType: text("metric_type").notNull(), // 'reviews_count', 'avg_rating', 'response_time', etc.
+  value: decimal("value", { precision: 10, scale: 2 }).notNull(),
+  calculatedAt: timestamp("calculated_at").defaultNow().notNull(),
+  period: text("period"), // 'all_time', 'yearly', 'monthly'
+  metadata: jsonb("metadata"), // Additional context
 });
 
 // Servizi offerti dal professionista
@@ -786,45 +832,7 @@ export const auditLogs = pgTable("audit_logs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Tabelle per sistema badge
-export const badges = pgTable("badges", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
-  slug: text("slug").notNull().unique(),
-  description: text("description").notNull(),
-  type: text("type").notNull(), // 'automatic', 'verified', 'achievement'
-  icon: text("icon"), // Nome icona o SVG
-  color: text("color").default("#3B82F6"), // Colore hex
-  requirements: jsonb("requirements"), // Criteri per badge automatici
-  isActive: boolean("is_active").default(true).notNull(),
-  sortOrder: integer("sort_order").default(0),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
 
-export const professionalBadges = pgTable("professional_badges", {
-  id: serial("id").primaryKey(),
-  professionalId: integer("professional_id").references(() => professionals.id, { onDelete: "cascade" }).notNull(),
-  badgeId: integer("badge_id").references(() => badges.id, { onDelete: "cascade" }).notNull(),
-  awardedAt: timestamp("awarded_at").defaultNow().notNull(),
-  awardedBy: integer("awarded_by").references(() => users.id), // Per badge verificati manualmente
-  expiresAt: timestamp("expires_at"), // Per badge che scadono
-  metadata: jsonb("metadata"), // Dati aggiuntivi (punteggio, note)
-  isVisible: boolean("is_visible").default(true).notNull(),
-  revokedAt: timestamp("revoked_at"),
-  revokedBy: integer("revoked_by").references(() => users.id),
-  revokeReason: text("revoke_reason"),
-});
-
-export const badgeAuditLog = pgTable("badge_audit_log", {
-  id: serial("id").primaryKey(),
-  professionalBadgeId: integer("professional_badge_id").references(() => professionalBadges.id).notNull(),
-  action: text("action").notNull(), // 'awarded', 'revoked', 'expired', 'renewed'
-  performedBy: integer("performed_by").references(() => users.id),
-  reason: text("reason"),
-  metadata: jsonb("metadata"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
 
 // Tabella per utenti consumer (clienti finali)
 export const consumers = pgTable("consumers", {
@@ -930,8 +938,17 @@ export const professionalBadgesRelations = relations(professionalBadges, ({ one,
     fields: [professionalBadges.revokedBy],
     references: [users.id],
   }),
-  auditLogs: many(badgeAuditLog),
 }));
+
+export const badgeAuditLog = pgTable("badge_audit_log", {
+  id: serial("id").primaryKey(),
+  professionalBadgeId: integer("professional_badge_id").references(() => professionalBadges.id).notNull(),
+  action: text("action").notNull(), // 'awarded', 'revoked', 'expired', 'renewed'
+  performedBy: integer("performed_by").references(() => users.id),
+  reason: text("reason"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 export const badgeAuditLogRelations = relations(badgeAuditLog, ({ one }) => ({
   professionalBadge: one(professionalBadges, {
@@ -1122,6 +1139,7 @@ export type Badge = typeof badges.$inferSelect;
 export type InsertBadge = z.infer<typeof insertBadgeSchema>;
 export type ProfessionalBadge = typeof professionalBadges.$inferSelect;
 export type InsertProfessionalBadge = z.infer<typeof insertProfessionalBadgeSchema>;
+export type BadgeMetric = typeof badgeMetrics.$inferSelect;
 export type Consumer = typeof consumers.$inferSelect;
 export type InsertConsumer = z.infer<typeof insertConsumerSchema>;
 export type Plan = typeof plans.$inferSelect;
