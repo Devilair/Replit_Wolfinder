@@ -37,7 +37,6 @@ import {
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { BadgesWidget } from "@/components/BadgesWidget";
-import { BadgesList } from "@/components/BadgesList";
 import { BadgeProgressCard } from "@/components/BadgeProgressCard";
 
 interface ProfessionalData {
@@ -70,6 +69,7 @@ interface SubscriptionPlan {
   features: string[];
   current: boolean;
 }
+
 
 
 
@@ -366,13 +366,8 @@ export default function ProfessionalDashboard() {
                 </Button>
               </div>
 
-              {/* Badge Progress Cards - Use existing BadgesList component */}
-              <BadgesList 
-                badges={badges} 
-                isLoading={badgesLoading}
-                onCheckAutomaticBadges={() => checkBadgesMutation.mutate()}
-                canCheckBadges={!checkBadgesMutation.isPending}
-              />
+              {/* Badge Progress Cards */}
+              <BadgeProgressDisplay />
             </div>
           </TabsContent>
 
