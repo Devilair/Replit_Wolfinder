@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, Star, TrendingUp, Shield, Clock, Users, Target } from "lucide-react";
+import { Award, Star, TrendingUp, Shield, Clock, Users, Target, BarChart3 } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -116,6 +117,16 @@ export default function BadgeDashboard() {
     }
   };
 
+  // Data for progress charts
+  const progressData = [
+    { name: 'Esperienza', earned: badgeStats.byFamily.esperienza, total: 4, color: '#3B82F6' },
+    { name: 'Qualità', earned: badgeStats.byFamily.qualita, total: 4, color: '#F59E0B' },
+    { name: 'Engagement', earned: badgeStats.byFamily.engagement, total: 4, color: '#10B981' },
+    { name: 'Eccellenza', earned: badgeStats.byFamily.eccellenza, total: 4, color: '#8B5CF6' },
+  ];
+
+  const overallProgress = badgeStats.total > 0 ? (badgeStats.earned / badgeStats.total) * 100 : 0;
+
   if (badgesLoading || profBadgesLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -187,6 +198,79 @@ export default function BadgeDashboard() {
             </Card>
           );
         })}
+      </div>
+
+      {/* Progress Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Progresso per Famiglia
+            </CardTitle>
+            <CardDescription>
+              Visualizza il progresso dei badge diviso per famiglia
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={progressData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="earned" fill="#8884d8" name="Ottenuti" />
+                <Bar dataKey="total" fill="#e0e0e0" name="Totali" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Progresso Complessivo
+            </CardTitle>
+            <CardDescription>
+              {badgeStats.earned} di {badgeStats.total} badge ottenuti
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-center">
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Ottenuti', value: badgeStats.earned, fill: '#10B981' },
+                      { name: 'Rimanenti', value: badgeStats.total - badgeStats.earned, fill: '#e0e0e0' }
+                    ]}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {[
+                      { name: 'Ottenuti', value: badgeStats.earned, fill: '#10B981' },
+                      { name: 'Rimanenti', value: badgeStats.total - badgeStats.earned, fill: '#e0e0e0' }
+                    ].map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600">
+                {overallProgress.toFixed(1)}%
+              </div>
+              <p className="text-sm text-muted-foreground">Completamento</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs value={selectedFamily} onValueChange={setSelectedFamily}>

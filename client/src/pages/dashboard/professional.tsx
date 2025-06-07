@@ -326,10 +326,14 @@ export default function ProfessionalDashboard() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                       <Button onClick={openEditModal} className="bg-blue-600 hover:bg-blue-700">
                         <Edit className="w-4 h-4 mr-2" />
                         Modifica Profilo
+                      </Button>
+                      <Button variant="outline" onClick={() => window.location.href = '/badge-dashboard'}>
+                        <Award className="w-4 h-4 mr-2" />
+                        Badge Dashboard
                       </Button>
                       <Button variant="outline">
                         <Users className="w-4 h-4 mr-2" />
