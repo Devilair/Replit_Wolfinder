@@ -11,7 +11,7 @@ import {
   type SubscriptionPlan, type InsertSubscriptionPlan, type Subscription, type InsertSubscription,
   type Transaction, type InsertTransaction, type ClaimRequest, type InsertClaimRequest
 } from "@shared/schema";
-import { eq, and, or, like, desc, asc, isNull, sql, count } from "drizzle-orm";
+import { eq, and, or, like, desc, asc, isNull, sql, count, gte, lte } from "drizzle-orm";
 import crypto from "crypto";
 
 // Types for aggregated data
@@ -892,34 +892,6 @@ export class DatabaseStorage implements IStorage {
   // Badge System Methods
   async getAllBadges(): Promise<Badge[]> {
     const result = await db.select().from(badges).where(eq(badges.isActive, true));
-    return result;
-  }
-
-  async createBadge(badgeData: InsertBadge): Promise<Badge> {
-    const [badge] = await db.insert(badges).values(badgeData).returning();
-    return badge;
-  }
-
-  async getProfessionalBadges(professionalId: number): Promise<any[]> {
-    const result = await db.select({
-      id: professionalBadges.id,
-      professionalId: professionalBadges.professionalId,
-      badgeId: professionalBadges.badgeId,
-      earnedAt: professionalBadges.awardedAt,
-      awardedBy: professionalBadges.awardedBy,
-      metadataSnapshot: professionalBadges.metadataSnapshot,
-      isVisible: professionalBadges.isVisible,
-      revokedAt: professionalBadges.revokedAt,
-      revokedBy: professionalBadges.revokedBy,
-      revokedReason: professionalBadges.revokedReason,
-      createdAt: professionalBadges.createdAt,
-      badge: badges
-    })
-    .from(professionalBadges)
-    .innerJoin(badges, eq(professionalBadges.badgeId, badges.id))
-    .where(eq(professionalBadges.professionalId, professionalId))
-    .orderBy(professionalBadges.earnedAt);
-    
     return result;
   }
 

@@ -437,7 +437,7 @@ export default function AdminDashboard() {
                         <p className="text-sm text-gray-600">{activity.description}</p>
                         <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
                           <span>Confidenza: {activity.confidence}%</span>
-                          <span>Entità coinvolte: {activity.affectedEntities.length}</span>
+                          <span>Entità coinvolte: {activity.affectedEntities?.length || 0}</span>
                         </div>
                       </div>
                       <Button size="sm" variant="outline">
