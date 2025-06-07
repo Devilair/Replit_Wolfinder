@@ -326,6 +326,265 @@ export class EmailService {
       </html>
     `;
   }
+
+  async sendPaymentSuccessNotification(
+    professionalId: number,
+    paymentData: {
+      planName: string;
+      amount: number;
+      currency: string;
+      invoiceUrl: string;
+      periodEnd: Date;
+    }
+  ): Promise<boolean> {
+    try {
+      const professional = await storage.getProfessional(professionalId);
+      if (!professional) {
+        console.error(`Professional not found: ${professionalId}`);
+        return false;
+      }
+
+      const { subject, html, text } = this.generatePaymentSuccessEmailContent(
+        professional.businessName || `${professional.firstName} ${professional.lastName}`,
+        paymentData
+      );
+
+      const notificationData: InsertProfessionalNotification = {
+        professionalId,
+        type: 'payment_success',
+        recipient: professional.email,
+        subject,
+        content: html,
+        metadata: {
+          planName: paymentData.planName,
+          amount: paymentData.amount,
+          currency: paymentData.currency
+        }
+      };
+
+      const notification = await this.logNotification(notificationData);
+
+      if (this.mailService) {
+        await this.mailService.send({
+          to: professional.email,
+          from: 'noreply@wolfinder.it',
+          subject,
+          html,
+          text
+        });
+
+        await this.updateNotificationStatus(notification.id, 'sent');
+        console.log(`Payment success notification sent to ${professional.email}`);
+        return true;
+      } else {
+        await this.updateNotificationStatus(notification.id, 'failed', 'SendGrid API key not configured');
+        console.log(`Payment success notification logged for ${professional.email} (email service not configured)`);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error sending payment success notification:', error);
+      return false;
+    }
+  }
+
+  async sendPaymentFailedNotification(
+    professionalId: number,
+    failureData: {
+      planName: string;
+      amount: number;
+      currency: string;
+      gracePeriodEnd: Date;
+      attemptCount: number;
+      retryUrl: string;
+    }
+  ): Promise<boolean> {
+    try {
+      const professional = await storage.getProfessional(professionalId);
+      if (!professional) {
+        console.error(`Professional not found: ${professionalId}`);
+        return false;
+      }
+
+      const { subject, html, text } = this.generatePaymentFailedEmailContent(
+        professional.businessName || `${professional.firstName} ${professional.lastName}`,
+        failureData
+      );
+
+      const notificationData: InsertProfessionalNotification = {
+        professionalId,
+        type: 'payment_failed',
+        recipient: professional.email,
+        subject,
+        content: html,
+        metadata: {
+          planName: failureData.planName,
+          amount: failureData.amount,
+          currency: failureData.currency,
+          attemptCount: failureData.attemptCount
+        }
+      };
+
+      const notification = await this.logNotification(notificationData);
+
+      if (this.mailService) {
+        await this.mailService.send({
+          to: professional.email,
+          from: 'noreply@wolfinder.it',
+          subject,
+          html,
+          text
+        });
+
+        await this.updateNotificationStatus(notification.id, 'sent');
+        console.log(`Payment failed notification sent to ${professional.email}`);
+        return true;
+      } else {
+        await this.updateNotificationStatus(notification.id, 'failed', 'SendGrid API key not configured');
+        console.log(`Payment failed notification logged for ${professional.email} (email service not configured)`);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error sending payment failed notification:', error);
+      return false;
+    }
+  }
+
+  private generatePaymentSuccessEmailContent(
+    professionalName: string,
+    paymentData: {
+      planName: string;
+      amount: number;
+      currency: string;
+      invoiceUrl: string;
+      periodEnd: Date;
+    }
+  ): { subject: string; html: string; text: string } {
+    const subject = `Pagamento confermato - Piano ${paymentData.planName}`;
+    
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #10b981; color: white; padding: 20px; text-align: center;">
+          <h2 style="margin: 0;">✅ Pagamento Confermato</h2>
+        </div>
+        <div style="padding: 30px;">
+          <p>Ciao ${professionalName},</p>
+          <p>Il tuo pagamento è stato elaborato con successo!</p>
+          
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #374151;">Dettagli Abbonamento</h3>
+            <p><strong>Piano:</strong> ${paymentData.planName}</p>
+            <p><strong>Importo:</strong> ${paymentData.amount} ${paymentData.currency}</p>
+            <p><strong>Valido fino al:</strong> ${paymentData.periodEnd.toLocaleDateString('it-IT')}</p>
+          </div>
+
+          <p>Il tuo abbonamento è ora attivo e puoi accedere a tutte le funzionalità premium.</p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="https://wolfinder.it/dashboard" 
+               style="background-color: #2563eb; color: white; padding: 12px 24px; 
+                      text-decoration: none; border-radius: 6px; display: inline-block;">
+              Vai alla Dashboard
+            </a>
+          </div>
+
+          <div style="text-align: center; margin: 20px 0;">
+            <a href="${paymentData.invoiceUrl}" 
+               style="color: #6b7280; text-decoration: none; font-size: 14px;">
+              Scarica Fattura
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const text = `
+      Pagamento Confermato - Piano ${paymentData.planName}
+      
+      Ciao ${professionalName},
+      
+      Il tuo pagamento è stato elaborato con successo!
+      
+      Piano: ${paymentData.planName}
+      Importo: ${paymentData.amount} ${paymentData.currency}
+      Valido fino al: ${paymentData.periodEnd.toLocaleDateString('it-IT')}
+      
+      Dashboard: https://wolfinder.it/dashboard
+      Fattura: ${paymentData.invoiceUrl}
+    `;
+    
+    return { subject, html, text };
+  }
+
+  private generatePaymentFailedEmailContent(
+    professionalName: string,
+    failureData: {
+      planName: string;
+      amount: number;
+      currency: string;
+      gracePeriodEnd: Date;
+      attemptCount: number;
+      retryUrl: string;
+    }
+  ): { subject: string; html: string; text: string } {
+    const subject = `⚠️ Problema con il pagamento - Piano ${failureData.planName}`;
+    
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #ef4444; color: white; padding: 20px; text-align: center;">
+          <h2 style="margin: 0;">⚠️ Pagamento non riuscito</h2>
+        </div>
+        <div style="padding: 30px;">
+          <p>Ciao ${professionalName},</p>
+          <p>Non siamo riusciti a elaborare il pagamento per il tuo abbonamento.</p>
+          
+          <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #dc2626;">Dettagli</h3>
+            <p><strong>Piano:</strong> ${failureData.planName}</p>
+            <p><strong>Importo:</strong> ${failureData.amount} ${failureData.currency}</p>
+            <p><strong>Tentativo:</strong> ${failureData.attemptCount}</p>
+          </div>
+
+          <div style="background-color: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 20px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #0284c7;">Periodo di Grazia</h3>
+            <p>Il tuo abbonamento rimane attivo fino al <strong>${failureData.gracePeriodEnd.toLocaleDateString('it-IT')}</strong>.</p>
+            <p>Aggiorna il tuo metodo di pagamento entro questa data per evitare interruzioni del servizio.</p>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${failureData.retryUrl}" 
+               style="background-color: #dc2626; color: white; padding: 12px 24px; 
+                      text-decoration: none; border-radius: 6px; display: inline-block;">
+              Aggiorna Pagamento
+            </a>
+          </div>
+
+          <p style="color: #6b7280; font-size: 14px;">
+            Se hai domande, contatta il nostro supporto: supporto@wolfinder.it
+          </p>
+        </div>
+      </div>
+    `;
+    
+    const text = `
+      Problema con il pagamento - Piano ${failureData.planName}
+      
+      Ciao ${professionalName},
+      
+      Non siamo riusciti a elaborare il pagamento per il tuo abbonamento.
+      
+      Piano: ${failureData.planName}
+      Importo: ${failureData.amount} ${failureData.currency}
+      Tentativo: ${failureData.attemptCount}
+      
+      Periodo di Grazia fino al: ${failureData.gracePeriodEnd.toLocaleDateString('it-IT')}
+      
+      Aggiorna pagamento: ${failureData.retryUrl}
+      
+      Supporto: supporto@wolfinder.it
+    `;
+    
+    return { subject, html, text };
+  }
 }
 
 export const emailService = new EmailService();

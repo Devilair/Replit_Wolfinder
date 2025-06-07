@@ -3585,6 +3585,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (invoice.subscription) {
         const stripeSubscription = await stripe.subscriptions.retrieve(invoice.subscription);
         await handleSubscriptionUpdate(stripeSubscription);
+        
+        // Rimuovi grace period se era attivo
+        const professionalId = parseInt(stripeSubscription.metadata.professionalId);
+        if (professionalId) {
+          const subscription = await storage.getProfessionalSubscription(professionalId);
+          if (subscription && subscription.isInGracePeriod) {
+            await storage.updateSubscription(subscription.id, {
+              isInGracePeriod: false,
+              gracePeriodEnd: null,
+              failedPaymentCount: 0
+            });
+          }
+          
+          // Invia email di conferma pagamento
+          const plan = await storage.getSubscriptionPlan(subscription?.planId || 1);
+          await emailService.sendPaymentSuccessNotification(professionalId, {
+            planName: plan?.name || 'Piano Premium',
+            amount: invoice.amount_paid / 100,
+            currency: invoice.currency.toUpperCase(),
+            invoiceUrl: invoice.hosted_invoice_url,
+            periodEnd: new Date(stripeSubscription.current_period_end * 1000)
+          });
+        }
       }
       console.log(`Payment succeeded for invoice ${invoice.id}`);
     } catch (error) {
@@ -3595,16 +3618,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
   async function handlePaymentFailed(invoice: any) {
     try {
       if (invoice.subscription) {
-        const professionalId = parseInt(invoice.subscription_metadata?.professionalId);
+        const stripeSubscription = await stripe.subscriptions.retrieve(invoice.subscription);
+        const professionalId = parseInt(stripeSubscription.metadata.professionalId);
+        
         if (professionalId) {
-          // Could implement notification logic here
-          console.log(`Payment failed for professional ${professionalId}, invoice ${invoice.id}`);
+          const subscription = await storage.getProfessionalSubscription(professionalId);
+          if (subscription) {
+            // Attiva grace period di 7 giorni
+            const gracePeriodEnd = new Date();
+            gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 7);
+            
+            await storage.updateSubscription(subscription.id, {
+              isInGracePeriod: true,
+              gracePeriodEnd: gracePeriodEnd,
+              failedPaymentCount: (subscription.failedPaymentCount || 0) + 1
+            });
+            
+            // Invia email di notifica pagamento fallito
+            const plan = await storage.getSubscriptionPlan(subscription.planId);
+            await emailService.sendPaymentFailedNotification(professionalId, {
+              planName: plan?.name || 'Piano Premium',
+              amount: invoice.amount_due / 100,
+              currency: invoice.currency.toUpperCase(),
+              gracePeriodEnd: gracePeriodEnd,
+              attemptCount: (subscription.failedPaymentCount || 0) + 1,
+              retryUrl: `https://dashboard.stripe.com/invoices/${invoice.id}`
+            });
+            
+            console.log(`Payment failed for professional ${professionalId}, grace period activated until ${gracePeriodEnd}`);
+          }
         }
       }
     } catch (error) {
       console.error('Error handling payment failure:', error);
     }
   }
+
+  // Grace period management endpoint
+  app.post("/api/subscriptions/check-grace-periods", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const now = new Date();
+      const expiredGracePeriods = await storage.getExpiredGracePeriods(now);
+      
+      let processedCount = 0;
+      for (const subscription of expiredGracePeriods) {
+        // Downgrade to free plan
+        const freePlan = await storage.getFreePlan();
+        if (freePlan) {
+          await storage.updateSubscription(subscription.id, {
+            planId: freePlan.id,
+            status: 'canceled',
+            isInGracePeriod: false,
+            gracePeriodEnd: null,
+            cancelAtPeriodEnd: true
+          });
+          
+          // Cancel Stripe subscription
+          if (subscription.stripeSubscriptionId) {
+            await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
+          }
+          
+          // Send downgrade notification
+          await emailService.sendSubscriptionDowngradeNotification(
+            subscription.professionalId,
+            { 
+              previousPlan: subscription.plan?.name || 'Piano Premium',
+              newPlan: freePlan.name,
+              reason: 'Grace period scaduto'
+            }
+          );
+          
+          processedCount++;
+        }
+      }
+      
+      res.json({ 
+        message: `Processed ${processedCount} expired grace periods`,
+        processedCount 
+      });
+    } catch (error) {
+      console.error('Error checking grace periods:', error);
+      res.status(500).json({ error: "Error processing grace periods" });
+    }
+  });
+
+  // Real-time subscription status check
+  app.get("/api/subscription/status", 
+    authService.authenticateToken,
+    authService.requireRole(['professional']),
+    async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      const professional = await storage.getProfessionalByUserId(userId);
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+      
+      const subscription = await storage.getProfessionalSubscription(professional.id);
+      const plan = subscription ? await storage.getSubscriptionPlan(subscription.planId) : null;
+      
+      const status = {
+        hasActiveSubscription: subscription?.status === 'active',
+        isInGracePeriod: subscription?.isInGracePeriod || false,
+        gracePeriodEnd: subscription?.gracePeriodEnd,
+        currentPlan: plan,
+        planLimits: plan ? {
+          reviewsPerMonth: plan.reviewsPerMonth,
+          photosAllowed: plan.photosAllowed,
+          analyticsAccess: plan.analyticsAccess,
+          prioritySupport: plan.prioritySupport,
+          badgeSystem: plan.badgeSystem
+        } : null,
+        usageThisMonth: subscription ? await storage.getProfessionalUsageThisMonth(professional.id) : null
+      };
+      
+      res.json(status);
+    } catch (error) {
+      console.error('Error fetching subscription status:', error);
+      res.status(500).json({ error: "Error fetching subscription status" });
+    }
+  });
 
   // Badge system routes
   app.post("/api/badges/evaluate/:professionalId", authService.requireRole(['admin']), async (req, res) => {
