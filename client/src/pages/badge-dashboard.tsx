@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { Award, Star, TrendingUp, Shield, Clock, Users, Target, BarChart3 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { apiRequest } from "@/lib/queryClient";
@@ -95,6 +96,144 @@ export default function BadgeDashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user", "badges"] });
     }
   });
+
+  // Fetch professional data for progress calculation
+  const { data: professionalData } = useQuery({
+    queryKey: ["/api/professional/profile-complete"],
+  });
+
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["/api/professional/reviews-complete"],
+  });
+
+  // Calculate badge progress based on actual professional data
+  const calculateBadgeProgress = (badge: BadgeData): number => {
+    if (!professionalData) return 0;
+
+    const slug = badge.slug;
+    const reviewCount = reviews.length || 0;
+    const rating = parseFloat(professionalData.rating || "0");
+    const profileViews = professionalData.profileViews || 0;
+    const isVerified = professionalData.isVerified || false;
+    const profileCompleteness = professionalData.profileCompleteness || 0;
+
+    switch (slug) {
+      case 'primo-cliente':
+        return Math.min(100, (reviewCount / 1) * 100);
+      
+      case 'cliente-soddisfatto':
+        return Math.min(100, (reviewCount / 5) * 100);
+      
+      case 'professionista-riconosciuto':
+        return Math.min(100, (reviewCount / 10) * 100);
+      
+      case 'eccellenza-servizio':
+        const ratingProgress = rating >= 4.5 ? 50 : (rating / 4.5) * 50;
+        const reviewProgress = Math.min(50, (reviewCount / 20) * 50);
+        return Math.min(100, ratingProgress + reviewProgress);
+      
+      case 'maestro-categoria':
+        const masterRatingProgress = rating >= 4.8 ? 33 : (rating / 4.8) * 33;
+        const masterReviewProgress = Math.min(33, (reviewCount / 50) * 33);
+        const masterViewProgress = Math.min(34, (profileViews / 1000) * 34);
+        return Math.min(100, masterRatingProgress + masterReviewProgress + masterViewProgress);
+      
+      case 'veterano-piattaforma':
+        return Math.min(100, profileCompleteness);
+      
+      case 'profilo-completo':
+        return profileCompleteness;
+      
+      case 'verificato':
+        return isVerified ? 100 : 0;
+      
+      case 'popolare':
+        return Math.min(100, (profileViews / 500) * 100);
+      
+      case 'influencer':
+        return Math.min(100, (profileViews / 2000) * 100);
+      
+      case 'attivo':
+        return Math.min(100, profileCompleteness * 0.8);
+      
+      case 'responsivo':
+        return Math.min(100, profileCompleteness * 0.7);
+      
+      case 'affidabile':
+        const reliableRating = rating >= 4.0 ? 50 : (rating / 4.0) * 50;
+        const reliableReviews = Math.min(50, (reviewCount / 15) * 50);
+        return Math.min(100, reliableRating + reliableReviews);
+      
+      case 'innovatore':
+        return Math.min(100, profileCompleteness * 0.9);
+      
+      case 'leader-settore':
+        const leaderRating = rating >= 4.7 ? 25 : (rating / 4.7) * 25;
+        const leaderReviews = Math.min(25, (reviewCount / 30) * 25);
+        const leaderViews = Math.min(25, (profileViews / 1500) * 25);
+        const leaderVerified = isVerified ? 25 : 0;
+        return Math.min(100, leaderRating + leaderReviews + leaderViews + leaderVerified);
+      
+      case 'pioniere':
+        return profileCompleteness > 80 ? 100 : 0;
+      
+      default:
+        return 0;
+    }
+  };
+
+  // Get progress message with specific missing requirements
+  const getProgressMessage = (badge: BadgeData): string => {
+    if (!professionalData) return "Caricamento dati...";
+
+    const progress = calculateBadgeProgress(badge);
+    const slug = badge.slug;
+    const reviewCount = reviews.length || 0;
+    const rating = parseFloat(professionalData.rating || "0");
+    const profileViews = professionalData.profileViews || 0;
+    const isVerified = professionalData.isVerified || false;
+    const profileCompleteness = professionalData.profileCompleteness || 0;
+
+    if (progress >= 100) return "Badge pronto per essere assegnato!";
+
+    switch (slug) {
+      case 'primo-cliente':
+        return `Manca ${1 - reviewCount} recensione per ottenere questo badge`;
+      
+      case 'cliente-soddisfatto':
+        return `Mancano ${Math.max(0, 5 - reviewCount)} recensioni per ottenere questo badge`;
+      
+      case 'professionista-riconosciuto':
+        return `Mancano ${Math.max(0, 10 - reviewCount)} recensioni per ottenere questo badge`;
+      
+      case 'eccellenza-servizio':
+        const needRating = rating < 4.5;
+        const needReviews = reviewCount < 20;
+        if (needRating && needReviews) {
+          return `Servono rating ≥4.5 e ${Math.max(0, 20 - reviewCount)} recensioni in più`;
+        } else if (needRating) {
+          return `Serve un rating di almeno 4.5 stelle (attuale: ${rating.toFixed(1)})`;
+        } else if (needReviews) {
+          return `Mancano ${Math.max(0, 20 - reviewCount)} recensioni`;
+        }
+        return "Quasi completato!";
+      
+      case 'profilo-completo':
+        return `Completa il profilo al 100% (attuale: ${profileCompleteness}%)`;
+      
+      case 'verificato':
+        return "Completa la procedura di verifica del profilo";
+      
+      case 'popolare':
+        return `Servono ${Math.max(0, 500 - profileViews)} visualizzazioni in più`;
+      
+      case 'influencer':
+        return `Servono ${Math.max(0, 2000 - profileViews)} visualizzazioni in più`;
+      
+      default:
+        return `Progresso: ${progress.toFixed(0)}%`;
+    }
+  };
 
   const filteredBadges = allBadges?.filter((badge: BadgeData) => 
     selectedFamily === "all" || badge.family === selectedFamily
@@ -318,6 +457,24 @@ export default function BadgeDashboard() {
                     <CardDescription className="mb-3">
                       {badge.description}
                     </CardDescription>
+                    
+                    {!isEarned && (
+                      <div className="mb-4 p-3 bg-blue-50 rounded-lg border">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-blue-900">Progresso verso il badge</span>
+                          <span className="text-sm font-bold text-blue-600">
+                            {calculateBadgeProgress(badge)}%
+                          </span>
+                        </div>
+                        <Progress 
+                          value={calculateBadgeProgress(badge)} 
+                          className="h-2 mb-2" 
+                        />
+                        <p className="text-xs text-blue-700">
+                          {getProgressMessage(badge)}
+                        </p>
+                      </div>
+                    )}
                     
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Requisiti:</p>

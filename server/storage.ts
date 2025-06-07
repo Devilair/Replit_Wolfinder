@@ -898,7 +898,7 @@ export class DatabaseStorage implements IStorage {
       id: professionalBadges.id,
       professionalId: professionalBadges.professionalId,
       badgeId: professionalBadges.badgeId,
-      earnedAt: professionalBadges.earnedAt,
+      earnedAt: professionalBadges.awardedAt,
       awardedBy: professionalBadges.awardedBy,
       metadataSnapshot: professionalBadges.metadataSnapshot,
       isVisible: professionalBadges.isVisible,
