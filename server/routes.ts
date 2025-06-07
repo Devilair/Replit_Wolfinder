@@ -21,6 +21,7 @@ import {
 import { authService } from "./auth";
 import multer from "multer";
 import express from "express";
+import { badgeSystem } from "./badge-system";
 import { 
   insertProfessionalSchema, 
   insertReviewSchema, 
@@ -3511,6 +3512,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error handling payment failure:', error);
     }
   }
+
+  // Badge system routes
+  app.post("/api/badges/evaluate/:professionalId", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.professionalId);
+      const result = await badgeSystem.evaluateProfessionalBadges(professionalId);
+      res.json(result);
+    } catch (error) {
+      console.error("Errore valutazione badge:", error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  app.get("/api/professionals/:id/badges", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      const badges = await badgeSystem.getProfessionalBadges(professionalId);
+      res.json(badges);
+    } catch (error) {
+      console.error("Errore recupero badge:", error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  app.post("/api/badges/initialize", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      await badgeSystem.initializeBadges();
+      res.json({ success: true, message: "Badge inizializzati con successo" });
+    } catch (error) {
+      console.error("Errore inizializzazione badge:", error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  app.get("/api/badges", async (req, res) => {
+    try {
+      const badges = await storage.getAllBadges();
+      res.json(badges);
+    } catch (error) {
+      console.error("Errore recupero tutti i badge:", error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

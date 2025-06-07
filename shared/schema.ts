@@ -327,51 +327,7 @@ export const professionalCertifications = pgTable("professional_certifications",
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Sistema Badge Meritocratico
-export const badges = pgTable("badges", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
-  slug: text("slug").notNull().unique(),
-  family: text("family").notNull(), // 'automatic', 'quality', 'growth', 'verification'
-  icon: text("icon").notNull(),
-  color: text("color").notNull(),
-  description: text("description").notNull(),
-  requirements: text("requirements").array().notNull(), // Array of requirements
-  calculationMethod: text("calculation_method").notNull(), // 'automatic', 'manual', 'hybrid'
-  decayEnabled: boolean("decay_enabled").default(false),
-  decayPeriod: text("decay_period"), // 'monthly', 'quarterly', 'yearly'
-  decayConditions: text("decay_conditions").array(), // Array of decay conditions
-  priority: integer("priority").notNull(), // Display order
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
 
-export const professionalBadges = pgTable("professional_badges", {
-  id: serial("id").primaryKey(),
-  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
-  badgeId: integer("badge_id").references(() => badges.id).notNull(),
-  earnedAt: timestamp("earned_at").defaultNow().notNull(),
-  awardedBy: text("awarded_by").default("system"), // 'system', 'admin', 'peer'
-  metadataSnapshot: jsonb("metadata_snapshot"), // Capture metrics at time of earning
-  isVisible: boolean("is_visible").default(true),
-  revokedAt: timestamp("revoked_at"),
-  revokedBy: integer("revoked_by").references(() => users.id),
-  revokedReason: text("revoked_reason"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-}, (table) => ({
-  uniqueProfessionalBadge: unique().on(table.professionalId, table.badgeId),
-}));
-
-export const badgeMetrics = pgTable("badge_metrics", {
-  id: serial("id").primaryKey(),
-  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
-  metricType: text("metric_type").notNull(), // 'reviews_count', 'avg_rating', 'response_time', etc.
-  value: decimal("value", { precision: 10, scale: 2 }).notNull(),
-  calculatedAt: timestamp("calculated_at").defaultNow().notNull(),
-  period: text("period"), // 'all_time', 'yearly', 'monthly'
-  metadata: jsonb("metadata"), // Additional context
-});
 
 // Servizi offerti dal professionista
 export const professionalServices = pgTable("professional_services", {
@@ -916,29 +872,7 @@ export const events = pgTable("events", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Relations per badge
-export const badgesRelations = relations(badges, ({ many }) => ({
-  professionalBadges: many(professionalBadges),
-}));
 
-export const professionalBadgesRelations = relations(professionalBadges, ({ one, many }) => ({
-  professional: one(professionals, {
-    fields: [professionalBadges.professionalId],
-    references: [professionals.id],
-  }),
-  badge: one(badges, {
-    fields: [professionalBadges.badgeId],
-    references: [badges.id],
-  }),
-  awardedBy: one(users, {
-    fields: [professionalBadges.awardedBy],
-    references: [users.id],
-  }),
-  revokedBy: one(users, {
-    fields: [professionalBadges.revokedBy],
-    references: [users.id],
-  }),
-}));
 
 export const badgeAuditLog = pgTable("badge_audit_log", {
   id: serial("id").primaryKey(),
@@ -1096,7 +1030,50 @@ export const professionalRegistrationSchema = z.object({
 
 export type ProfessionalRegistrationData = z.infer<typeof professionalRegistrationSchema>;
 
-// Insert schemas per nuove tabelle
+// Sistema Badge Meritocratico
+export const badges = pgTable("badges", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  family: text("family").notNull(), // 'automatic', 'quality', 'growth', 'verification'
+  icon: text("icon").notNull(),
+  color: text("color").notNull(),
+  description: text("description").notNull(),
+  requirements: text("requirements").array().notNull(),
+  calculationMethod: text("calculation_method").notNull(), // 'automatic', 'manual', 'hybrid'
+  priority: integer("priority").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const professionalBadges = pgTable("professional_badges", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  badgeId: integer("badge_id").references(() => badges.id).notNull(),
+  earnedAt: timestamp("earned_at").defaultNow().notNull(),
+  awardedBy: text("awarded_by").default("system"),
+  metadataSnapshot: jsonb("metadata_snapshot"),
+  isVisible: boolean("is_visible").default(true),
+  revokedAt: timestamp("revoked_at"),
+  revokedBy: integer("revoked_by").references(() => users.id),
+  revokedReason: text("revoked_reason"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueProfessionalBadge: unique().on(table.professionalId, table.badgeId),
+}));
+
+export const badgeMetrics = pgTable("badge_metrics", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  metricType: text("metric_type").notNull(),
+  value: decimal("value", { precision: 10, scale: 2 }).notNull(),
+  calculatedAt: timestamp("calculated_at").defaultNow().notNull(),
+  period: text("period"),
+  metadata: jsonb("metadata"),
+});
+
+// Insert schemas per badge
 export const insertBadgeSchema = createInsertSchema(badges).omit({ 
   id: true, 
   createdAt: true, 
@@ -1105,8 +1082,25 @@ export const insertBadgeSchema = createInsertSchema(badges).omit({
 
 export const insertProfessionalBadgeSchema = createInsertSchema(professionalBadges).omit({ 
   id: true, 
-  awardedAt: true 
+  earnedAt: true,
+  createdAt: true
 });
+
+// Relations per badge (definite dopo le tabelle)
+export const badgesRelations = relations(badges, ({ many }) => ({
+  professionalBadges: many(professionalBadges),
+}));
+
+export const professionalBadgesRelations = relations(professionalBadges, ({ one }) => ({
+  professional: one(professionals, {
+    fields: [professionalBadges.professionalId],
+    references: [professionals.id],
+  }),
+  badge: one(badges, {
+    fields: [professionalBadges.badgeId],
+    references: [badges.id],
+  }),
+}));
 
 export const insertConsumerSchema = createInsertSchema(consumers).omit({ 
   id: true, 
