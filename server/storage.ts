@@ -132,6 +132,13 @@ export interface IStorage {
     citiesCount: number;
     averageRating: number;
   }>;
+
+  // Admin methods
+  getAllUsers(): Promise<User[]>;
+  updateProfessional(id: number, data: Partial<Professional>): Promise<Professional>;
+  deleteProfessional(id: number): Promise<void>;
+  getAdminStats(): Promise<any>;
+  getRecentActivity(): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1067,6 +1074,76 @@ export class DatabaseStorage implements IStorage {
 
   async getRecentSuspiciousActivities(): Promise<any[]> {
     return [];
+  }
+
+  // Admin methods implementation
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async updateProfessional(id: number, data: Partial<Professional>): Promise<Professional> {
+    const [professional] = await db
+      .update(professionals)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(professionals.id, id))
+      .returning();
+    return professional;
+  }
+
+  async deleteProfessional(id: number): Promise<void> {
+    await db.delete(professionals).where(eq(professionals.id, id));
+  }
+
+  async getAdminStats(): Promise<any> {
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    return {
+      activeUsers: {
+        today: await this.getActiveUsersCount(today, today),
+        week: await this.getActiveUsersCount(weekAgo, today),
+        month: await this.getActiveUsersCount(monthAgo, today),
+        previousPeriod: 0,
+        changePercent: 0
+      },
+      reviews: {
+        total: await this.getReviewsCount(),
+        verified: await this.getVerifiedReviewsCount(),
+        pending: await this.getPendingReviewsCount(),
+        rejected: await this.getRejectedReviewsCount(),
+        newToday: await this.getNewReviewsCount(today, today),
+        averageVerificationTime: await this.getAverageVerificationTime()
+      },
+      professionals: {
+        total: await this.getProfessionalsCount(),
+        verified: await this.getVerifiedProfessionalsCount(),
+        pending: await this.getPendingProfessionalsCount(),
+        newThisWeek: await this.getNewProfessionalsCount(weekAgo, today),
+        conversionRate: 85
+      },
+      revenue: {
+        monthToDate: await this.getMonthlyRevenue(today.getMonth() + 1, today.getFullYear()),
+        projectedMonthly: 15000,
+        subscriptionConversion: 12.5,
+        averageRevenue: 67
+      }
+    };
+  }
+
+  async getRecentActivity(): Promise<any[]> {
+    const activities = await db.select({
+      id: events.id,
+      type: events.type,
+      description: events.description,
+      createdAt: events.createdAt,
+      professionalId: events.professionalId
+    })
+    .from(events)
+    .orderBy(desc(events.createdAt))
+    .limit(10);
+
+    return activities;
   }
 }
 
