@@ -11,14 +11,14 @@ export async function seedSubscriptionPlans() {
       priceMonthly: "0",
       priceYearly: null,
       features: JSON.stringify([
-        "Profilo base",
-        "Fino a 5 recensioni visibili",
-        "Ricerca semplice",
+        "Profilo modificabile",
+        "Recensioni illimitate visibili",
+        "Risposte illimitate",
         "Badge base"
       ]),
       maxProfiles: 1,
       maxPhotos: 3,
-      maxResponses: 2,
+      maxResponses: null, // unlimited
       maxBadges: 5,
       maxAccounts: 1,
       canReceiveReviews: true,
@@ -36,7 +36,6 @@ export async function seedSubscriptionPlans() {
       priceYearly: "290", // 2 mesi gratis
       features: JSON.stringify([
         "Tutte le funzionalità del piano Gratuito",
-        "Fino a 50 recensioni visibili",
         "Risposta illimitata alle recensioni",
         "10 foto profilo/portfolio",
         "Badge avanzati",
@@ -67,10 +66,8 @@ export async function seedSubscriptionPlans() {
         "25 foto profilo/portfolio",
         "Tutti i badge disponibili",
         "Analytics avanzate",
-        "Posizionamento prioritario nei risultati",
         "Supporto telefonico",
-        "Personalizzazione profilo avanzata",
-        "Badge esclusivi"
+        "Personalizzazione profilo avanzata"
       ]),
       maxProfiles: 1,
       maxPhotos: 25,
@@ -99,7 +96,7 @@ export async function seedSubscriptionPlans() {
         "Report personalizzati",
         "API access",
         "Account manager dedicato",
-        "Badge studio esclusivi",
+        "Badge di team",
         "White-label options"
       ]),
       maxProfiles: 5,
