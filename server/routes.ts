@@ -12,6 +12,12 @@ import {
   insertSubscriptionPlanSchema,
   insertSubscriptionSchema,
   insertTransactionSchema,
+  insertBadgeSchema,
+  insertProfessionalBadgeSchema,
+  insertConsumerSchema,
+  insertPlanSchema,
+  insertProfessionalPlanSchema,
+  insertEventSchema,
   type InsertClaimRequest
 } from "@shared/schema";
 import { z } from "zod";
@@ -2330,6 +2336,268 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting claim request:", error);
       res.status(500).json({ message: "Failed to delete claim request" });
+    }
+  });
+
+  // =====================================================
+  // BADGE SYSTEM ROUTES
+  // =====================================================
+
+  // Get all badges
+  app.get("/api/badges", async (req, res) => {
+    try {
+      const badges = await storage.getBadges();
+      res.json(badges);
+    } catch (error) {
+      console.error("Error fetching badges:", error);
+      res.status(500).json({ message: "Failed to fetch badges" });
+    }
+  });
+
+  // Get professional badges
+  app.get("/api/professionals/:id/badges", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      if (isNaN(professionalId)) {
+        return res.status(400).json({ message: "Invalid professional ID" });
+      }
+
+      const badges = await storage.getProfessionalBadges(professionalId);
+      res.json(badges);
+    } catch (error) {
+      console.error("Error fetching professional badges:", error);
+      res.status(500).json({ message: "Failed to fetch professional badges" });
+    }
+  });
+
+  // Award badge (admin only)
+  app.post("/api/admin/professionals/:id/badges", authService.requireRole(['admin']), async (req: any, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      const { badgeId, metadata } = req.body;
+      const awardedBy = req.user?.id;
+
+      if (isNaN(professionalId) || !badgeId) {
+        return res.status(400).json({ message: "Invalid data" });
+      }
+
+      const badge = await storage.awardBadge(professionalId, badgeId, awardedBy, metadata);
+      res.json(badge);
+    } catch (error) {
+      console.error("Error awarding badge:", error);
+      res.status(500).json({ message: "Failed to award badge" });
+    }
+  });
+
+  // Revoke badge (admin only)
+  app.delete("/api/admin/professional-badges/:id", authService.requireRole(['admin']), async (req: any, res) => {
+    try {
+      const professionalBadgeId = parseInt(req.params.id);
+      const { reason } = req.body;
+      const revokedBy = req.user?.id;
+
+      if (isNaN(professionalBadgeId)) {
+        return res.status(400).json({ message: "Invalid badge ID" });
+      }
+
+      await storage.revokeBadge(professionalBadgeId, revokedBy, reason);
+      res.json({ success: true, message: "Badge revoked successfully" });
+    } catch (error) {
+      console.error("Error revoking badge:", error);
+      res.status(500).json({ message: "Failed to revoke badge" });
+    }
+  });
+
+  // Check automatic badges for professional
+  app.post("/api/professionals/:id/check-badges", authService.authenticateToken, async (req: any, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      if (isNaN(professionalId)) {
+        return res.status(400).json({ message: "Invalid professional ID" });
+      }
+
+      // Verifica che l'utente sia il proprietario del profilo o admin
+      const professional = await storage.getProfessionalByUserId(req.user?.id);
+      if (!professional || (professional.id !== professionalId && req.user?.role !== 'admin')) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.checkAutomaticBadges(professionalId);
+      res.json({ success: true, message: "Automatic badges checked" });
+    } catch (error) {
+      console.error("Error checking automatic badges:", error);
+      res.status(500).json({ message: "Failed to check automatic badges" });
+    }
+  });
+
+  // =====================================================
+  // PLAN SYSTEM ROUTES
+  // =====================================================
+
+  // Get all plans
+  app.get("/api/plans", async (req, res) => {
+    try {
+      const plans = await storage.getPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error("Error fetching plans:", error);
+      res.status(500).json({ message: "Failed to fetch plans" });
+    }
+  });
+
+  // Get professional's current plan
+  app.get("/api/professionals/:id/plan", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      if (isNaN(professionalId)) {
+        return res.status(400).json({ message: "Invalid professional ID" });
+      }
+
+      const plan = await storage.getProfessionalPlan(professionalId);
+      res.json(plan);
+    } catch (error) {
+      console.error("Error fetching professional plan:", error);
+      res.status(500).json({ message: "Failed to fetch professional plan" });
+    }
+  });
+
+  // Assign plan to professional (admin only or professional owner)
+  app.post("/api/professionals/:id/plan", authService.authenticateToken, async (req: any, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      const { planId, billingCycle } = req.body;
+
+      if (isNaN(professionalId) || !planId) {
+        return res.status(400).json({ message: "Invalid data" });
+      }
+
+      // Verifica autorizzazioni
+      const professional = await storage.getProfessionalByUserId(req.user?.id);
+      if (!professional || (professional.id !== professionalId && req.user?.role !== 'admin')) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const assignedPlan = await storage.assignPlan(professionalId, planId, billingCycle);
+      res.json(assignedPlan);
+    } catch (error) {
+      console.error("Error assigning plan:", error);
+      res.status(500).json({ message: "Failed to assign plan" });
+    }
+  });
+
+  // Cancel professional plan
+  app.delete("/api/professionals/:id/plan", authService.authenticateToken, async (req: any, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      if (isNaN(professionalId)) {
+        return res.status(400).json({ message: "Invalid professional ID" });
+      }
+
+      // Verifica autorizzazioni
+      const professional = await storage.getProfessionalByUserId(req.user?.id);
+      if (!professional || (professional.id !== professionalId && req.user?.role !== 'admin')) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.cancelProfessionalPlan(professionalId);
+      res.json({ success: true, message: "Plan cancelled successfully" });
+    } catch (error) {
+      console.error("Error cancelling plan:", error);
+      res.status(500).json({ message: "Failed to cancel plan" });
+    }
+  });
+
+  // =====================================================
+  // CONSUMER SYSTEM ROUTES
+  // =====================================================
+
+  // Get consumer profile
+  app.get("/api/consumer/profile", authService.authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const consumer = await storage.getConsumer(userId);
+      res.json(consumer);
+    } catch (error) {
+      console.error("Error fetching consumer profile:", error);
+      res.status(500).json({ message: "Failed to fetch consumer profile" });
+    }
+  });
+
+  // Create or update consumer profile
+  app.post("/api/consumer/profile", authService.authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const validatedData = insertConsumerSchema.parse({ ...req.body, userId });
+      
+      const existingConsumer = await storage.getConsumer(userId);
+      if (existingConsumer) {
+        await storage.updateConsumer(userId, validatedData);
+        const updated = await storage.getConsumer(userId);
+        res.json(updated);
+      } else {
+        const consumer = await storage.createConsumer(validatedData);
+        res.json(consumer);
+      }
+    } catch (error) {
+      console.error("Error creating/updating consumer profile:", error);
+      res.status(500).json({ message: "Failed to create/update consumer profile" });
+    }
+  });
+
+  // =====================================================
+  // EVENTS & ANALYTICS ROUTES
+  // =====================================================
+
+  // Track event
+  app.post("/api/events", async (req, res) => {
+    try {
+      const validatedData = insertEventSchema.parse(req.body);
+      const event = await storage.createEvent(validatedData);
+      res.json(event);
+    } catch (error) {
+      console.error("Error tracking event:", error);
+      res.status(500).json({ message: "Failed to track event" });
+    }
+  });
+
+  // Get professional analytics
+  app.get("/api/professionals/:id/analytics", authService.authenticateToken, async (req: any, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      if (isNaN(professionalId)) {
+        return res.status(400).json({ message: "Invalid professional ID" });
+      }
+
+      // Verifica autorizzazioni
+      const professional = await storage.getProfessionalByUserId(req.user?.id);
+      if (!professional || (professional.id !== professionalId && req.user?.role !== 'admin')) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const analytics = await storage.getEventAnalytics(professionalId);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
+  // Get global analytics (admin only)
+  app.get("/api/admin/analytics", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const analytics = await storage.getEventAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching global analytics:", error);
+      res.status(500).json({ message: "Failed to fetch global analytics" });
     }
   });
 

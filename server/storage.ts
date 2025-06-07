@@ -16,6 +16,12 @@ import {
   professionalOrders,
   professionalServices,
   professionalPortfolio,
+  badges,
+  professionalBadges,
+  consumers,
+  plans,
+  professionalPlans,
+  events,
   type User, 
   type InsertUser,
   type Category,
@@ -34,7 +40,19 @@ import {
   type InsertTransaction,
   type ProfessionalWithDetails,
   type ProfessionalSummary,
-  type SubscriptionWithDetails
+  type SubscriptionWithDetails,
+  type Badge,
+  type InsertBadge,
+  type ProfessionalBadge,
+  type InsertProfessionalBadge,
+  type Consumer,
+  type InsertConsumer,
+  type Plan,
+  type InsertPlan,
+  type ProfessionalPlan,
+  type InsertProfessionalPlan,
+  type Event,
+  type InsertEvent
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, and, or, ilike, sql } from "drizzle-orm";
@@ -180,6 +198,58 @@ export interface IStorage {
   }): Promise<Transaction[]>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   updateTransaction(id: number, data: Partial<InsertTransaction>): Promise<void>;
+
+  // Badge System
+  getBadges(): Promise<Badge[]>;
+  getBadge(id: number): Promise<Badge | undefined>;
+  createBadge(badge: InsertBadge): Promise<Badge>;
+  updateBadge(id: number, data: Partial<InsertBadge>): Promise<void>;
+  deleteBadge(id: number): Promise<void>;
+  
+  // Professional Badges
+  getProfessionalBadges(professionalId: number): Promise<(ProfessionalBadge & { badge: Badge })[]>;
+  awardBadge(professionalId: number, badgeId: number, awardedBy?: number, metadata?: any): Promise<ProfessionalBadge>;
+  revokeBadge(professionalBadgeId: number, revokedBy?: number, reason?: string): Promise<void>;
+  checkAutomaticBadges(professionalId: number): Promise<void>;
+  
+  // Consumer System
+  getConsumer(userId: number): Promise<Consumer | undefined>;
+  createConsumer(consumer: InsertConsumer): Promise<Consumer>;
+  updateConsumer(userId: number, data: Partial<InsertConsumer>): Promise<void>;
+  updateConsumerStats(userId: number, stats: { reviewsWritten?: number; profilesViewed?: number; searchesPerformed?: number }): Promise<void>;
+  
+  // Plan System (nuovi piani semplificati)
+  getPlans(): Promise<Plan[]>;
+  getPlan(id: number): Promise<Plan | undefined>;
+  getPlanBySlug(slug: string): Promise<Plan | undefined>;
+  createPlan(plan: InsertPlan): Promise<Plan>;
+  updatePlan(id: number, data: Partial<InsertPlan>): Promise<void>;
+  deletePlan(id: number): Promise<void>;
+  
+  // Professional Plans
+  getProfessionalPlan(professionalId: number): Promise<(ProfessionalPlan & { plan: Plan }) | undefined>;
+  assignPlan(professionalId: number, planId: number, billingCycle?: string): Promise<ProfessionalPlan>;
+  updateProfessionalPlan(professionalId: number, data: Partial<InsertProfessionalPlan>): Promise<void>;
+  cancelProfessionalPlan(professionalId: number): Promise<void>;
+  
+  // Events System
+  createEvent(event: InsertEvent): Promise<Event>;
+  getEvents(params?: {
+    type?: string;
+    userId?: number;
+    professionalId?: number;
+    limit?: number;
+    offset?: number;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<Event[]>;
+  getEventAnalytics(professionalId?: number): Promise<{
+    totalEvents: number;
+    pageViews: number;
+    profileViews: number;
+    contactClicks: number;
+    topEvents: { type: string; count: number }[];
+  }>;
 
   // Subscription Analytics
   getSubscriptionStats(): Promise<{
@@ -1853,6 +1923,368 @@ export class DatabaseStorage implements IStorage {
       console.error('Error approving claim request:', error);
       return false;
     }
+  }
+
+  // Badge System Implementation
+  async getBadges(): Promise<Badge[]> {
+    return await db
+      .select()
+      .from(badges)
+      .where(eq(badges.isActive, true))
+      .orderBy(asc(badges.sortOrder));
+  }
+
+  async getBadge(id: number): Promise<Badge | undefined> {
+    const [badge] = await db
+      .select()
+      .from(badges)
+      .where(eq(badges.id, id));
+    return badge;
+  }
+
+  async createBadge(badge: InsertBadge): Promise<Badge> {
+    const [created] = await db
+      .insert(badges)
+      .values(badge)
+      .returning();
+    return created;
+  }
+
+  async updateBadge(id: number, data: Partial<InsertBadge>): Promise<void> {
+    await db
+      .update(badges)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(badges.id, id));
+  }
+
+  async deleteBadge(id: number): Promise<void> {
+    await db
+      .update(badges)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(badges.id, id));
+  }
+
+  // Professional Badges Implementation
+  async getProfessionalBadges(professionalId: number): Promise<(ProfessionalBadge & { badge: Badge })[]> {
+    const results = await db
+      .select()
+      .from(professionalBadges)
+      .leftJoin(badges, eq(professionalBadges.badgeId, badges.id))
+      .where(
+        and(
+          eq(professionalBadges.professionalId, professionalId),
+          eq(professionalBadges.isVisible, true),
+          or(
+            eq(professionalBadges.revokedAt, null),
+            eq(professionalBadges.expiresAt, null)
+          )
+        )
+      )
+      .orderBy(desc(professionalBadges.awardedAt));
+
+    return results.map(result => ({
+      ...result.professional_badges,
+      badge: result.badges!
+    }));
+  }
+
+  async awardBadge(professionalId: number, badgeId: number, awardedBy?: number, metadata?: any): Promise<ProfessionalBadge> {
+    const [awarded] = await db
+      .insert(professionalBadges)
+      .values({
+        professionalId,
+        badgeId,
+        awardedBy,
+        metadata,
+      })
+      .returning();
+    return awarded;
+  }
+
+  async revokeBadge(professionalBadgeId: number, revokedBy?: number, reason?: string): Promise<void> {
+    await db
+      .update(professionalBadges)
+      .set({
+        revokedAt: new Date(),
+        revokedBy,
+        revokeReason: reason,
+        isVisible: false,
+      })
+      .where(eq(professionalBadges.id, professionalBadgeId));
+  }
+
+  async checkAutomaticBadges(professionalId: number): Promise<void> {
+    // Implementazione logica per badge automatici
+    const professional = await this.getProfessional(professionalId);
+    if (!professional) return;
+
+    const automaticBadges = await db
+      .select()
+      .from(badges)
+      .where(eq(badges.type, 'automatic'));
+
+    for (const badge of automaticBadges) {
+      const requirements = badge.requirements as any;
+      if (!requirements) continue;
+
+      let shouldAward = false;
+
+      // Controllo badge "Profilo Completo"
+      if (badge.slug === 'complete-profile') {
+        const hasDescription = professional.description && professional.description.length >= 50;
+        const hasPhotos = true; // Controllare dalle foto reali
+        shouldAward = hasDescription && hasPhotos;
+      }
+
+      // Controllo badge "Recensioni Positive" 
+      if (badge.slug === 'positive-reviews') {
+        const reviewCount = professional.reviewCount || 0;
+        const avgRating = parseFloat(professional.rating || '0');
+        shouldAward = reviewCount >= 5 && avgRating >= 4.0;
+      }
+
+      if (shouldAward) {
+        // Verifica se non ha già questo badge
+        const existingBadge = await db
+          .select()
+          .from(professionalBadges)
+          .where(
+            and(
+              eq(professionalBadges.professionalId, professionalId),
+              eq(professionalBadges.badgeId, badge.id),
+              eq(professionalBadges.revokedAt, null)
+            )
+          );
+
+        if (existingBadge.length === 0) {
+          await this.awardBadge(professionalId, badge.id);
+        }
+      }
+    }
+  }
+
+  // Consumer System Implementation
+  async getConsumer(userId: number): Promise<Consumer | undefined> {
+    const [consumer] = await db
+      .select()
+      .from(consumers)
+      .where(eq(consumers.userId, userId));
+    return consumer;
+  }
+
+  async createConsumer(consumer: InsertConsumer): Promise<Consumer> {
+    const [created] = await db
+      .insert(consumers)
+      .values(consumer)
+      .returning();
+    return created;
+  }
+
+  async updateConsumer(userId: number, data: Partial<InsertConsumer>): Promise<void> {
+    await db
+      .update(consumers)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(consumers.userId, userId));
+  }
+
+  async updateConsumerStats(userId: number, stats: { reviewsWritten?: number; profilesViewed?: number; searchesPerformed?: number }): Promise<void> {
+    await db
+      .update(consumers)
+      .set({ ...stats, updatedAt: new Date() })
+      .where(eq(consumers.userId, userId));
+  }
+
+  // Plan System Implementation
+  async getPlans(): Promise<Plan[]> {
+    return await db
+      .select()
+      .from(plans)
+      .where(eq(plans.isActive, true))
+      .orderBy(asc(plans.sortOrder));
+  }
+
+  async getPlan(id: number): Promise<Plan | undefined> {
+    const [plan] = await db
+      .select()
+      .from(plans)
+      .where(eq(plans.id, id));
+    return plan;
+  }
+
+  async getPlanBySlug(slug: string): Promise<Plan | undefined> {
+    const [plan] = await db
+      .select()
+      .from(plans)
+      .where(eq(plans.slug, slug));
+    return plan;
+  }
+
+  async createPlan(plan: InsertPlan): Promise<Plan> {
+    const [created] = await db
+      .insert(plans)
+      .values(plan)
+      .returning();
+    return created;
+  }
+
+  async updatePlan(id: number, data: Partial<InsertPlan>): Promise<void> {
+    await db
+      .update(plans)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(plans.id, id));
+  }
+
+  async deletePlan(id: number): Promise<void> {
+    await db
+      .update(plans)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(plans.id, id));
+  }
+
+  // Professional Plans Implementation
+  async getProfessionalPlan(professionalId: number): Promise<(ProfessionalPlan & { plan: Plan }) | undefined> {
+    const [result] = await db
+      .select()
+      .from(professionalPlans)
+      .leftJoin(plans, eq(professionalPlans.planId, plans.id))
+      .where(eq(professionalPlans.professionalId, professionalId));
+
+    if (!result) return undefined;
+
+    return {
+      ...result.professional_plans,
+      plan: result.plans!
+    };
+  }
+
+  async assignPlan(professionalId: number, planId: number, billingCycle: string = 'monthly'): Promise<ProfessionalPlan> {
+    const now = new Date();
+    const periodEnd = new Date();
+    if (billingCycle === 'yearly') {
+      periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+    } else {
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
+    }
+
+    // Rimuovi piano esistente se presente
+    await db
+      .delete(professionalPlans)
+      .where(eq(professionalPlans.professionalId, professionalId));
+
+    const [assigned] = await db
+      .insert(professionalPlans)
+      .values({
+        professionalId,
+        planId,
+        billingCycle,
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+      })
+      .returning();
+
+    return assigned;
+  }
+
+  async updateProfessionalPlan(professionalId: number, data: Partial<InsertProfessionalPlan>): Promise<void> {
+    await db
+      .update(professionalPlans)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(professionalPlans.professionalId, professionalId));
+  }
+
+  async cancelProfessionalPlan(professionalId: number): Promise<void> {
+    await db
+      .update(professionalPlans)
+      .set({ 
+        status: 'cancelled',
+        cancelledAt: new Date(),
+        cancelAtPeriodEnd: true,
+        updatedAt: new Date() 
+      })
+      .where(eq(professionalPlans.professionalId, professionalId));
+  }
+
+  // Events System Implementation
+  async createEvent(event: InsertEvent): Promise<Event> {
+    const [created] = await db
+      .insert(events)
+      .values(event)
+      .returning();
+    return created;
+  }
+
+  async getEvents(params?: {
+    type?: string;
+    userId?: number;
+    professionalId?: number;
+    limit?: number;
+    offset?: number;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<Event[]> {
+    let query = db.select().from(events);
+
+    const conditions = [];
+    if (params?.type) conditions.push(eq(events.type, params.type));
+    if (params?.userId) conditions.push(eq(events.userId, params.userId));
+    if (params?.professionalId) conditions.push(eq(events.professionalId, params.professionalId));
+    if (params?.startDate) conditions.push(sql`${events.createdAt} >= ${params.startDate}`);
+    if (params?.endDate) conditions.push(sql`${events.createdAt} <= ${params.endDate}`);
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    query = query.orderBy(desc(events.createdAt));
+
+    if (params?.limit) {
+      query = query.limit(params.limit);
+    }
+
+    if (params?.offset) {
+      query = query.offset(params.offset);
+    }
+
+    return await query;
+  }
+
+  async getEventAnalytics(professionalId?: number): Promise<{
+    totalEvents: number;
+    pageViews: number;
+    profileViews: number;
+    contactClicks: number;
+    topEvents: { type: string; count: number }[];
+  }> {
+    let query = db.select().from(events);
+
+    if (professionalId) {
+      query = query.where(eq(events.professionalId, professionalId));
+    }
+
+    const allEvents = await query;
+    
+    const totalEvents = allEvents.length;
+    const pageViews = allEvents.filter(e => e.type === 'page_view').length;
+    const profileViews = allEvents.filter(e => e.type === 'profile_view').length;
+    const contactClicks = allEvents.filter(e => e.type === 'contact_click').length;
+
+    const eventCounts: { [key: string]: number } = {};
+    allEvents.forEach(event => {
+      eventCounts[event.type] = (eventCounts[event.type] || 0) + 1;
+    });
+
+    const topEvents = Object.entries(eventCounts)
+      .map(([type, count]) => ({ type, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return {
+      totalEvents,
+      pageViews,
+      profileViews,
+      contactClicks,
+      topEvents,
+    };
   }
 }
 
