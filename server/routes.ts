@@ -3875,6 +3875,173 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/professionals", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const {
+        search = '',
+        status = 'all',
+        category = 'all',
+        sort = 'newest',
+        page = 1,
+        limit = 20
+      } = req.query;
+
+      // Get professionals with filtering
+      const professionals = await storage.getProfessionals();
+      
+      // Apply filters
+      let filteredProfessionals = professionals;
+      
+      if (search) {
+        const searchTerm = search.toString().toLowerCase();
+        filteredProfessionals = filteredProfessionals.filter(p => 
+          p.businessName.toLowerCase().includes(searchTerm) ||
+          p.email.toLowerCase().includes(searchTerm) ||
+          p.city.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      if (status !== 'all') {
+        filteredProfessionals = filteredProfessionals.filter(p => {
+          if (status === 'approved') return p.isVerified === true;
+          if (status === 'pending') return p.isVerified === false;
+          return false;
+        });
+      }
+
+      if (category !== 'all') {
+        const categoryId = parseInt(category.toString());
+        filteredProfessionals = filteredProfessionals.filter(p => p.categoryId === categoryId);
+      }
+
+      // Apply sorting
+      filteredProfessionals.sort((a, b) => {
+        switch (sort) {
+          case 'newest':
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          case 'oldest':
+            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          case 'rating':
+            return parseFloat(b.rating || '0') - parseFloat(a.rating || '0');
+          case 'reviews':
+            return (b.reviewCount || 0) - (a.reviewCount || 0);
+          default:
+            return 0;
+        }
+      });
+
+      // Pagination
+      const startIndex = (parseInt(page.toString()) - 1) * parseInt(limit.toString());
+      const endIndex = startIndex + parseInt(limit.toString());
+      const paginatedProfessionals = filteredProfessionals.slice(startIndex, endIndex);
+
+      // Get categories for each professional
+      const categories = await storage.getCategories();
+      const categoryMap = categories.reduce((acc, cat) => {
+        acc[cat.id] = cat;
+        return acc;
+      }, {} as any);
+
+      const enrichedProfessionals = paginatedProfessionals.map(p => ({
+        ...p,
+        category: categoryMap[p.categoryId] || { id: 0, name: 'Unknown' },
+        verificationStatus: p.isVerified ? 'approved' : 'pending',
+        profileCompleteness: 85, // Mock value
+        isPremium: false, // Mock value
+        subscription: null
+      }));
+
+      res.json({
+        data: enrichedProfessionals,
+        total: filteredProfessionals.length,
+        pages: Math.ceil(filteredProfessionals.length / parseInt(limit.toString()))
+      });
+    } catch (error) {
+      console.error('Error fetching admin professionals:', error);
+      res.status(500).json({ error: "Error fetching professionals" });
+    }
+  });
+
+  app.patch("/api/admin/professionals/:id/verify", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      const { status, notes } = req.body;
+
+      const professional = await storage.getProfessional(professionalId);
+      if (!professional) {
+        return res.status(404).json({ error: "Professional not found" });
+      }
+
+      // Update verification status
+      const isVerified = status === 'approved';
+      await db.update(professionals)
+        .set({ 
+          isVerified,
+          adminNotes: notes || null,
+          updatedAt: new Date()
+        })
+        .where(eq(professionals.id, professionalId));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating professional verification:', error);
+      res.status(500).json({ error: "Error updating professional" });
+    }
+  });
+
+  app.delete("/api/admin/professionals/:id", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+
+      const professional = await storage.getProfessional(professionalId);
+      if (!professional) {
+        return res.status(404).json({ error: "Professional not found" });
+      }
+
+      // Delete professional (this will cascade delete related data)
+      await db.delete(professionals).where(eq(professionals.id, professionalId));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting professional:', error);
+      res.status(500).json({ error: "Error deleting professional" });
+    }
+  });
+
+  app.post("/api/admin/professionals/bulk-action", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const { action, ids } = req.body;
+
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: "Invalid professional IDs" });
+      }
+
+      switch (action) {
+        case 'verify':
+          await db.update(professionals)
+            .set({ isVerified: true, updatedAt: new Date() })
+            .where(sql`${professionals.id} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`);
+          break;
+        case 'reject':
+          await db.update(professionals)
+            .set({ isVerified: false, updatedAt: new Date() })
+            .where(sql`${professionals.id} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`);
+          break;
+        case 'delete':
+          await db.delete(professionals)
+            .where(sql`${professionals.id} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`);
+          break;
+        default:
+          return res.status(400).json({ error: "Invalid action" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error performing bulk action:', error);
+      res.status(500).json({ error: "Error performing bulk action" });
+    }
+  });
+
   // Badge system routes
   app.post("/api/badges/evaluate/:professionalId", authService.requireRole(['admin']), async (req, res) => {
     try {

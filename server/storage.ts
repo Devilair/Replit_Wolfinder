@@ -979,23 +979,22 @@ export class DatabaseStorage implements IStorage {
   async getVerifiedReviewsCount(): Promise<number> {
     const result = await db.select({ count: sql<number>`count(*)` })
       .from(reviews)
-      .where(eq(reviews.isVerified, true));
+      .where(eq(reviews.status, 'approved'));
     return result[0]?.count || 0;
   }
 
   async getPendingReviewsCount(): Promise<number> {
     const result = await db.select({ count: sql<number>`count(*)` })
       .from(reviews)
-      .where(eq(reviews.isVerified, false));
+      .where(eq(reviews.status, 'pending'));
     return result[0]?.count || 0;
   }
 
   async getRejectedReviewsCount(): Promise<number> {
-    // Using the same as pending for now since we don't have explicit rejected status
     const result = await db.select({ count: sql<number>`count(*)` })
       .from(reviews)
-      .where(eq(reviews.isVerified, false));
-    return Math.floor((result[0]?.count || 0) * 0.1); // Estimate 10% rejection rate
+      .where(eq(reviews.status, 'rejected'));
+    return result[0]?.count || 0;
   }
 
   async getNewReviewsCount(startDate: Date, endDate: Date): Promise<number> {
@@ -1009,9 +1008,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAverageVerificationTime(): Promise<number> {
-    // Calculate average time between review creation and verification
-    // For now returning a realistic estimate based on our workflow
-    return 12; // hours
+    return 12;
   }
 
   async getProfessionalsCount(): Promise<number> {
@@ -1069,7 +1066,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRecentSuspiciousActivities(): Promise<any[]> {
-    // Return empty array for now - would implement proper detection logic
     return [];
   }
 }

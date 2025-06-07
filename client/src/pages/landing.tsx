@@ -651,6 +651,7 @@ export default function Landing() {
                 <Link href="/cookies" className="block text-gray-600 hover:text-gray-900 transition-colors">Cookie Policy</Link>
                 <Link href="/guidelines" className="block text-gray-600 hover:text-gray-900 transition-colors">Linee guida recensioni</Link>
                 <Link href="/support" className="block text-gray-600 hover:text-gray-900 transition-colors">Centro assistenza</Link>
+                <Link href="/admin/dashboard" className="block text-xs text-gray-400 hover:text-gray-600 transition-colors mt-4">Admin Dashboard</Link>
               </div>
             </div>
           </div>
