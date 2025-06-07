@@ -10,7 +10,8 @@ import {
   CreditCard,
   Settings,
   LogOut,
-  Home
+  Home,
+  FileText
 } from "lucide-react";
 
 interface AdminLayoutProps {

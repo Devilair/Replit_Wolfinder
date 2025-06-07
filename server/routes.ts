@@ -4093,6 +4093,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Audit Log endpoints for administrative transparency
+  app.get('/api/admin/audit-logs', requireAdmin, async (req, res) => {
+    try {
+      const { search, action, targetType, limit = 50, offset = 0 } = req.query;
+      
+      let query = db.select({
+        id: auditLogs.id,
+        userId: auditLogs.userId,
+        action: auditLogs.action,
+        targetType: auditLogs.targetType,
+        targetId: auditLogs.targetId,
+        oldValues: auditLogs.oldValues,
+        newValues: auditLogs.newValues,
+        reason: auditLogs.reason,
+        ipAddress: auditLogs.ipAddress,
+        userAgent: auditLogs.userAgent,
+        createdAt: auditLogs.createdAt,
+        user: {
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email
+        }
+      })
+      .from(auditLogs)
+      .leftJoin(users, eq(auditLogs.userId, users.id))
+      .orderBy(desc(auditLogs.createdAt));
+
+      if (search) {
+        query = query.where(
+          or(
+            ilike(auditLogs.action, `%${search}%`),
+            ilike(auditLogs.reason, `%${search}%`),
+            ilike(users.email, `%${search}%`)
+          )
+        );
+      }
+
+      if (action && action !== 'all') {
+        query = query.where(ilike(auditLogs.action, `%${action}%`));
+      }
+
+      if (targetType && targetType !== 'all') {
+        query = query.where(eq(auditLogs.targetType, targetType as string));
+      }
+
+      const logs = await query.limit(Number(limit)).offset(Number(offset));
+      
+      res.json(logs);
+    } catch (error) {
+      console.error('Error fetching audit logs:', error);
+      res.status(500).json({ message: 'Failed to fetch audit logs' });
+    }
+  });
+
+  // Create audit log entry
+  app.post('/api/admin/audit-logs', requireAdmin, async (req, res) => {
+    try {
+      const { action, targetType, targetId, oldValues, newValues, reason } = req.body;
+      const userId = req.user?.claims?.sub;
+      const ipAddress = req.ip || req.connection.remoteAddress;
+      const userAgent = req.get('User-Agent');
+
+      const [auditLog] = await db.insert(auditLogs).values({
+        userId: parseInt(userId),
+        action,
+        targetType,
+        targetId,
+        oldValues: oldValues ? JSON.stringify(oldValues) : null,
+        newValues: newValues ? JSON.stringify(newValues) : null,
+        reason,
+        ipAddress,
+        userAgent
+      }).returning();
+
+      res.json(auditLog);
+    } catch (error) {
+      console.error('Error creating audit log:', error);
+      res.status(500).json({ message: 'Failed to create audit log' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

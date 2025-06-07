@@ -21,6 +21,7 @@ import AdminSubscriptions from "@/pages/admin/subscriptions";
 import AdminUsers from "@/pages/admin/users";
 import AdminSettings from "@/pages/admin/settings";
 import ClaimRequests from "@/pages/admin/claim-requests";
+import AuditLogs from "@/pages/admin/audit-logs";
 import AdminLogin from "@/pages/admin-login";
 import ProfessionalSubscriptionDemo from "@/pages/professional-subscription-demo";
 import SubscriptionPlans from "@/pages/subscription-plans";
@@ -138,6 +139,11 @@ function Router() {
       <Route path="/admin/claim-requests" component={() => (
         <AdminLayout>
           <ClaimRequests />
+        </AdminLayout>
+      )} />
+      <Route path="/admin/audit-logs" component={() => (
+        <AdminLayout>
+          <AuditLogs />
         </AdminLayout>
       )} />
       
