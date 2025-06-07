@@ -40,7 +40,7 @@ import {
   users
 } from "@shared/schema";
 import { eq, desc, or, ilike } from "drizzle-orm";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -4100,46 +4100,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Audit Log endpoints for administrative transparency
   app.get('/api/admin/audit-logs', requireAdmin, async (req, res) => {
     try {
-      const { search, action, targetType, limit = 50, offset = 0 } = req.query;
+      const { limit = 50, offset = 0 } = req.query;
       
-      // Get audit logs with user information
-      const rawLogs = await db
-        .select({
-          id: auditLogs.id,
-          userId: auditLogs.userId,
-          action: auditLogs.action,
-          targetType: auditLogs.entityType,
-          targetId: auditLogs.entityId,
-          oldValues: auditLogs.oldValues,
-          newValues: auditLogs.newValues,
-          ipAddress: auditLogs.ipAddress,
-          userAgent: auditLogs.userAgent,
-          createdAt: auditLogs.createdAt,
-          userName: users.name,
-          userEmail: users.email
-        })
-        .from(auditLogs)
-        .leftJoin(users, eq(auditLogs.userId, users.id))
-        .orderBy(desc(auditLogs.createdAt))
-        .limit(Number(limit))
-        .offset(Number(offset));
+      // Use raw SQL to avoid Drizzle schema issues
+      const result = await pool.query(`
+        SELECT 
+          al.id, 
+          al.user_id as "userId", 
+          al.action, 
+          al.entity_type as "targetType", 
+          al.entity_id as "targetId", 
+          al.old_values as "oldValues", 
+          al.new_values as "newValues", 
+          al.ip_address as "ipAddress", 
+          al.user_agent as "userAgent", 
+          al.created_at as "createdAt",
+          u.name as "userName",
+          u.email as "userEmail"
+        FROM audit_logs al 
+        LEFT JOIN users u ON al.user_id = u.id 
+        ORDER BY al.created_at DESC 
+        LIMIT $1 OFFSET $2
+      `, [Number(limit), Number(offset)]);
 
-      // Transform to match frontend expectations
-      const logs = rawLogs.map(log => ({
-        id: log.id,
-        userId: log.userId,
-        action: log.action,
-        targetType: log.targetType,
-        targetId: log.targetId,
-        oldValues: log.oldValues,
-        newValues: log.newValues,
-        ipAddress: log.ipAddress,
-        userAgent: log.userAgent,
-        createdAt: log.createdAt,
+      const logs = result.rows.map(row => ({
+        id: row.id,
+        userId: row.userId,
+        action: row.action,
+        targetType: row.targetType,
+        targetId: row.targetId,
+        oldValues: row.oldValues,
+        newValues: row.newValues,
+        ipAddress: row.ipAddress,
+        userAgent: row.userAgent,
+        createdAt: row.createdAt,
         user: {
-          firstName: log.userName || 'Unknown',
+          firstName: row.userName || 'Unknown',
           lastName: '',
-          email: log.userEmail || 'Unknown'
+          email: row.userEmail || 'Unknown'
         }
       }));
       
