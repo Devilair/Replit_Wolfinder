@@ -2016,56 +2016,70 @@ export class DatabaseStorage implements IStorage {
   async checkAutomaticBadges(professionalId: number): Promise<ProfessionalBadge[]> {
     const newBadges: ProfessionalBadge[] = [];
     
-    // Implementazione logica per badge automatici
-    const professional = await this.getProfessional(professionalId);
-    if (!professional) return newBadges;
-
-    const automaticBadges = await db
-      .select()
-      .from(badges)
-      .where(eq(badges.type, 'automatic'));
-
-    for (const badge of automaticBadges) {
-      const requirements = badge.requirements as any;
-      if (!requirements) continue;
-
-      let shouldAward = false;
-
-      // Controllo badge "Profilo Completo"
-      if (badge.slug === 'complete-profile') {
-        const hasDescription = professional.description && professional.description.length >= 50;
-        const hasPhotos = true; // Controllare dalle foto reali
-        shouldAward = hasDescription && hasPhotos;
+    try {
+      // Implementazione logica per badge automatici
+      const professional = await this.getProfessional(professionalId);
+      if (!professional) {
+        console.log('Professional not found for ID:', professionalId);
+        return newBadges;
       }
 
-      // Controllo badge "Recensioni Positive" 
-      if (badge.slug === 'positive-reviews') {
-        const reviewCount = professional.reviewCount || 0;
-        const avgRating = parseFloat(professional.rating || '0');
-        shouldAward = reviewCount >= 5 && avgRating >= 4.0;
-      }
+      console.log('Checking automatic badges for professional:', professionalId);
 
-      if (shouldAward) {
-        // Verifica se non ha già questo badge
-        const existingBadge = await db
-          .select()
-          .from(professionalBadges)
-          .where(
-            and(
-              eq(professionalBadges.professionalId, professionalId),
-              eq(professionalBadges.badgeId, badge.id),
-              isNull(professionalBadges.revokedAt)
-            )
-          );
+      const automaticBadges = await db
+        .select()
+        .from(badges)
+        .where(eq(badges.type, 'automatic'));
 
-        if (existingBadge.length === 0) {
-          const newBadge = await this.awardBadge(professionalId, badge.id);
-          newBadges.push(newBadge);
+      console.log('Found automatic badges:', automaticBadges.length);
+
+      for (const badge of automaticBadges) {
+        const requirements = badge.requirements as any;
+        if (!requirements) continue;
+
+        let shouldAward = false;
+
+        // Controllo badge "Profilo Completo"
+        if (badge.slug === 'complete-profile') {
+          const hasDescription = professional.description && professional.description.length >= 50;
+          const hasPhotos = true; // Controllare dalle foto reali
+          shouldAward = hasDescription && hasPhotos;
+        }
+
+        // Controllo badge "Recensioni Positive" 
+        if (badge.slug === 'positive-reviews') {
+          const reviewCount = professional.reviewCount || 0;
+          const avgRating = parseFloat(professional.rating || '0');
+          shouldAward = reviewCount >= 5 && avgRating >= 4.0;
+        }
+
+        if (shouldAward) {
+          // Verifica se non ha già questo badge
+          const existingBadge = await db
+            .select()
+            .from(professionalBadges)
+            .where(
+              and(
+                eq(professionalBadges.professionalId, professionalId),
+                eq(professionalBadges.badgeId, badge.id),
+                isNull(professionalBadges.revokedAt)
+              )
+            );
+
+          if (existingBadge.length === 0) {
+            const newBadge = await this.awardBadge(professionalId, badge.id);
+            newBadges.push(newBadge);
+            console.log('Awarded new badge:', badge.name);
+          }
         }
       }
+      
+      console.log('Returning new badges count:', newBadges.length);
+      return newBadges;
+    } catch (error) {
+      console.error('Error in checkAutomaticBadges:', error);
+      return newBadges; // Return empty array on error
     }
-    
-    return newBadges;
   }
 
   // Consumer System Implementation
