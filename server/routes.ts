@@ -4106,11 +4106,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: auditLogs.id,
         userId: auditLogs.userId,
         action: auditLogs.action,
-        targetType: auditLogs.targetType,
-        targetId: auditLogs.targetId,
+        targetType: auditLogs.entityType,
+        targetId: auditLogs.entityId,
         oldValues: auditLogs.oldValues,
         newValues: auditLogs.newValues,
-        reason: auditLogs.reason,
         ipAddress: auditLogs.ipAddress,
         userAgent: auditLogs.userAgent,
         createdAt: auditLogs.createdAt,
@@ -4128,7 +4127,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         query = query.where(
           or(
             ilike(auditLogs.action, `%${search}%`),
-            ilike(auditLogs.reason, `%${search}%`),
             ilike(users.email, `%${search}%`)
           )
         );
@@ -4139,7 +4137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (targetType && targetType !== 'all') {
-        query = query.where(eq(auditLogs.targetType, targetType as string));
+        query = query.where(eq(auditLogs.entityType, targetType as string));
       }
 
       const logs = await query.limit(Number(limit)).offset(Number(offset));
@@ -4160,13 +4158,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userAgent = req.get('User-Agent');
 
       const [auditLog] = await db.insert(auditLogs).values({
-        userId: parseInt(userId),
+        userId: userId,
         action,
-        targetType,
-        targetId,
+        entityType: targetType,
+        entityId: targetId,
         oldValues: oldValues ? JSON.stringify(oldValues) : null,
         newValues: newValues ? JSON.stringify(newValues) : null,
-        reason,
         ipAddress,
         userAgent
       }).returning();
