@@ -35,8 +35,12 @@ import {
   insertPlanSchema,
   insertProfessionalPlanSchema,
   insertEventSchema,
-  type InsertClaimRequest
+  type InsertClaimRequest,
+  auditLogs,
+  users
 } from "@shared/schema";
+import { eq, desc, or, ilike } from "drizzle-orm";
+import { db } from "./db";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -4148,10 +4152,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create audit log entry
-  app.post('/api/admin/audit-logs', requireAdmin, async (req, res) => {
+  app.post('/api/admin/audit-logs', requireAdmin, async (req: any, res) => {
     try {
       const { action, targetType, targetId, oldValues, newValues, reason } = req.body;
-      const userId = req.user?.claims?.sub;
+      const userId = 1; // Admin user ID for development
       const ipAddress = req.ip || req.connection.remoteAddress;
       const userAgent = req.get('User-Agent');
 

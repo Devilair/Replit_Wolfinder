@@ -47,7 +47,7 @@ export default function AuditLogs() {
 
   const getActionBadge = (action: string) => {
     if (action.includes('approve') || action.includes('verify')) {
-      return <Badge variant="success" className="bg-green-100 text-green-800">Approvazione</Badge>;
+      return <Badge className="bg-green-100 text-green-800">Approvazione</Badge>;
     }
     if (action.includes('reject') || action.includes('deny')) {
       return <Badge variant="destructive">Rifiuto</Badge>;
