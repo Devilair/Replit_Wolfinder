@@ -23,6 +23,7 @@ import AdminSettings from "@/pages/admin/settings";
 import ClaimRequests from "@/pages/admin/claim-requests";
 import AdminLogin from "@/pages/admin-login";
 import ProfessionalSubscriptionDemo from "@/pages/professional-subscription-demo";
+import SubscriptionPlans from "@/pages/subscription-plans";
 import Register from "@/pages/auth/register";
 import Login from "@/pages/auth/login";
 import LoginPage from "@/pages/login";
@@ -46,6 +47,7 @@ function Router() {
       <Route path="/reclama-profilo/:id" component={ClaimProfile} />
       <Route path="/demo/subscription-limits" component={ProfessionalSubscriptionDemo} />
       <Route path="/professional-subscription-demo" component={ProfessionalSubscriptionDemo} />
+      <Route path="/subscription-plans" component={SubscriptionPlans} />
       
       {/* About Pages */}
       <Route path="/chi-siamo" component={ChiSiamo} />
