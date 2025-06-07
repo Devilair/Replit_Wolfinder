@@ -29,6 +29,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { name: "Categorie", href: "/admin/categories", icon: Building2, current: location === "/admin/categories" },
     { name: "Abbonamenti", href: "/admin/subscriptions", icon: CreditCard, current: location === "/admin/subscriptions" },
     { name: "Utenti", href: "/admin/users", icon: Users, current: location === "/admin/users" },
+    { name: "Audit Log", href: "/admin/audit-logs", icon: FileText, current: location === "/admin/audit-logs" },
     { name: "Impostazioni", href: "/admin/settings", icon: Settings, current: location === "/admin/settings" },
   ];
 
