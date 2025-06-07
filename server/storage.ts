@@ -2040,87 +2040,230 @@ export class DatabaseStorage implements IStorage {
         let progress = 0;
         let requirements: any[] = [];
 
-        // Calcola progresso per badge specifici
-        if (badge.slug === 'complete-profile') {
-          const hasDescription = professional.description && professional.description.length >= 50;
-          const hasContactInfo = professional.phoneFixed || professional.phoneMobile;
-          const hasAddress = professional.address && professional.city;
-          const hasBusinessInfo = professional.businessName;
+        // Calculate progress based on badge type
+        switch (badge.slug) {
+          case 'complete-profile':
+            const hasDescription = professional.description && professional.description.length >= 50;
+            const hasContactInfo = professional.phoneFixed || professional.phoneMobile;
+            const hasAddress = professional.address && professional.city;
+            const hasBusinessInfo = professional.businessName;
 
-          const completedReqs = [hasDescription, hasContactInfo, hasAddress, hasBusinessInfo].filter(Boolean).length;
-          progress = (completedReqs / 4) * 100;
+            const completedReqs = [hasDescription, hasContactInfo, hasAddress, hasBusinessInfo].filter(Boolean).length;
+            progress = (completedReqs / 4) * 100;
 
-          requirements = [
-            {
-              description: "Descrizione dettagliata (min. 50 caratteri)",
-              current: professional.description?.length || 0,
-              target: 50,
-              completed: hasDescription,
-              suggestion: hasDescription ? null : "Aggiungi una descrizione più dettagliata della tua attività"
-            },
-            {
-              description: "Informazioni di contatto",
-              current: hasContactInfo ? 1 : 0,
-              target: 1,
-              completed: hasContactInfo,
-              suggestion: hasContactInfo ? null : "Aggiungi almeno un numero di telefono"
-            },
-            {
-              description: "Indirizzo completo",
-              current: hasAddress ? 1 : 0,
-              target: 1,
-              completed: hasAddress,
-              suggestion: hasAddress ? null : "Completa l'indirizzo con via e città"
-            },
-            {
-              description: "Nome dell'attività",
-              current: hasBusinessInfo ? 1 : 0,
-              target: 1,
-              completed: hasBusinessInfo,
-              suggestion: hasBusinessInfo ? null : "Aggiungi il nome della tua attività"
-            }
-          ];
-        }
+            requirements = [
+              {
+                description: "Descrizione dettagliata (min. 50 caratteri)",
+                current: professional.description?.length || 0,
+                target: 50,
+                completed: hasDescription,
+                suggestion: hasDescription ? null : "Aggiungi una descrizione più dettagliata della tua attività"
+              },
+              {
+                description: "Informazioni di contatto",
+                current: hasContactInfo ? 1 : 0,
+                target: 1,
+                completed: hasContactInfo,
+                suggestion: hasContactInfo ? null : "Aggiungi almeno un numero di telefono"
+              },
+              {
+                description: "Indirizzo completo",
+                current: hasAddress ? 1 : 0,
+                target: 1,
+                completed: hasAddress,
+                suggestion: hasAddress ? null : "Completa l'indirizzo con via e città"
+              },
+              {
+                description: "Nome dell'attività",
+                current: hasBusinessInfo ? 1 : 0,
+                target: 1,
+                completed: hasBusinessInfo,
+                suggestion: hasBusinessInfo ? null : "Aggiungi il nome della tua attività"
+              }
+            ];
+            break;
 
-        if (badge.slug === 'positive-reviews') {
-          const reviewCount = professional.reviewCount || 0;
-          const avgRating = parseFloat(professional.rating || '0');
-          const hasEnoughReviews = reviewCount >= 5;
-          const hasGoodRating = avgRating >= 4.0;
-
-          progress = Math.min((reviewCount / 5) * 60 + (hasGoodRating ? 40 : 0), 100);
-
-          requirements = [
-            {
-              description: "Almeno 5 recensioni",
+          case 'first-review':
+            const reviewCount = professional.reviewCount || 0;
+            progress = reviewCount >= 1 ? 100 : 0;
+            requirements = [{
+              description: "Prima recensione ricevuta",
               current: reviewCount,
-              target: 5,
-              completed: hasEnoughReviews,
-              suggestion: hasEnoughReviews ? null : "Chiedi ai tuoi clienti di lasciare una recensione"
-            },
-            {
-              description: "Rating medio di 4.0 o superiore",
-              current: avgRating,
-              target: 4.0,
-              completed: hasGoodRating,
-              suggestion: hasGoodRating ? null : "Migliora la qualità del servizio per ottenere rating più alti"
-            }
-          ];
-        }
-
-        if (badge.slug === 'verified-identity') {
-          const isVerified = professional.isVerified;
-          progress = isVerified ? 100 : 0;
-
-          requirements = [
-            {
-              description: "Identità verificata dall'amministrazione",
-              current: isVerified ? 1 : 0,
               target: 1,
-              completed: isVerified,
-              suggestion: isVerified ? null : "Contatta l'amministrazione per verificare la tua identità"
-            }
-          ];
+              completed: reviewCount >= 1,
+              suggestion: reviewCount >= 1 ? null : "Chiedi ai tuoi clienti di lasciare una recensione"
+            }];
+            break;
+
+          case 'first-contact':
+            // Mock for now - would need actual contact tracking
+            progress = professional.profileViews > 0 ? 100 : 0;
+            requirements = [{
+              description: "Primo contatto con cliente",
+              current: professional.profileViews > 0 ? 1 : 0,
+              target: 1,
+              completed: professional.profileViews > 0,
+              suggestion: professional.profileViews > 0 ? null : "Aumenta la visibilità del tuo profilo"
+            }];
+            break;
+
+          case 'veteran-junior':
+            const daysSinceCreation = Math.floor((new Date().getTime() - new Date(professional.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+            progress = Math.min((daysSinceCreation / 90) * 100, 100);
+            requirements = [{
+              description: "Profilo attivo da 90 giorni",
+              current: daysSinceCreation,
+              target: 90,
+              completed: daysSinceCreation >= 90,
+              suggestion: daysSinceCreation >= 90 ? null : `Ancora ${90 - daysSinceCreation} giorni di attività`
+            }];
+            break;
+
+          case 'veteran':
+            const daysSinceCreationYear = Math.floor((new Date().getTime() - new Date(professional.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+            progress = Math.min((daysSinceCreationYear / 365) * 100, 100);
+            requirements = [{
+              description: "Profilo attivo da 1 anno",
+              current: daysSinceCreationYear,
+              target: 365,
+              completed: daysSinceCreationYear >= 365,
+              suggestion: daysSinceCreationYear >= 365 ? null : `Ancora ${365 - daysSinceCreationYear} giorni di attività`
+            }];
+            break;
+
+          case 'happy-clients':
+            const totalReviews = professional.reviewCount || 0;
+            const avgRating = parseFloat(professional.rating || '0');
+            // Assuming 95% positive means rating >= 4.0
+            const positivePercentage = avgRating >= 4.0 ? 95 : (avgRating / 4.0) * 95;
+            const hasEnoughReviews = totalReviews >= 10;
+            const hasPositiveRating = positivePercentage >= 95;
+
+            progress = (hasEnoughReviews ? 50 : (totalReviews / 10) * 50) + (hasPositiveRating ? 50 : (positivePercentage / 95) * 50);
+
+            requirements = [
+              {
+                description: "Almeno 10 recensioni totali",
+                current: totalReviews,
+                target: 10,
+                completed: hasEnoughReviews,
+                suggestion: hasEnoughReviews ? null : "Chiedi più recensioni ai tuoi clienti"
+              },
+              {
+                description: "95% recensioni positive (≥4 stelle)",
+                current: Math.round(positivePercentage),
+                target: 95,
+                completed: hasPositiveRating,
+                suggestion: hasPositiveRating ? null : "Migliora la qualità del servizio per ottenere recensioni più positive"
+              }
+            ];
+            break;
+
+          case 'five-stars':
+            const fiveStarReviews = professional.reviewCount || 0;
+            const fiveStarRating = parseFloat(professional.rating || '0');
+            const hasEnoughFiveStarReviews = fiveStarReviews >= 10;
+            const hasHighRating = fiveStarRating >= 4.8;
+
+            progress = (hasEnoughFiveStarReviews ? 50 : (fiveStarReviews / 10) * 50) + (hasHighRating ? 50 : (fiveStarRating / 4.8) * 50);
+
+            requirements = [
+              {
+                description: "Almeno 10 recensioni",
+                current: fiveStarReviews,
+                target: 10,
+                completed: hasEnoughFiveStarReviews,
+                suggestion: hasEnoughFiveStarReviews ? null : "Ottieni più recensioni"
+              },
+              {
+                description: "Rating medio ≥4.8 stelle",
+                current: fiveStarRating,
+                target: 4.8,
+                completed: hasHighRating,
+                suggestion: hasHighRating ? null : "Migliora la qualità per ottenere rating più alti"
+              }
+            ];
+            break;
+
+          case 'top-reviews':
+            const topReviewCount = professional.reviewCount || 0;
+            const topRating = parseFloat(professional.rating || '0');
+            const hasEnoughTopReviews = topReviewCount >= 20;
+            const hasGoodTopRating = topRating >= 4.5;
+
+            progress = (hasEnoughTopReviews ? 60 : (topReviewCount / 20) * 60) + (hasGoodTopRating ? 40 : (topRating / 4.5) * 40);
+
+            requirements = [
+              {
+                description: "Almeno 20 recensioni",
+                current: topReviewCount,
+                target: 20,
+                completed: hasEnoughTopReviews,
+                suggestion: hasEnoughTopReviews ? null : "Continua a raccogliere recensioni"
+              },
+              {
+                description: "Rating medio ≥4.5 stelle",
+                current: topRating,
+                target: 4.5,
+                completed: hasGoodTopRating,
+                suggestion: hasGoodTopRating ? null : "Mantieni alta la qualità del servizio"
+              }
+            ];
+            break;
+
+          case 'growing':
+            // Mock calculation - would need actual view tracking
+            const currentViews = professional.profileViews || 0;
+            const growthPercent = currentViews > 100 ? 20 : (currentViews / 100) * 20;
+            progress = Math.min(growthPercent * 5, 100);
+
+            requirements = [{
+              description: "+20% visualizzazioni ultimo mese",
+              current: Math.round(growthPercent),
+              target: 20,
+              completed: growthPercent >= 20,
+              suggestion: growthPercent >= 20 ? null : "Migliora la visibilità del tuo profilo"
+            }];
+            break;
+
+          case 'popular':
+            const monthlyViews = professional.profileViews || 0;
+            progress = Math.min((monthlyViews / 100) * 100, 100);
+
+            requirements = [{
+              description: "100+ visualizzazioni ultimo mese",
+              current: monthlyViews,
+              target: 100,
+              completed: monthlyViews >= 100,
+              suggestion: monthlyViews >= 100 ? null : "Aumenta la visibilità del tuo profilo"
+            }];
+            break;
+
+          case 'reliable':
+            // Assuming no problematic flag means reliable
+            const isReliable = !professional.isProblematic;
+            progress = isReliable ? 100 : 0;
+
+            requirements = [{
+              description: "Zero segnalazioni negli ultimi 12 mesi",
+              current: isReliable ? 0 : 1,
+              target: 0,
+              completed: isReliable,
+              suggestion: isReliable ? null : "Risolvi eventuali problemi segnalati"
+            }];
+            break;
+
+          default:
+            // For badges not yet implemented, show as not started
+            progress = 0;
+            requirements = [{
+              description: "Badge in fase di implementazione",
+              current: 0,
+              target: 1,
+              completed: false,
+              suggestion: "Questo badge sarà disponibile presto"
+            }];
+            break;
         }
 
         return {
@@ -2128,81 +2271,152 @@ export class DatabaseStorage implements IStorage {
           isEarned,
           progress: Math.round(progress),
           requirements,
-          earnedBadge: earnedBadge?.professional_badges || null
+          awardedAt: earnedBadge?.professional_badges?.awardedAt || null,
+          nextActions: requirements.filter(req => !req.completed).map(req => req.suggestion).filter(Boolean)
         };
-      });
+      }).filter(badgeData => badgeData.badge);
     } catch (error) {
       console.error('Error calculating badge progress:', error);
       return [];
     }
   }
 
-  async checkAutomaticBadges(professionalId: number): Promise<ProfessionalBadge[]> {
-    const newBadges: ProfessionalBadge[] = [];
-    
+  async checkAutomaticBadges(professionalId: number): Promise<{ awarded: string[], message: string }> {
     try {
-      // Implementazione logica per badge automatici
       const professional = await this.getProfessional(professionalId);
-      if (!professional) {
-        console.log('Professional not found for ID:', professionalId);
-        return newBadges;
-      }
+      if (!professional) return { awarded: [], message: "Professionista non trovato" };
 
-      console.log('Checking automatic badges for professional:', professionalId);
+      const awardedBadges: string[] = [];
 
-      const automaticBadges = await db
-        .select()
-        .from(badges)
-        .where(eq(badges.type, 'automatic'));
+      // Check for Profile Complete badge
+      const hasDescription = professional.description && professional.description.length >= 50;
+      const hasContactInfo = professional.phoneFixed || professional.phoneMobile;
+      const hasAddress = professional.address && professional.city;
+      const hasBusinessInfo = professional.businessName;
 
-      console.log('Found automatic badges:', automaticBadges.length);
-
-      for (const badge of automaticBadges) {
-        const requirements = badge.requirements as any;
-        if (!requirements) continue;
-
-        let shouldAward = false;
-
-        // Controllo badge "Profilo Completo"
-        if (badge.slug === 'complete-profile') {
-          const hasDescription = professional.description && professional.description.length >= 50;
-          const hasPhotos = true; // Controllare dalle foto reali
-          shouldAward = hasDescription && hasPhotos;
-        }
-
-        // Controllo badge "Recensioni Positive" 
-        if (badge.slug === 'positive-reviews') {
-          const reviewCount = professional.reviewCount || 0;
-          const avgRating = parseFloat(professional.rating || '0');
-          shouldAward = reviewCount >= 5 && avgRating >= 4.0;
-        }
-
-        if (shouldAward) {
-          // Verifica se non ha già questo badge
-          const existingBadge = await db
+      if (hasDescription && hasContactInfo && hasAddress && hasBusinessInfo) {
+        const profileCompleteBadge = await db.select().from(badges).where(eq(badges.slug, 'complete-profile')).limit(1);
+        if (profileCompleteBadge.length > 0) {
+          const existingAward = await db
             .select()
             .from(professionalBadges)
             .where(
               and(
                 eq(professionalBadges.professionalId, professionalId),
-                eq(professionalBadges.badgeId, badge.id),
+                eq(professionalBadges.badgeId, profileCompleteBadge[0].id),
                 isNull(professionalBadges.revokedAt)
               )
-            );
+            )
+            .limit(1);
 
-          if (existingBadge.length === 0) {
-            const newBadge = await this.awardBadge(professionalId, badge.id);
-            newBadges.push(newBadge);
-            console.log('Awarded new badge:', badge.name);
+          if (existingAward.length === 0) {
+            await this.awardBadge(professionalId, profileCompleteBadge[0].id);
+            awardedBadges.push("Profilo Completo");
           }
         }
       }
-      
-      console.log('Returning new badges count:', newBadges.length);
-      return newBadges;
+
+      // Check for First Review badge
+      if (professional.reviewCount && professional.reviewCount >= 1) {
+        const firstReviewBadge = await db.select().from(badges).where(eq(badges.slug, 'first-review')).limit(1);
+        if (firstReviewBadge.length > 0) {
+          const existingAward = await db
+            .select()
+            .from(professionalBadges)
+            .where(
+              and(
+                eq(professionalBadges.professionalId, professionalId),
+                eq(professionalBadges.badgeId, firstReviewBadge[0].id),
+                isNull(professionalBadges.revokedAt)
+              )
+            )
+            .limit(1);
+
+          if (existingAward.length === 0) {
+            await this.awardBadge(professionalId, firstReviewBadge[0].id);
+            awardedBadges.push("Prima Recensione");
+          }
+        }
+      }
+
+      // Check for Veteran Junior badge (90 days)
+      const daysSinceCreation = Math.floor((new Date().getTime() - new Date(professional.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+      if (daysSinceCreation >= 90) {
+        const veteranJuniorBadge = await db.select().from(badges).where(eq(badges.slug, 'veteran-junior')).limit(1);
+        if (veteranJuniorBadge.length > 0) {
+          const existingAward = await db
+            .select()
+            .from(professionalBadges)
+            .where(
+              and(
+                eq(professionalBadges.professionalId, professionalId),
+                eq(professionalBadges.badgeId, veteranJuniorBadge[0].id),
+                isNull(professionalBadges.revokedAt)
+              )
+            )
+            .limit(1);
+
+          if (existingAward.length === 0) {
+            await this.awardBadge(professionalId, veteranJuniorBadge[0].id);
+            awardedBadges.push("Veterano Junior");
+          }
+        }
+      }
+
+      // Check for Veteran badge (365 days)
+      if (daysSinceCreation >= 365) {
+        const veteranBadge = await db.select().from(badges).where(eq(badges.slug, 'veteran')).limit(1);
+        if (veteranBadge.length > 0) {
+          const existingAward = await db
+            .select()
+            .from(professionalBadges)
+            .where(
+              and(
+                eq(professionalBadges.professionalId, professionalId),
+                eq(professionalBadges.badgeId, veteranBadge[0].id),
+                isNull(professionalBadges.revokedAt)
+              )
+            )
+            .limit(1);
+
+          if (existingAward.length === 0) {
+            await this.awardBadge(professionalId, veteranBadge[0].id);
+            awardedBadges.push("Veterano");
+          }
+        }
+      }
+
+      // Check for Reliable badge (no problematic flags)
+      if (!professional.isProblematic) {
+        const reliableBadge = await db.select().from(badges).where(eq(badges.slug, 'reliable')).limit(1);
+        if (reliableBadge.length > 0) {
+          const existingAward = await db
+            .select()
+            .from(professionalBadges)
+            .where(
+              and(
+                eq(professionalBadges.professionalId, professionalId),
+                eq(professionalBadges.badgeId, reliableBadge[0].id),
+                isNull(professionalBadges.revokedAt)
+              )
+            )
+            .limit(1);
+
+          if (existingAward.length === 0) {
+            await this.awardBadge(professionalId, reliableBadge[0].id);
+            awardedBadges.push("Affidabile");
+          }
+        }
+      }
+
+      const message = awardedBadges.length > 0 
+        ? `Congratulazioni! Hai ottenuto ${awardedBadges.length} nuovi badge: ${awardedBadges.join(', ')}`
+        : "Nessun nuovo badge automatico disponibile al momento. Continua a migliorare il tuo profilo!";
+
+      return { awarded: awardedBadges, message };
     } catch (error) {
-      console.error('Error in checkAutomaticBadges:', error);
-      return newBadges; // Return empty array on error
+      console.error('Error checking automatic badges:', error);
+      return { awarded: [], message: "Errore durante la verifica dei badge" };
     }
   }
 

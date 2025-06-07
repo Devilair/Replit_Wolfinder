@@ -1,0 +1,44 @@
+Revisione rapida dell’anteprima UI + coerenza con la tassonomia concordata
+Badge mostrato in UI	Status vs lista ufficiale	Osservazioni / Azioni
+Profilo Completo	✅ (esiste → On-boarding)	OK (progress bar perfetta).
+Primo Contatto	⚠️ Nuovo, non previsto	Decidi se tenere: non sostituisce Prima Recensione. Se resta, rinomina in “Primo Contatto” anche nella tassonomia ufficiale.
+Recensioni Positive (≥5 rec. > 4★)	⚠️ Simile a Cliente Felice ma soglia molto bassa	Portalo a ≥ 10 rec. & 95 % positive per allinearsi.
+Professionista Attivo (3 mesi)	⚠️ Era Veterano (≥ 1 anno)	Mantieni questo come Junior Veteran (3 m) e conserva “Veterano” a 12 mesi: progressione chiara.
+Top Recensioni (20 rec. ≥ 4,5★)	✅ (= step intermedio fra 5 Stelle e Eccellenza)	Buon badge “scala”. Aggiungi 5 Stelle (10 rec. ≥ 4,8★) per coerenza.
+Ordine Professionale	✅ (= Certificato Professionale)	Manca però Verificato e Identità Confermata: vanno aggiunti.
+Esperienza Certificata (10 anni)	✅ Nuovo ma sensato	Mantienilo dentro famiglia “Qualità”.
+Specializzazione Elite	✅ (coerente con badge esperto di nicchia)	Definisci requisiti oggettivi (es. 10 rec. in categoria specifica).
+Risposta Rapida (≤2 h 90 %)	✅ (= Responsivo)	Allineato.
+Comunicatore Eccellente (> 4,5 su “comunicazione”)	✅ aggiunge soft-skill	Ok se il rating comunica-clienti è tracciato; altrimenti rinvia.
+● Mancano	In Crescita, Popolare, Affidabile, Collaborativo, Locale, Top Performer, Eccellenza, Badge verifiche sede/studio	Devono comparire per coprire tutte le famiglie concordate.
+
+Piano di azione per chiudere il “Badge System” (7–10 giorni)
+Ord.	Macro-Task	Sotto-task chiave	Responsabile	Done when…
+B-1	Master-dictionary badge	- Elenco definitivo (nome, slug, famiglia, requisiti, decadenza)
+- Mappatura tra vecchi e nuovi nomi	PO + Dev	JSON siglato e pushato in repo
+B-2	Back-end allineamento	- Aggiungi badge mancanti (Top Performer, Eccellenza, ecc.)
+- Unifica Veterano (3 m = Junior, 12 m = Senior)
+- Inserisci flag manual_verification dove serve	Back-end	/api/badges restituisce tutti i 20+ badge
+B-3	Regole & Cron	- Aggiorna soglie (Recensioni Positive ≥10 rec. 95 %)
+- Split cron: weekly (qualità/crescita) vs nightly (attività/risposta)	Back-end	Cron log badge OK, nessun conflitto
+B-4	Frontend: componente Badge Card	- Stato: Non iniziato / In corso / Ottenuto / Decaduto
+- Badge familiari con colore/icon differente (automatico 🏆, qualità ⭐, crescita 📈, verifica 🛡️)
+- Tooltip “perdi il badge se…”	Front-end	Tutti i badge renderizzano correttamente con progress
+B-5	Filtro & Ordinamento UI	- Tabs o select per famiglia
+- Search badge by name	Front-end	UX test: filtrare “Verifica” mostra solo scudi
+B-6	Workflow Verifica Manuale	- Endpoint upload doc → admin approve → badge live
+- Notifica toast “Badge Verificato ottenuto”	Back-end + Front-end	Badge Verificato assegnabile manualmente in staging
+B-7	Decadenza & Notification	- Banner se badge sta per scadere (rating in calo)
+- Email summary mensile	Back-end	Simulazione calo rating → badge rimosso e mail ricevuta
+
+KPI di chiusura Sprint “Badge System”
+Copertura 100 % dei badge concordati (≥ 20).
+
+Ogni badge visualizza stato corretto e progress % (profilo test).
+
+Cron genera log senza errori < 60 s.
+
+Lighthouse: page “/badge” < 2 s load, 0 errori console.
+
+Manual test: abbassi rating → badge qualità decade entro 24 h.
+
