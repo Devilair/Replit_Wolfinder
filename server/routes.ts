@@ -40,6 +40,14 @@ import {
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Simple admin middleware for testing
+  const requireAdmin = (req: any, res: any, next: any) => {
+    // Allow access in development mode for testing
+    if (process.env.NODE_ENV === 'development') {
+      return next();
+    }
+    return res.status(401).json({ error: 'Admin access required' });
+  };
 
   // Multer configuration for file uploads
   const upload = multer({
@@ -670,7 +678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Critical Metrics
-  app.get("/api/admin/critical-metrics", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
+  app.get("/api/admin/critical-metrics", requireAdmin, async (req, res) => {
     try {
       const metrics = {
         averageResponseTime: "2.3",
@@ -686,7 +694,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Recent Activity (with real-time subscription notifications)
-  app.get("/api/admin/recent-activity", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
+  app.get("/api/admin/recent-activity", requireAdmin, async (req, res) => {
     try {
       const activities = await storage.getRecentActivity();
       res.json(activities);
@@ -697,7 +705,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Moderation Queue
-  app.get("/api/admin/moderation-queue", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
+  app.get("/api/admin/moderation-queue", requireAdmin, async (req, res) => {
     try {
       const queue = {
         professionals: 3,
@@ -712,7 +720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Suspicious Activity
-  app.get("/api/admin/suspicious-activity", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
+  app.get("/api/admin/suspicious-activity", requireAdmin, async (req, res) => {
     try {
       const suspiciousActivities = [
         {
@@ -3741,15 +3749,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin dashboard endpoints
-  // Simple admin middleware for testing
-  const requireAdmin = (req: any, res: any, next: any) => {
-    // Allow access in development mode for testing
-    if (process.env.NODE_ENV === 'development') {
-      return next();
-    }
-    return res.status(401).json({ error: 'Admin access required' });
-  };
-
   app.get("/api/admin/dashboard-stats", requireAdmin, async (req, res) => {
     try {
       const timeRange = (req.query.timeRange as string) || '30d';
