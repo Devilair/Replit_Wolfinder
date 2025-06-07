@@ -239,10 +239,9 @@ export default function ProfessionalDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 bg-white/50 backdrop-blur-sm border">
+          <TabsList className="grid w-full grid-cols-6 bg-white/50 backdrop-blur-sm border">
             <TabsTrigger value="overview">Panoramica</TabsTrigger>
             <TabsTrigger value="profile">Profilo</TabsTrigger>
-            <TabsTrigger value="badges">Badge</TabsTrigger>
             <TabsTrigger value="reviews">Recensioni</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="services">Servizi</TabsTrigger>
@@ -355,75 +354,7 @@ export default function ProfessionalDashboard() {
             </div>
           </TabsContent>
 
-          {/* Badges Tab */}
-          <TabsContent value="badges" className="space-y-6">
-            <div className="space-y-6">
-              {/* Header */}
-              <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-2xl font-bold">I miei badge</h2>
-                  <p className="text-muted-foreground">
-                    Gestisci e monitora i tuoi badge di qualità professionale
-                  </p>
-                </div>
-                <Button 
-                  onClick={() => checkBadgesMutation.mutate()}
-                  disabled={checkBadgesMutation.isPending}
-                  className="flex items-center gap-2"
-                >
-                  <RefreshCw className={`h-4 w-4 ${checkBadgesMutation.isPending ? 'animate-spin' : ''}`} />
-                  Controlla Badge
-                </Button>
-              </div>
 
-              {/* Badge Progress Cards */}
-              {badgeProgressLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[1, 2, 3].map(i => (
-                    <Card key={i} className="animate-pulse">
-                      <CardHeader>
-                        <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="h-20 bg-gray-200 rounded"></div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : badgeProgress?.length === 0 ? (
-                <Card>
-                  <CardContent className="text-center py-8">
-                    <Award className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Nessun badge disponibile
-                    </h3>
-                    <p className="text-gray-500 mb-4">
-                      Non ci sono badge configurati nel sistema al momento.
-                    </p>
-                    <Button 
-                      onClick={() => checkBadgesMutation.mutate()}
-                      disabled={checkBadgesMutation.isPending}
-                      className="flex items-center gap-2"
-                    >
-                      <RefreshCw className={`h-4 w-4 ${checkBadgesMutation.isPending ? 'animate-spin' : ''}`} />
-                      Verifica badge disponibili
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {badgeProgress?.map((badgeData, index) => (
-                    <BadgeProgressCard
-                      key={badgeData.badge.id}
-                      badgeProgress={badgeData}
-                      onAction={() => checkBadgesMutation.mutate()}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
 
           {/* Profile Tab */}
           <TabsContent value="profile" className="space-y-6">
