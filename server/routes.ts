@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-
+import { stripeService } from "./stripe-service";
 
 import { authService } from "./auth";
 import multer from "multer";
@@ -2660,6 +2660,337 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching global analytics:", error);
       res.status(500).json({ message: "Failed to fetch global analytics" });
+    }
+  });
+
+  // ==================== STRIPE SUBSCRIPTION ROUTES ====================
+  
+  // Get all subscription plans
+  app.get("/api/subscription-plans", async (req, res) => {
+    try {
+      const plans = await storage.getSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error("Error fetching subscription plans:", error);
+      res.status(500).json({ message: "Failed to fetch subscription plans" });
+    }
+  });
+
+  // Get specific subscription plan
+  app.get("/api/subscription-plans/:id", async (req, res) => {
+    try {
+      const planId = parseInt(req.params.id);
+      if (isNaN(planId)) {
+        return res.status(400).json({ message: "Invalid plan ID" });
+      }
+
+      const plan = await storage.getSubscriptionPlan(planId);
+      if (!plan) {
+        return res.status(404).json({ message: "Plan not found" });
+      }
+
+      res.json(plan);
+    } catch (error) {
+      console.error("Error fetching subscription plan:", error);
+      res.status(500).json({ message: "Failed to fetch subscription plan" });
+    }
+  });
+
+  // Create subscription for professional
+  app.post("/api/subscriptions/create", async (req, res) => {
+    try {
+      const { professionalId, planId } = req.body;
+
+      if (!professionalId || !planId) {
+        return res.status(400).json({ message: "Professional ID and Plan ID are required" });
+      }
+
+      // Get professional and plan details
+      const professional = await storage.getProfessional(professionalId);
+      const plan = await storage.getSubscriptionPlan(planId);
+
+      if (!professional || !plan) {
+        return res.status(404).json({ message: "Professional or plan not found" });
+      }
+
+      // Check if professional already has active subscription
+      const existingSubscription = await storage.getProfessionalSubscription(professionalId);
+      if (existingSubscription) {
+        return res.status(400).json({ message: "Professional already has an active subscription" });
+      }
+
+      // Create or get Stripe customer
+      let customer;
+      try {
+        customer = await stripeService.createCustomer({
+          email: professional.email,
+          name: professional.businessName,
+          metadata: {
+            professionalId: professionalId.toString(),
+            planId: planId.toString()
+          }
+        });
+      } catch (stripeError) {
+        console.error("Stripe customer creation error:", stripeError);
+        return res.status(500).json({ message: "Failed to create payment customer" });
+      }
+
+      // Create Stripe subscription if plan has a Stripe price ID
+      let stripeSubscription;
+      if (plan.stripePriceId) {
+        try {
+          stripeSubscription = await stripeService.createSubscription({
+            customerId: customer.id,
+            priceId: plan.stripePriceId,
+            metadata: {
+              professionalId: professionalId.toString(),
+              planId: planId.toString()
+            }
+          });
+        } catch (stripeError) {
+          console.error("Stripe subscription creation error:", stripeError);
+          return res.status(500).json({ message: "Failed to create subscription" });
+        }
+      }
+
+      // Create subscription in database
+      const subscription = await storage.createSubscription({
+        professionalId,
+        planId,
+        status: stripeSubscription ? 'incomplete' : 'active',
+        stripeSubscriptionId: stripeSubscription?.id,
+        stripeCustomerId: customer.id,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        cancelAtPeriodEnd: false
+      });
+
+      // Update professional with Stripe info
+      await storage.updateProfessionalStripeInfo(professionalId, customer.id, stripeSubscription?.id);
+
+      res.json({
+        subscription,
+        clientSecret: stripeSubscription?.latest_invoice?.payment_intent?.client_secret,
+        customerId: customer.id
+      });
+
+    } catch (error) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ message: "Failed to create subscription" });
+    }
+  });
+
+  // Get professional's subscription
+  app.get("/api/professionals/:id/subscription", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      if (isNaN(professionalId)) {
+        return res.status(400).json({ message: "Invalid professional ID" });
+      }
+
+      const subscription = await storage.getProfessionalSubscription(professionalId);
+      res.json(subscription);
+    } catch (error) {
+      console.error("Error fetching professional subscription:", error);
+      res.status(500).json({ message: "Failed to fetch subscription" });
+    }
+  });
+
+  // Update subscription (upgrade/downgrade)
+  app.patch("/api/subscriptions/:id", async (req, res) => {
+    try {
+      const subscriptionId = parseInt(req.params.id);
+      const { planId, status } = req.body;
+
+      if (isNaN(subscriptionId)) {
+        return res.status(400).json({ message: "Invalid subscription ID" });
+      }
+
+      const subscription = await storage.getSubscription(subscriptionId);
+      if (!subscription) {
+        return res.status(404).json({ message: "Subscription not found" });
+      }
+
+      // If changing plan, update Stripe subscription
+      if (planId && planId !== subscription.planId) {
+        const newPlan = await storage.getSubscriptionPlan(planId);
+        if (!newPlan) {
+          return res.status(404).json({ message: "New plan not found" });
+        }
+
+        if (subscription.stripeSubscriptionId && newPlan.stripePriceId) {
+          try {
+            await stripeService.updateSubscription({
+              subscriptionId: subscription.stripeSubscriptionId,
+              priceId: newPlan.stripePriceId,
+              metadata: {
+                professionalId: subscription.professionalId.toString(),
+                planId: planId.toString()
+              }
+            });
+          } catch (stripeError) {
+            console.error("Stripe subscription update error:", stripeError);
+            return res.status(500).json({ message: "Failed to update payment subscription" });
+          }
+        }
+      }
+
+      // Update subscription in database
+      const updateData: any = {};
+      if (planId) updateData.planId = planId;
+      if (status) updateData.status = status;
+
+      const updatedSubscription = await storage.updateSubscription(subscriptionId, updateData);
+      res.json(updatedSubscription);
+
+    } catch (error) {
+      console.error("Error updating subscription:", error);
+      res.status(500).json({ message: "Failed to update subscription" });
+    }
+  });
+
+  // Cancel subscription
+  app.post("/api/subscriptions/:id/cancel", async (req, res) => {
+    try {
+      const subscriptionId = parseInt(req.params.id);
+      const { immediately = false } = req.body;
+
+      if (isNaN(subscriptionId)) {
+        return res.status(400).json({ message: "Invalid subscription ID" });
+      }
+
+      const subscription = await storage.getSubscription(subscriptionId);
+      if (!subscription) {
+        return res.status(404).json({ message: "Subscription not found" });
+      }
+
+      // Cancel Stripe subscription
+      if (subscription.stripeSubscriptionId) {
+        try {
+          await stripeService.cancelSubscription(subscription.stripeSubscriptionId, immediately);
+        } catch (stripeError) {
+          console.error("Stripe subscription cancellation error:", stripeError);
+          return res.status(500).json({ message: "Failed to cancel payment subscription" });
+        }
+      }
+
+      // Update subscription in database
+      const canceledSubscription = await storage.cancelSubscription(subscriptionId);
+      res.json(canceledSubscription);
+
+    } catch (error) {
+      console.error("Error canceling subscription:", error);
+      res.status(500).json({ message: "Failed to cancel subscription" });
+    }
+  });
+
+  // Stripe webhook endpoint
+  app.post("/api/webhooks/stripe", async (req, res) => {
+    let event;
+
+    try {
+      const signature = req.headers['stripe-signature'] as string;
+      
+      if (!process.env.STRIPE_WEBHOOK_SECRET) {
+        console.error("Missing STRIPE_WEBHOOK_SECRET");
+        return res.status(400).send("Webhook secret not configured");
+      }
+
+      event = stripeService.constructEvent(
+        req.body,
+        signature,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+    } catch (err) {
+      console.error("Webhook signature verification failed:", err);
+      return res.status(400).send("Webhook signature verification failed");
+    }
+
+    // Handle the event
+    try {
+      switch (event.type) {
+        case 'invoice.payment_succeeded': {
+          const invoice = event.data.object;
+          const subscriptionId = invoice.subscription as string;
+          
+          if (subscriptionId) {
+            // Find and update subscription status
+            const subscriptions = await storage.getSubscriptions();
+            const subscription = subscriptions.find(s => s.stripeSubscriptionId === subscriptionId);
+            
+            if (subscription) {
+              await storage.updateSubscription(subscription.id, { 
+                status: 'active',
+                currentPeriodStart: new Date(invoice.period_start * 1000),
+                currentPeriodEnd: new Date(invoice.period_end * 1000)
+              });
+            }
+          }
+          break;
+        }
+
+        case 'invoice.payment_failed': {
+          const invoice = event.data.object;
+          const subscriptionId = invoice.subscription as string;
+          
+          if (subscriptionId) {
+            const subscriptions = await storage.getSubscriptions();
+            const subscription = subscriptions.find(s => s.stripeSubscriptionId === subscriptionId);
+            
+            if (subscription) {
+              await storage.updateSubscription(subscription.id, { status: 'past_due' });
+            }
+          }
+          break;
+        }
+
+        case 'customer.subscription.deleted': {
+          const subscription = event.data.object;
+          
+          const subscriptions = await storage.getSubscriptions();
+          const dbSubscription = subscriptions.find(s => s.stripeSubscriptionId === subscription.id);
+          
+          if (dbSubscription) {
+            await storage.updateSubscription(dbSubscription.id, { status: 'canceled' });
+          }
+          break;
+        }
+
+        default:
+          console.log(`Unhandled event type ${event.type}`);
+      }
+
+      res.json({ received: true });
+    } catch (error) {
+      console.error("Error processing webhook:", error);
+      res.status(500).json({ message: "Error processing webhook" });
+    }
+  });
+
+  // Get subscription analytics for admin
+  app.get("/api/admin/subscriptions/analytics", async (req, res) => {
+    try {
+      const subscriptions = await storage.getSubscriptions();
+      
+      const analytics = {
+        totalSubscriptions: subscriptions.length,
+        activeSubscriptions: subscriptions.filter(s => s.status === 'active').length,
+        canceledSubscriptions: subscriptions.filter(s => s.status === 'canceled').length,
+        pastDueSubscriptions: subscriptions.filter(s => s.status === 'past_due').length,
+        monthlyRevenue: subscriptions
+          .filter(s => s.status === 'active')
+          .reduce((total, s) => total + parseFloat(s.plan.priceMonthly), 0),
+        planDistribution: subscriptions.reduce((acc, s) => {
+          const planName = s.plan.name;
+          acc[planName] = (acc[planName] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>)
+      };
+
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching subscription analytics:", error);
+      res.status(500).json({ message: "Failed to fetch subscription analytics" });
     }
   });
 

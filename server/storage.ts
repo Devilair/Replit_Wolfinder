@@ -97,6 +97,23 @@ export interface IStorage {
   getPlan(id: number): Promise<Plan | undefined>;
   createPlan(plan: InsertPlan): Promise<Plan>;
 
+  // Subscription System
+  getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined>;
+  createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
+  updateSubscriptionPlan(id: number, plan: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan>;
+  deleteSubscriptionPlan(id: number): Promise<void>;
+  
+  getSubscriptions(params?: { professionalId?: number; status?: string }): Promise<SubscriptionWithDetails[]>;
+  getSubscription(id: number): Promise<SubscriptionWithDetails | undefined>;
+  getProfessionalSubscription(professionalId: number): Promise<SubscriptionWithDetails | undefined>;
+  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  updateSubscription(id: number, subscription: Partial<InsertSubscription>): Promise<Subscription>;
+  cancelSubscription(id: number): Promise<Subscription>;
+  
+  // Stripe integration helpers
+  updateProfessionalStripeInfo(professionalId: number, customerId: string, subscriptionId?: string): Promise<void>;
+
   // Events
   createEvent(event: InsertEvent): Promise<Event>;
   getEvents(params?: any): Promise<Event[]>;
@@ -628,6 +645,175 @@ export class DatabaseStorage implements IStorage {
       .values(plan)
       .returning();
     return created;
+  }
+
+  // Subscription System Methods
+  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    return await db
+      .select()
+      .from(subscriptionPlans)
+      .where(eq(subscriptionPlans.isActive, true))
+      .orderBy(asc(subscriptionPlans.priceMonthly));
+  }
+
+  async getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined> {
+    const [plan] = await db
+      .select()
+      .from(subscriptionPlans)
+      .where(eq(subscriptionPlans.id, id));
+    return plan;
+  }
+
+  async createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    const [created] = await db
+      .insert(subscriptionPlans)
+      .values(plan)
+      .returning();
+    return created;
+  }
+
+  async updateSubscriptionPlan(id: number, plan: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan> {
+    const [updated] = await db
+      .update(subscriptionPlans)
+      .set({ ...plan, updatedAt: new Date() })
+      .where(eq(subscriptionPlans.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteSubscriptionPlan(id: number): Promise<void> {
+    await db
+      .update(subscriptionPlans)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(subscriptionPlans.id, id));
+  }
+
+  async getSubscriptions(params?: { professionalId?: number; status?: string }): Promise<SubscriptionWithDetails[]> {
+    let query = db
+      .select({
+        id: subscriptions.id,
+        professionalId: subscriptions.professionalId,
+        planId: subscriptions.planId,
+        status: subscriptions.status,
+        currentPeriodStart: subscriptions.currentPeriodStart,
+        currentPeriodEnd: subscriptions.currentPeriodEnd,
+        cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
+        stripeSubscriptionId: subscriptions.stripeSubscriptionId,
+        stripeCustomerId: subscriptions.stripeCustomerId,
+        createdAt: subscriptions.createdAt,
+        updatedAt: subscriptions.updatedAt,
+        professional: professionals,
+        plan: subscriptionPlans
+      })
+      .from(subscriptions)
+      .leftJoin(professionals, eq(subscriptions.professionalId, professionals.id))
+      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id));
+
+    if (params?.professionalId) {
+      query = query.where(eq(subscriptions.professionalId, params.professionalId));
+    }
+    if (params?.status) {
+      query = query.where(eq(subscriptions.status, params.status));
+    }
+
+    return await query;
+  }
+
+  async getSubscription(id: number): Promise<SubscriptionWithDetails | undefined> {
+    const [subscription] = await db
+      .select({
+        id: subscriptions.id,
+        professionalId: subscriptions.professionalId,
+        planId: subscriptions.planId,
+        status: subscriptions.status,
+        currentPeriodStart: subscriptions.currentPeriodStart,
+        currentPeriodEnd: subscriptions.currentPeriodEnd,
+        cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
+        stripeSubscriptionId: subscriptions.stripeSubscriptionId,
+        stripeCustomerId: subscriptions.stripeCustomerId,
+        createdAt: subscriptions.createdAt,
+        updatedAt: subscriptions.updatedAt,
+        professional: professionals,
+        plan: subscriptionPlans
+      })
+      .from(subscriptions)
+      .leftJoin(professionals, eq(subscriptions.professionalId, professionals.id))
+      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
+      .where(eq(subscriptions.id, id));
+
+    return subscription;
+  }
+
+  async getProfessionalSubscription(professionalId: number): Promise<SubscriptionWithDetails | undefined> {
+    const [subscription] = await db
+      .select({
+        id: subscriptions.id,
+        professionalId: subscriptions.professionalId,
+        planId: subscriptions.planId,
+        status: subscriptions.status,
+        currentPeriodStart: subscriptions.currentPeriodStart,
+        currentPeriodEnd: subscriptions.currentPeriodEnd,
+        cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
+        stripeSubscriptionId: subscriptions.stripeSubscriptionId,
+        stripeCustomerId: subscriptions.stripeCustomerId,
+        createdAt: subscriptions.createdAt,
+        updatedAt: subscriptions.updatedAt,
+        professional: professionals,
+        plan: subscriptionPlans
+      })
+      .from(subscriptions)
+      .leftJoin(professionals, eq(subscriptions.professionalId, professionals.id))
+      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
+      .where(and(
+        eq(subscriptions.professionalId, professionalId),
+        eq(subscriptions.status, 'active')
+      ));
+
+    return subscription;
+  }
+
+  async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    const [created] = await db
+      .insert(subscriptions)
+      .values(subscription)
+      .returning();
+    return created;
+  }
+
+  async updateSubscription(id: number, subscription: Partial<InsertSubscription>): Promise<Subscription> {
+    const [updated] = await db
+      .update(subscriptions)
+      .set({ ...subscription, updatedAt: new Date() })
+      .where(eq(subscriptions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async cancelSubscription(id: number): Promise<Subscription> {
+    const [updated] = await db
+      .update(subscriptions)
+      .set({ 
+        status: 'canceled',
+        cancelAtPeriodEnd: true,
+        updatedAt: new Date() 
+      })
+      .where(eq(subscriptions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateProfessionalStripeInfo(professionalId: number, customerId: string, subscriptionId?: string): Promise<void> {
+    const updateData: any = {
+      updatedAt: new Date()
+    };
+
+    // Note: We need to add stripe fields to professionals table or create a separate stripe_customers table
+    // For now, this method is prepared for when we add those fields
+
+    await db
+      .update(professionals)
+      .set(updateData)
+      .where(eq(professionals.id, professionalId));
   }
 
   async createEvent(event: InsertEvent): Promise<Event> {
