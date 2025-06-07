@@ -353,8 +353,7 @@ export class DatabaseStorage implements IStorage {
           eq(professionalBadges.professionalId, professionalId),
           isNull(professionalBadges.revokedAt)
         )
-      )
-      .orderBy(asc(badges.priority));
+      );
 
     return results.map(result => ({
       ...result.professional_badges,
@@ -442,6 +441,98 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error checking automatic badges:', error);
       return { awarded: [], message: "Errore durante la verifica dei badge" };
+    }
+  }
+
+  async getBadgeProgress(professionalId: number): Promise<any[]> {
+    try {
+      const professional = await this.getProfessional(professionalId);
+      if (!professional) return [];
+
+      const allBadges = await this.getBadges();
+      const earnedBadges = await this.getProfessionalBadges(professionalId);
+      const earnedBadgeIds = earnedBadges.map(pb => pb.badge.id);
+
+      return allBadges.map(badge => {
+        const isEarned = earnedBadgeIds.includes(badge.id);
+        let progress = 0;
+        let currentValue = 0;
+        let targetValue = 1;
+
+        // Calculate progress based on badge type
+        switch (badge.slug) {
+          case 'complete-profile':
+            const hasDescription = professional.description && professional.description.length >= 50;
+            const hasContactInfo = professional.phoneFixed || professional.phoneMobile;
+            const hasAddress = professional.address && professional.city;
+            const hasBusinessInfo = professional.businessName;
+            currentValue = [hasDescription, hasContactInfo, hasAddress, hasBusinessInfo].filter(Boolean).length;
+            targetValue = 4;
+            progress = (currentValue / targetValue) * 100;
+            break;
+
+          case 'first-review':
+            currentValue = professional.reviewCount || 0;
+            targetValue = 1;
+            progress = Math.min((currentValue / targetValue) * 100, 100);
+            break;
+
+          case 'five-reviews':
+            currentValue = professional.reviewCount || 0;
+            targetValue = 5;
+            progress = Math.min((currentValue / targetValue) * 100, 100);
+            break;
+
+          case 'ten-reviews':
+            currentValue = professional.reviewCount || 0;
+            targetValue = 10;
+            progress = Math.min((currentValue / targetValue) * 100, 100);
+            break;
+
+          case 'excellence-rating':
+            const rating = parseFloat(professional.rating || '0');
+            currentValue = rating;
+            targetValue = 4.5;
+            progress = rating >= 4.5 ? 100 : (rating / targetValue) * 100;
+            break;
+
+          case 'profile-views-100':
+            currentValue = professional.profileViews || 0;
+            targetValue = 100;
+            progress = Math.min((currentValue / targetValue) * 100, 100);
+            break;
+
+          default:
+            progress = isEarned ? 100 : 0;
+            break;
+        }
+
+        return {
+          badge,
+          isEarned,
+          progress: Math.round(progress),
+          currentValue,
+          targetValue,
+          earnedAt: isEarned ? earnedBadges.find(pb => pb.badge.id === badge.id)?.awardedAt : null
+        };
+      });
+    } catch (error) {
+      console.error('Error calculating badge progress:', error);
+      return [];
+    }
+  }
+
+  async getReviewsWithResponses(professionalId: number): Promise<any[]> {
+    try {
+      const reviews = await this.getReviewsByProfessional(professionalId);
+      return reviews.map(review => ({
+        ...review,
+        response: null,
+        canRespond: true
+      }));
+    } catch (error) {
+      console.error('Error fetching reviews with responses:', error);
+      return [];
     }
   }
 

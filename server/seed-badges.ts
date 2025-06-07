@@ -41,16 +41,14 @@ async function seedBadges() {
 }
 
 // Run if called directly
-if (require.main === module) {
-  seedBadges()
-    .then(() => {
-      console.log('Badge seeding completed');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('Badge seeding failed:', error);
-      process.exit(1);
-    });
-}
+seedBadges()
+  .then(() => {
+    console.log('Badge seeding completed');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('Badge seeding failed:', error);
+    process.exit(1);
+  });
 
 export { seedBadges };
