@@ -107,6 +107,11 @@ export default function ProfessionalDashboard() {
     queryKey: ["/api/professional/badges"],
   });
 
+  // Fetch badge progress data
+  const { data: badgeProgress = [], isLoading: badgeProgressLoading } = useQuery({
+    queryKey: ["/api/professional/badges/progress"],
+  });
+
   // Check automatic badges mutation
   const checkBadgesMutation = useMutation({
     mutationFn: async () => {
@@ -114,6 +119,7 @@ export default function ProfessionalDashboard() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/professional/badges"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/badges/progress"] });
       toast({
         title: "Badge controllati",
         description: data.message || "I tuoi badge sono stati aggiornati con successo!",
@@ -367,7 +373,51 @@ export default function ProfessionalDashboard() {
               </div>
 
               {/* Badge Progress Cards */}
-              <BadgeProgressDisplay />
+              {badgeProgressLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2, 3].map(i => (
+                    <Card key={i} className="animate-pulse">
+                      <CardHeader>
+                        <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-20 bg-gray-200 rounded"></div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : badgeProgress?.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <Award className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Nessun badge disponibile
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      Non ci sono badge configurati nel sistema al momento.
+                    </p>
+                    <Button 
+                      onClick={() => checkBadgesMutation.mutate()}
+                      disabled={checkBadgesMutation.isPending}
+                      className="flex items-center gap-2"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${checkBadgesMutation.isPending ? 'animate-spin' : ''}`} />
+                      Verifica badge disponibili
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {badgeProgress?.map((badgeData, index) => (
+                    <BadgeProgressCard
+                      key={badgeData.badge.id}
+                      badgeProgress={badgeData}
+                      onAction={() => checkBadgesMutation.mutate()}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </TabsContent>
 
