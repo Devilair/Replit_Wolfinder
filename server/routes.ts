@@ -878,25 +878,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Professional profile not found" });
       }
 
-      // Check subscription limits
-      const subscription = await storage.getProfessionalSubscription(professional.id);
-      const currentResponses = await storage.getMonthlyResponseCount(professional.id);
-      
-      // Check if user has reached response limit for Essentials plan
-      if (subscription?.plan?.name === 'Essentials' && subscription.plan.max_responses && subscription.plan.max_responses > 0) {
-        if (currentResponses >= subscription.plan.max_responses) {
-          return res.status(403).json({ 
-            message: `Monthly response limit reached (${subscription.plan.max_responses}). Upgrade to Professional plan for unlimited responses.`,
-            limit: subscription.plan.max_responses,
-            used: currentResponses,
-            currentPlan: subscription.plan.name
-          });
-        }
-      }
-      
-      if (!subscription || (subscription.plan.maxResponses !== -1 && currentResponses >= subscription.plan.maxResponses)) {
-        return res.status(403).json({ message: "Response limit reached. Upgrade your plan." });
-      }
+      // Note: Response limits removed for ethical compliance
+      // All plans now allow unlimited responses
 
       const reviewResponse = await storage.createReviewResponse({
         reviewId: parseInt(reviewId),
