@@ -187,28 +187,28 @@ export default function ProfessionalDashboard() {
   // Subscription plans data
   const subscriptionPlans: SubscriptionPlan[] = [
     {
-      name: "Essentials",
+      name: "Gratuito",
       price: "Gratuito",
-      features: ["Profilo base", "5 foto", "Informazioni di contatto"],
+      features: ["Profilo modificabile", "Recensioni illimitate visibili", "Risposte illimitate", "Badge base"],
       current: !professionalData?.subscription
     },
     {
-      name: "Professional",
-      price: "€39/mese",
-      features: ["Profilo completo", "20 foto", "Analytics base", "Certificazioni"],
-      current: professionalData?.subscription?.plan === "professional"
+      name: "Essenziale",
+      price: "€29/mese",
+      features: ["Risposta illimitata alle recensioni", "10 foto profilo/portfolio", "Badge avanzati", "Analytics di base", "Supporto email prioritario"],
+      current: professionalData?.subscription?.plan === "essenziale"
     },
     {
-      name: "Expert",
-      price: "€120/mese",
-      features: ["Analytics avanzati", "Portfolio completo", "Priorità nei risultati", "Badge verificato"],
-      current: professionalData?.subscription?.plan === "expert"
+      name: "Professionale",
+      price: "€59/mese",
+      features: ["Recensioni illimitate", "25 foto profilo/portfolio", "Tutti i badge disponibili", "Analytics avanzate", "Supporto telefonico", "Personalizzazione profilo avanzata"],
+      current: professionalData?.subscription?.plan === "professionale"
     },
     {
-      name: "Enterprise",
-      price: "€200/mese",
-      features: ["Tutte le funzionalità", "Supporto prioritario", "API access", "White label"],
-      current: professionalData?.subscription?.plan === "enterprise"
+      name: "Studio",
+      price: "€99/mese",
+      features: ["Gestione team multipli", "Profili multipli sotto stesso studio", "50 foto per profilo", "Dashboard amministrativa studio", "Report personalizzati", "API access"],
+      current: professionalData?.subscription?.plan === "studio"
     }
   ];
 
@@ -232,9 +232,26 @@ export default function ProfessionalDashboard() {
           <div className="mt-4 p-4 bg-white rounded-lg border">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Completezza profilo</span>
-              <span className="text-sm text-gray-500">{professionalData?.profileCompleteness || 50}%</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">{professionalData?.profileCompleteness || 50}%</span>
+                {(professionalData?.profileCompleteness || 50) < 100 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs text-blue-600 hover:text-blue-700 p-1 h-auto"
+                    onClick={openEditModal}
+                  >
+                    Completa ora →
+                  </Button>
+                )}
+              </div>
             </div>
             <Progress value={professionalData?.profileCompleteness || 50} className="h-2" />
+            {(professionalData?.profileCompleteness || 50) < 100 && (
+              <p className="text-xs text-gray-500 mt-1">
+                Aggiungi informazioni mancanti per migliorare la visibilità
+              </p>
+            )}
           </div>
         </div>
 
@@ -303,9 +320,20 @@ export default function ProfessionalDashboard() {
                       <p className="text-2xl font-bold text-gray-900">
                         {professionalData?.isVerified ? "Verificato" : "In verifica"}
                       </p>
-                      <Badge variant={professionalData?.isVerified ? "default" : "secondary"} className="mt-1">
-                        {professionalData?.verificationStatus || "pending"}
-                      </Badge>
+                      {professionalData?.isVerified ? (
+                        <Badge variant="default" className="mt-1 bg-green-100 text-green-800">
+                          ✓ Verificato
+                        </Badge>
+                      ) : (
+                        <div className="mt-1">
+                          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 mb-1">
+                            ⏳ In verifica
+                          </Badge>
+                          <p className="text-xs text-gray-500">
+                            Documento in revisione, ~24h
+                          </p>
+                        </div>
+                      )}
                     </div>
                     <Shield className="w-8 h-8 text-purple-600" />
                   </div>
@@ -601,6 +629,12 @@ export default function ProfessionalDashboard() {
                     <Card key={index} className={`border-2 ${plan.current ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
                       <CardContent className="p-6">
                         <div className="text-center">
+                          <div className="flex items-center justify-center mb-3">
+                            {plan.name === "Gratuito" && <Users className="w-8 h-8 text-gray-500" />}
+                            {plan.name === "Essenziale" && <Zap className="w-8 h-8 text-blue-500" />}
+                            {plan.name === "Professionale" && <Crown className="w-8 h-8 text-purple-500" />}
+                            {plan.name === "Studio" && <Building2 className="w-8 h-8 text-orange-500" />}
+                          </div>
                           <h3 className="text-lg font-bold mb-2">{plan.name}</h3>
                           <p className="text-2xl font-bold text-blue-600 mb-4">{plan.price}</p>
                           {plan.current && (

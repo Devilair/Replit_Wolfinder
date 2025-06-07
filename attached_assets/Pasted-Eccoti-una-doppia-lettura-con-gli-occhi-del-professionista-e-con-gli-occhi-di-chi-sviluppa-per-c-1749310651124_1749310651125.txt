@@ -1,0 +1,46 @@
+Eccoti una doppia lettura—“con gli occhi del professionista” e “con gli occhi di chi sviluppa”—per capire cosa funziona bene, cosa manca e dove potremmo alzare ulteriormente l’asticella.
+
+1. 🧑‍💼 Esperienza da professionista (utente finale)
+Mi piace	Perché funziona	Dove migliorerei
+Barra di completezza subito in alto	Mi orienta: so a colpo d’occhio quanto mi manca per sembrare “serio”.	Al 50 % non so qual è il passo successivo: aggiungi un micro-link “Completa ora → Carica foto del logo”.
+Tab orizzontali chiari	Un click e passo da Recensioni ad Analytics.	Potrei dimenticarmi la sezione “Servizi” (ora vuota): metti badge “NEW” quando verrà attivata.
+Scheda “Azioni rapide” in Panoramica	Ottimo: mi guida dove conta.	Aggiungi “Invita cliente a recensire” (con link & QR) fin dal piano Essenziale.
+Analytics basiche già visibili	Vedo 99 visite e 12 richieste → incentivo forte a restare.	Per chi non ha upgrade, un mini-grafico sparkline di visita basterebbe, invece del placeholder “disponibile con Professional”.
+Tab Abbonamento con card verticali	Mi è chiaro il costo e l’upgrade.	Attenzione: i nomi piani (“Professional”, “Expert”, “Enterprise”) non coincidono con quelli decisi (Essenziale, Professionale, Studio). Rischio confusione.
+
+2. 🛠️ Occhio da sviluppatore / product
+2.1 Consistenza UI & copy
+Naming piani: in un’unica dashboard appaiono Essentials / Professional / Expert / Enterprise → vanno riallineati alla nomenclatura finale (Gratuito, Essenziale, Professionale, Studio) per evitare bug di mappatura DB.
+
+Iconografia: in Panoramica usi icone Lucide outline (👁, 💬) ma nel tab Abbonamento le card non hanno icone. Un piccolo simbolo rinforza la differenza fra piani.
+
+2.2 Stato “in verifica”
+Label “pending” è in grigio molto chiaro: su display meno luminosi rischia di sembrare testo disattivato. Usa una chip gialla “In verifica” con tool-tip su cosa manca (es. “Documento carta d’identità in revisione, 24 h circa”).
+
+2.3 Placeholders & vuoti
+Tab Recensioni vuoto mostra solo testo. Inserisci una illustrazione o, meglio, un call-to-action “Invia il tuo link recensione” con pulsante — trasforma il vuoto in azione.
+
+2.4 Scalabilità codice / componenti
+Le card KPI (Visite, Recensioni, Rating) sembrano hard-coded; converrebbe un componente <KpiCard title icon value delta cap="questa settimana"/> riusabile altrove.
+
+In Abbonamento: oggi i benefit sono listati manualmente; se il team marketing domani cambia una feature, tocca toccare JSX. Meglio renderli con loop su un array benefits preso dallo stesso JSON dei piani.
+
+2.5 Performance e UX micro-trucchi
+Il progresso 50 % in cima ricalcola al caricamento: se il profilo è grande può rallentare il first paint; esegui il calcolo in background e usa skeleton.
+
+Modale “Modifica informazioni” potrebbe aprirsi in draw-over (side panel) invece di page reload: meno frizione, più moderno.
+
+3. Sintesi azioni rapide da fare
+Allineare i nomi dei piani in UI e backend.
+
+Guidare l’utente quando vede 50 % completezza o zero recensioni: CTA chiaro.
+
+Rendere visibili cosa manca per la verifica (chip gialla + tooltip).
+
+Riempire i vuoti con illustrazioni/CTA (Recensioni, Servizi).
+
+Estrarre in JSON la lista benefit card abbonamento per futuri update senza codice.
+
+Side-panel edit per le informazioni base (nice-to-have).
+
+Con questi ritocchi la dashboard diventa non solo bella, ma anche super-chiara e pronta a crescere senza refactor continui.
