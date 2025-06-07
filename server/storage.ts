@@ -55,7 +55,7 @@ import {
   type InsertEvent
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, and, or, ilike, sql } from "drizzle-orm";
+import { eq, desc, asc, and, or, ilike, sql, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -2013,10 +2013,12 @@ export class DatabaseStorage implements IStorage {
       .where(eq(professionalBadges.id, professionalBadgeId));
   }
 
-  async checkAutomaticBadges(professionalId: number): Promise<void> {
+  async checkAutomaticBadges(professionalId: number): Promise<ProfessionalBadge[]> {
+    const newBadges: ProfessionalBadge[] = [];
+    
     // Implementazione logica per badge automatici
     const professional = await this.getProfessional(professionalId);
-    if (!professional) return;
+    if (!professional) return newBadges;
 
     const automaticBadges = await db
       .select()
@@ -2052,15 +2054,18 @@ export class DatabaseStorage implements IStorage {
             and(
               eq(professionalBadges.professionalId, professionalId),
               eq(professionalBadges.badgeId, badge.id),
-              eq(professionalBadges.revokedAt, null)
+              isNull(professionalBadges.revokedAt)
             )
           );
 
         if (existingBadge.length === 0) {
-          await this.awardBadge(professionalId, badge.id);
+          const newBadge = await this.awardBadge(professionalId, badge.id);
+          newBadges.push(newBadge);
         }
       }
     }
+    
+    return newBadges;
   }
 
   // Consumer System Implementation
