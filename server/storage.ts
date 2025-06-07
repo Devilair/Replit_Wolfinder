@@ -507,12 +507,66 @@ export class DatabaseStorage implements IStorage {
             break;
         }
 
+        // Create requirements based on badge slug
+        let requirements = [];
+        switch (badge.slug) {
+          case 'complete-profile':
+            const hasDescription = professional.description && professional.description.length >= 50;
+            const hasContactInfo = professional.phoneFixed || professional.phoneMobile;
+            const hasAddress = professional.address && professional.city;
+            const hasBusinessInfo = professional.businessName;
+            requirements = [
+              { text: "Descrizione completa (min 50 caratteri)", completed: hasDescription },
+              { text: "Informazioni di contatto", completed: hasContactInfo },
+              { text: "Indirizzo completo", completed: hasAddress },
+              { text: "Nome attività", completed: hasBusinessInfo }
+            ];
+            break;
+          case 'first-review':
+            requirements = [
+              { text: "Ricevere la prima recensione", completed: (professional.reviewCount || 0) >= 1 }
+            ];
+            break;
+          case 'five-reviews':
+            requirements = [
+              { text: "Ricevere 5 recensioni", completed: (professional.reviewCount || 0) >= 5 }
+            ];
+            break;
+          case 'ten-reviews':
+            requirements = [
+              { text: "Ricevere 10 recensioni", completed: (professional.reviewCount || 0) >= 10 }
+            ];
+            break;
+          case 'excellence-rating':
+            const rating = parseFloat(professional.rating || '0');
+            requirements = [
+              { text: "Mantenere rating medio ≥ 4.5 stelle", completed: rating >= 4.5 }
+            ];
+            break;
+          case 'profile-views-100':
+            requirements = [
+              { text: "Raggiungere 100 visualizzazioni profilo", completed: (professional.profileViews || 0) >= 100 }
+            ];
+            break;
+          default:
+            if (badge.requirements && Array.isArray(badge.requirements)) {
+              requirements = badge.requirements.map(req => ({
+                text: req,
+                completed: isEarned
+              }));
+            } else {
+              requirements = [{ text: badge.description, completed: isEarned }];
+            }
+            break;
+        }
+
         return {
           badge,
           isEarned,
           progress: Math.round(progress),
           currentValue,
           targetValue,
+          requirements,
           earnedAt: isEarned ? earnedBadges.find(pb => pb.badge.id === badge.id)?.awardedAt : null
         };
       });

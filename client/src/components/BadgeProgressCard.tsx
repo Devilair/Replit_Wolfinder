@@ -59,7 +59,7 @@ const getStatusText = (progress: number, isEarned: boolean) => {
 };
 
 export function BadgeProgressCard({ badgeProgress, onAction }: BadgeProgressCardProps) {
-  const { badge, isEarned, progress, requirements } = badgeProgress;
+  const { badge, isEarned, progress, requirements = [] } = badgeProgress;
 
   return (
     <Card className={cn(
@@ -108,7 +108,7 @@ export function BadgeProgressCard({ badgeProgress, onAction }: BadgeProgressCard
             {isEarned ? "Requisiti completati:" : "Requisiti:"}
           </h4>
           <div className="space-y-2">
-            {requirements.map((req, index) => (
+            {requirements && requirements.length > 0 ? requirements.map((req, index) => (
               <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
                 {req.completed ? (
                   <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
@@ -120,9 +120,9 @@ export function BadgeProgressCard({ badgeProgress, onAction }: BadgeProgressCard
                     "text-sm",
                     req.completed ? "text-green-700" : "text-gray-700"
                   )}>
-                    {req.description}
+                    {req.text || req.description}
                   </p>
-                  {!req.completed && (
+                  {!req.completed && req.current !== undefined && req.target !== undefined && (
                     <div className="mt-1 flex items-center gap-2">
                       <div className="text-xs text-gray-500">
                         {req.current}/{req.target}
@@ -142,7 +142,13 @@ export function BadgeProgressCard({ badgeProgress, onAction }: BadgeProgressCard
                   )}
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">
+                  Nessun requisito specifico disponibile.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -158,17 +164,12 @@ export function BadgeProgressCard({ badgeProgress, onAction }: BadgeProgressCard
         )}
 
         {/* Badge Details */}
-        {isEarned && badgeProgress.earnedBadge && (
+        {isEarned && badgeProgress.earnedAt && (
           <div className="p-3 bg-green-50 rounded-lg">
             <p className="text-sm text-green-700">
               <strong>Ottenuto il:</strong> {' '}
-              {new Date(badgeProgress.earnedBadge.awardedAt).toLocaleDateString('it-IT')}
+              {new Date(badgeProgress.earnedAt).toLocaleDateString('it-IT')}
             </p>
-            {badgeProgress.earnedBadge.metadata && (
-              <p className="text-xs text-green-600 mt-1">
-                {JSON.stringify(badgeProgress.earnedBadge.metadata)}
-              </p>
-            )}
           </div>
         )}
       </CardContent>
