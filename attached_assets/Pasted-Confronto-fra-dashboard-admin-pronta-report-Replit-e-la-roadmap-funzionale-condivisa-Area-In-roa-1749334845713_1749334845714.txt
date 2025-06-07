@@ -1,0 +1,33 @@
+Confronto fra “dashboard admin pronta” (report Replit) e la roadmap funzionale condivisa
+Area	In roadmap	Stato riportato da Replit	Commento / eventuale miglioria
+Statistiche in tempo reale	✔ utenti, recensioni, professionisti, revenue	✔ confermato	✅ Allineato
+Webhook Stripe + grace-period	✔ (fase piani)	✔ implementato	✅ Allineato
+Gestione verifiche documenti	✔ approva / rifiuta + badge	✔ “Gestione completa verifiche”	⚠️ Da verificare se viene inviata l’e-mail di esito e se il badge compare subito.
+Monitor attività sospette	richiesto solo come “alert 5xx, rating anomali”	✔ “sistema di monitoraggio attività sospette”	✅ Extra positivo – assicurarsi ci sia anche un log consultabile.
+Override piani / estensione grazia	previsto nei comandi admin	non menzionato	➕ Aggiungere pulsante “Prolunga grazia 7 gg” o “Passa a Essenziale per…”.
+Audit-log azioni admin	esplicitamente richiesto	non citato	🔴 Manca: ogni intervento (es. cancellare recensione) deve finire in un registro consultabile.
+Report MRR, tasso upgrade	richiesto	“tracking automatico revenue da Stripe”	✔ OK ma chiedere export mensile (CSV / PDF) per investitori.
+Backup / restore test	parte di “scalabilità”	non citato	🔴 Da pianificare: test di ripristino DB e file.
+Filtro avanzato tabelle	filtro per piano, città, stato verifica	“gestione completa professionisti” (non dettagliato)	⚠️ Verificare che i filtri multipli esistano (es. “piano = gratuito” AND “città = Ferrara”).
+KPI qualità (p95 latency, 0 bug critici)	road-map fase finale	non citato	⚠️ Chiedere cruscotto performance / error rate.
+
+Cosa chiederei a Replit come step di rifinitura
+Audit-log trasparente
+• Ogni azione dell’amministratore deve finire in uno storico consultabile (data, chi, cosa, motivo).
+
+Comandi rapidi sui piani
+• Pulsante “Concedi sconto”, “Prolunga periodo di grazia”, “Forza downgrade” all’interno della scheda professionista.
+
+Conferma flusso badge verificato
+• Dopo “Approva documento” → e-mail al professionista + badge istantaneo sul profilo pubblico.
+
+Export mensile KPI finanziari
+• Un click per scaricare CSV / PDF con MRR, churn, nuovi abbonati.
+
+Backup & restore test report
+• Log di un ripristino DB e file completato con successo in staging (garanzia business continuity).
+
+Dashboard performance
+• Widget che mostri error rate, latenze API e spazio disco; avvisa se supera soglia.
+
+Se questi sei punti vengono coperti, la parte back-office sarà davvero “production-grade” e in linea perfetta con il piano funzionale.

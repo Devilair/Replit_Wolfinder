@@ -659,6 +659,12 @@ export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 
+// Audit Log types
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = typeof auditLogs.$inferInsert;
+export type AdminAction = typeof adminActions.$inferSelect;
+export type InsertAdminAction = typeof adminActions.$inferInsert;
+
 // Extended types for API responses
 export type ProfessionalWithDetails = Professional & {
   user: User;
@@ -693,6 +699,35 @@ export const adminActivity = pgTable("admin_activity", {
   metadata: jsonb("metadata"), // Additional data about the action
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Audit Log per tracciare tutte le azioni amministrative
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  action: text("action").notNull(), // 'approve_verification', 'reject_review', 'extend_grace', etc.
+  targetType: text("target_type").notNull(), // 'professional', 'review', 'subscription', etc.
+  targetId: integer("target_id").notNull(),
+  oldValues: text("old_values"), // JSON with previous state
+  newValues: text("new_values"), // JSON with new state
+  reason: text("reason"), // Motivo dell'azione
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Admin Actions per comandi rapidi sui piani
+export const adminActions = pgTable("admin_actions", {
+  id: serial("id").primaryKey(),
+  professionalId: integer("professional_id").references(() => professionals.id).notNull(),
+  actionType: text("action_type").notNull(), // 'extend_grace', 'force_downgrade', 'grant_discount'
+  actionData: text("action_data"), // JSON con parametri specifici
+  executedBy: integer("executed_by").references(() => users.id).notNull(),
+  scheduledFor: timestamp("scheduled_for"),
+  executedAt: timestamp("executed_at"),
+  status: text("status").default("pending").notNull(), // pending, executed, failed
+  result: text("result"), // Risultato dell'azione
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -774,21 +809,6 @@ export const apiKeys = pgTable("api_keys", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   expiresAt: timestamp("expires_at"),
 });
-
-export const auditLogs = pgTable("audit_logs", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
-  action: text("action").notNull(),
-  entityType: text("entity_type").notNull(),
-  entityId: integer("entity_id"),
-  oldValues: jsonb("old_values"),
-  newValues: jsonb("new_values"),
-  ipAddress: text("ip_address"),
-  userAgent: text("user_agent"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-
 
 // Tabella per utenti consumer (clienti finali)
 export const consumers = pgTable("consumers", {
