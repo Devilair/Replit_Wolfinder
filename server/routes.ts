@@ -2361,6 +2361,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get badge progress with requirements and suggestions
+  app.get("/api/professional/badges/progress", authService.authenticateToken, authService.requireRole(['professional']), async (req: any, res) => {
+    try {
+      const user = req.user;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      const badgeProgress = await storage.getBadgeProgress(professional.id);
+      res.json(badgeProgress);
+    } catch (error) {
+      console.error("Error fetching badge progress:", error);
+      res.status(500).json({ message: "Failed to fetch badge progress" });
+    }
+  });
+
   // Check and award automatic badges for professional
   app.post("/api/professional/badges/check-automatic", authService.authenticateToken, authService.requireRole(['professional']), async (req: any, res) => {
     try {

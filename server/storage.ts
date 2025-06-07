@@ -210,6 +210,7 @@ export interface IStorage {
   getProfessionalBadges(professionalId: number): Promise<(ProfessionalBadge & { badge: Badge })[]>;
   awardBadge(professionalId: number, badgeId: number, awardedBy?: number, metadata?: any): Promise<ProfessionalBadge>;
   revokeBadge(professionalBadgeId: number, revokedBy?: number, reason?: string): Promise<void>;
+  getBadgeProgress(professionalId: number): Promise<any[]>;
   checkAutomaticBadges(professionalId: number): Promise<void>;
   
   // Consumer System
@@ -2011,6 +2012,129 @@ export class DatabaseStorage implements IStorage {
         isVisible: false,
       })
       .where(eq(professionalBadges.id, professionalBadgeId));
+  }
+
+  async getBadgeProgress(professionalId: number): Promise<any[]> {
+    try {
+      const professional = await this.getProfessional(professionalId);
+      if (!professional) return [];
+
+      const allBadges = await db.select().from(badges);
+      const earnedBadges = await db
+        .select()
+        .from(professionalBadges)
+        .leftJoin(badges, eq(professionalBadges.badgeId, badges.id))
+        .where(
+          and(
+            eq(professionalBadges.professionalId, professionalId),
+            isNull(professionalBadges.revokedAt)
+          )
+        );
+
+      const earnedBadgeIds = new Set(earnedBadges.map(eb => eb.professional_badges?.badgeId));
+
+      return allBadges.map(badge => {
+        const isEarned = earnedBadgeIds.has(badge.id);
+        const earnedBadge = earnedBadges.find(eb => eb.professional_badges?.badgeId === badge.id);
+
+        let progress = 0;
+        let requirements: any[] = [];
+
+        // Calcola progresso per badge specifici
+        if (badge.slug === 'complete-profile') {
+          const hasDescription = professional.description && professional.description.length >= 50;
+          const hasContactInfo = professional.phoneFixed || professional.phoneMobile;
+          const hasAddress = professional.address && professional.city;
+          const hasBusinessInfo = professional.businessName;
+
+          const completedReqs = [hasDescription, hasContactInfo, hasAddress, hasBusinessInfo].filter(Boolean).length;
+          progress = (completedReqs / 4) * 100;
+
+          requirements = [
+            {
+              description: "Descrizione dettagliata (min. 50 caratteri)",
+              current: professional.description?.length || 0,
+              target: 50,
+              completed: hasDescription,
+              suggestion: hasDescription ? null : "Aggiungi una descrizione più dettagliata della tua attività"
+            },
+            {
+              description: "Informazioni di contatto",
+              current: hasContactInfo ? 1 : 0,
+              target: 1,
+              completed: hasContactInfo,
+              suggestion: hasContactInfo ? null : "Aggiungi almeno un numero di telefono"
+            },
+            {
+              description: "Indirizzo completo",
+              current: hasAddress ? 1 : 0,
+              target: 1,
+              completed: hasAddress,
+              suggestion: hasAddress ? null : "Completa l'indirizzo con via e città"
+            },
+            {
+              description: "Nome dell'attività",
+              current: hasBusinessInfo ? 1 : 0,
+              target: 1,
+              completed: hasBusinessInfo,
+              suggestion: hasBusinessInfo ? null : "Aggiungi il nome della tua attività"
+            }
+          ];
+        }
+
+        if (badge.slug === 'positive-reviews') {
+          const reviewCount = professional.reviewCount || 0;
+          const avgRating = parseFloat(professional.rating || '0');
+          const hasEnoughReviews = reviewCount >= 5;
+          const hasGoodRating = avgRating >= 4.0;
+
+          progress = Math.min((reviewCount / 5) * 60 + (hasGoodRating ? 40 : 0), 100);
+
+          requirements = [
+            {
+              description: "Almeno 5 recensioni",
+              current: reviewCount,
+              target: 5,
+              completed: hasEnoughReviews,
+              suggestion: hasEnoughReviews ? null : "Chiedi ai tuoi clienti di lasciare una recensione"
+            },
+            {
+              description: "Rating medio di 4.0 o superiore",
+              current: avgRating,
+              target: 4.0,
+              completed: hasGoodRating,
+              suggestion: hasGoodRating ? null : "Migliora la qualità del servizio per ottenere rating più alti"
+            }
+          ];
+        }
+
+        if (badge.slug === 'verified-identity') {
+          const isVerified = professional.isVerified;
+          progress = isVerified ? 100 : 0;
+
+          requirements = [
+            {
+              description: "Identità verificata dall'amministrazione",
+              current: isVerified ? 1 : 0,
+              target: 1,
+              completed: isVerified,
+              suggestion: isVerified ? null : "Contatta l'amministrazione per verificare la tua identità"
+            }
+          ];
+        }
+
+        return {
+          badge,
+          isEarned,
+          progress: Math.round(progress),
+          requirements,
+          earnedBadge: earnedBadge?.professional_badges || null
+        };
+      });
+    } catch (error) {
+      console.error('Error calculating badge progress:', error);
+      return [];
+    }
   }
 
   async checkAutomaticBadges(professionalId: number): Promise<ProfessionalBadge[]> {
