@@ -1,0 +1,65 @@
+To-do: gestione “tempo e rinnovi” degli abbonamenti Wolfinder
+(scritta senza tecnicismi: cosa deve succedere, non come programmarlo)
+
+Durata chiara all’acquisto
+
+L’utente deve poter scegliere se pagare mensile o annuale.
+
+Nella schermata di conferma si vede la prossima data di rinnovo.
+
+Rinnovo automatico puntuale
+
+Alla data stabilita, l’abbonamento si rinnova da solo.
+
+Se il rinnovo va a buon fine, l’utente riceve una mail di conferma con la nuova data.
+
+Promemoria prima del rinnovo
+
+Avviso via e-mail almeno 7 giorni prima che scada il periodo in corso, con:
+“Il tuo piano Professionale si rinnoverà il 15/05 a 59 €.”
+
+Periodo di tolleranza su pagamento fallito
+
+Se il pagamento non riesce, l’utente ha 7 giorni di grazia:
+– Mail immediata “Pagamento non riuscito, riproveremo”.
+– Secondo promemoria 3 giorni prima della scadenza della grazia.
+
+Scaduti i 7 giorni senza pagamento, il piano torna automaticamente a Gratuito e le funzioni premium si spengono.
+
+Upgrade e downgrade immediati
+
+Passando a un piano superiore, le nuove funzioni si attivano subito e la prossima data di rinnovo si aggiorna.
+
+Downgradando, le funzioni in più scompaiono all’istante e il prezzo del rinnovo futuro cambia.
+
+Prova gratuita (se prevista)
+
+Se offriamo un periodo di prova, deve indicare chiaramente: “Prova Gratuita fino al 30/06, poi 29 €/mese”.
+
+Alla fine della prova, parte il primo pagamento oppure il profilo torna al piano Gratuito se l’utente non conferma.
+
+Storico pagamenti e fatture
+
+Nella dashboard ogni professionista vede l’elenco dei pagamenti effettuati, con importo, data, tipo di piano e link alla fattura.
+
+Blocco temporaneo volontario
+
+Il professionista può “mettere in pausa” l’abbonamento (es. ferie):
+– Il piano resta attivo fino al termine del mese già pagato.
+– Dal mese successivo passa a Gratuito finché non lo riattiva.
+
+Controllo amministratore
+
+L’area admin deve mostrare per ogni abbonato: piano attuale, data prossimo rinnovo, stato (attivo / in grazia / sospeso).
+
+Deve permettere di forzare un passaggio di piano o di estendere la grazia in casi particolari.
+
+Prova pratica richiesta
+
+Fate un giro di test e dimostratemi:
+
+un rinnovo mensile andato a buon fine,
+
+un pagamento fallito con scadenza dei 7 giorni,
+
+un upgrade da Essenziale ad Elite con funzioni subito attive.

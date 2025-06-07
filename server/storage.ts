@@ -87,6 +87,12 @@ export interface IStorage {
   
   // Additional methods needed by routes
   getReviewsWithResponses(professionalId: number): Promise<any[]>;
+  
+  // Feature gating methods
+  getProfessionalByUserId(userId: number): Promise<Professional | undefined>;
+  getProfessionalSubscription(professionalId: number): Promise<any>;
+  getProfessionalPhotoCount(professionalId: number): Promise<number>;
+  getProfessionalServiceCount(professionalId: number): Promise<number>;
 
   // Consumer System
   getConsumer(userId: number): Promise<Consumer | undefined>;
@@ -787,6 +793,17 @@ export class DatabaseStorage implements IStorage {
       .where(eq(subscriptions.id, id))
       .returning();
     return updated;
+  }
+
+  // Feature gating methods
+  async getProfessionalPhotoCount(professionalId: number): Promise<number> {
+    // Simulate photo count - in real implementation this would query photos table
+    return 2; // Default for testing
+  }
+
+  async getProfessionalServiceCount(professionalId: number): Promise<number> {
+    // Simulate service count - in real implementation this would query services table
+    return 1; // Default for testing
   }
 
   async cancelSubscription(id: number): Promise<Subscription> {
