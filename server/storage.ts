@@ -327,7 +327,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBadges(): Promise<Badge[]> {
-    return await db.select().from(badges).orderBy(asc(badges.priority));
+    return await db.select().from(badges).orderBy(asc(badges.id));
   }
 
   async getBadge(id: number): Promise<Badge | undefined> {
