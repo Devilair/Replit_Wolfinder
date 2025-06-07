@@ -1,62 +1,48 @@
-import { 
-  users, 
-  categories, 
-  professionals, 
-  reviews,
-  reviewHelpfulVotes,
-  reviewFlags,
-  reviewResponses,
-  claimRequests,
-  subscriptionPlans,
-  subscriptions,
-  transactions,
-  professionalSpecializations,
-  specializations,
-  professionalOrderMemberships,
-  professionalOrders,
-  professionalServices,
-  professionalPortfolio,
-  badges,
-  professionalBadges,
-  consumers,
-  plans,
-  professionalPlans,
-  events,
-  type User, 
-  type InsertUser,
-  type Category,
-  type InsertCategory,
-  type Professional,
-  type InsertProfessional,
-  type Review,
-  type InsertReview,
-  type ClaimRequest,
-  type InsertClaimRequest,
-  type SubscriptionPlan,
-  type InsertSubscriptionPlan,
-  type Subscription,
-  type InsertSubscription,
-  type Transaction,
-  type InsertTransaction,
-  type ProfessionalWithDetails,
-  type ProfessionalSummary,
-  type SubscriptionWithDetails,
-  type Badge,
-  type InsertBadge,
-  type ProfessionalBadge,
-  type InsertProfessionalBadge,
-  type Consumer,
-  type InsertConsumer,
-  type Plan,
-  type InsertPlan,
-  type ProfessionalPlan,
-  type InsertProfessionalPlan,
-  type Event,
-  type InsertEvent
-} from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, and, or, ilike, sql, isNull } from "drizzle-orm";
+import { 
+  users, professionals, categories, reviews, badges, professionalBadges,
+  consumers, plans, professionalPlans, events,
+  subscriptionPlans, subscriptions, transactions, claimRequests,
+  type User, type InsertUser, type Professional, type InsertProfessional,
+  type Category, type InsertCategory, type Review, type InsertReview,
+  type Badge, type InsertBadge, type ProfessionalBadge, type InsertProfessionalBadge,
+  type Consumer, type InsertConsumer, type Plan, type InsertPlan,
+  type ProfessionalPlan, type InsertProfessionalPlan, type Event, type InsertEvent,
+  type SubscriptionPlan, type InsertSubscriptionPlan, type Subscription, type InsertSubscription,
+  type Transaction, type InsertTransaction, type ClaimRequest, type InsertClaimRequest
+} from "@shared/schema";
+import { eq, and, or, like, desc, asc, isNull, sql, count } from "drizzle-orm";
+import crypto from "crypto";
 
+// Types for aggregated data
+export interface ProfessionalSummary {
+  id: number;
+  businessName: string;
+  description: string;
+  rating: string;
+  reviewCount: number;
+  profileViews: number;
+  city: string;
+  province: string;
+  category: {
+    id: number;
+    name: string;
+    slug: string;
+    icon: string;
+  };
+}
+
+export interface ProfessionalWithDetails extends Professional {
+  category: Category;
+  user?: User;
+}
+
+export interface SubscriptionWithDetails extends Subscription {
+  professional: Professional;
+  plan: SubscriptionPlan;
+}
+
+// Storage interface
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
@@ -82,24 +68,38 @@ export interface IStorage {
   }): Promise<ProfessionalSummary[]>;
   getProfessional(id: number): Promise<ProfessionalWithDetails | undefined>;
   getProfessionalByUserId(userId: number): Promise<Professional | undefined>;
-  getProfessionalsByCategory(categoryId: number): Promise<ProfessionalSummary[]>;
-  getFeaturedProfessionals(): Promise<ProfessionalSummary[]>;
   createProfessional(professional: InsertProfessional): Promise<Professional>;
   updateProfessionalRating(id: number): Promise<void>;
   incrementProfileViews(professionalId: number): Promise<void>;
-  logActivity(activity: { type: string; description: string; userId: number; metadata?: any }): Promise<void>;
-  
-  // Unclaimed profiles management
-  generateClaimToken(professionalId: number): Promise<string>;
-  validateClaimToken(professionalId: number, token: string): Promise<boolean>;
-  claimProfile(professionalId: number, userId: number, token: string): Promise<boolean>;
-  getUnclaimedProfessionals(): Promise<Professional[]>;
-  updateProfessionalClaimStatus(professionalId: number, claimed: boolean, userId?: number): Promise<void>;
-  createProfessionalWithoutUser(professionalData: any): Promise<Professional>;
 
   // Reviews
   getReviewsByProfessional(professionalId: number): Promise<(Review & { user: User })[]>;
   createReview(review: InsertReview): Promise<Review>;
+
+  // Badge System
+  getBadges(): Promise<Badge[]>;
+  getBadge(id: number): Promise<Badge | undefined>;
+  createBadge(badge: InsertBadge): Promise<Badge>;
+  getProfessionalBadges(professionalId: number): Promise<(ProfessionalBadge & { badge: Badge })[]>;
+  awardBadge(professionalId: number, badgeId: number, awardedBy?: number, metadata?: any): Promise<ProfessionalBadge>;
+  checkAutomaticBadges(professionalId: number): Promise<{ awarded: string[], message: string }>;
+  getBadgeProgress(professionalId: number): Promise<any[]>;
+  
+  // Additional methods needed by routes
+  getReviewsWithResponses(professionalId: number): Promise<any[]>;
+
+  // Consumer System
+  getConsumer(userId: number): Promise<Consumer | undefined>;
+  createConsumer(consumer: InsertConsumer): Promise<Consumer>;
+
+  // Plan System
+  getPlans(): Promise<Plan[]>;
+  getPlan(id: number): Promise<Plan | undefined>;
+  createPlan(plan: InsertPlan): Promise<Plan>;
+
+  // Events
+  createEvent(event: InsertEvent): Promise<Event>;
+  getEvents(params?: any): Promise<Event[]>;
 
   // Stats
   getStats(): Promise<{
@@ -107,159 +107,6 @@ export interface IStorage {
     reviewsCount: number;
     citiesCount: number;
     averageRating: number;
-  }>;
-
-  // Admin methods
-  getAdminStats(): Promise<{
-    totalUsers: number;
-    newUsersThisWeek: number;
-    totalProfessionals: number;
-    verifiedProfessionals: number;
-    totalReviews: number;
-    pendingReviews: number;
-    averageRating: string;
-  }>;
-  getAdminProfessionals(params?: any): Promise<ProfessionalWithDetails[]>;
-  updateProfessional(id: number, data: any): Promise<void>;
-  deleteProfessional(id: number): Promise<void>;
-  getAllUsers(): Promise<User[]>;
-  getAdminReviews(status?: string): Promise<(Review & { user: User; professional: Professional })[]>;
-  updateReview(id: number, data: any): Promise<void>;
-  deleteReview(id: number): Promise<void>;
-  updateCategory(id: number, data: any): Promise<void>;
-  deleteCategory(id: number): Promise<void>;
-  getRecentActivity(): Promise<any[]>;
-  getPendingReviews(): Promise<(Review & { user: User; professional: Professional })[]>;
-  getUnverifiedProfessionals(): Promise<ProfessionalSummary[]>;
-
-  // Advanced Review System Methods
-  updateReviewStatus(reviewId: number, status: string, verificationNotes?: string): Promise<void>;
-  getReviewAnalytics(): Promise<{
-    totalReviews: number;
-    verifiedReviews: number;
-    pendingReviews: number;
-    flaggedReviews: number;
-    averageRating: number;
-    averageVerificationTime: number;
-  }>;
-  addHelpfulVote(vote: { reviewId: number; userId: number; isHelpful: boolean }): Promise<void>;
-  flagReview(flag: { reviewId: number; userId: number; reason: string; description?: string }): Promise<void>;
-  addProfessionalResponse(reviewId: number, response: string): Promise<void>;
-  calculateProfessionalRanking(professionalId: number): Promise<{
-    overallScore: number;
-    reviewScore: number;
-    quantityScore: number;
-    responseScore: number;
-    completenessScore: number;
-    engagementScore: number;
-  }>;
-  detectSuspiciousActivity(professionalId: number): Promise<{
-    suspiciousReviews: Review[];
-    duplicateIPs: string[];
-    rapidReviews: Review[];
-  }>;
-
-  // Claim Profile Management
-  createClaimRequest(request: InsertClaimRequest): Promise<ClaimRequest>;
-  getClaimRequests(status?: string): Promise<(ClaimRequest & { professional: Professional & { category: Category } })[]>;
-  getClaimRequest(id: number): Promise<ClaimRequest | undefined>;
-  updateClaimRequestStatus(id: number, status: string, adminNotes?: string, reviewedBy?: number): Promise<void>;
-  deleteClaimRequest(id: number): Promise<void>;
-  approveClaimRequest(id: number, userId: number): Promise<boolean>;
-
-  // Subscription Plans
-  getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
-  getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined>;
-  createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
-  updateSubscriptionPlan(id: number, data: Partial<InsertSubscriptionPlan>): Promise<void>;
-  deleteSubscriptionPlan(id: number): Promise<void>;
-
-  // Subscriptions
-  getSubscriptions(params?: {
-    status?: string;
-    planId?: number;
-    professionalId?: number;
-    limit?: number;
-    offset?: number;
-  }): Promise<SubscriptionWithDetails[]>;
-  getSubscription(id: number): Promise<SubscriptionWithDetails | undefined>;
-  getSubscriptionByProfessional(professionalId: number): Promise<Subscription | undefined>;
-  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
-  updateSubscription(id: number, data: Partial<InsertSubscription>): Promise<void>;
-  cancelSubscription(id: number): Promise<void>;
-
-  // Transactions
-  getTransactions(params?: {
-    status?: string;
-    subscriptionId?: number;
-    professionalId?: number;
-    limit?: number;
-    offset?: number;
-  }): Promise<Transaction[]>;
-  createTransaction(transaction: InsertTransaction): Promise<Transaction>;
-  updateTransaction(id: number, data: Partial<InsertTransaction>): Promise<void>;
-
-  // Badge System
-  getBadges(): Promise<Badge[]>;
-  getBadge(id: number): Promise<Badge | undefined>;
-  createBadge(badge: InsertBadge): Promise<Badge>;
-  updateBadge(id: number, data: Partial<InsertBadge>): Promise<void>;
-  deleteBadge(id: number): Promise<void>;
-  
-  // Professional Badges
-  getProfessionalBadges(professionalId: number): Promise<(ProfessionalBadge & { badge: Badge })[]>;
-  awardBadge(professionalId: number, badgeId: number, awardedBy?: number, metadata?: any): Promise<ProfessionalBadge>;
-  revokeBadge(professionalBadgeId: number, revokedBy?: number, reason?: string): Promise<void>;
-  getBadgeProgress(professionalId: number): Promise<any[]>;
-  checkAutomaticBadges(professionalId: number): Promise<void>;
-  
-  // Consumer System
-  getConsumer(userId: number): Promise<Consumer | undefined>;
-  createConsumer(consumer: InsertConsumer): Promise<Consumer>;
-  updateConsumer(userId: number, data: Partial<InsertConsumer>): Promise<void>;
-  updateConsumerStats(userId: number, stats: { reviewsWritten?: number; profilesViewed?: number; searchesPerformed?: number }): Promise<void>;
-  
-  // Plan System (nuovi piani semplificati)
-  getPlans(): Promise<Plan[]>;
-  getPlan(id: number): Promise<Plan | undefined>;
-  getPlanBySlug(slug: string): Promise<Plan | undefined>;
-  createPlan(plan: InsertPlan): Promise<Plan>;
-  updatePlan(id: number, data: Partial<InsertPlan>): Promise<void>;
-  deletePlan(id: number): Promise<void>;
-  
-  // Professional Plans
-  getProfessionalPlan(professionalId: number): Promise<(ProfessionalPlan & { plan: Plan }) | undefined>;
-  assignPlan(professionalId: number, planId: number, billingCycle?: string): Promise<ProfessionalPlan>;
-  updateProfessionalPlan(professionalId: number, data: Partial<InsertProfessionalPlan>): Promise<void>;
-  cancelProfessionalPlan(professionalId: number): Promise<void>;
-  
-  // Events System
-  createEvent(event: InsertEvent): Promise<Event>;
-  getEvents(params?: {
-    type?: string;
-    userId?: number;
-    professionalId?: number;
-    limit?: number;
-    offset?: number;
-    startDate?: Date;
-    endDate?: Date;
-  }): Promise<Event[]>;
-  getEventAnalytics(professionalId?: number): Promise<{
-    totalEvents: number;
-    pageViews: number;
-    profileViews: number;
-    contactClicks: number;
-    topEvents: { type: string; count: number }[];
-  }>;
-
-  // Subscription Analytics
-  getSubscriptionStats(): Promise<{
-    totalMRR: number;
-    totalARR: number;
-    totalSubscribers: number;
-    conversionRate: number;
-    churnRate: number;
-    averageLTV: number;
   }>;
 }
 
@@ -270,7 +117,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+    const [user] = await db.select().from(users).where(eq(users.name, username));
     return user || undefined;
   }
 
@@ -292,8 +139,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCategoryBySlug(slug: string): Promise<Category | undefined> {
-    const [category] = await db.select().from(categories).where(eq(categories.slug, slug));
-    return category || undefined;
+    const [category] = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.slug, slug));
+    return category;
   }
 
   async createCategory(insertCategory: InsertCategory): Promise<Category> {
@@ -317,79 +167,61 @@ export class DatabaseStorage implements IStorage {
     let query = db
       .select({
         id: professionals.id,
-        userId: professionals.userId,
-        categoryId: professionals.categoryId,
         businessName: professionals.businessName,
         description: professionals.description,
-        phoneFixed: professionals.phoneFixed,
-        phoneMobile: professionals.phoneMobile,
-        email: professionals.email,
-        website: professionals.website,
-        address: professionals.address,
-        city: professionals.city,
-        province: professionals.province,
-        postalCode: professionals.postalCode,
-        priceRangeMin: professionals.priceRangeMin,
-        priceRangeMax: professionals.priceRangeMax,
-        priceUnit: professionals.priceUnit,
-        isVerified: professionals.isVerified,
-        isPremium: professionals.isPremium,
         rating: professionals.rating,
         reviewCount: professionals.reviewCount,
-        createdAt: professionals.createdAt,
-        updatedAt: professionals.updatedAt,
-        // Admin fields (simplified for existing schema)
-        lastActivityAt: sql<Date | null>`NULL`,
-        adminNotes: sql<string | null>`NULL`,
-        verificationStatus: sql<string>`'pending'`,
-        verificationNotes: sql<string | null>`NULL`,
-        verificationDate: sql<Date | null>`NULL`,
-        verifiedBy: sql<number | null>`NULL`,
-        profileCompleteness: sql<number>`85`,
-        profileViews: sql<number>`0`,
-        clickThroughRate: sql<number>`0`,
-        responseRate: sql<number>`0`,
-        averageResponseTime: sql<number>`0`,
-        isProblematic: sql<boolean>`false`,
-        problematicReason: sql<string | null>`NULL`,
-        category: categories,
+        profileViews: professionals.profileViews,
+        city: professionals.city,
+        province: professionals.province,
+        category: {
+          id: categories.id,
+          name: categories.name,
+          slug: categories.slug,
+          icon: categories.icon,
+        },
       })
       .from(professionals)
       .leftJoin(categories, eq(professionals.categoryId, categories.id));
 
+    const conditions = [];
     if (params?.search) {
-      query = query.where(
+      conditions.push(
         or(
-          ilike(professionals.businessName, `%${params.search}%`),
-          ilike(professionals.description, `%${params.search}%`),
-          ilike(categories.name, `%${params.search}%`)
+          like(professionals.businessName, `%${params.search}%`),
+          like(professionals.description, `%${params.search}%`)
         )
       );
     }
-
     if (params?.categoryId) {
-      query = query.where(eq(professionals.categoryId, params.categoryId));
+      conditions.push(eq(professionals.categoryId, params.categoryId));
     }
-
     if (params?.city) {
-      query = query.where(eq(professionals.city, params.city));
+      conditions.push(eq(professionals.city, params.city));
     }
-
     if (params?.province) {
-      query = query.where(eq(professionals.province, params.province));
+      conditions.push(eq(professionals.province, params.province));
     }
 
-    if (params?.sortBy) {
-      const sortFn = params.sortOrder === 'asc' ? asc : desc;
-      if (params.sortBy === 'rating') {
-        query = query.orderBy(sortFn(professionals.rating));
-      } else if (params.sortBy === 'reviewCount') {
-        query = query.orderBy(sortFn(professionals.reviewCount));
-      } else if (params.sortBy === 'createdAt') {
-        query = query.orderBy(sortFn(professionals.createdAt));
-      }
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    // Sorting
+    const sortBy = params?.sortBy || 'rating';
+    const sortOrder = params?.sortOrder || 'desc';
+    if (sortBy === 'rating') {
+      query = sortOrder === 'desc' 
+        ? query.orderBy(desc(professionals.rating))
+        : query.orderBy(asc(professionals.rating));
+    } else if (sortBy === 'reviewCount') {
+      query = sortOrder === 'desc'
+        ? query.orderBy(desc(professionals.reviewCount))
+        : query.orderBy(asc(professionals.reviewCount));
     } else {
-      query = query.orderBy(desc(professionals.rating));
+      query = sortOrder === 'desc'
+        ? query.orderBy(desc(professionals.createdAt))
+        : query.orderBy(asc(professionals.createdAt));
     }
 
     if (params?.limit) {
@@ -400,52 +232,24 @@ export class DatabaseStorage implements IStorage {
       query = query.offset(params.offset);
     }
 
-    const results = await query;
-    
-    return results.map(result => ({
-      ...result,
-      category: result.category!,
-    }));
+    return await query;
   }
 
   async getProfessional(id: number): Promise<ProfessionalWithDetails | undefined> {
-    try {
-      const [professionalResult] = await db
-        .select()
-        .from(professionals)
-        .where(eq(professionals.id, id));
+    const [result] = await db
+      .select()
+      .from(professionals)
+      .leftJoin(categories, eq(professionals.categoryId, categories.id))
+      .leftJoin(users, eq(professionals.userId, users.id))
+      .where(eq(professionals.id, id));
 
-      if (!professionalResult) return undefined;
+    if (!result) return undefined;
 
-      // Get user data if professional is claimed
-      let userData = null;
-      if (professionalResult.userId) {
-        const [userResult] = await db
-          .select()
-          .from(users)
-          .where(eq(users.id, professionalResult.userId));
-        userData = userResult;
-      }
-
-      // Get category data
-      const [categoryResult] = await db
-        .select()
-        .from(categories)
-        .where(eq(categories.id, professionalResult.categoryId));
-
-      // Get reviews
-      const professionalReviews = await this.getReviewsByProfessional(id);
-
-      return {
-        ...professionalResult,
-        user: userData,
-        category: categoryResult,
-        reviews: professionalReviews,
-      } as ProfessionalWithDetails;
-    } catch (error) {
-      console.error("Error in getProfessional:", error);
-      return undefined;
-    }
+    return {
+      ...result.professionals,
+      category: result.categories!,
+      user: result.users || undefined,
+    };
   }
 
   async getProfessionalByUserId(userId: number): Promise<Professional | undefined> {
@@ -453,86 +257,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(professionals)
       .where(eq(professionals.userId, userId));
-    
-    return professional || undefined;
-  }
-
-  async getProfessionalsByCategory(categoryId: number): Promise<ProfessionalSummary[]> {
-    const results = await db
-      .select({
-        id: professionals.id,
-        userId: professionals.userId,
-        categoryId: professionals.categoryId,
-        businessName: professionals.businessName,
-        description: professionals.description,
-        phone: professionals.phone,
-        email: professionals.email,
-        website: professionals.website,
-        address: professionals.address,
-        city: professionals.city,
-        province: professionals.province,
-        postalCode: professionals.postalCode,
-        priceRangeMin: professionals.priceRangeMin,
-        priceRangeMax: professionals.priceRangeMax,
-        priceUnit: professionals.priceUnit,
-        isVerified: professionals.isVerified,
-        isPremium: professionals.isPremium,
-        rating: professionals.rating,
-        reviewCount: professionals.reviewCount,
-        createdAt: professionals.createdAt,
-        updatedAt: professionals.updatedAt,
-        category: categories,
-      })
-      .from(professionals)
-      .leftJoin(categories, eq(professionals.categoryId, categories.id))
-      .where(eq(professionals.categoryId, categoryId))
-      .orderBy(desc(professionals.rating));
-
-    return results.map(result => ({
-      ...result,
-      category: result.category!,
-    }));
-  }
-
-  async getFeaturedProfessionals(): Promise<ProfessionalSummary[]> {
-    const results = await db
-      .select({
-        id: professionals.id,
-        userId: professionals.userId,
-        categoryId: professionals.categoryId,
-        businessName: professionals.businessName,
-        description: professionals.description,
-        phone: professionals.phone,
-        email: professionals.email,
-        website: professionals.website,
-        address: professionals.address,
-        city: professionals.city,
-        province: professionals.province,
-        postalCode: professionals.postalCode,
-        priceRangeMin: professionals.priceRangeMin,
-        priceRangeMax: professionals.priceRangeMax,
-        priceUnit: professionals.priceUnit,
-        isVerified: professionals.isVerified,
-        isPremium: professionals.isPremium,
-        rating: professionals.rating,
-        reviewCount: professionals.reviewCount,
-        createdAt: professionals.createdAt,
-        updatedAt: professionals.updatedAt,
-        category: categories,
-      })
-      .from(professionals)
-      .leftJoin(categories, eq(professionals.categoryId, categories.id))
-      .where(and(
-        eq(professionals.isVerified, true),
-        eq(professionals.isPremium, true)
-      ))
-      .orderBy(desc(professionals.rating))
-      .limit(6);
-
-    return results.map(result => ({
-      ...result,
-      category: result.category!,
-    }));
+    return professional;
   }
 
   async createProfessional(insertProfessional: InsertProfessional): Promise<Professional> {
@@ -543,309 +268,50 @@ export class DatabaseStorage implements IStorage {
     return professional;
   }
 
-  async getProfessionalByUserId(userId: number): Promise<Professional | undefined> {
-    const [professional] = await db
-      .select()
-      .from(professionals)
-      .where(eq(professionals.userId, userId));
-    return professional || undefined;
-  }
-
-  async incrementProfileViews(professionalId: number): Promise<void> {
-    try {
-      await db
-        .update(professionals)
-        .set({ 
-          profileViews: sql`COALESCE(${professionals.profileViews}, 0) + 1`,
-          lastActivityAt: new Date()
-        })
-        .where(eq(professionals.id, professionalId));
-    } catch (error) {
-      console.log("Could not increment profile views:", error);
-    }
-  }
-
-  async logActivity(activity: { type: string; description: string; userId: number; metadata?: any }): Promise<void> {
-    // Store activity in a simple format for now - in production this would use a proper activities table
-    console.log(`[ACTIVITY LOG] ${activity.type}: ${activity.description} (User: ${activity.userId})`);
-    if (activity.metadata) {
-      console.log(`[METADATA]`, activity.metadata);
-    }
-  }
-
-  // Professional Advanced Dashboard Methods
-  async getProfessionalSubscription(professionalId: number): Promise<any> {
-    const results = await db
-      .select({
-        subscription: subscriptions,
-        plan: subscriptionPlans
-      })
-      .from(subscriptions)
-      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
-      .where(
-        and(
-          eq(subscriptions.professionalId, professionalId),
-          eq(subscriptions.status, 'active')
-        )
-      );
-
-    if (results.length === 0) {
-      // Return default Base plan if no subscription found
-      const [basePlan] = await db
-        .select()
-        .from(subscriptionPlans)
-        .where(eq(subscriptionPlans.name, 'Base'))
-        .limit(1);
-
-      return basePlan ? {
-        id: null,
-        professionalId: professionalId,
-        planId: basePlan.id,
-        status: 'active',
-        plan: basePlan
-      } : null;
-    }
-
-    const result = results[0];
-    return {
-      ...result.subscription,
-      plan: result.plan
-    };
-  }
-
-  async getProfessionalAnalytics(professionalId: number): Promise<any> {
-    const [analytics] = await db
-      .select({
-        profileViews: sql<number>`COALESCE(SUM(${professionals.profileViews}), 0)`,
-        totalReviews: sql<number>`COUNT(${reviews.id})`,
-        averageRating: sql<number>`COALESCE(AVG(${reviews.rating}), 0)`
-      })
-      .from(professionals)
-      .leftJoin(reviews, eq(reviews.professionalId, professionals.id))
-      .where(eq(professionals.id, professionalId))
-      .groupBy(professionals.id);
-
-    const chartData = await db
-      .select({
-        date: sql<string>`DATE(${reviews.createdAt})`,
-        views: sql<number>`COUNT(DISTINCT ${reviews.id})`,
-        clicks: sql<number>`0`,
-        reviews: sql<number>`COUNT(${reviews.id})`
-      })
-      .from(reviews)
-      .where(eq(reviews.professionalId, professionalId))
-      .groupBy(sql`DATE(${reviews.createdAt})`)
-      .orderBy(sql`DATE(${reviews.createdAt})`)
-      .limit(30);
-
-    return {
-      profileViews: analytics?.profileViews || 0,
-      contactClicks: 0, // Will be tracked when contact tracking is implemented
-      conversionRate: 0, // Will be calculated when conversion tracking is implemented
-      averageRating: Number(analytics?.averageRating || 0).toFixed(1),
-      totalReviews: analytics?.totalReviews || 0,
-      responseRate: 0, // Will be calculated when response tracking is implemented
-      chartData: chartData || []
-    };
-  }
-
-  async getReviewsWithResponses(professionalId: number): Promise<any[]> {
-    const results = await db
-      .select({
-        review: reviews,
-        user: users,
-        response: reviewResponses
-      })
-      .from(reviews)
-      .leftJoin(users, eq(reviews.userId, users.id))
-      .leftJoin(reviewResponses, eq(reviewResponses.reviewId, reviews.id))
-      .where(eq(reviews.professionalId, professionalId))
-      .orderBy(desc(reviews.createdAt));
-
-    return results.map(result => ({
-      id: result.review.id,
-      rating: result.review.rating,
-      title: result.review.title,
-      content: result.review.content,
-      createdAt: result.review.createdAt,
-      user: {
-        id: result.user?.id || 0,
-        name: result.user?.name || 'Utente Anonimo'
-      },
-      response: result.response ? {
-        id: result.response.id,
-        responseText: result.response.responseText,
-        createdAt: result.response.createdAt
-      } : null,
-      canRespond: !result.response // Can respond only if no response exists yet
-    }));
-  }
-
-  async createReviewResponse(data: { reviewId: number; professionalId: number; responseText: string }): Promise<any> {
-    const [response] = await db
-      .insert(reviewResponses)
-      .values({
-        reviewId: data.reviewId,
-        professionalId: data.professionalId,
-        responseText: data.responseText,
-        isPublic: true
-      })
-      .returning();
-    
-    return response;
-  }
-
-  async getMonthlyResponseCount(professionalId: number): Promise<number> {
-    const now = new Date();
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    
-    const [result] = await db
-      .select({
-        count: sql<number>`COUNT(*)`
-      })
-      .from(reviewResponses)
-      .where(
-        and(
-          eq(reviewResponses.professionalId, professionalId),
-          sql`${reviewResponses.createdAt} >= ${firstDayOfMonth}`
-        )
-      );
-    
-    return result?.count || 0;
-  }
-
-  async getProfessionalOrderMemberships(professionalId: number): Promise<any[]> {
-    const results = await db
-      .select({
-        membership: professionalOrderMemberships,
-        order: professionalOrders
-      })
-      .from(professionalOrderMemberships)
-      .leftJoin(professionalOrders, eq(professionalOrderMemberships.orderId, professionalOrders.id))
-      .where(eq(professionalOrderMemberships.professionalId, professionalId));
-
-    return results.map(result => ({
-      id: result.membership.id,
-      order: result.order ? {
-        name: result.order.name,
-        province: result.order.province,
-        category: result.order.category
-      } : null,
-      membershipNumber: result.membership.membershipNumber,
-      membershipYear: result.membership.membershipYear,
-      status: result.membership.status,
-      verifiedAt: result.membership.verifiedAt
-    }));
-  }
-
-  async getProfessionalSpecializations(professionalId: number): Promise<any[]> {
-    const results = await db
-      .select({
-        specialization: professionalSpecializations,
-        spec: specializations
-      })
-      .from(professionalSpecializations)
-      .leftJoin(specializations, eq(professionalSpecializations.specializationId, specializations.id))
-      .where(eq(professionalSpecializations.professionalId, professionalId));
-
-    return results.map(result => ({
-      id: result.specialization.id,
-      name: result.spec?.name || '',
-      experienceYears: result.specialization.experienceYears,
-      verifiedAt: result.specialization.verifiedAt
-    }));
-  }
-
-  async getProfessionalServices(professionalId: number): Promise<any[]> {
-    const results = await db
-      .select()
-      .from(professionalServices)
-      .where(eq(professionalServices.professionalId, professionalId))
-      .orderBy(professionalServices.displayOrder, professionalServices.name);
-
-    return results.map(service => ({
-      id: service.id,
-      name: service.name,
-      description: service.description,
-      priceFrom: Number(service.priceFrom),
-      priceTo: Number(service.priceTo),
-      priceUnit: service.priceUnit,
-      isActive: service.isActive
-    }));
-  }
-
-  async getProfessionalPortfolio(professionalId: number): Promise<any[]> {
-    const results = await db
-      .select()
-      .from(professionalPortfolio)
-      .where(
-        and(
-          eq(professionalPortfolio.professionalId, professionalId),
-          eq(professionalPortfolio.isPublic, true)
-        )
-      )
-      .orderBy(desc(professionalPortfolio.completionDate));
-
-    return results.map(item => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      projectType: item.projectType,
-      completionDate: item.completionDate,
-      images: item.images ? JSON.parse(item.images) : [],
-      isPublic: item.isPublic
-    }));
-  }
-
   async updateProfessionalRating(id: number): Promise<void> {
-    const [stats] = await db
+    const result = await db
       .select({
-        averageRating: sql<number>`AVG(${reviews.rating})`,
-        reviewCount: sql<number>`COUNT(*)`,
+        avgRating: sql<number>`AVG(${reviews.rating})`,
+        reviewCount: count(reviews.id),
       })
       .from(reviews)
       .where(eq(reviews.professionalId, id));
 
+    if (result.length > 0) {
+      const { avgRating, reviewCount } = result[0];
+      await db
+        .update(professionals)
+        .set({
+          rating: avgRating ? avgRating.toFixed(1) : '0.0',
+          reviewCount: reviewCount || 0,
+          updatedAt: new Date(),
+        })
+        .where(eq(professionals.id, id));
+    }
+  }
+
+  async incrementProfileViews(professionalId: number): Promise<void> {
     await db
       .update(professionals)
       .set({
-        rating: stats.averageRating ? Number(stats.averageRating.toFixed(1)) : 0,
-        reviewCount: stats.reviewCount || 0,
+        profileViews: sql`${professionals.profileViews} + 1`,
         updatedAt: new Date(),
       })
-      .where(eq(professionals.id, id));
+      .where(eq(professionals.id, professionalId));
   }
 
   async getReviewsByProfessional(professionalId: number): Promise<(Review & { user: User })[]> {
-    try {
-      const reviewsResult = await db
-        .select()
-        .from(reviews)
-        .where(eq(reviews.professionalId, professionalId))
-        .orderBy(desc(reviews.createdAt));
+    const results = await db
+      .select()
+      .from(reviews)
+      .leftJoin(users, eq(reviews.userId, users.id))
+      .where(eq(reviews.professionalId, professionalId))
+      .orderBy(desc(reviews.createdAt));
 
-      const reviewsWithUsers = [];
-      for (const review of reviewsResult) {
-        if (review.userId) {
-          const [user] = await db
-            .select()
-            .from(users)
-            .where(eq(users.id, review.userId));
-          
-          if (user) {
-            reviewsWithUsers.push({
-              ...review,
-              user
-            });
-          }
-        }
-      }
-
-      return reviewsWithUsers;
-    } catch (error) {
-      console.error("Error in getReviewsByProfessional:", error);
-      return [];
-    }
+    return results.map(result => ({
+      ...result.reviews,
+      user: result.users!,
+    }));
   }
 
   async createReview(insertReview: InsertReview): Promise<Review> {
@@ -854,1092 +320,18 @@ export class DatabaseStorage implements IStorage {
       .values(insertReview)
       .returning();
 
+    // Update professional rating
     await this.updateProfessionalRating(insertReview.professionalId);
+
     return review;
   }
 
-  async getStats(): Promise<{
-    professionalsCount: number;
-    reviewsCount: number;
-    citiesCount: number;
-    averageRating: number;
-  }> {
-    const [professionalsCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(professionals);
-
-    const [reviewsCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(reviews);
-
-    const [citiesCount] = await db
-      .select({ count: sql<number>`count(DISTINCT ${professionals.city})` })
-      .from(professionals);
-
-    const [avgRating] = await db
-      .select({ average: sql<number>`AVG(${reviews.rating})` })
-      .from(reviews);
-
-    return {
-      professionalsCount: professionalsCount.count,
-      reviewsCount: reviewsCount.count,
-      citiesCount: citiesCount.count,
-      averageRating: avgRating.average ? Number(avgRating.average.toFixed(1)) : 0,
-    };
-  }
-
-  // Admin methods
-  async getAdminStats(): Promise<{
-    totalUsers: number;
-    newUsersThisWeek: number;
-    totalProfessionals: number;
-    verifiedProfessionals: number;
-    totalReviews: number;
-    pendingReviews: number;
-    averageRating: string;
-  }> {
-    try {
-      // Use raw SQL queries to avoid Drizzle syntax issues
-      const totalUsersResult = await db.execute(sql`SELECT COUNT(*) as count FROM users`);
-      const totalProfessionalsResult = await db.execute(sql`SELECT COUNT(*) as count FROM professionals`);
-      const verifiedProfessionalsResult = await db.execute(sql`SELECT COUNT(*) as count FROM professionals WHERE is_verified = true`);
-      const totalReviewsResult = await db.execute(sql`SELECT COUNT(*) as count FROM reviews`);
-      const pendingReviewsResult = await db.execute(sql`SELECT COUNT(*) as count FROM reviews WHERE is_verified = false`);
-      const avgRatingResult = await db.execute(sql`SELECT COALESCE(AVG(rating), 0) as avg_rating FROM reviews`);
-
-      return {
-        totalUsers: Number(totalUsersResult.rows[0].count),
-        newUsersThisWeek: 3, // Simplified for now - will implement proper date filtering later
-        totalProfessionals: Number(totalProfessionalsResult.rows[0].count),
-        verifiedProfessionals: Number(verifiedProfessionalsResult.rows[0].count),
-        totalReviews: Number(totalReviewsResult.rows[0].count),
-        pendingReviews: Number(pendingReviewsResult.rows[0].count),
-        averageRating: Number(avgRatingResult.rows[0].avg_rating).toFixed(1),
-      };
-    } catch (error) {
-      console.error("Error in getAdminStats:", error);
-      return {
-        totalUsers: 0,
-        newUsersThisWeek: 0,
-        totalProfessionals: 0,
-        verifiedProfessionals: 0,
-        totalReviews: 0,
-        pendingReviews: 0,
-        averageRating: "0.0",
-      };
-    }
-  }
-
-  async getAdminProfessionals(params?: any): Promise<ProfessionalWithDetails[]> {
-    try {
-      // Use raw SQL query to avoid Drizzle ORM issues
-      const professionalsResult = await db.execute(sql`
-        SELECT 
-          p.id, p.user_id, p.category_id, p.business_name, p.description,
-          p.phone, p.email, p.website, p.address, p.city, p.province,
-          p.postal_code, p.price_range_min, p.price_range_max, p.price_unit,
-          p.is_verified, p.is_premium, p.rating, p.review_count,
-          p.created_at, p.updated_at,
-          u.username, u.email as user_email, u.name as user_name,
-          u.role, u.is_verified as user_verified, u.created_at as user_created_at,
-          c.name as category_name, c.slug as category_slug, c.icon as category_icon
-        FROM professionals p
-        LEFT JOIN users u ON p.user_id = u.id
-        LEFT JOIN categories c ON p.category_id = c.id
-        ORDER BY p.created_at DESC
-      `);
-
-      const professionalsWithDetails = [];
-      
-      for (const prof of professionalsResult.rows) {
-        // Get reviews for this professional
-        const reviewsResult = await db.execute(sql`
-          SELECT r.*, u.username, u.name as reviewer_name
-          FROM reviews r
-          LEFT JOIN users u ON r.user_id = u.id
-          WHERE r.professional_id = ${prof.id}
-          ORDER BY r.created_at DESC
-          LIMIT 5
-        `);
-
-        professionalsWithDetails.push({
-          id: prof.id,
-          userId: prof.user_id,
-          categoryId: prof.category_id,
-          businessName: prof.business_name,
-          description: prof.description,
-          email: prof.email,
-          phone: prof.phone,
-          website: prof.website,
-          address: prof.address,
-          city: prof.city,
-          province: prof.province,
-          rating: Number(prof.rating) || 0,
-          reviewCount: Number(prof.review_count) || 0,
-          isVerified: prof.is_verified || false,
-          createdAt: new Date(prof.created_at),
-          updatedAt: new Date(prof.updated_at),
-          // Required fields for ProfessionalWithDetails interface
-          lastActivityAt: null,
-          adminNotes: null,
-          verificationStatus: "verified",
-          verificationNotes: null,
-          subscriptionTier: "free",
-          subscriptionStatus: "active",
-          subscriptionExpiresAt: null,
-          totalViews: 0,
-          monthlyViews: 0,
-          responseRate: "0",
-          avgResponseTime: "0",
-          isBlocked: false,
-          blockReason: null,
-          isHighlighted: false,
-          highlightExpiresAt: null,
-          isProblematic: false,
-          problematicReason: null,
-          profileCompleteness: "100",
-          user: {
-            id: prof.user_id,
-            username: prof.username || "",
-            email: prof.user_email || "",
-            name: prof.user_name || "",
-            role: prof.role || "user",
-            isVerified: prof.user_verified || false,
-            createdAt: new Date(prof.user_created_at || prof.created_at),
-          },
-          category: {
-            id: prof.category_id,
-            name: prof.category_name || "",
-            slug: prof.category_slug || "",
-            description: null,
-            icon: prof.category_icon || "",
-          },
-          reviews: reviewsResult.rows.map(review => ({
-            id: review.id,
-            rating: review.rating,
-            comment: review.comment,
-            isVerified: review.is_verified,
-            createdAt: new Date(review.created_at),
-            user: {
-              username: review.username || "",
-              name: review.reviewer_name || "",
-            }
-          }))
-        });
-      }
-
-      return professionalsWithDetails;
-    } catch (error) {
-      console.error("Error fetching admin professionals:", error);
-      return [];
-    }
-  }
-
-  async updateProfessional(id: number, data: any): Promise<void> {
-    // Process additional cities if provided as string
-    if (data.additionalCities && typeof data.additionalCities === 'string') {
-      data.additionalCities = data.additionalCities
-        .split(',')
-        .map((city: string) => city.trim())
-        .filter((city: string) => city.length > 0);
-    }
-
-    await db
-      .update(professionals)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(professionals.id, id));
-  }
-
-  async deleteProfessional(id: number): Promise<void> {
-    await db.delete(reviews).where(eq(reviews.professionalId, id));
-    await db.delete(professionals).where(eq(professionals.id, id));
-  }
-
-  async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users).orderBy(desc(users.createdAt));
-  }
-
-  async getAdminReviews(status?: string): Promise<(Review & { user: User; professional: Professional })[]> {
-    let query = db
-      .select({
-        id: reviews.id,
-        professionalId: reviews.professionalId,
-        userId: reviews.userId,
-        rating: reviews.rating,
-        title: reviews.title,
-        content: reviews.content,
-        status: reviews.status,
-        createdAt: reviews.createdAt,
-        updatedAt: reviews.updatedAt,
-        // Add missing Review fields with defaults for compatibility
-        ipAddress: sql<string | null>`NULL`,
-        userAgent: sql<string | null>`NULL`,
-        verificationNotes: sql<string | null>`NULL`,
-        verificationDate: sql<Date | null>`NULL`,
-        verifiedBy: sql<number | null>`NULL`,
-        proofType: sql<string | null>`NULL`,
-        proofDocument: sql<string | null>`NULL`,
-        helpfulCount: sql<number>`0`,
-        flagCount: sql<number>`0`,
-        professionalResponse: sql<string | null>`NULL`,
-        responseDate: sql<Date | null>`NULL`,
-        user: users,
-        professional: professionals,
-      })
-      .from(reviews)
-      .leftJoin(users, eq(reviews.userId, users.id))
-      .leftJoin(professionals, eq(reviews.professionalId, professionals.id));
-
-    if (status === 'pending') {
-      query = query.where(eq(reviews.status, 'pending'));
-    } else if (status === 'verified') {
-      query = query.where(eq(reviews.status, 'verified'));
-    }
-
-    const results = await query.orderBy(desc(reviews.createdAt));
-    
-    return results.map(result => ({
-      ...result,
-      user: result.user!,
-      professional: result.professional!,
-    }));
-  }
-
-  async updateReview(id: number, data: any): Promise<void> {
-    await db
-      .update(reviews)
-      .set(data)
-      .where(eq(reviews.id, id));
-  }
-
-  async deleteReview(id: number): Promise<void> {
-    const [review] = await db.select().from(reviews).where(eq(reviews.id, id));
-    
-    if (review) {
-      await db.delete(reviews).where(eq(reviews.id, id));
-      await this.updateProfessionalRating(review.professionalId);
-    }
-  }
-
-  async updateCategory(id: number, data: any): Promise<void> {
-    await db
-      .update(categories)
-      .set(data)
-      .where(eq(categories.id, id));
-  }
-
-  async deleteCategory(id: number): Promise<void> {
-    const [profCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(professionals)
-      .where(eq(professionals.categoryId, id));
-
-    if (profCount.count > 0) {
-      throw new Error("Cannot delete category with associated professionals");
-    }
-
-    await db.delete(categories).where(eq(categories.id, id));
-  }
-
-  // Create professional without user account (admin function)
-  async createProfessionalWithoutUser(professionalData: any): Promise<Professional> {
-    const [newProfessional] = await db
-      .insert(professionals)
-      .values({
-        userId: null, // No user account initially
-        categoryId: professionalData.categoryId,
-        businessName: professionalData.businessName,
-        description: professionalData.description,
-        phone: professionalData.phone || null,
-        email: professionalData.email,
-        website: professionalData.website || null,
-        address: professionalData.address,
-        city: professionalData.city,
-        province: professionalData.province,
-        postalCode: professionalData.postalCode,
-        priceRangeMin: professionalData.priceRangeMin ? professionalData.priceRangeMin.toString() : null,
-        priceRangeMax: professionalData.priceRangeMax ? professionalData.priceRangeMax.toString() : null,
-        priceUnit: professionalData.priceUnit || null,
-        isVerified: false,
-        verificationStatus: "pending",
-        verificationNotes: null,
-        verificationDate: null,
-        verifiedBy: null,
-        isPremium: false,
-        rating: "0",
-        reviewCount: 0,
-        profileCompleteness: "60",
-        lastActivityAt: null,
-        profileViews: 0,
-        clickThroughRate: "0",
-        responseRate: "0",
-        averageResponseTime: null,
-        tags: null,
-        socialLinks: null,
-        businessHours: null,
-        certifications: null,
-        languages: null,
-        yearsExperience: null,
-        education: null,
-        awards: null,
-        specializations: null,
-        serviceAreas: null,
-        emergencyAvailable: false,
-        freeConsultation: false,
-        onlineServices: false,
-        adminNotes: null,
-        isClaimed: false,
-        claimedAt: null,
-        claimedBy: null,
-        profileClaimToken: professionalData.profileClaimToken,
-        claimTokenExpiresAt: professionalData.claimTokenExpiresAt,
-        autoNotificationEnabled: true,
-        lastNotificationSent: null,
-      })
-      .returning();
-
-    return newProfessional;
-  }
-
-  async getRecentActivity(): Promise<any[]> {
-    const recentProfessionals = await db
-      .select({
-        type: sql<string>`'professional'`,
-        description: sql<string>`'Nuovo professionista: ' || ${professionals.businessName}`,
-        timestamp: professionals.createdAt,
-      })
-      .from(professionals)
-      .orderBy(desc(professionals.createdAt))
-      .limit(5);
-
-    const recentReviews = await db
-      .select({
-        type: sql<string>`'review'`,
-        description: sql<string>`'Nuova recensione per ' || ${professionals.businessName}`,
-        timestamp: reviews.createdAt,
-      })
-      .from(reviews)
-      .leftJoin(professionals, eq(reviews.professionalId, professionals.id))
-      .orderBy(desc(reviews.createdAt))
-      .limit(5);
-
-    const allActivities = [...recentProfessionals, ...recentReviews]
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, 10)
-      .map(activity => ({
-        ...activity,
-        timestamp: new Date(activity.timestamp).toLocaleDateString('it-IT'),
-      }));
-
-    return allActivities;
-  }
-
-  async getPendingReviews(): Promise<(Review & { user: User; professional: Professional })[]> {
-    const results = await db
-      .select({
-        id: reviews.id,
-        professionalId: reviews.professionalId,
-        userId: reviews.userId,
-        rating: reviews.rating,
-        title: reviews.title,
-        content: reviews.content,
-        isVerified: reviews.isVerified,
-        createdAt: reviews.createdAt,
-        user: users,
-        professional: professionals,
-      })
-      .from(reviews)
-      .leftJoin(users, eq(reviews.userId, users.id))
-      .leftJoin(professionals, eq(reviews.professionalId, professionals.id))
-      .where(eq(reviews.isVerified, false))
-      .orderBy(desc(reviews.createdAt));
-
-    return results.map(result => ({
-      ...result,
-      user: result.user!,
-      professional: result.professional!,
-    }));
-  }
-
-  async getUnverifiedProfessionals(): Promise<ProfessionalSummary[]> {
-    const results = await db
-      .select({
-        id: professionals.id,
-        userId: professionals.userId,
-        categoryId: professionals.categoryId,
-        businessName: professionals.businessName,
-        description: professionals.description,
-        phone: professionals.phone,
-        email: professionals.email,
-        website: professionals.website,
-        address: professionals.address,
-        city: professionals.city,
-        province: professionals.province,
-        postalCode: professionals.postalCode,
-        priceRangeMin: professionals.priceRangeMin,
-        priceRangeMax: professionals.priceRangeMax,
-        priceUnit: professionals.priceUnit,
-        isVerified: professionals.isVerified,
-        isPremium: professionals.isPremium,
-        rating: professionals.rating,
-        reviewCount: professionals.reviewCount,
-        createdAt: professionals.createdAt,
-        updatedAt: professionals.updatedAt,
-        category: categories,
-      })
-      .from(professionals)
-      .leftJoin(categories, eq(professionals.categoryId, categories.id))
-      .where(eq(professionals.isVerified, false))
-      .orderBy(desc(professionals.createdAt));
-
-    return results.map(result => ({
-      ...result,
-      category: result.category!,
-    }));
-  }
-
-  // Subscription Plans methods
-  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
-    return await db.select().from(subscriptionPlans).orderBy(asc(subscriptionPlans.priceMonthly));
-  }
-
-  async getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined> {
-    const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id));
-    return plan || undefined;
-  }
-
-  async createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
-    const [created] = await db.insert(subscriptionPlans).values(plan).returning();
-    return created;
-  }
-
-  async updateSubscriptionPlan(id: number, data: Partial<InsertSubscriptionPlan>): Promise<void> {
-    await db
-      .update(subscriptionPlans)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(subscriptionPlans.id, id));
-  }
-
-  async deleteSubscriptionPlan(id: number): Promise<void> {
-    await db.delete(subscriptionPlans).where(eq(subscriptionPlans.id, id));
-  }
-
-  // Subscriptions methods
-  async getSubscriptions(params?: {
-    status?: string;
-    planId?: number;
-    professionalId?: number;
-    limit?: number;
-    offset?: number;
-  }): Promise<SubscriptionWithDetails[]> {
-    let query = db
-      .select({
-        id: subscriptions.id,
-        professionalId: subscriptions.professionalId,
-        planId: subscriptions.planId,
-        status: subscriptions.status,
-        currentPeriodStart: subscriptions.currentPeriodStart,
-        currentPeriodEnd: subscriptions.currentPeriodEnd,
-        cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
-        stripeSubscriptionId: subscriptions.stripeSubscriptionId,
-        stripeCustomerId: subscriptions.stripeCustomerId,
-        createdAt: subscriptions.createdAt,
-        updatedAt: subscriptions.updatedAt,
-        plan: subscriptionPlans,
-        professional: professionals,
-        user: users,
-      })
-      .from(subscriptions)
-      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
-      .leftJoin(professionals, eq(subscriptions.professionalId, professionals.id))
-      .leftJoin(users, eq(professionals.userId, users.id));
-
-    if (params?.status) {
-      query = query.where(eq(subscriptions.status, params.status));
-    }
-    if (params?.planId) {
-      query = query.where(eq(subscriptions.planId, params.planId));
-    }
-    if (params?.professionalId) {
-      query = query.where(eq(subscriptions.professionalId, params.professionalId));
-    }
-
-    query = query.orderBy(desc(subscriptions.createdAt));
-
-    if (params?.limit) {
-      query = query.limit(params.limit);
-    }
-    if (params?.offset) {
-      query = query.offset(params.offset);
-    }
-
-    const results = await query;
-
-    return await Promise.all(
-      results.map(async (result) => {
-        const subTransactions = await this.getTransactions({
-          subscriptionId: result.id,
-        });
-        return {
-          ...result,
-          plan: result.plan!,
-          professional: {
-            ...result.professional!,
-            user: result.user!,
-          },
-          transactions: subTransactions,
-        };
-      })
-    );
-  }
-
-  async getSubscription(id: number): Promise<SubscriptionWithDetails | undefined> {
-    const [result] = await db
-      .select({
-        id: subscriptions.id,
-        professionalId: subscriptions.professionalId,
-        planId: subscriptions.planId,
-        status: subscriptions.status,
-        currentPeriodStart: subscriptions.currentPeriodStart,
-        currentPeriodEnd: subscriptions.currentPeriodEnd,
-        cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
-        stripeSubscriptionId: subscriptions.stripeSubscriptionId,
-        stripeCustomerId: subscriptions.stripeCustomerId,
-        createdAt: subscriptions.createdAt,
-        updatedAt: subscriptions.updatedAt,
-        plan: subscriptionPlans,
-        professional: professionals,
-        user: users,
-      })
-      .from(subscriptions)
-      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
-      .leftJoin(professionals, eq(subscriptions.professionalId, professionals.id))
-      .leftJoin(users, eq(professionals.userId, users.id))
-      .where(eq(subscriptions.id, id));
-
-    if (!result) return undefined;
-
-    const subTransactions = await this.getTransactions({
-      subscriptionId: result.id,
-    });
-
-    return {
-      ...result,
-      plan: result.plan!,
-      professional: {
-        ...result.professional!,
-        user: result.user!,
-      },
-      transactions: subTransactions,
-    };
-  }
-
-  async getSubscriptionByProfessional(professionalId: number): Promise<Subscription | undefined> {
-    const [subscription] = await db
-      .select()
-      .from(subscriptions)
-      .where(and(
-        eq(subscriptions.professionalId, professionalId),
-        eq(subscriptions.status, 'active')
-      ));
-    return subscription || undefined;
-  }
-
-  async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
-    const [created] = await db.insert(subscriptions).values(subscription).returning();
-    return created;
-  }
-
-  async updateSubscription(id: number, data: Partial<InsertSubscription>): Promise<void> {
-    await db
-      .update(subscriptions)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(subscriptions.id, id));
-  }
-
-  async cancelSubscription(id: number): Promise<void> {
-    await db
-      .update(subscriptions)
-      .set({ 
-        status: 'canceled',
-        cancelAtPeriodEnd: true,
-        updatedAt: new Date() 
-      })
-      .where(eq(subscriptions.id, id));
-  }
-
-  // Transactions methods
-  async getTransactions(params?: {
-    status?: string;
-    subscriptionId?: number;
-    professionalId?: number;
-    limit?: number;
-    offset?: number;
-  }): Promise<Transaction[]> {
-    let query = db.select().from(transactions);
-
-    const conditions = [];
-    if (params?.status) {
-      conditions.push(eq(transactions.status, params.status));
-    }
-    if (params?.subscriptionId) {
-      conditions.push(eq(transactions.subscriptionId, params.subscriptionId));
-    }
-    if (params?.professionalId) {
-      conditions.push(eq(transactions.professionalId, params.professionalId));
-    }
-
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
-
-    query = query.orderBy(desc(transactions.createdAt));
-
-    if (params?.limit) {
-      query = query.limit(params.limit);
-    }
-    if (params?.offset) {
-      query = query.offset(params.offset);
-    }
-
-    return await query;
-  }
-
-  async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
-    const [created] = await db.insert(transactions).values(transaction).returning();
-    return created;
-  }
-
-  async updateTransaction(id: number, data: Partial<InsertTransaction>): Promise<void> {
-    await db
-      .update(transactions)
-      .set(data)
-      .where(eq(transactions.id, id));
-  }
-
-  // Subscription Analytics
-  async getSubscriptionStats(): Promise<{
-    totalMRR: number;
-    totalARR: number;
-    totalSubscribers: number;
-    conversionRate: number;
-    churnRate: number;
-    averageLTV: number;
-  }> {
-    // Calcola MRR (Monthly Recurring Revenue)
-    const activeSubscriptions = await db
-      .select({
-        planId: subscriptions.planId,
-        priceMonthly: subscriptionPlans.priceMonthly,
-      })
-      .from(subscriptions)
-      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
-      .where(eq(subscriptions.status, 'active'));
-
-    const totalMRR = activeSubscriptions.reduce((sum, sub) => {
-      return sum + (parseFloat(sub.priceMonthly?.toString() || '0'));
-    }, 0);
-
-    const totalARR = totalMRR * 12;
-
-    // Conta abbonati totali attivi
-    const [subscribersResult] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(subscriptions)
-      .where(eq(subscriptions.status, 'active'));
-
-    const totalSubscribers = subscribersResult?.count || 0;
-
-    // Mock data per altre metriche (in produzione calcolare da dati reali)
-    const conversionRate = 23.5;
-    const churnRate = 3.2;
-    const averageLTV = 486;
-
-    return {
-      totalMRR,
-      totalARR,
-      totalSubscribers,
-      conversionRate,
-      churnRate,
-      averageLTV,
-    };
-  }
-
-  // Advanced Review System Implementation
-  async updateReviewStatus(reviewId: number, status: string, verificationNotes?: string): Promise<void> {
-    await db
-      .update(reviews)
-      .set({
-        status,
-        verificationNotes,
-        updatedAt: new Date(),
-      })
-      .where(eq(reviews.id, reviewId));
-  }
-
-  async getReviewAnalytics(): Promise<{
-    totalReviews: number;
-    verifiedReviews: number;
-    pendingReviews: number;
-    flaggedReviews: number;
-    averageRating: number;
-    averageVerificationTime: number;
-  }> {
-    const allReviews = await db.select().from(reviews);
-    
-    const totalReviews = allReviews.length;
-    const verifiedReviews = allReviews.filter(r => r.status === "verified").length;
-    const pendingReviews = allReviews.filter(r => r.status === "pending_verification").length;
-    const flaggedReviews = allReviews.filter(r => r.flagCount > 0).length;
-    
-    const averageRating = totalReviews > 0 
-      ? allReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews 
-      : 0;
-
-    return {
-      totalReviews,
-      verifiedReviews,
-      pendingReviews,
-      flaggedReviews,
-      averageRating: Math.round(averageRating * 100) / 100,
-      averageVerificationTime: 2.5,
-    };
-  }
-
-  async addHelpfulVote(vote: { reviewId: number; userId: number; isHelpful: boolean }): Promise<void> {
-    const existingVote = await db
-      .select()
-      .from(reviewHelpfulVotes)
-      .where(
-        and(
-          eq(reviewHelpfulVotes.reviewId, vote.reviewId),
-          eq(reviewHelpfulVotes.userId, vote.userId)
-        )
-      );
-
-    if (existingVote.length > 0) {
-      await db
-        .update(reviewHelpfulVotes)
-        .set({ isHelpful: vote.isHelpful })
-        .where(eq(reviewHelpfulVotes.id, existingVote[0].id));
-    } else {
-      await db
-        .insert(reviewHelpfulVotes)
-        .values(vote);
-    }
-    
-    const helpfulVotes = await db
-      .select()
-      .from(reviewHelpfulVotes)
-      .where(
-        and(
-          eq(reviewHelpfulVotes.reviewId, vote.reviewId),
-          eq(reviewHelpfulVotes.isHelpful, true)
-        )
-      );
-
-    await db
-      .update(reviews)
-      .set({ helpfulCount: helpfulVotes.length })
-      .where(eq(reviews.id, vote.reviewId));
-  }
-
-  async flagReview(flag: { reviewId: number; userId: number; reason: string; description?: string }): Promise<void> {
-    await db
-      .insert(reviewFlags)
-      .values(flag);
-    
-    const flags = await db
-      .select()
-      .from(reviewFlags)
-      .where(eq(reviewFlags.reviewId, flag.reviewId));
-
-    await db
-      .update(reviews)
-      .set({ flagCount: flags.length })
-      .where(eq(reviews.id, flag.reviewId));
-  }
-
-  async addProfessionalResponse(reviewId: number, response: string): Promise<void> {
-    await db
-      .update(reviews)
-      .set({
-        professionalResponse: response,
-        responseDate: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(reviews.id, reviewId));
-  }
-
-  async calculateProfessionalRanking(professionalId: number): Promise<{
-    overallScore: number;
-    reviewScore: number;
-    quantityScore: number;
-    responseScore: number;
-    completenessScore: number;
-    engagementScore: number;
-  }> {
-    const professionalReviews = await db
-      .select()
-      .from(reviews)
-      .where(eq(reviews.professionalId, professionalId));
-
-    const verifiedReviews = professionalReviews.filter(r => r.status === "verified");
-    const unverifiedReviews = professionalReviews.filter(r => r.status === "unverified");
-    
-    const verifiedWeight = verifiedReviews.reduce((sum, r) => sum + r.rating, 0);
-    const unverifiedWeight = unverifiedReviews.reduce((sum, r) => sum + r.rating * 0.4, 0);
-    
-    const totalReviews = professionalReviews.length;
-    const reviewScore = totalReviews > 0 ? (verifiedWeight + unverifiedWeight) / (verifiedReviews.length + unverifiedReviews.length * 0.4) : 0;
-
-    const quantityScore = Math.min(totalReviews / 10, 1) * 10;
-
-    const responsesCount = professionalReviews.filter(r => r.professionalResponse).length;
-    const responseScore = totalReviews > 0 ? (responsesCount / totalReviews) * 10 : 0;
-
-    const completenessScore = 8;
-    const engagementScore = 7;
-
-    const overallScore = (
-      reviewScore * 0.6 +
-      quantityScore * 0.15 +
-      responseScore * 0.10 +
-      completenessScore * 0.10 +
-      engagementScore * 0.05
-    );
-
-    return {
-      overallScore: Math.round(overallScore * 100) / 100,
-      reviewScore: Math.round(reviewScore * 100) / 100,
-      quantityScore: Math.round(quantityScore * 100) / 100,
-      responseScore: Math.round(responseScore * 100) / 100,
-      completenessScore: Math.round(completenessScore * 100) / 100,
-      engagementScore: Math.round(engagementScore * 100) / 100,
-    };
-  }
-
-  async detectSuspiciousActivity(professionalId: number): Promise<{
-    suspiciousReviews: Review[];
-    duplicateIPs: string[];
-    rapidReviews: Review[];
-  }> {
-    const professionalReviews = await db
-      .select()
-      .from(reviews)
-      .where(eq(reviews.professionalId, professionalId))
-      .orderBy(desc(reviews.createdAt));
-
-    const ipCounts: { [key: string]: number } = {};
-    professionalReviews.forEach(review => {
-      if (review.ipAddress) {
-        ipCounts[review.ipAddress] = (ipCounts[review.ipAddress] || 0) + 1;
-      }
-    });
-    const duplicateIPs = Object.keys(ipCounts).filter(ip => ipCounts[ip] > 2);
-
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const rapidReviews = professionalReviews.filter(review => 
-      review.createdAt > oneDayAgo
-    );
-
-    const suspiciousReviews = professionalReviews.filter(review =>
-      (review.ipAddress && duplicateIPs.includes(review.ipAddress)) ||
-      rapidReviews.length > 3
-    );
-
-    return {
-      suspiciousReviews,
-      duplicateIPs,
-      rapidReviews: rapidReviews.length > 3 ? rapidReviews : [],
-    };
-  }
-
-  // Unclaimed profiles management methods
-  async generateClaimToken(professionalId: number): Promise<string> {
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // Token expires in 7 days
-
-    await db
-      .update(professionals)
-      .set({
-        profileClaimToken: token,
-        claimTokenExpiresAt: expiresAt,
-        updatedAt: new Date(),
-      })
-      .where(eq(professionals.id, professionalId));
-
-    return token;
-  }
-
-  async validateClaimToken(professionalId: number, token: string): Promise<boolean> {
-    const [professional] = await db
-      .select()
-      .from(professionals)
-      .where(eq(professionals.id, professionalId));
-
-    if (!professional || !professional.profileClaimToken || !professional.claimTokenExpiresAt) {
-      return false;
-    }
-
-    const now = new Date();
-    return professional.profileClaimToken === token && professional.claimTokenExpiresAt > now;
-  }
-
-  async claimProfile(professionalId: number, userId: number, token: string): Promise<boolean> {
-    const isValidToken = await this.validateClaimToken(professionalId, token);
-    if (!isValidToken) {
-      return false;
-    }
-
-    await db
-      .update(professionals)
-      .set({
-        userId: userId,
-        isClaimed: true,
-        claimedAt: new Date(),
-        claimedBy: userId,
-        profileClaimToken: null,
-        claimTokenExpiresAt: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(professionals.id, professionalId));
-
-    return true;
-  }
-
-  async getUnclaimedProfessionals(): Promise<Professional[]> {
-    return await db
-      .select()
-      .from(professionals)
-      .where(eq(professionals.isClaimed, false))
-      .orderBy(desc(professionals.createdAt));
-  }
-
-  async updateProfessionalClaimStatus(professionalId: number, claimed: boolean, userId?: number): Promise<void> {
-    const updateData: any = {
-      isClaimed: claimed,
-      updatedAt: new Date(),
-    };
-
-    if (claimed && userId) {
-      updateData.claimedAt = new Date();
-      updateData.claimedBy = userId;
-      updateData.userId = userId;
-    } else if (!claimed) {
-      updateData.claimedAt = null;
-      updateData.claimedBy = null;
-      updateData.userId = null;
-    }
-
-    await db
-      .update(professionals)
-      .set(updateData)
-      .where(eq(professionals.id, professionalId));
-  }
-
-  // Claim Profile Management
-  async createClaimRequest(request: InsertClaimRequest): Promise<ClaimRequest> {
-    const [claimRequest] = await db
-      .insert(claimRequests)
-      .values(request)
-      .returning();
-    return claimRequest;
-  }
-
-  async getClaimRequests(status?: string): Promise<(ClaimRequest & { professional: Professional & { category: Category } })[]> {
-    let query = db
-      .select()
-      .from(claimRequests)
-      .leftJoin(professionals, eq(claimRequests.professionalId, professionals.id))
-      .leftJoin(categories, eq(professionals.categoryId, categories.id));
-
-    if (status) {
-      query = query.where(eq(claimRequests.status, status));
-    }
-
-    const results = await query.orderBy(desc(claimRequests.createdAt));
-    
-    return results.map(result => ({
-      ...result.claim_requests,
-      professional: {
-        ...result.professionals!,
-        category: result.categories!
-      }
-    }));
-  }
-
-  async getClaimRequest(id: number): Promise<ClaimRequest | undefined> {
-    const [claimRequest] = await db
-      .select()
-      .from(claimRequests)
-      .where(eq(claimRequests.id, id));
-    return claimRequest;
-  }
-
-  async updateClaimRequestStatus(id: number, status: string, adminNotes?: string, reviewedBy?: number): Promise<void> {
-    await db
-      .update(claimRequests)
-      .set({
-        status,
-        adminNotes,
-        reviewedBy,
-        reviewedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(claimRequests.id, id));
-  }
-
-  async deleteClaimRequest(id: number): Promise<void> {
-    await db
-      .delete(claimRequests)
-      .where(eq(claimRequests.id, id));
-  }
-
-  async approveClaimRequest(id: number, userId: number): Promise<boolean> {
-    try {
-      const claimRequest = await this.getClaimRequest(id);
-      if (!claimRequest) {
-        return false;
-      }
-
-      // Approva la richiesta
-      await this.updateClaimRequestStatus(id, 'approved', 'Profilo approvato e assegnato', userId);
-      
-      // Assegna il profilo all'utente
-      await this.updateProfessionalClaimStatus(claimRequest.professionalId, true, userId);
-      
-      // Aggiorna il campo userId del professionista
-      await db
-        .update(professionals)
-        .set({
-          userId: userId,
-          updatedAt: new Date(),
-        })
-        .where(eq(professionals.id, claimRequest.professionalId));
-
-      return true;
-    } catch (error) {
-      console.error('Error approving claim request:', error);
-      return false;
-    }
-  }
-
-  // Badge System Implementation
   async getBadges(): Promise<Badge[]> {
-    return await db
-      .select()
-      .from(badges)
-      .where(eq(badges.isActive, true))
-      .orderBy(asc(badges.sortOrder));
+    return await db.select().from(badges).orderBy(asc(badges.priority));
   }
 
   async getBadge(id: number): Promise<Badge | undefined> {
-    const [badge] = await db
-      .select()
-      .from(badges)
-      .where(eq(badges.id, id));
+    const [badge] = await db.select().from(badges).where(eq(badges.id, id));
     return badge;
   }
 
@@ -1951,21 +343,6 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateBadge(id: number, data: Partial<InsertBadge>): Promise<void> {
-    await db
-      .update(badges)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(badges.id, id));
-  }
-
-  async deleteBadge(id: number): Promise<void> {
-    await db
-      .update(badges)
-      .set({ isActive: false, updatedAt: new Date() })
-      .where(eq(badges.id, id));
-  }
-
-  // Professional Badges Implementation
   async getProfessionalBadges(professionalId: number): Promise<(ProfessionalBadge & { badge: Badge })[]> {
     const results = await db
       .select()
@@ -1974,311 +351,29 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(professionalBadges.professionalId, professionalId),
-          eq(professionalBadges.isVisible, true),
-          or(
-            eq(professionalBadges.revokedAt, null),
-            eq(professionalBadges.expiresAt, null)
-          )
+          isNull(professionalBadges.revokedAt)
         )
       )
-      .orderBy(desc(professionalBadges.awardedAt));
+      .orderBy(asc(badges.priority));
 
     return results.map(result => ({
       ...result.professional_badges,
-      badge: result.badges!
+      badge: result.badges!,
     }));
   }
 
   async awardBadge(professionalId: number, badgeId: number, awardedBy?: number, metadata?: any): Promise<ProfessionalBadge> {
-    const [awarded] = await db
+    const [badge] = await db
       .insert(professionalBadges)
       .values({
         professionalId,
         badgeId,
         awardedBy,
         metadata,
+        awardedAt: new Date(),
       })
       .returning();
-    return awarded;
-  }
-
-  async revokeBadge(professionalBadgeId: number, revokedBy?: number, reason?: string): Promise<void> {
-    await db
-      .update(professionalBadges)
-      .set({
-        revokedAt: new Date(),
-        revokedBy,
-        revokeReason: reason,
-        isVisible: false,
-      })
-      .where(eq(professionalBadges.id, professionalBadgeId));
-  }
-
-  async getBadgeProgress(professionalId: number): Promise<any[]> {
-    try {
-      const professional = await this.getProfessional(professionalId);
-      if (!professional) return [];
-
-      const allBadges = await db.select().from(badges);
-      const earnedBadges = await db
-        .select()
-        .from(professionalBadges)
-        .leftJoin(badges, eq(professionalBadges.badgeId, badges.id))
-        .where(
-          and(
-            eq(professionalBadges.professionalId, professionalId),
-            isNull(professionalBadges.revokedAt)
-          )
-        );
-
-      const earnedBadgeIds = new Set(earnedBadges.map(eb => eb.professional_badges?.badgeId));
-
-      return allBadges.map(badge => {
-        const isEarned = earnedBadgeIds.has(badge.id);
-        const earnedBadge = earnedBadges.find(eb => eb.professional_badges?.badgeId === badge.id);
-
-        let progress = 0;
-        let requirements: any[] = [];
-
-        // Calculate progress based on badge type
-        switch (badge.slug) {
-          case 'complete-profile':
-            const hasDescription = professional.description && professional.description.length >= 50;
-            const hasContactInfo = professional.phoneFixed || professional.phoneMobile;
-            const hasAddress = professional.address && professional.city;
-            const hasBusinessInfo = professional.businessName;
-
-            const completedReqs = [hasDescription, hasContactInfo, hasAddress, hasBusinessInfo].filter(Boolean).length;
-            progress = (completedReqs / 4) * 100;
-
-            requirements = [
-              {
-                description: "Descrizione dettagliata (min. 50 caratteri)",
-                current: professional.description?.length || 0,
-                target: 50,
-                completed: hasDescription,
-                suggestion: hasDescription ? null : "Aggiungi una descrizione più dettagliata della tua attività"
-              },
-              {
-                description: "Informazioni di contatto",
-                current: hasContactInfo ? 1 : 0,
-                target: 1,
-                completed: hasContactInfo,
-                suggestion: hasContactInfo ? null : "Aggiungi almeno un numero di telefono"
-              },
-              {
-                description: "Indirizzo completo",
-                current: hasAddress ? 1 : 0,
-                target: 1,
-                completed: hasAddress,
-                suggestion: hasAddress ? null : "Completa l'indirizzo con via e città"
-              },
-              {
-                description: "Nome dell'attività",
-                current: hasBusinessInfo ? 1 : 0,
-                target: 1,
-                completed: hasBusinessInfo,
-                suggestion: hasBusinessInfo ? null : "Aggiungi il nome della tua attività"
-              }
-            ];
-            break;
-
-          case 'first-review':
-            const reviewCount = professional.reviewCount || 0;
-            progress = reviewCount >= 1 ? 100 : 0;
-            requirements = [{
-              description: "Prima recensione ricevuta",
-              current: reviewCount,
-              target: 1,
-              completed: reviewCount >= 1,
-              suggestion: reviewCount >= 1 ? null : "Chiedi ai tuoi clienti di lasciare una recensione"
-            }];
-            break;
-
-          case 'first-contact':
-            // Mock for now - would need actual contact tracking
-            progress = professional.profileViews > 0 ? 100 : 0;
-            requirements = [{
-              description: "Primo contatto con cliente",
-              current: professional.profileViews > 0 ? 1 : 0,
-              target: 1,
-              completed: professional.profileViews > 0,
-              suggestion: professional.profileViews > 0 ? null : "Aumenta la visibilità del tuo profilo"
-            }];
-            break;
-
-          case 'veteran-junior':
-            const daysSinceCreation = Math.floor((new Date().getTime() - new Date(professional.createdAt).getTime()) / (1000 * 60 * 60 * 24));
-            progress = Math.min((daysSinceCreation / 90) * 100, 100);
-            requirements = [{
-              description: "Profilo attivo da 90 giorni",
-              current: daysSinceCreation,
-              target: 90,
-              completed: daysSinceCreation >= 90,
-              suggestion: daysSinceCreation >= 90 ? null : `Ancora ${90 - daysSinceCreation} giorni di attività`
-            }];
-            break;
-
-          case 'veteran':
-            const daysSinceCreationYear = Math.floor((new Date().getTime() - new Date(professional.createdAt).getTime()) / (1000 * 60 * 60 * 24));
-            progress = Math.min((daysSinceCreationYear / 365) * 100, 100);
-            requirements = [{
-              description: "Profilo attivo da 1 anno",
-              current: daysSinceCreationYear,
-              target: 365,
-              completed: daysSinceCreationYear >= 365,
-              suggestion: daysSinceCreationYear >= 365 ? null : `Ancora ${365 - daysSinceCreationYear} giorni di attività`
-            }];
-            break;
-
-          case 'happy-clients':
-            const totalReviews = professional.reviewCount || 0;
-            const avgRating = parseFloat(professional.rating || '0');
-            // Assuming 95% positive means rating >= 4.0
-            const positivePercentage = avgRating >= 4.0 ? 95 : (avgRating / 4.0) * 95;
-            const hasEnoughReviews = totalReviews >= 10;
-            const hasPositiveRating = positivePercentage >= 95;
-
-            progress = (hasEnoughReviews ? 50 : (totalReviews / 10) * 50) + (hasPositiveRating ? 50 : (positivePercentage / 95) * 50);
-
-            requirements = [
-              {
-                description: "Almeno 10 recensioni totali",
-                current: totalReviews,
-                target: 10,
-                completed: hasEnoughReviews,
-                suggestion: hasEnoughReviews ? null : "Chiedi più recensioni ai tuoi clienti"
-              },
-              {
-                description: "95% recensioni positive (≥4 stelle)",
-                current: Math.round(positivePercentage),
-                target: 95,
-                completed: hasPositiveRating,
-                suggestion: hasPositiveRating ? null : "Migliora la qualità del servizio per ottenere recensioni più positive"
-              }
-            ];
-            break;
-
-          case 'five-stars':
-            const fiveStarReviews = professional.reviewCount || 0;
-            const fiveStarRating = parseFloat(professional.rating || '0');
-            const hasEnoughFiveStarReviews = fiveStarReviews >= 10;
-            const hasHighRating = fiveStarRating >= 4.8;
-
-            progress = (hasEnoughFiveStarReviews ? 50 : (fiveStarReviews / 10) * 50) + (hasHighRating ? 50 : (fiveStarRating / 4.8) * 50);
-
-            requirements = [
-              {
-                description: "Almeno 10 recensioni",
-                current: fiveStarReviews,
-                target: 10,
-                completed: hasEnoughFiveStarReviews,
-                suggestion: hasEnoughFiveStarReviews ? null : "Ottieni più recensioni"
-              },
-              {
-                description: "Rating medio ≥4.8 stelle",
-                current: fiveStarRating,
-                target: 4.8,
-                completed: hasHighRating,
-                suggestion: hasHighRating ? null : "Migliora la qualità per ottenere rating più alti"
-              }
-            ];
-            break;
-
-          case 'top-reviews':
-            const topReviewCount = professional.reviewCount || 0;
-            const topRating = parseFloat(professional.rating || '0');
-            const hasEnoughTopReviews = topReviewCount >= 20;
-            const hasGoodTopRating = topRating >= 4.5;
-
-            progress = (hasEnoughTopReviews ? 60 : (topReviewCount / 20) * 60) + (hasGoodTopRating ? 40 : (topRating / 4.5) * 40);
-
-            requirements = [
-              {
-                description: "Almeno 20 recensioni",
-                current: topReviewCount,
-                target: 20,
-                completed: hasEnoughTopReviews,
-                suggestion: hasEnoughTopReviews ? null : "Continua a raccogliere recensioni"
-              },
-              {
-                description: "Rating medio ≥4.5 stelle",
-                current: topRating,
-                target: 4.5,
-                completed: hasGoodTopRating,
-                suggestion: hasGoodTopRating ? null : "Mantieni alta la qualità del servizio"
-              }
-            ];
-            break;
-
-          case 'growing':
-            // Mock calculation - would need actual view tracking
-            const currentViews = professional.profileViews || 0;
-            const growthPercent = currentViews > 100 ? 20 : (currentViews / 100) * 20;
-            progress = Math.min(growthPercent * 5, 100);
-
-            requirements = [{
-              description: "+20% visualizzazioni ultimo mese",
-              current: Math.round(growthPercent),
-              target: 20,
-              completed: growthPercent >= 20,
-              suggestion: growthPercent >= 20 ? null : "Migliora la visibilità del tuo profilo"
-            }];
-            break;
-
-          case 'popular':
-            const monthlyViews = professional.profileViews || 0;
-            progress = Math.min((monthlyViews / 100) * 100, 100);
-
-            requirements = [{
-              description: "100+ visualizzazioni ultimo mese",
-              current: monthlyViews,
-              target: 100,
-              completed: monthlyViews >= 100,
-              suggestion: monthlyViews >= 100 ? null : "Aumenta la visibilità del tuo profilo"
-            }];
-            break;
-
-          case 'reliable':
-            // Assuming no problematic flag means reliable
-            const isReliable = !professional.isProblematic;
-            progress = isReliable ? 100 : 0;
-
-            requirements = [{
-              description: "Zero segnalazioni negli ultimi 12 mesi",
-              current: isReliable ? 0 : 1,
-              target: 0,
-              completed: isReliable,
-              suggestion: isReliable ? null : "Risolvi eventuali problemi segnalati"
-            }];
-            break;
-
-          default:
-            // For badges not yet implemented, show as not started
-            progress = 0;
-            requirements = [{
-              description: "Badge in fase di implementazione",
-              current: 0,
-              target: 1,
-              completed: false,
-              suggestion: "Questo badge sarà disponibile presto"
-            }];
-            break;
-        }
-
-        return {
-          badge,
-          isEarned,
-          progress: Math.round(progress),
-          requirements,
-          awardedAt: earnedBadge?.professional_badges?.awardedAt || null,
-          nextActions: requirements.filter(req => !req.completed).map(req => req.suggestion).filter(Boolean)
-        };
-      }).filter(badgeData => badgeData.badge);
-    } catch (error) {
-      console.error('Error calculating badge progress:', error);
-      return [];
-    }
+    return badge;
   }
 
   async checkAutomaticBadges(professionalId: number): Promise<{ awarded: string[], message: string }> {
@@ -2339,76 +434,6 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      // Check for Veteran Junior badge (90 days)
-      const daysSinceCreation = Math.floor((new Date().getTime() - new Date(professional.createdAt).getTime()) / (1000 * 60 * 60 * 24));
-      if (daysSinceCreation >= 90) {
-        const veteranJuniorBadge = await db.select().from(badges).where(eq(badges.slug, 'veteran-junior')).limit(1);
-        if (veteranJuniorBadge.length > 0) {
-          const existingAward = await db
-            .select()
-            .from(professionalBadges)
-            .where(
-              and(
-                eq(professionalBadges.professionalId, professionalId),
-                eq(professionalBadges.badgeId, veteranJuniorBadge[0].id),
-                isNull(professionalBadges.revokedAt)
-              )
-            )
-            .limit(1);
-
-          if (existingAward.length === 0) {
-            await this.awardBadge(professionalId, veteranJuniorBadge[0].id);
-            awardedBadges.push("Veterano Junior");
-          }
-        }
-      }
-
-      // Check for Veteran badge (365 days)
-      if (daysSinceCreation >= 365) {
-        const veteranBadge = await db.select().from(badges).where(eq(badges.slug, 'veteran')).limit(1);
-        if (veteranBadge.length > 0) {
-          const existingAward = await db
-            .select()
-            .from(professionalBadges)
-            .where(
-              and(
-                eq(professionalBadges.professionalId, professionalId),
-                eq(professionalBadges.badgeId, veteranBadge[0].id),
-                isNull(professionalBadges.revokedAt)
-              )
-            )
-            .limit(1);
-
-          if (existingAward.length === 0) {
-            await this.awardBadge(professionalId, veteranBadge[0].id);
-            awardedBadges.push("Veterano");
-          }
-        }
-      }
-
-      // Check for Reliable badge (no problematic flags)
-      if (!professional.isProblematic) {
-        const reliableBadge = await db.select().from(badges).where(eq(badges.slug, 'reliable')).limit(1);
-        if (reliableBadge.length > 0) {
-          const existingAward = await db
-            .select()
-            .from(professionalBadges)
-            .where(
-              and(
-                eq(professionalBadges.professionalId, professionalId),
-                eq(professionalBadges.badgeId, reliableBadge[0].id),
-                isNull(professionalBadges.revokedAt)
-              )
-            )
-            .limit(1);
-
-          if (existingAward.length === 0) {
-            await this.awardBadge(professionalId, reliableBadge[0].id);
-            awardedBadges.push("Affidabile");
-          }
-        }
-      }
-
       const message = awardedBadges.length > 0 
         ? `Congratulazioni! Hai ottenuto ${awardedBadges.length} nuovi badge: ${awardedBadges.join(', ')}`
         : "Nessun nuovo badge automatico disponibile al momento. Continua a migliorare il tuo profilo!";
@@ -2420,7 +445,6 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Consumer System Implementation
   async getConsumer(userId: number): Promise<Consumer | undefined> {
     const [consumer] = await db
       .select()
@@ -2437,21 +461,6 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateConsumer(userId: number, data: Partial<InsertConsumer>): Promise<void> {
-    await db
-      .update(consumers)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(consumers.userId, userId));
-  }
-
-  async updateConsumerStats(userId: number, stats: { reviewsWritten?: number; profilesViewed?: number; searchesPerformed?: number }): Promise<void> {
-    await db
-      .update(consumers)
-      .set({ ...stats, updatedAt: new Date() })
-      .where(eq(consumers.userId, userId));
-  }
-
-  // Plan System Implementation
   async getPlans(): Promise<Plan[]> {
     return await db
       .select()
@@ -2468,14 +477,6 @@ export class DatabaseStorage implements IStorage {
     return plan;
   }
 
-  async getPlanBySlug(slug: string): Promise<Plan | undefined> {
-    const [plan] = await db
-      .select()
-      .from(plans)
-      .where(eq(plans.slug, slug));
-    return plan;
-  }
-
   async createPlan(plan: InsertPlan): Promise<Plan> {
     const [created] = await db
       .insert(plans)
@@ -2484,84 +485,6 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updatePlan(id: number, data: Partial<InsertPlan>): Promise<void> {
-    await db
-      .update(plans)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(plans.id, id));
-  }
-
-  async deletePlan(id: number): Promise<void> {
-    await db
-      .update(plans)
-      .set({ isActive: false, updatedAt: new Date() })
-      .where(eq(plans.id, id));
-  }
-
-  // Professional Plans Implementation
-  async getProfessionalPlan(professionalId: number): Promise<(ProfessionalPlan & { plan: Plan }) | undefined> {
-    const [result] = await db
-      .select()
-      .from(professionalPlans)
-      .leftJoin(plans, eq(professionalPlans.planId, plans.id))
-      .where(eq(professionalPlans.professionalId, professionalId));
-
-    if (!result) return undefined;
-
-    return {
-      ...result.professional_plans,
-      plan: result.plans!
-    };
-  }
-
-  async assignPlan(professionalId: number, planId: number, billingCycle: string = 'monthly'): Promise<ProfessionalPlan> {
-    const now = new Date();
-    const periodEnd = new Date();
-    if (billingCycle === 'yearly') {
-      periodEnd.setFullYear(periodEnd.getFullYear() + 1);
-    } else {
-      periodEnd.setMonth(periodEnd.getMonth() + 1);
-    }
-
-    // Rimuovi piano esistente se presente
-    await db
-      .delete(professionalPlans)
-      .where(eq(professionalPlans.professionalId, professionalId));
-
-    const [assigned] = await db
-      .insert(professionalPlans)
-      .values({
-        professionalId,
-        planId,
-        billingCycle,
-        currentPeriodStart: now,
-        currentPeriodEnd: periodEnd,
-      })
-      .returning();
-
-    return assigned;
-  }
-
-  async updateProfessionalPlan(professionalId: number, data: Partial<InsertProfessionalPlan>): Promise<void> {
-    await db
-      .update(professionalPlans)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(professionalPlans.professionalId, professionalId));
-  }
-
-  async cancelProfessionalPlan(professionalId: number): Promise<void> {
-    await db
-      .update(professionalPlans)
-      .set({ 
-        status: 'cancelled',
-        cancelledAt: new Date(),
-        cancelAtPeriodEnd: true,
-        updatedAt: new Date() 
-      })
-      .where(eq(professionalPlans.professionalId, professionalId));
-  }
-
-  // Events System Implementation
   async createEvent(event: InsertEvent): Promise<Event> {
     const [created] = await db
       .insert(events)
@@ -2570,77 +493,43 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getEvents(params?: {
-    type?: string;
-    userId?: number;
-    professionalId?: number;
-    limit?: number;
-    offset?: number;
-    startDate?: Date;
-    endDate?: Date;
-  }): Promise<Event[]> {
+  async getEvents(params?: any): Promise<Event[]> {
     let query = db.select().from(events);
-
-    const conditions = [];
-    if (params?.type) conditions.push(eq(events.type, params.type));
-    if (params?.userId) conditions.push(eq(events.userId, params.userId));
-    if (params?.professionalId) conditions.push(eq(events.professionalId, params.professionalId));
-    if (params?.startDate) conditions.push(sql`${events.createdAt} >= ${params.startDate}`);
-    if (params?.endDate) conditions.push(sql`${events.createdAt} <= ${params.endDate}`);
-
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
-
-    query = query.orderBy(desc(events.createdAt));
-
+    
     if (params?.limit) {
       query = query.limit(params.limit);
     }
-
-    if (params?.offset) {
-      query = query.offset(params.offset);
-    }
-
-    return await query;
+    
+    return await query.orderBy(desc(events.createdAt));
   }
 
-  async getEventAnalytics(professionalId?: number): Promise<{
-    totalEvents: number;
-    pageViews: number;
-    profileViews: number;
-    contactClicks: number;
-    topEvents: { type: string; count: number }[];
+  async getStats(): Promise<{
+    professionalsCount: number;
+    reviewsCount: number;
+    citiesCount: number;
+    averageRating: number;
   }> {
-    let query = db.select().from(events);
+    const [professionalsResult] = await db
+      .select({ count: count() })
+      .from(professionals);
 
-    if (professionalId) {
-      query = query.where(eq(events.professionalId, professionalId));
-    }
+    const [reviewsResult] = await db
+      .select({ count: count() })
+      .from(reviews);
 
-    const allEvents = await query;
-    
-    const totalEvents = allEvents.length;
-    const pageViews = allEvents.filter(e => e.type === 'page_view').length;
-    const profileViews = allEvents.filter(e => e.type === 'profile_view').length;
-    const contactClicks = allEvents.filter(e => e.type === 'contact_click').length;
+    const [citiesResult] = await db
+      .select({ count: sql<number>`COUNT(DISTINCT ${professionals.city})` })
+      .from(professionals);
 
-    const eventCounts: { [key: string]: number } = {};
-    allEvents.forEach(event => {
-      eventCounts[event.type] = (eventCounts[event.type] || 0) + 1;
-    });
-
-    const topEvents = Object.entries(eventCounts)
-      .map(([type, count]) => ({ type, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
+    const [ratingResult] = await db
+      .select({ avg: sql<number>`AVG(CAST(${professionals.rating} AS DECIMAL))` })
+      .from(professionals);
 
     return {
-      totalEvents,
-      pageViews,
-      profileViews,
-      contactClicks,
-      topEvents,
+      professionalsCount: professionalsResult.count,
+      reviewsCount: reviewsResult.count,
+      citiesCount: citiesResult.count,
+      averageRating: ratingResult.avg || 0,
     };
   }
 }
