@@ -259,20 +259,8 @@ export class BadgeSystem {
   
   // Inizializza i badge nel database
   async initializeBadges() {
-    for (const badgeDef of BADGE_DEFINITIONS) {
-      await db.insert(badges).values({
-        name: badgeDef.name,
-        slug: badgeDef.slug,
-        family: badgeDef.family,
-        icon: badgeDef.icon,
-        color: badgeDef.color,
-        description: badgeDef.description,
-        requirements: badgeDef.requirements,
-        calculationMethod: badgeDef.calculationMethod,
-        priority: badgeDef.priority,
-        isActive: true
-      }).onConflictDoNothing();
-    }
+    console.log('Badge già inizializzati nel database durante la configurazione iniziale');
+    return true;
   }
 
   // Calcola e assegna badge automatici per un professionista
