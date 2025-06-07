@@ -28,6 +28,7 @@ import Register from "@/pages/auth/register";
 import Login from "@/pages/auth/login";
 import LoginPage from "@/pages/login";
 import RegisterProfessional from "@/pages/register-professional";
+import BadgeDashboard from "@/pages/badge-dashboard";
 import ProfessionalDashboard from "@/pages/dashboard/professional";
 import ChiSiamo from "@/pages/about/chi-siamo";
 import LaNostraStoria from "@/pages/about/la-nostra-storia";
@@ -71,6 +72,7 @@ function Router() {
       <Route path="/dashboard" component={ProfessionalDashboard} />
       <Route path="/dashboard/professional" component={ProfessionalDashboard} />
       <Route path="/dashboard/professional-advanced" component={ProfessionalDashboard} />
+      <Route path="/badge-dashboard" component={BadgeDashboard} />
       
       {/* Admin Login */}
       <Route path="/admin-login" component={AdminLogin} />

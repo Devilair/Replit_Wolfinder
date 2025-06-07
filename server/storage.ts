@@ -880,6 +880,83 @@ export class DatabaseStorage implements IStorage {
       averageRating: ratingResult.avg || 0,
     };
   }
+
+  // Badge System Methods
+  async getAllBadges(): Promise<Badge[]> {
+    const result = await db.select().from(badges).where(eq(badges.isActive, true));
+    return result;
+  }
+
+  async createBadge(badgeData: InsertBadge): Promise<Badge> {
+    const [badge] = await db.insert(badges).values(badgeData).returning();
+    return badge;
+  }
+
+  async getProfessionalBadges(professionalId: number): Promise<any[]> {
+    const result = await db.select({
+      id: professionalBadges.id,
+      professionalId: professionalBadges.professionalId,
+      badgeId: professionalBadges.badgeId,
+      earnedAt: professionalBadges.earnedAt,
+      awardedBy: professionalBadges.awardedBy,
+      metadataSnapshot: professionalBadges.metadataSnapshot,
+      isVisible: professionalBadges.isVisible,
+      revokedAt: professionalBadges.revokedAt,
+      revokedBy: professionalBadges.revokedBy,
+      revokedReason: professionalBadges.revokedReason,
+      createdAt: professionalBadges.createdAt,
+      badge: badges
+    })
+    .from(professionalBadges)
+    .innerJoin(badges, eq(professionalBadges.badgeId, badges.id))
+    .where(eq(professionalBadges.professionalId, professionalId))
+    .orderBy(professionalBadges.earnedAt);
+    
+    return result;
+  }
+
+  async awardBadge(professionalId: number, badgeId: number, awardedBy: string = "system", metadata?: any): Promise<ProfessionalBadge> {
+    const [professionalBadge] = await db.insert(professionalBadges).values({
+      professionalId,
+      badgeId,
+      awardedBy,
+      metadataSnapshot: metadata,
+      isVisible: true
+    }).returning();
+    return professionalBadge;
+  }
+
+  async revokeBadge(professionalId: number, badgeId: number, revokedBy: number, reason: string): Promise<boolean> {
+    const result = await db.update(professionalBadges)
+      .set({
+        revokedAt: new Date(),
+        revokedBy,
+        revokedReason: reason,
+        isVisible: false
+      })
+      .where(
+        and(
+          eq(professionalBadges.professionalId, professionalId),
+          eq(professionalBadges.badgeId, badgeId),
+          isNull(professionalBadges.revokedAt)
+        )
+      );
+    return result.rowCount > 0;
+  }
+
+  async saveProfessionalMetrics(professionalId: number, metrics: any): Promise<void> {
+    const metricsArray = Object.entries(metrics).map(([key, value]) => ({
+      professionalId,
+      metricType: key,
+      value: value as string,
+      calculatedAt: new Date(),
+      period: 'all_time'
+    }));
+
+    if (metricsArray.length > 0) {
+      await db.insert(badgeMetrics).values(metricsArray);
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
