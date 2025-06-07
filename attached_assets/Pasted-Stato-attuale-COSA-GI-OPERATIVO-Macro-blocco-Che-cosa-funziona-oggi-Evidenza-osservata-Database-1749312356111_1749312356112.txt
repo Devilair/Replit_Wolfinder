@@ -1,0 +1,50 @@
+Stato attuale – COSA È GIÀ OPERATIVO
+Macro-blocco	Che cosa funziona oggi	Evidenza osservata
+Database & Auth	Schema 23 tabelle, ruoli, MFA, rate-limit, audit-log	Login multi-ruolo testato, nessun 500
+Professionisti	Claim profilo, categorie, geo Ferrara/Livorno	Flow “Sei tu?” completato con doc PDF
+Recensioni	Creazione, moderazione manuale base	Review appare, flag “pending” ok
+Feature-gating	Middleware plan-guard + file subscription-features.ts (limiti foto, servizi, analytics, API)	Demo /test/feature-gating mostra blocchi / CTA upgrade
+Badge System (core)	23 badge, cron nightly, dashboard “Badge”	“Profilo completo”, “In verifica” visualizzati
+Dashboard Pro (UI)	Panoramica, Profilo, Recensioni, Analytics base placeholder, Abbonamento card	Screenshot validato
+Email base	SendGrid signup mail funzionante	Mail test ricevuta
+
+2. Stato PARZIALE – funziona ma non è completo
+Area	Ciò che c’è	Cosa manca per chiuderlo
+Stripe	Chiavi test caricate, loader prodotti OK	Checkout, webhook, gestione rinnovi/grace, fatture
+Upgrade/Downgrade runtime	Card piani in UI, limit-logic nel middleware	Cambio piano in tempo reale dopo webhook
+Verifica documenti	Upload S3 presigned + flag “pending”	Coda moderazione, badge auto al “verified”, mail di esito
+Analytics avanzate	Event table, KPI viste/click raccolti	Grafici trend, export CSV, filtro periodo
+Notifiche	Toast UI sul limite superato	Email / push su “limite raggiunto”, “badge ottenuto”, “rinnovo tra 7 gg”
+Admin dashboard	Shell UI con tabelle mock	Query reali, bulk moderazione, override piani, report MRR
+
+3. Stato NON ANCORA INIZIATO
+Modulo	Perché serve	Priorità attuale
+Servizi & listino	Offerta dei pro, upsell futuri	Media
+Marketplace / preventivi	Monetizzazione lead	Bassa
+Mobile PWA / push	Esperienza notifica live	Bassa
+AI matching / sentiment	Vantaggio competitivo	Post-MVP
+
+4. Roadmap proposta (8 settimane → MVP monetizzabile)
+Sprint (durata)	Blocco obiettivo	Deliverable chiave
+S1 – 2 sett.	Stripe LIVE + Dashboard “Il mio piano”	• Checkout mensile/annuale • Webhook rinnovo/fallito+grace • Card piano con upgrade/downgrade • Mail conferma & reminder
+S2 – 2 sett.	Verifica documenti + Badge “Verificato”	• Coda admin review • Badge auto • Mail esito • Tooltip stato “In verifica”
+S3 – 1,5 sett.	Analytics avanzate & export	• Grafici trend • CSV download • CTA upsell se piano < Pro
+S4 – 1 sett.	Notifiche & reminder	• Email limite raggiunto • Badge earned • Push (in-app)
+S5 – 1,5 sett.	Admin dashboard reale	• Tabelle live • Bulk approva/blocca • Report MRR & upgrade funnel
+
+(Tempistiche riviste sulla base delle priorità emerse)
+
+5. Check demo richiesti a fine S1
+Acquisto Essenziale con carta test → limiti passano da 3 a 10 foto subito.
+
+Pagamento fallito simulato → e-mail “grace 7 gg” → trascorsi 7 gg piano torna Gratuito e limiti rientrano.
+
+Card piano mostra data rinnovo corretta + link fattura PDF.
+
+6. Extra linee guida (già condivise)
+Nessun piano deve nascondere recensioni o spingere ranking.
+
+Messaggi blocco: sempre spiegazione + pulsante “Sblocca con piano X”.
+
+Badge: mai acquistabili; sono assegnati o per algoritmo o per verifica manuale.
+

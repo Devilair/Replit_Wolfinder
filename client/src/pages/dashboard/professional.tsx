@@ -650,8 +650,12 @@ export default function ProfessionalDashboard() {
                             ))}
                           </ul>
                           {!plan.current && (
-                            <Button className="w-full mt-4" variant={plan.name === "Essentials" ? "outline" : "default"}>
-                              {plan.name === "Essentials" ? "Downgrade" : "Upgrade"}
+                            <Button 
+                              className="w-full mt-4" 
+                              variant={plan.name === "Gratuito" ? "outline" : "default"}
+                              onClick={() => window.location.href = `/checkout?plan=${plan.id}&billing=monthly`}
+                            >
+                              {plan.name === "Gratuito" ? "Piano Gratuito" : "Attiva Piano"}
                             </Button>
                           )}
                         </div>

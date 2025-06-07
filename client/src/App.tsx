@@ -38,6 +38,7 @@ import LineeGuidaRecensioni from "@/pages/about/linee-guida-recensioni";
 import CentroAssistenza from "@/pages/about/centro-assistenza";
 import FeatureGatingTest from "@/pages/feature-gating-test";
 import SubscriptionManagement from "@/pages/subscription-management";
+import Checkout from "@/pages/checkout";
 
 function Router() {
   useAuthPersistence();
@@ -73,6 +74,7 @@ function Router() {
       <Route path="/dashboard/professional" component={ProfessionalDashboard} />
       <Route path="/dashboard/professional-advanced" component={ProfessionalDashboard} />
       <Route path="/badge-dashboard" component={BadgeDashboard} />
+      <Route path="/checkout" component={Checkout} />
       
       {/* Admin Login */}
       <Route path="/admin-login" component={AdminLogin} />

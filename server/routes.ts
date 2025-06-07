@@ -3379,6 +3379,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Stripe subscription intent for recurring payments
+  app.post("/api/create-subscription-intent", 
+    authService.authenticateToken,
+    authService.requireRole(['professional']),
+    async (req, res) => {
+    try {
+      const { planId, billingCycle = 'monthly' } = req.body;
+      const userId = (req as any).user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      // Get the subscription plan
+      const plan = await storage.getSubscriptionPlan(planId);
+      if (!plan) {
+        return res.status(404).json({ message: "Plan not found" });
+      }
+
+      // Get or create the professional profile
+      const professional = await storage.getProfessionalByUserId(userId);
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      // Calculate price based on billing cycle
+      const amount = billingCycle === 'yearly' && plan.priceYearly 
+        ? parseFloat(plan.priceYearly) 
+        : parseFloat(plan.priceMonthly);
+
+      // Create or retrieve Stripe customer
+      let stripeCustomerId = professional.stripeCustomerId;
+      if (!stripeCustomerId) {
+        const customer = await stripe.customers.create({
+          email: professional.email,
+          name: professional.businessName || `${professional.description}`,
+          metadata: {
+            professionalId: professional.id.toString(),
+            userId: userId.toString()
+          }
+        });
+        stripeCustomerId = customer.id;
+        
+        // Update professional with stripe customer ID
+        await storage.updateProfessional(professional.id, {
+          stripeCustomerId: stripeCustomerId
+        });
+      }
+
+      // Create subscription
+      const subscription = await stripe.subscriptions.create({
+        customer: stripeCustomerId,
+        items: [{
+          price_data: {
+            currency: 'eur',
+            product_data: {
+              name: `Piano ${plan.name}`,
+              description: plan.description || `Abbonamento ${plan.name}`,
+            },
+            unit_amount: Math.round(amount * 100),
+            recurring: {
+              interval: billingCycle === 'yearly' ? 'year' : 'month',
+            },
+          },
+        }],
+        payment_behavior: 'default_incomplete',
+        payment_settings: { save_default_payment_method: 'on_subscription' },
+        expand: ['latest_invoice.payment_intent'],
+        metadata: {
+          professionalId: professional.id.toString(),
+          planId: planId.toString(),
+          billingCycle: billingCycle
+        }
+      });
+
+      const paymentIntent = subscription.latest_invoice?.payment_intent;
+
+      res.json({
+        clientSecret: paymentIntent?.client_secret,
+        subscriptionId: subscription.id,
+        plan: {
+          ...plan,
+          price: amount,
+          features: JSON.parse(plan.features)
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Error creating subscription intent:', error);
+      res.status(500).json({ message: "Error creating subscription: " + error.message });
+    }
+  });
+
   // Stripe webhook endpoint
   app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'] as string;
