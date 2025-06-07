@@ -35,6 +35,8 @@ import {
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { BadgesWidget } from "@/components/BadgesWidget";
+import { BadgesList } from "@/components/BadgesList";
 
 interface ProfessionalData {
   id: number;
@@ -94,6 +96,32 @@ export default function ProfessionalDashboard() {
   // Mock data for reviews and analytics
   const { data: reviews } = useQuery({
     queryKey: ["/api/professional/reviews-complete"],
+  });
+
+  // Fetch professional badges
+  const { data: badges = [], isLoading: badgesLoading } = useQuery({
+    queryKey: ["/api/professional/badges"],
+  });
+
+  // Check automatic badges mutation
+  const checkBadgesMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/professional/badges/check");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/badges"] });
+      toast({
+        title: "Badge controllati",
+        description: "I tuoi badge sono stati aggiornati con successo!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Errore",
+        description: "Errore durante il controllo dei badge",
+        variant: "destructive",
+      });
+    },
   });
 
   // Update mutation
@@ -201,9 +229,10 @@ export default function ProfessionalDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 bg-white/50 backdrop-blur-sm border">
+          <TabsList className="grid w-full grid-cols-7 bg-white/50 backdrop-blur-sm border">
             <TabsTrigger value="overview">Panoramica</TabsTrigger>
             <TabsTrigger value="profile">Profilo</TabsTrigger>
+            <TabsTrigger value="badges">Badge</TabsTrigger>
             <TabsTrigger value="reviews">Recensioni</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="services">Servizi</TabsTrigger>
@@ -275,31 +304,41 @@ export default function ProfessionalDashboard() {
               </Card>
             </div>
 
-            {/* Quick Actions */}
-            <Card className="border-0 shadow-lg bg-white/90">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Zap className="w-5 h-5 mr-2" />
-                  Azioni Rapide
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button onClick={openEditModal} className="bg-blue-600 hover:bg-blue-700">
-                    <Edit className="w-4 h-4 mr-2" />
-                    Modifica Profilo
-                  </Button>
-                  <Button variant="outline">
-                    <Users className="w-4 h-4 mr-2" />
-                    Gestisci Recensioni
-                  </Button>
-                  <Button variant="outline">
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Visualizza Analytics
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Sidebar Layout for Badges and Quick Actions */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Quick Actions */}
+              <div className="lg:col-span-2">
+                <Card className="border-0 shadow-lg bg-white/90">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Zap className="w-5 h-5 mr-2" />
+                      Azioni Rapide
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Button onClick={openEditModal} className="bg-blue-600 hover:bg-blue-700">
+                        <Edit className="w-4 h-4 mr-2" />
+                        Modifica Profilo
+                      </Button>
+                      <Button variant="outline">
+                        <Users className="w-4 h-4 mr-2" />
+                        Gestisci Recensioni
+                      </Button>
+                      <Button variant="outline">
+                        <BarChart3 className="w-4 h-4 mr-2" />
+                        Visualizza Analytics
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Badges Widget */}
+              <div className="lg:col-span-1">
+                <BadgesWidget badges={badges} />
+              </div>
+            </div>
           </TabsContent>
 
           {/* Profile Tab */}
