@@ -4077,7 +4077,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/professionals", requireAdmin, async (req, res) => {
+  app.get("/api/admin/professionals", async (req, res) => {
     try {
       const {
         search = '',
