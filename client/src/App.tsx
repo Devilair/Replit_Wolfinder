@@ -43,6 +43,7 @@ import SubscriptionManagement from "@/pages/subscription-management";
 import Checkout from "@/pages/checkout";
 import SubscriptionPlansPage from "@/pages/subscription/plans";
 import SubscriptionCheckout from "@/pages/subscription/checkout";
+import SubscriptionSuccess from "@/pages/subscription/success";
 
 function Router() {
   useAuthPersistence();
@@ -60,6 +61,7 @@ function Router() {
       <Route path="/subscription-management" component={SubscriptionManagement} />
       <Route path="/subscription/plans" component={SubscriptionPlansPage} />
       <Route path="/subscription/checkout" component={SubscriptionCheckout} />
+      <Route path="/subscription/success" component={SubscriptionSuccess} />
       <Route path="/test/feature-gating" component={FeatureGatingTest} />
       
       {/* About Pages */}
