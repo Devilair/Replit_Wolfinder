@@ -56,7 +56,11 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <img src="@assets/logo_1749382291587.png" alt="Wolfinder" className="h-10 w-auto" />
+              <img 
+                src="/attached_assets/logo_1749382291587.png" 
+                alt="Wolfinder" 
+                className="h-12 w-auto" 
+              />
             </div>
             <nav className="hidden md:flex space-x-8">
               <Link href="/about" className="text-gray-700 hover:text-primary transition-colors">Chi siamo</Link>
@@ -426,7 +430,11 @@ export default function Landing() {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             <div className="md:col-span-2">
               <div className="flex items-center mb-4">
-                <img src="@assets/logo_1749382291587.png" alt="Wolfinder" className="h-8 w-auto" />
+                <img 
+                  src="/attached_assets/logo_1749382291587.png" 
+                  alt="Wolfinder" 
+                  className="h-12 w-auto" 
+                />
               </div>
               <p className="text-gray-300 text-sm mb-6 leading-relaxed">
                 La prima piattaforma italiana etica per trovare professionisti affidabili. 

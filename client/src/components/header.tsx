@@ -22,7 +22,11 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-8">
             <Link href="/" className="flex items-center">
-              <img src="@assets/logo_1749382291587.png" alt="Wolfinder" className="h-8 w-auto" />
+              <img 
+                src="/attached_assets/logo_1749382291587.png" 
+                alt="Wolfinder" 
+                className="h-12 w-auto" 
+              />
             </Link>
             <nav className="hidden md:flex space-x-6">
               {navigation.map((item) => (
