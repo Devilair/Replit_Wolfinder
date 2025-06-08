@@ -299,6 +299,58 @@ export class DatabaseStorage implements IStorage {
     return professional;
   }
 
+  async getFeaturedProfessionals(limit: number = 6): Promise<ProfessionalSummary[]> {
+    return await db
+      .select({
+        id: professionals.id,
+        businessName: professionals.businessName,
+        description: professionals.description,
+        rating: professionals.rating,
+        reviewCount: professionals.reviewCount,
+        profileViews: professionals.profileViews,
+        city: professionals.city,
+        province: professionals.province,
+        category: {
+          id: categories.id,
+          name: categories.name,
+          slug: categories.slug,
+          icon: categories.icon,
+        },
+      })
+      .from(professionals)
+      .leftJoin(categories, eq(professionals.categoryId, categories.id))
+      .where(eq(professionals.isVerified, true))
+      .orderBy(desc(professionals.rating), desc(professionals.reviewCount))
+      .limit(limit);
+  }
+
+  async getProfessionalsByCategory(categoryId: number): Promise<ProfessionalSummary[]> {
+    return await db
+      .select({
+        id: professionals.id,
+        businessName: professionals.businessName,
+        description: professionals.description,
+        rating: professionals.rating,
+        reviewCount: professionals.reviewCount,
+        profileViews: professionals.profileViews,
+        city: professionals.city,
+        province: professionals.province,
+        category: {
+          id: categories.id,
+          name: categories.name,
+          slug: categories.slug,
+          icon: categories.icon,
+        },
+      })
+      .from(professionals)
+      .leftJoin(categories, eq(professionals.categoryId, categories.id))
+      .where(and(
+        eq(professionals.categoryId, categoryId),
+        eq(professionals.isVerified, true)
+      ))
+      .orderBy(desc(professionals.rating), desc(professionals.reviewCount));
+  }
+
   async updateProfessionalRating(id: number): Promise<void> {
     const result = await db
       .select({

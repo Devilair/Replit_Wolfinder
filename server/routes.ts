@@ -383,12 +383,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Search professionals with filters
+  app.get("/api/professionals/search", async (req, res) => {
+    try {
+      const { search, categoryId, city, province, limit, offset, sortBy, sortOrder } = req.query;
+      
+      const params = {
+        search: search as string,
+        categoryId: categoryId ? parseInt(categoryId as string) : undefined,
+        city: city as string,
+        province: province as string,
+        limit: limit ? parseInt(limit as string) : 20,
+        offset: offset ? parseInt(offset as string) : 0,
+        sortBy: (sortBy as 'rating' | 'reviewCount' | 'createdAt') || 'rating',
+        sortOrder: (sortOrder as 'asc' | 'desc') || 'desc'
+      };
+
+      const professionals = await storage.getProfessionals(params);
+      res.json(professionals);
+    } catch (error) {
+      console.error("Error searching professionals:", error);
+      res.status(500).json({ message: "Failed to search professionals" });
+    }
+  });
+
   // Get featured professionals
   app.get("/api/professionals/featured", async (req, res) => {
     try {
       const professionals = await storage.getFeaturedProfessionals();
       res.json(professionals);
     } catch (error) {
+      console.error("Error fetching featured professionals:", error);
       res.status(500).json({ message: "Failed to fetch featured professionals" });
     }
   });
@@ -404,11 +429,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const professionals = await storage.getProfessionalsByCategory(categoryId);
       res.json(professionals);
     } catch (error) {
+      console.error("Error fetching professionals by category:", error);
       res.status(500).json({ message: "Failed to fetch professionals by category" });
     }
   });
 
-  // Get professional by ID
+  // Get professional by ID (must be last for parameter matching)
   app.get("/api/professionals/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
