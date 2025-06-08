@@ -1178,6 +1178,7 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(categories, eq(professionals.categoryId, categories.id))
         .orderBy(desc(professionals.createdAt));
 
+      // Transform to match ProfessionalWithDetails interface
       return professionalsWithCategories.map(prof => ({
         ...prof,
         category: prof.category || {
@@ -1186,7 +1187,7 @@ export class DatabaseStorage implements IStorage {
           slug: 'non-categorizzato', 
           icon: '❓'
         }
-      })) as ProfessionalWithDetails[];
+      }));
     } catch (error) {
       console.error("Error fetching admin professionals:", error);
       return [];

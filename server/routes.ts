@@ -1237,27 +1237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin Professionals Management
-  app.get("/api/admin/professionals", async (req, res) => {
-    try {
-      const { search, categoryId, status } = req.query;
-      
-      const params: any = {};
-      if (search) params.search = search as string;
-      if (categoryId) params.categoryId = parseInt(categoryId as string);
-      
-      // Apply status filters
-      if (status === 'verified') params.isVerified = true;
-      else if (status === 'unverified') params.isVerified = false;
-      else if (status === 'premium') params.isPremium = true;
-
-      const professionals = await storage.getAdminProfessionals();
-      res.json(professionals);
-    } catch (error) {
-      console.error("Error fetching professionals:", error);
-      res.status(500).json({ message: "Failed to fetch professionals" });
-    }
-  });
+  // Admin Professionals Management - endpoint rimosso per evitare duplicati
 
   app.post("/api/admin/professionals", async (req, res) => {
     try {
