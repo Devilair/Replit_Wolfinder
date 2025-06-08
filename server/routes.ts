@@ -4077,6 +4077,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin create professional manually
+  app.post("/api/admin/professionals", async (req, res) => {
+    try {
+      const { businessName, email, phoneFixed, phoneMobile, address, city, province, categoryId, description, website } = req.body;
+      
+      const professionalData = {
+        businessName,
+        email,
+        phoneFixed: phoneFixed || null,
+        phoneMobile: phoneMobile || null,
+        address,
+        city,
+        province,
+        categoryId: parseInt(categoryId),
+        description: description || '',
+        website: website || null,
+        isVerified: false,
+        verificationStatus: 'pending' as const,
+        isClaimed: false, // Important: Admin-created profiles are unclaimed
+        userId: null, // No user associated yet
+        rating: '0.0',
+        reviewCount: 0,
+        profileViews: 0,
+        profileCompleteness: 70, // Base completeness for admin-created profiles
+      };
+
+      const newProfessional = await storage.createProfessional(professionalData);
+      
+      res.json(newProfessional);
+    } catch (error) {
+      console.error("Error creating professional:", error);
+      res.status(500).json({ error: "Error creating professional" });
+    }
+  });
+
   app.get("/api/admin/professionals", async (req, res) => {
     try {
       const {

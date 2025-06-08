@@ -3,8 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   Search, 
   Filter, 
@@ -18,14 +24,12 @@ import {
   Phone,
   MapPin,
   Star,
+  Plus,
   Calendar,
   AlertTriangle,
   Download,
   RefreshCw
 } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
 
 interface Professional {
   id: number;
@@ -62,6 +66,19 @@ export default function AdminProfessionals() {
   const [sortBy, setSortBy] = useState<string>("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProfessionals, setSelectedProfessionals] = useState<number[]>([]);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newProfessional, setNewProfessional] = useState({
+    businessName: '',
+    email: '',
+    phoneFixed: '',
+    phoneMobile: '',
+    address: '',
+    city: '',
+    province: '',
+    categoryId: '',
+    description: '',
+    website: ''
+  });
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -79,6 +96,39 @@ export default function AdminProfessionals() {
 
   const { data: categories } = useQuery({
     queryKey: ['/api/categories']
+  });
+
+  const createProfessionalMutation = useMutation({
+    mutationFn: async (data: typeof newProfessional) => {
+      return apiRequest("POST", "/api/admin/professionals", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Successo",
+        description: "Professionista creato con successo",
+      });
+      setIsCreateDialogOpen(false);
+      setNewProfessional({
+        businessName: '',
+        email: '',
+        phoneFixed: '',
+        phoneMobile: '',
+        address: '',
+        city: '',
+        province: '',
+        categoryId: '',
+        description: '',
+        website: ''
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/professionals'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Errore",
+        description: "Errore nella creazione del professionista",
+        variant: "destructive",
+      });
+    },
   });
 
   const verifyProfessionalMutation = useMutation({
@@ -220,6 +270,13 @@ export default function AdminProfessionals() {
         </div>
         
         <div className="flex gap-2">
+          <Button 
+            onClick={() => setIsCreateDialogOpen(true)}
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Aggiungi Professionista
+          </Button>
           <Button variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Esporta
