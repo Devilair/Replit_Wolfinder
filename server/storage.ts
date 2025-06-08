@@ -138,6 +138,32 @@ export interface IStorage {
   updateProfessional(id: number, data: Partial<Professional>): Promise<Professional>;
   deleteProfessional(id: number): Promise<void>;
   getAdminStats(): Promise<any>;
+  getAdminDashboardStats(): Promise<{
+    activeUsers: {
+      today: number;
+      week: number;
+      month: number;
+      changePercent: number;
+    };
+    reviews: {
+      total: number;
+      verified: number;
+      pending: number;
+      rejected: number;
+      newToday: number;
+    };
+    professionals: {
+      total: number;
+      verified: number;
+      pending: number;
+      newThisWeek: number;
+    };
+    revenue: {
+      monthToDate: number;
+      projectedMonthly: number;
+      subscriptionConversion: number;
+    };
+  }>;
   getRecentActivity(): Promise<any[]>;
 }
 
@@ -1159,6 +1185,129 @@ export class DatabaseStorage implements IStorage {
         projectedMonthly: 15000,
         subscriptionConversion: 12.5,
         averageRevenue: 67
+      }
+    };
+  }
+
+  async getAdminDashboardStats(): Promise<{
+    activeUsers: {
+      today: number;
+      week: number;
+      month: number;
+      changePercent: number;
+    };
+    reviews: {
+      total: number;
+      verified: number;
+      pending: number;
+      rejected: number;
+      newToday: number;
+    };
+    professionals: {
+      total: number;
+      verified: number;
+      pending: number;
+      newThisWeek: number;
+    };
+    revenue: {
+      monthToDate: number;
+      projectedMonthly: number;
+      subscriptionConversion: number;
+    };
+  }> {
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+    // Active Users
+    const [monthlyUsers] = await db.select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(gte(users.createdAt, monthAgo));
+
+    const [weeklyUsers] = await db.select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(gte(users.createdAt, weekAgo));
+
+    const [todayUsers] = await db.select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(and(gte(users.createdAt, startOfToday), lte(users.createdAt, endOfToday)));
+
+    // Reviews
+    const [totalReviews] = await db.select({ count: sql<number>`count(*)` })
+      .from(reviews);
+
+    const [verifiedReviews] = await db.select({ count: sql<number>`count(*)` })
+      .from(reviews)
+      .where(eq(reviews.isVerified, true));
+
+    const [pendingReviews] = await db.select({ count: sql<number>`count(*)` })
+      .from(reviews)
+      .where(eq(reviews.isVerified, false));
+
+    const [todayReviews] = await db.select({ count: sql<number>`count(*)` })
+      .from(reviews)
+      .where(and(gte(reviews.createdAt, startOfToday), lte(reviews.createdAt, endOfToday)));
+
+    // Professionals
+    const [totalProfessionals] = await db.select({ count: sql<number>`count(*)` })
+      .from(professionals);
+
+    const [verifiedProfessionals] = await db.select({ count: sql<number>`count(*)` })
+      .from(professionals)
+      .where(eq(professionals.isVerified, true));
+
+    const [pendingProfessionals] = await db.select({ count: sql<number>`count(*)` })
+      .from(professionals)
+      .where(eq(professionals.isVerified, false));
+
+    const [weekProfessionals] = await db.select({ count: sql<number>`count(*)` })
+      .from(professionals)
+      .where(gte(professionals.createdAt, weekAgo));
+
+    // Revenue
+    const currentMonth = today.getMonth() + 1;
+    const currentYear = today.getFullYear();
+    const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
+
+    const [monthlyRevenue] = await db.select({ 
+      total: sql<number>`COALESCE(SUM(CAST(amount AS DECIMAL)), 0)` 
+    })
+      .from(transactions)
+      .where(and(
+        eq(transactions.status, 'completed'),
+        gte(transactions.createdAt, startOfMonth)
+      ));
+
+    const [activeSubscriptions] = await db.select({ count: sql<number>`count(*)` })
+      .from(subscriptions)
+      .where(eq(subscriptions.status, 'active'));
+
+    return {
+      activeUsers: {
+        today: todayUsers?.count || 0,
+        week: weeklyUsers?.count || 0,
+        month: monthlyUsers?.count || 0,
+        changePercent: 8.3
+      },
+      reviews: {
+        total: totalReviews?.count || 0,
+        verified: verifiedReviews?.count || 0,
+        pending: pendingReviews?.count || 0,
+        rejected: 0,
+        newToday: todayReviews?.count || 0
+      },
+      professionals: {
+        total: totalProfessionals?.count || 0,
+        verified: verifiedProfessionals?.count || 0,
+        pending: pendingProfessionals?.count || 0,
+        newThisWeek: weekProfessionals?.count || 0
+      },
+      revenue: {
+        monthToDate: Number(monthlyRevenue?.total || 0),
+        projectedMonthly: Number(monthlyRevenue?.total || 0) * 2.1,
+        subscriptionConversion: ((activeSubscriptions?.count || 0) / (totalProfessionals?.count || 1)) * 100
       }
     };
   }

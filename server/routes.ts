@@ -704,6 +704,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Dashboard Stats - Endpoint principale per la dashboard
+  app.get("/api/admin/dashboard-stats", requireAdmin, async (req, res) => {
+    try {
+      const stats = await storage.getAdminDashboardStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+  });
+
   // Admin Recent Activity (with real-time subscription notifications)
   app.get("/api/admin/recent-activity", requireAdmin, async (req, res) => {
     try {
