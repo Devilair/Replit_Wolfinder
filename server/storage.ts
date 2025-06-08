@@ -135,6 +135,7 @@ export interface IStorage {
 
   // Admin methods
   getAllUsers(): Promise<User[]>;
+  getAdminProfessionals(params?: any): Promise<ProfessionalWithDetails[]>;
   updateProfessional(id: number, data: Partial<Professional>): Promise<Professional>;
   deleteProfessional(id: number): Promise<void>;
   getAdminStats(): Promise<any>;
@@ -1137,6 +1138,59 @@ export class DatabaseStorage implements IStorage {
   // Admin methods implementation
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAdminProfessionals(params?: any): Promise<ProfessionalWithDetails[]> {
+    try {
+      const professionalsWithCategories = await db
+        .select({
+          id: professionals.id,
+          userId: professionals.userId,
+          categoryId: professionals.categoryId,
+          businessName: professionals.businessName,
+          description: professionals.description,
+          phoneFixed: professionals.phoneFixed,
+          phoneMobile: professionals.phoneMobile,
+          email: professionals.email,
+          website: professionals.website,
+          address: professionals.address,
+          city: professionals.city,
+          province: professionals.province,
+          postalCode: professionals.postalCode,
+          priceRangeMin: professionals.priceRangeMin,
+          priceRangeMax: professionals.priceRangeMax,
+          priceUnit: professionals.priceUnit,
+          isVerified: professionals.isVerified,
+          isPremium: professionals.isPremium,
+          rating: professionals.rating,
+          reviewCount: professionals.reviewCount,
+          profileViews: professionals.profileViews,
+          createdAt: professionals.createdAt,
+          updatedAt: professionals.updatedAt,
+          category: {
+            id: categories.id,
+            name: categories.name,
+            slug: categories.slug,
+            icon: categories.icon
+          }
+        })
+        .from(professionals)
+        .leftJoin(categories, eq(professionals.categoryId, categories.id))
+        .orderBy(desc(professionals.createdAt));
+
+      return professionalsWithCategories.map(prof => ({
+        ...prof,
+        category: prof.category || {
+          id: 0,
+          name: 'Non categorizzato',
+          slug: 'non-categorizzato', 
+          icon: '❓'
+        }
+      })) as ProfessionalWithDetails[];
+    } catch (error) {
+      console.error("Error fetching admin professionals:", error);
+      return [];
+    }
   }
 
   async updateProfessional(id: number, data: Partial<Professional>): Promise<Professional> {

@@ -4108,8 +4108,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         limit = 20
       } = req.query;
 
-      // Get professionals with filtering
-      const professionals = await storage.getProfessionals();
+      // Get professionals with admin details
+      const professionals = await storage.getAdminProfessionals();
       
       // Apply filters
       let filteredProfessionals = professionals;
@@ -4118,7 +4118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const searchTerm = search.toString().toLowerCase();
         filteredProfessionals = filteredProfessionals.filter(p => 
           p.businessName.toLowerCase().includes(searchTerm) ||
-          p.email.toLowerCase().includes(searchTerm) ||
+          p.email?.toLowerCase().includes(searchTerm) ||
           p.city.toLowerCase().includes(searchTerm)
         );
       }
@@ -4133,16 +4133,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (category !== 'all') {
         const categoryId = parseInt(category.toString());
-        filteredProfessionals = filteredProfessionals.filter(p => p.categoryId === categoryId);
+        filteredProfessionals = filteredProfessionals.filter(p => p.category?.id === categoryId);
       }
 
       // Apply sorting
       filteredProfessionals.sort((a, b) => {
         switch (sort) {
           case 'newest':
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
           case 'oldest':
-            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
           case 'rating':
             return parseFloat(b.rating || '0') - parseFloat(a.rating || '0');
           case 'reviews':
@@ -4157,16 +4157,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const endIndex = startIndex + parseInt(limit.toString());
       const paginatedProfessionals = filteredProfessionals.slice(startIndex, endIndex);
 
-      // Get categories for each professional
-      const categories = await storage.getCategories();
-      const categoryMap = categories.reduce((acc, cat) => {
-        acc[cat.id] = cat;
-        return acc;
-      }, {} as any);
-
       const enrichedProfessionals = paginatedProfessionals.map(p => ({
         ...p,
-        category: categoryMap[p.categoryId] || { id: 0, name: 'Unknown' },
         verificationStatus: p.isVerified ? 'approved' : 'pending',
         profileCompleteness: 85, // Mock value
         isPremium: false, // Mock value
