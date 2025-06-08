@@ -1507,6 +1507,198 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // === SUBSCRIPTION MANAGEMENT ROUTES ===
+
+  // Stripe subscription endpoints
+  app.post("/api/create-subscription", authService.authenticateToken, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { planId, billingType } = req.body;
+
+      // Get plan details
+      const plan = await storage.getSubscriptionPlan(planId);
+      if (!plan) {
+        return res.status(404).json({ message: "Plan not found" });
+      }
+
+      // Get or create professional profile
+      let professional = await storage.getProfessionalByUserId(user.id);
+      if (!professional) {
+        return res.status(404).json({ message: "Professional profile not found" });
+      }
+
+      // Calculate amount based on billing type
+      const amount = billingType === 'yearly' 
+        ? parseFloat(plan.priceYearly || plan.priceMonthly) 
+        : parseFloat(plan.priceMonthly);
+
+      // Create or get Stripe customer
+      let customerId = professional.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: user.name,
+          metadata: {
+            professionalId: professional.id.toString(),
+            userId: user.id.toString()
+          }
+        });
+        customerId = customer.id;
+        
+        // Update professional with Stripe customer ID
+        await storage.updateProfessional(professional.id, { stripeCustomerId: customerId });
+      }
+
+      // Create subscription in Stripe
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{
+          price_data: {
+            currency: 'eur',
+            product_data: {
+              name: `${plan.name} - ${billingType === 'yearly' ? 'Annuale' : 'Mensile'}`,
+              description: plan.description || ''
+            },
+            unit_amount: Math.round(amount * 100), // Convert to cents
+            recurring: {
+              interval: billingType === 'yearly' ? 'year' : 'month'
+            }
+          }
+        }],
+        payment_behavior: 'default_incomplete',
+        payment_settings: { save_default_payment_method: 'on_subscription' },
+        expand: ['latest_invoice.payment_intent'],
+      });
+
+      // Save subscription to database
+      const now = new Date();
+      const periodEnd = new Date();
+      if (billingType === 'yearly') {
+        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+      } else {
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+      }
+
+      await storage.createSubscription({
+        professionalId: professional.id,
+        planId: planId,
+        status: 'incomplete',
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+        stripeSubscriptionId: subscription.id,
+        stripeCustomerId: customerId
+      });
+
+      const paymentIntent = subscription.latest_invoice?.payment_intent as any;
+      
+      res.json({
+        subscriptionId: subscription.id,
+        clientSecret: paymentIntent?.client_secret,
+        status: subscription.status
+      });
+    } catch (error) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ message: "Failed to create subscription" });
+    }
+  });
+
+  // Stripe webhook handler
+  app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    let event;
+
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig!, process.env.STRIPE_WEBHOOK_SECRET!);
+    } catch (err: any) {
+      console.log(`Webhook signature verification failed.`, err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    try {
+      switch (event.type) {
+        case 'invoice.payment_succeeded':
+          await handlePaymentSucceeded(event.data.object);
+          break;
+        case 'invoice.payment_failed':
+          await handlePaymentFailed(event.data.object);
+          break;
+        case 'customer.subscription.updated':
+          await handleSubscriptionUpdate(event.data.object);
+          break;
+        case 'customer.subscription.deleted':
+          await handleSubscriptionCancellation(event.data.object);
+          break;
+        default:
+          console.log(`Unhandled event type ${event.type}`);
+      }
+    } catch (error) {
+      console.error('Error processing webhook:', error);
+      return res.status(500).json({ message: 'Webhook processing failed' });
+    }
+
+    res.json({received: true});
+  });
+
+  // Webhook helper functions
+  async function handleSubscriptionUpdate(stripeSubscription: any) {
+    const subscription = await storage.getSubscriptionByStripeId(stripeSubscription.id);
+    if (subscription) {
+      await storage.updateSubscription(subscription.id, {
+        status: stripeSubscription.status,
+        currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+        currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+        cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end
+      });
+    }
+  }
+
+  async function handleSubscriptionCancellation(stripeSubscription: any) {
+    const subscription = await storage.getSubscriptionByStripeId(stripeSubscription.id);
+    if (subscription) {
+      await storage.updateSubscription(subscription.id, {
+        status: 'canceled'
+      });
+    }
+  }
+
+  async function handlePaymentSucceeded(invoice: any) {
+    const subscription = await storage.getSubscriptionByStripeId(invoice.subscription);
+    if (subscription) {
+      // Update subscription status to active
+      await storage.updateSubscription(subscription.id, {
+        status: 'active'
+      });
+
+      // Send success notification if email service is available
+      try {
+        const professional = await storage.getProfessional(subscription.professionalId);
+        if (professional?.contactEmail) {
+          console.log(`Payment succeeded for professional ${professional.id}`);
+        }
+      } catch (error) {
+        console.error('Error sending payment success notification:', error);
+      }
+    }
+  }
+
+  async function handlePaymentFailed(invoice: any) {
+    const subscription = await storage.getSubscriptionByStripeId(invoice.subscription);
+    if (subscription) {
+      // Update subscription status
+      await storage.updateSubscription(subscription.id, {
+        status: 'past_due'
+      });
+
+      // Send failed payment notification
+      try {
+        const professional = await storage.getProfessional(subscription.professionalId);
+        if (professional?.contactEmail) {
+          console.log(`Payment failed for professional ${professional.id}`);
+        }
+      } catch (error) {
+        console.error('Error sending payment failed notification:', error);
+      }
+    }
+  }
   
   // Subscription Plans
   app.get("/api/admin/subscription-plans", async (req, res) => {

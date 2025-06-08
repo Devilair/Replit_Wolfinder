@@ -1,0 +1,138 @@
+Piano Strategico per Istruzioni a Replit - Wolfinder
+1. PRIORITÀ CRITICHE PER IL BUSINESS
+1.1 Riparazione Sistema di Ricerca
+Richiesta per Replit:
+
+Diagnosticare l'endpoint di ricerca professionisti non funzionante
+Implementare filtri essenziali: città (Ferrara/Livorno), categoria professionale, badge
+Assicurarsi che il ranking rispetti il principio meritocratico (basato su recensioni/badge, mai su pagamenti)
+Ottimizzare le query per performance quando il database crescerà
+Creare indici appropriati nelle tabelle PostgreSQL per velocizzare la ricerca
+
+1.2 Implementazione Geofiltri
+Richiesta per Replit:
+
+Assicurarsi che la struttura dati professionisti supporti informazioni geografiche complete
+Implementare filtro per città nell'API di ricerca (focus iniziale su Ferrara e Livorno)
+Preparare la struttura per futura espansione geografica
+Opzionale ma utile: implementare visualizzazione mappa dei risultati
+
+1.3 Landing Page Pubblica
+Richiesta per Replit:
+
+Creare una landing page professionale che comunichi chiaramente il valore distintivo di Wolfinder
+Elementi essenziali: spiegazione del modello etico/meritocratico, barra di ricerca prominente, esempi di professionisti
+Includere sezione che spiega il sistema di badge e verifica
+Design responsive con call-to-action chiara per professionisti e utenti finali
+Comunicare visivamente la differenza tra Wolfinder e piattaforme pay-to-win
+
+2. FLUSSO DI ABBONAMENTO E ONBOARDING
+2.1 Completamento Subscription Flow
+Richiesta per Replit:
+
+Completare l'interfaccia utente per il processo di acquisto abbonamento
+Integrare completamente Stripe per pagamenti e webhooks
+Implementare la logica per limitare funzionalità in base al piano (es. numero di foto)
+Gestire rinnovi, cancellazioni e cambi di piano
+Assicurarsi che il piano non influisca mai sul ranking nei risultati (coerenza con valori Wolfinder)
+
+2.2 Processo Onboarding Professionisti
+Richiesta per Replit:
+
+Creare un wizard step-by-step per guidare nuovi professionisti nella creazione profilo
+Implementare suggerimenti contestuali per ottimizzare il profilo
+Sviluppare sistema per facilitare richiesta di recensioni ai clienti (link/QR code)
+Creare sistema email di benvenuto con guide essenziali
+Implementare checklist completamento profilo con indicatori di progressione
+
+3. SISTEMA DI VERIFICA E CREDIBILITÀ
+3.1 Workflow Verifica Professionisti
+Richiesta per Replit:
+
+Implementare processo di upload documenti sicuro
+Creare interfaccia admin per revisione documenti e approvazione/rifiuto
+Automatizzare assegnazione badge "Verificato" post-approvazione
+Implementare notifiche email per comunicare stato verifica
+Considerare integrazione con servizi di verifica identità (opzionale)
+
+3.2 Sistema Badge Automatizzato
+Richiesta per Replit:
+
+Completare la logica di calcolo e assegnazione automatica badge
+Implementare cron job per verificare e aggiornare badge periodicamente
+Sviluppare regole di decadimento per badge non mantenuti
+Creare visualizzazione badge nel profilo con tooltips esplicativi
+Assicurarsi che i badge siano visibili nei risultati di ricerca
+
+4. ESPERIENZA UTENTE CONSUMER
+4.1 Dashboard Utenti Finali
+Richiesta per Replit:
+
+Sviluppare interfaccia per gestione account utente finale
+Implementare sezione per visualizzare e gestire recensioni lasciate
+Creare funzionalità per salvare professionisti preferiti
+Sviluppare sistema notifiche per risposte alle recensioni
+Assicurarsi che l'esperienza sia semplice e intuitiva
+
+4.2 Pagina Dettaglio Professionista
+Richiesta per Replit:
+
+Creare pagina pubblica dettaglio professionista
+Implementare visualizzazione recensioni con possibilità di ordinamento
+Sviluppare gallery immagini per portfolio professionista
+Implementare badge visibili con spiegazioni
+Creare sistema contatto diretto (rispettando GDPR)
+
+5. INFRASTRUTTURA E COMPLIANCE
+5.1 Sistema Notifiche Email
+Richiesta per Replit:
+
+Configurare SendGrid per l'invio email
+Creare template per vari tipi di notifiche (registrazione, recensioni, badge, etc.)
+Implementare code system per gestione email in batch
+Sviluppare preferenze notifiche utente
+Implementare tracciamento apertura/click per ottimizzazione
+
+5.2 Compliance GDPR e Legale
+Richiesta per Replit:
+
+Implementare privacy policy completa
+Sviluppare cookie banner con consenso esplicito
+Creare funzionalità per export/cancellazione dati utente
+Implementare termini di servizio
+Assicurarsi che tutte le funzionalità rispettino normative GDPR
+
+CONSIDERAZIONI PER REPLIT
+
+Approccio MVP: Concentrarsi prima sul flusso completo utente (ricerca → profilo → contatto) piuttosto che funzionalità isolate
+Testing con utenti reali: Preparare la piattaforma per test con un gruppo selezionato di professionisti a Ferrara
+Scalabilità: Strutturare il database e le API pensando alla futura espansione geografica
+Integrità dei dati: Mantenere coerenza con i principi etici in ogni aspetto dell'implementazione
+Documentazione: Documentare API e funzionalità per facilitare futuri sviluppi
+
+PRIORITIZZAZIONE SPRINT
+Sprint 1: Core Business (2 settimane)
+
+Fix ricerca professionisti
+Implementazione geofiltri
+Landing page pubblica base
+
+Sprint 2: Monetizzazione (2 settimane)
+
+Completamento subscription flow
+Sistema verifica professionisti
+Notifiche email essenziali
+
+Sprint 3: Esperienza Utente (2 settimane)
+
+Onboarding professionisti
+Dashboard consumer
+Pagina dettaglio professionista
+
+Sprint 4: Ottimizzazione (2 settimane)
+
+Badge automation
+Compliance GDPR
+Performance e monitoring
+
+Questa struttura fornisce indicazioni chiare a Replit senza entrare nei dettagli implementativi, mantenendo il focus sulle funzionalità business-critical che devono essere sviluppate per rendere Wolfinder operativo.
