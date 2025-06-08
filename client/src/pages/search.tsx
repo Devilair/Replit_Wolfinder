@@ -31,8 +31,8 @@ interface Professional {
 export default function SearchPage() {
   const [location] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCity, setSelectedCity] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCity, setSelectedCity] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("rating");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
@@ -40,8 +40,8 @@ export default function SearchPage() {
   useEffect(() => {
     const params = new URLSearchParams(location.split('?')[1] || '');
     setSearchTerm(params.get('search') || '');
-    setSelectedCity(params.get('city') || '');
-    setSelectedCategory(params.get('categoryId') || '');
+    setSelectedCity(params.get('city') || 'all');
+    setSelectedCategory(params.get('categoryId') || 'all');
   }, [location]);
 
   const { data: categories = [] } = useQuery({
@@ -50,8 +50,8 @@ export default function SearchPage() {
 
   const searchParams = {
     search: searchTerm,
-    city: selectedCity,
-    categoryId: selectedCategory ? parseInt(selectedCategory) : undefined,
+    city: selectedCity === 'all' ? undefined : selectedCity,
+    categoryId: selectedCategory === 'all' ? undefined : parseInt(selectedCategory),
     sortBy,
     sortOrder: 'desc',
     limit: 20
@@ -171,7 +171,7 @@ export default function SearchPage() {
                   <SelectValue placeholder="Tutte le città" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tutte le città</SelectItem>
+                  <SelectItem value="all">Tutte le città</SelectItem>
                   <SelectItem value="Ferrara">Ferrara</SelectItem>
                   <SelectItem value="Livorno">Livorno</SelectItem>
                 </SelectContent>
@@ -181,7 +181,7 @@ export default function SearchPage() {
                   <SelectValue placeholder="Tutte le categorie" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tutte le categorie</SelectItem>
+                  <SelectItem value="all">Tutte le categorie</SelectItem>
                   {categories.map((category: Category) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.icon} {category.name}
@@ -245,16 +245,16 @@ export default function SearchPage() {
                     Ricerca: "{searchTerm}"
                   </Badge>
                 )}
-                {selectedCity && (
+                {selectedCity && selectedCity !== 'all' && (
                   <Badge variant="secondary">
                     <MapPin className="h-3 w-3 mr-1" />
                     {selectedCity}
                   </Badge>
                 )}
-                {selectedCategory && (
+                {selectedCategory && selectedCategory !== 'all' && (
                   <Badge variant="secondary">
-                    {categories.find(c => c.id.toString() === selectedCategory)?.icon}{' '}
-                    {categories.find(c => c.id.toString() === selectedCategory)?.name}
+                    {categories.find((c: any) => c.id.toString() === selectedCategory)?.icon}{' '}
+                    {categories.find((c: any) => c.id.toString() === selectedCategory)?.name}
                   </Badge>
                 )}
               </div>
