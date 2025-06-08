@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, MapPin, Star, Shield, Users, Award, ArrowRight, Check } from "lucide-react";
-import logoWolfinder from "@assets/logo_wolfinder_1749381817551.png";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,9 +56,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <img src={logoWolfinder} alt="Wolfinder" className="h-8 w-auto mr-3" />
-              <span className="text-2xl font-bold text-primary">Wolfinder</span>
-              <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary">Etico</Badge>
+              <img src="@assets/logo_1749382291587.png" alt="Wolfinder" className="h-10 w-auto" />
             </div>
             <nav className="hidden md:flex space-x-8">
               <Link href="/about" className="text-gray-700 hover:text-primary transition-colors">Chi siamo</Link>
@@ -428,8 +426,7 @@ export default function Landing() {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             <div className="md:col-span-2">
               <div className="flex items-center mb-4">
-                <span className="text-2xl font-bold text-blue-400">Wolfinder</span>
-                <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800">Etico</Badge>
+                <img src="@assets/logo_1749382291587.png" alt="Wolfinder" className="h-8 w-auto" />
               </div>
               <p className="text-gray-300 text-sm mb-6 leading-relaxed">
                 La prima piattaforma italiana etica per trovare professionisti affidabili. 

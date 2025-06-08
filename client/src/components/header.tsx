@@ -22,8 +22,7 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-8">
             <Link href="/" className="flex items-center">
-              <Search className="text-blue-600 text-2xl mr-2" />
-              <span className="text-2xl font-bold text-gray-800">Wolfinder</span>
+              <img src="@assets/logo_1749382291587.png" alt="Wolfinder" className="h-8 w-auto" />
             </Link>
             <nav className="hidden md:flex space-x-6">
               {navigation.map((item) => (
@@ -32,8 +31,8 @@ export default function Header() {
                   href={item.href}
                   className={`transition-colors font-medium ${
                     isActive(item.href)
-                      ? "text-blue-600"
-                      : "text-gray-500 hover:text-blue-600"
+                      ? "text-primary"
+                      : "text-gray-500 hover:text-primary"
                   }`}
                 >
                   {item.name}
@@ -52,11 +51,11 @@ export default function Header() {
             </Link>
             <Button 
               variant="ghost" 
-              className="text-gray-500 hover:text-blue-600 font-medium hidden sm:block"
+              className="text-gray-500 hover:text-primary font-medium hidden sm:block"
             >
               Accedi
             </Button>
-            <Button className="bg-blue-600 text-white hover:bg-blue-700 font-medium">
+            <Button className="bg-primary text-white hover:bg-primary/90 font-medium">
               Registrati
             </Button>
             
@@ -76,8 +75,8 @@ export default function Header() {
                       onClick={() => setIsOpen(false)}
                       className={`text-lg font-medium transition-colors ${
                         isActive(item.href)
-                          ? "text-blue-600"
-                          : "text-gray-700 hover:text-blue-600"
+                          ? "text-primary"
+                          : "text-gray-700 hover:text-primary"
                       }`}
                     >
                       {item.name}
