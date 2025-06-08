@@ -1140,53 +1140,69 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users).orderBy(desc(users.createdAt));
   }
 
-  async getAdminProfessionals(params?: any): Promise<ProfessionalWithDetails[]> {
+  async getAdminProfessionals(params?: any): Promise<any[]> {
     try {
-      const professionalsWithCategories = await db
-        .select({
-          id: professionals.id,
-          userId: professionals.userId,
-          categoryId: professionals.categoryId,
-          businessName: professionals.businessName,
-          description: professionals.description,
-          phoneFixed: professionals.phoneFixed,
-          phoneMobile: professionals.phoneMobile,
-          email: professionals.email,
-          website: professionals.website,
-          address: professionals.address,
-          city: professionals.city,
-          province: professionals.province,
-          postalCode: professionals.postalCode,
-          priceRangeMin: professionals.priceRangeMin,
-          priceRangeMax: professionals.priceRangeMax,
-          priceUnit: professionals.priceUnit,
-          isVerified: professionals.isVerified,
-          isPremium: professionals.isPremium,
-          rating: professionals.rating,
-          reviewCount: professionals.reviewCount,
-          profileViews: professionals.profileViews,
-          createdAt: professionals.createdAt,
-          updatedAt: professionals.updatedAt,
-          category: {
-            id: categories.id,
-            name: categories.name,
-            slug: categories.slug,
-            icon: categories.icon
-          }
-        })
-        .from(professionals)
-        .leftJoin(categories, eq(professionals.categoryId, categories.id))
-        .orderBy(desc(professionals.createdAt));
+      // Use raw SQL query to ensure compatibility with database schema
+      const professionalsResult = await db.execute(sql`
+        SELECT 
+          p.id, 
+          p.user_id, 
+          p.category_id, 
+          p.business_name, 
+          p.description,
+          p.phone_fixed, 
+          p.phone_mobile, 
+          p.email, 
+          p.website, 
+          p.address, 
+          p.city, 
+          p.province,
+          p.postal_code, 
+          p.price_range_min, 
+          p.price_range_max, 
+          p.price_unit,
+          p.is_verified, 
+          p.is_premium, 
+          p.rating, 
+          p.review_count,
+          p.profile_views,
+          p.created_at, 
+          p.updated_at,
+          p.verification_status,
+          p.is_claimed,
+          p.claimed_at,
+          p.profile_completeness,
+          p.last_activity_at,
+          c.id as category_id_join,
+          c.name as category_name, 
+          c.slug as category_slug, 
+          c.icon as category_icon
+        FROM professionals p
+        LEFT JOIN categories c ON p.category_id = c.id
+        ORDER BY p.created_at DESC
+      `);
 
-      // Transform to match ProfessionalWithDetails interface
-      return professionalsWithCategories.map(prof => ({
-        ...prof,
-        category: prof.category || {
-          id: 0,
-          name: 'Non categorizzato',
-          slug: 'non-categorizzato', 
-          icon: '❓'
-        }
+      return professionalsResult.rows.map((prof: any) => ({
+        id: prof.id,
+        businessName: prof.business_name,
+        email: prof.email,
+        phoneFixed: prof.phone_fixed,
+        phoneMobile: prof.phone_mobile,
+        address: prof.address,
+        city: prof.city,
+        category: {
+          id: prof.category_id,
+          name: prof.category_name || 'Non categorizzato'
+        },
+        isVerified: prof.is_verified || false,
+        verificationStatus: prof.verification_status || 'pending',
+        rating: Number(prof.rating) || 0,
+        reviewCount: Number(prof.review_count) || 0,
+        profileCompleteness: Number(prof.profile_completeness) || 0,
+        lastActivityAt: prof.last_activity_at ? new Date(prof.last_activity_at) : new Date(),
+        createdAt: new Date(prof.created_at),
+        isPremium: prof.is_premium || false,
+        isClaimed: prof.is_claimed || false
       }));
     } catch (error) {
       console.error("Error fetching admin professionals:", error);
