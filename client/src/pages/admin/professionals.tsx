@@ -431,6 +431,12 @@ export default function AdminProfessionals() {
                           {professional.verificationStatus}
                         </span>
                       </Badge>
+                      {!professional.isClaimed && (
+                        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Non reclamato
+                        </Badge>
+                      )}
                       {professional.isPremium && (
                         <Badge variant="default" className="bg-purple-100 text-purple-800">
                           Premium
@@ -566,6 +572,12 @@ export default function AdminProfessionals() {
           </CardContent>
         </Card>
       )}
+      
+      {/* Create Professional Dialog */}
+      <CreateProfessionalDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+      />
     </div>
   );
 }
