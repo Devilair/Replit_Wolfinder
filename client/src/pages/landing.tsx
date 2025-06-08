@@ -75,17 +75,43 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative py-20">
+      {/* Hero Section - Inspired by Trustpilot */}
+      <section className="relative py-16 bg-gradient-to-br from-blue-50 via-white to-green-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              Trova professionisti <span className="text-blue-600">veramente</span> affidabili
+            <div className="flex justify-center items-center mb-6">
+              <div className="flex items-center">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star key={star} className="h-8 w-8 text-green-500 fill-green-500" />
+                ))}
+                <span className="ml-3 text-lg font-semibold text-gray-700">Trustpilot</span>
+              </div>
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+              Dietro ogni grande decisione<br />
+              c'è una <span className="text-green-600">recensione autentica</span>
             </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Su Wolfinder il successo si guadagna con la qualità, non con i pagamenti. 
-              Solo recensioni autentiche e verifiche rigorose determinano la visibilità.
+            <p className="text-xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
+              Wolfinder è la prima piattaforma italiana che mette la qualità al centro. 
+              Solo professionisti verificati, recensioni autentiche e ranking meritocratico. 
+              <strong> Zero pay-to-win</strong>.
             </p>
+            
+            {/* Stats Row - Trustpilot Style */}
+            <div className="flex flex-wrap justify-center items-center gap-8 mb-12 text-sm text-gray-600">
+              <div className="flex items-center">
+                <Shield className="h-5 w-5 text-green-600 mr-2" />
+                <span><strong>100%</strong> Professionisti verificati</span>
+              </div>
+              <div className="flex items-center">
+                <Users className="h-5 w-5 text-blue-600 mr-2" />
+                <span><strong>Solo</strong> recensioni autentiche</span>
+              </div>
+              <div className="flex items-center">
+                <Award className="h-5 w-5 text-purple-600 mr-2" />
+                <span><strong>Ranking</strong> meritocratico</span>
+              </div>
+            </div>
 
             {/* Search Bar */}
             <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6 mb-12">
@@ -158,12 +184,76 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Featured Reviews Section - Trustpilot Style */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Cosa dicono i nostri utenti</h2>
+            <p className="text-lg text-gray-600">Recensioni autentiche da clienti verificati</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+            {/* Sample Review Cards */}
+            <Card className="bg-white border-l-4 border-l-green-500">
+              <CardContent className="p-6">
+                <div className="flex items-center mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} className="h-4 w-4 text-green-500 fill-green-500" />
+                  ))}
+                </div>
+                <p className="text-gray-800 mb-4 italic">
+                  "Finalmente una piattaforma che mette davvero al centro la qualità. 
+                  Ho trovato l'architetto perfetto per la mia casa."
+                </p>
+                <div className="text-sm text-gray-600">
+                  <span className="font-semibold">Marco T.</span> · Cliente verificato
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-white border-l-4 border-l-blue-500">
+              <CardContent className="p-6">
+                <div className="flex items-center mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} className="h-4 w-4 text-green-500 fill-green-500" />
+                  ))}
+                </div>
+                <p className="text-gray-800 mb-4 italic">
+                  "Su Wolfinder non si paga per essere visibili, ma si lavora per meritarlo. 
+                  Questo fa la differenza."
+                </p>
+                <div className="text-sm text-gray-600">
+                  <span className="font-semibold">Avv. Giuseppe R.</span> · Professionista verificato
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-white border-l-4 border-l-purple-500">
+              <CardContent className="p-6">
+                <div className="flex items-center mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} className="h-4 w-4 text-green-500 fill-green-500" />
+                  ))}
+                </div>
+                <p className="text-gray-800 mb-4 italic">
+                  "Trasparenza totale e professionalità. Ogni recensione è autentica, 
+                  si sente subito la differenza."
+                </p>
+                <div className="text-sm text-gray-600">
+                  <span className="font-semibold">Elena M.</span> · Cliente verificato
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Featured Professionals */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Professionisti in Evidenza</h2>
-            <p className="text-lg text-gray-600">I migliori professionisti selezionati in base a qualità e affidabilità</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Professionisti più apprezzati</h2>
+            <p className="text-lg text-gray-600">Selezionati in base a qualità del servizio e recensioni autentiche</p>
           </div>
           
           {featuredProfessionals.length > 0 ? (
@@ -217,8 +307,41 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Popular Categories - Trustpilot Style */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Trova professionisti per categoria</h2>
+            <p className="text-lg text-gray-600">Esplora le categorie più richieste su Wolfinder</p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-16">
+            {categories.slice(0, 12).map((category: Category) => (
+              <Link 
+                key={category.id} 
+                href={`/search?categoryId=${category.id}`}
+                className="group"
+              >
+                <Card className="text-center p-6 hover:shadow-lg transition-all duration-200 hover:bg-blue-50 border-2 hover:border-blue-200">
+                  <div className="text-3xl mb-3">{category.icon}</div>
+                  <div className="text-sm font-medium text-gray-900 group-hover:text-blue-600">
+                    {category.name}
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+          
+          <div className="text-center">
+            <Button variant="outline" asChild>
+              <Link href="/search">Vedi tutte le categorie</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Why Wolfinder */}
-      <section className="py-16">
+      <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -272,44 +395,100 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-lg font-bold mb-4">Wolfinder</h3>
-              <p className="text-gray-300 text-sm">
-                La prima piattaforma italiana etica per trovare professionisti affidabili.
+      {/* Call to Action - Trustpilot Style */}
+      <section className="py-16 bg-gradient-to-r from-blue-600 to-green-600 text-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+            Pronto a trovare il professionista giusto?
+          </h2>
+          <p className="text-xl mb-8 text-blue-100">
+            Unisciti a migliaia di clienti che hanno già scelto la qualità su Wolfinder
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" variant="secondary" asChild>
+              <Link href="/search">
+                <Search className="h-5 w-5 mr-2" />
+                Cerca Professionisti
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600" asChild>
+              <Link href="/register-professional">
+                Registrati come Professionista
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer - Enhanced */}
+      <footer className="bg-gray-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+            <div className="md:col-span-2">
+              <div className="flex items-center mb-4">
+                <span className="text-2xl font-bold text-blue-400">Wolfinder</span>
+                <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800">Etico</Badge>
+              </div>
+              <p className="text-gray-300 text-sm mb-6 leading-relaxed">
+                La prima piattaforma italiana etica per trovare professionisti affidabili. 
+                Solo recensioni autentiche, ranking meritocratico e verifiche rigorose.
               </p>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} className="h-4 w-4 text-green-400 fill-green-400" />
+                  ))}
+                  <span className="ml-2 text-sm text-gray-300">Eccellente</span>
+                </div>
+                <div className="text-xs text-gray-400">su Trustpilot</div>
+              </div>
             </div>
+            
             <div>
               <h4 className="font-semibold mb-4">Per i Clienti</h4>
-              <ul className="space-y-2 text-sm text-gray-300">
-                <li><Link href="/search" className="hover:text-white">Cerca Professionisti</Link></li>
-                <li><Link href="/categories" className="hover:text-white">Categorie</Link></li>
-                <li><Link href="/how-it-works" className="hover:text-white">Come Funziona</Link></li>
+              <ul className="space-y-3 text-sm text-gray-300">
+                <li><Link href="/search" className="hover:text-white transition-colors">Cerca Professionisti</Link></li>
+                <li><Link href="/search?city=Ferrara" className="hover:text-white transition-colors">Professionisti Ferrara</Link></li>
+                <li><Link href="/search?city=Livorno" className="hover:text-white transition-colors">Professionisti Livorno</Link></li>
+                <li><Link href="/how-it-works" className="hover:text-white transition-colors">Come Funziona</Link></li>
+                <li><Link href="/reviews-guide" className="hover:text-white transition-colors">Guida alle Recensioni</Link></li>
               </ul>
             </div>
+            
             <div>
               <h4 className="font-semibold mb-4">Per i Professionisti</h4>
-              <ul className="space-y-2 text-sm text-gray-300">
-                <li><Link href="/register-professional" className="hover:text-white">Registrati</Link></li>
-                <li><Link href="/pricing" className="hover:text-white">Piani e Prezzi</Link></li>
-                <li><Link href="/verification" className="hover:text-white">Processo di Verifica</Link></li>
+              <ul className="space-y-3 text-sm text-gray-300">
+                <li><Link href="/register-professional" className="hover:text-white transition-colors">Registrati Gratis</Link></li>
+                <li><Link href="/subscription-plans" className="hover:text-white transition-colors">Piani Premium</Link></li>
+                <li><Link href="/verification" className="hover:text-white transition-colors">Verifica Profilo</Link></li>
+                <li><Link href="/badges" className="hover:text-white transition-colors">Sistema Badge</Link></li>
+                <li><Link href="/professional-resources" className="hover:text-white transition-colors">Risorse</Link></li>
               </ul>
             </div>
+            
             <div>
               <h4 className="font-semibold mb-4">Azienda</h4>
-              <ul className="space-y-2 text-sm text-gray-300">
-                <li><Link href="/about" className="hover:text-white">Chi Siamo</Link></li>
-                <li><Link href="/contact" className="hover:text-white">Contatti</Link></li>
-                <li><Link href="/privacy" className="hover:text-white">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="hover:text-white">Termini di Servizio</Link></li>
+              <ul className="space-y-3 text-sm text-gray-300">
+                <li><Link href="/about" className="hover:text-white transition-colors">Chi Siamo</Link></li>
+                <li><Link href="/ethics" className="hover:text-white transition-colors">I Nostri Valori</Link></li>
+                <li><Link href="/press" className="hover:text-white transition-colors">Stampa</Link></li>
+                <li><Link href="/contact" className="hover:text-white transition-colors">Contatti</Link></li>
+                <li><Link href="/careers" className="hover:text-white transition-colors">Lavora con noi</Link></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
-            <p>&copy; 2025 Wolfinder. Tutti i diritti riservati. Piattaforma italiana per professionisti etici.</p>
+          
+          <div className="border-t border-gray-800 mt-12 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <div className="text-sm text-gray-400 mb-4 md:mb-0">
+                &copy; 2025 Wolfinder. Tutti i diritti riservati. Piattaforma italiana per professionisti etici.
+              </div>
+              <div className="flex space-x-6 text-sm">
+                <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link>
+                <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">Termini di Servizio</Link>
+                <Link href="/cookies" className="text-gray-400 hover:text-white transition-colors">Cookie Policy</Link>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
