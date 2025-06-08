@@ -855,6 +855,14 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  async getSubscriptionByStripeId(stripeSubscriptionId: string): Promise<Subscription | undefined> {
+    const [subscription] = await db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId));
+    return subscription;
+  }
+
   // Feature gating methods
   async getProfessionalPhotoCount(professionalId: number): Promise<number> {
     // Simulate photo count - in real implementation this would query photos table

@@ -41,6 +41,8 @@ import CentroAssistenza from "@/pages/about/centro-assistenza";
 import FeatureGatingTest from "@/pages/feature-gating-test";
 import SubscriptionManagement from "@/pages/subscription-management";
 import Checkout from "@/pages/checkout";
+import SubscriptionPlansPage from "@/pages/subscription/plans";
+import SubscriptionCheckout from "@/pages/subscription/checkout";
 
 function Router() {
   useAuthPersistence();
@@ -56,6 +58,8 @@ function Router() {
       <Route path="/professional-subscription-demo" component={ProfessionalSubscriptionDemo} />
       <Route path="/subscription-plans" component={SubscriptionPlans} />
       <Route path="/subscription-management" component={SubscriptionManagement} />
+      <Route path="/subscription/plans" component={SubscriptionPlansPage} />
+      <Route path="/subscription/checkout" component={SubscriptionCheckout} />
       <Route path="/test/feature-gating" component={FeatureGatingTest} />
       
       {/* About Pages */}
