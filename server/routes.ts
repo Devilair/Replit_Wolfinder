@@ -4080,7 +4080,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin create professional manually
   app.post("/api/admin/professionals", async (req, res) => {
     try {
-      const { businessName, email, phoneFixed, phoneMobile, address, city, province, categoryId, description, website } = req.body;
+      const { businessName, email, phoneFixed, phoneMobile, address, city, province, postalCode, categoryId, description, website } = req.body;
       
       const professionalData = {
         businessName,
@@ -4090,6 +4090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         address,
         city,
         province,
+        postalCode: postalCode || '00000',
         categoryId: parseInt(categoryId),
         description: description || '',
         website: website || null,
@@ -4100,7 +4101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rating: '0.0',
         reviewCount: 0,
         profileViews: 0,
-        profileCompleteness: 70, // Base completeness for admin-created profiles
+        profileCompleteness: "70.00", // Base completeness for admin-created profiles
       };
 
       const newProfessional = await storage.createProfessional(professionalData);
