@@ -398,22 +398,22 @@ export default function Landing() {
       </section>
 
       {/* Call to Action - Trustpilot Style */}
-      <section className="py-16 bg-gradient-to-r from-blue-600 to-green-600 text-white">
+      <section className="py-16 bg-gradient-to-r from-primary to-orange-600 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Pronto a trovare il professionista giusto?
           </h2>
-          <p className="text-xl mb-8 text-blue-100">
+          <p className="text-xl mb-8 text-orange-100">
             Unisciti a migliaia di clienti che hanno già scelto la qualità su Wolfinder
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" asChild>
+            <Button size="lg" variant="secondary" className="bg-white text-primary hover:bg-gray-50" asChild>
               <Link href="/search">
                 <Search className="h-5 w-5 mr-2" />
                 Cerca Professionisti
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600" asChild>
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-primary" asChild>
               <Link href="/register-professional">
                 Registrati come Professionista
               </Link>
