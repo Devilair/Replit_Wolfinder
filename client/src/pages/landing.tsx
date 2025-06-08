@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, MapPin, Star, Shield, Users, Award, ArrowRight, Check } from "lucide-react";
+import logoWolfinder from "@assets/logo_wolfinder_1749381817551.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
