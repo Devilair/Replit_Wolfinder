@@ -84,7 +84,7 @@ export default function Landing() {
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star key={star} className="h-8 w-8 text-green-500 fill-green-500" />
                 ))}
-                <span className="ml-3 text-lg font-semibold text-gray-700">Trustpilot</span>
+                <span className="ml-3 text-lg font-semibold text-gray-700">Piattaforma Verificata</span>
               </div>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
@@ -440,7 +440,7 @@ export default function Landing() {
                   ))}
                   <span className="ml-2 text-sm text-gray-300">Eccellente</span>
                 </div>
-                <div className="text-xs text-gray-400">su Trustpilot</div>
+                <div className="text-xs text-gray-400">Valutazioni verificate</div>
               </div>
             </div>
             
