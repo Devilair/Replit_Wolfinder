@@ -56,13 +56,14 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <span className="text-2xl font-bold text-blue-600">Wolfinder</span>
-              <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800">Etico</Badge>
+              <img src={logoWolfinder} alt="Wolfinder" className="h-8 w-auto mr-3" />
+              <span className="text-2xl font-bold text-primary">Wolfinder</span>
+              <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary">Etico</Badge>
             </div>
             <nav className="hidden md:flex space-x-8">
-              <Link href="/about" className="text-gray-700 hover:text-blue-600 transition-colors">Chi siamo</Link>
-              <Link href="/professionals" className="text-gray-700 hover:text-blue-600 transition-colors">Professionisti</Link>
-              <Link href="/register-professional" className="text-gray-700 hover:text-blue-600 transition-colors">Registrati</Link>
+              <Link href="/about" className="text-gray-700 hover:text-primary transition-colors">Chi siamo</Link>
+              <Link href="/professionals" className="text-gray-700 hover:text-primary transition-colors">Professionisti</Link>
+              <Link href="/register-professional" className="text-gray-700 hover:text-primary transition-colors">Registrati</Link>
             </nav>
             <div className="flex items-center space-x-4">
               <Button variant="outline" asChild>
@@ -77,20 +78,20 @@ export default function Landing() {
       </header>
 
       {/* Hero Section - Inspired by Trustpilot */}
-      <section className="relative py-16 bg-gradient-to-br from-blue-50 via-white to-green-50">
+      <section className="relative py-16 bg-gradient-to-br from-orange-50 via-white to-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex justify-center items-center mb-6">
               <div className="flex items-center">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="h-8 w-8 text-green-500 fill-green-500" />
+                  <Star key={star} className="h-8 w-8 text-primary fill-primary" />
                 ))}
                 <span className="ml-3 text-lg font-semibold text-gray-700">Piattaforma Verificata</span>
               </div>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
               Dietro ogni grande decisione<br />
-              c'è una <span className="text-green-600">recensione autentica</span>
+              c'è una <span className="text-primary">recensione autentica</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
               Wolfinder è la prima piattaforma italiana che mette la qualità al centro. 
@@ -101,15 +102,15 @@ export default function Landing() {
             {/* Stats Row - Trustpilot Style */}
             <div className="flex flex-wrap justify-center items-center gap-8 mb-12 text-sm text-gray-600">
               <div className="flex items-center">
-                <Shield className="h-5 w-5 text-green-600 mr-2" />
+                <Shield className="h-5 w-5 text-primary mr-2" />
                 <span><strong>100%</strong> Professionisti verificati</span>
               </div>
               <div className="flex items-center">
-                <Users className="h-5 w-5 text-blue-600 mr-2" />
+                <Users className="h-5 w-5 text-primary mr-2" />
                 <span><strong>Solo</strong> recensioni autentiche</span>
               </div>
               <div className="flex items-center">
-                <Award className="h-5 w-5 text-purple-600 mr-2" />
+                <Award className="h-5 w-5 text-primary mr-2" />
                 <span><strong>Ranking</strong> meritocratico</span>
               </div>
             </div>
@@ -160,22 +161,22 @@ export default function Landing() {
             {/* Value Propositions */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
               <div className="text-center">
-                <div className="bg-blue-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <Shield className="h-8 w-8 text-blue-600" />
+                <div className="bg-primary/10 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <Shield className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">100% Meritocratico</h3>
                 <p className="text-gray-600">Il ranking si basa solo su qualità e recensioni verificate, mai sui pagamenti</p>
               </div>
               <div className="text-center">
-                <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <Award className="h-8 w-8 text-green-600" />
+                <div className="bg-primary/10 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <Award className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Professionisti Verificati</h3>
                 <p className="text-gray-600">Ogni professionista è verificato con documenti e controlli di identità</p>
               </div>
               <div className="text-center">
-                <div className="bg-purple-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <Users className="h-8 w-8 text-purple-600" />
+                <div className="bg-primary/10 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <Users className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Recensioni Autentiche</h3>
                 <p className="text-gray-600">Solo clienti reali possono lasciare recensioni, eliminate le recensioni false</p>
@@ -349,21 +350,21 @@ export default function Landing() {
               <h2 className="text-3xl font-bold text-gray-900 mb-6">Perché Wolfinder è diverso</h2>
               <div className="space-y-4">
                 <div className="flex items-start">
-                  <Check className="h-6 w-6 text-green-600 mr-3 mt-1" />
+                  <Check className="h-6 w-6 text-primary mr-3 mt-1" />
                   <div>
                     <h3 className="font-semibold text-lg mb-2">Nessun Pay-to-Win</h3>
                     <p className="text-gray-600">Il tuo posto nei risultati dipende solo dalla qualità del tuo lavoro, non da quanto paghi</p>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <Check className="h-6 w-6 text-green-600 mr-3 mt-1" />
+                  <Check className="h-6 w-6 text-primary mr-3 mt-1" />
                   <div>
                     <h3 className="font-semibold text-lg mb-2">Trasparenza Totale</h3>
                     <p className="text-gray-600">Ogni azione è tracciata e verificabile. Saprai sempre perché un professionista è in cima ai risultati</p>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <Check className="h-6 w-6 text-green-600 mr-3 mt-1" />
+                  <Check className="h-6 w-6 text-primary mr-3 mt-1" />
                   <div>
                     <h3 className="font-semibold text-lg mb-2">Solo Eccellenza</h3>
                     <p className="text-gray-600">Accettiamo solo professionisti qualificati che superano i nostri controlli di qualità</p>
@@ -371,7 +372,7 @@ export default function Landing() {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-blue-600 to-purple-700 rounded-lg p-8 text-white">
+            <div className="bg-gradient-to-br from-primary to-orange-600 rounded-lg p-8 text-white">
               <h3 className="text-2xl font-bold mb-4">Sei un professionista?</h3>
               <p className="mb-6">Unisciti alla prima piattaforma italiana che premia davvero la qualità del tuo lavoro</p>
               <ul className="space-y-2 mb-6">
@@ -388,7 +389,7 @@ export default function Landing() {
                   Clienti qualificati e verificati
                 </li>
               </ul>
-              <Button variant="secondary" className="w-full" asChild>
+              <Button variant="secondary" className="w-full bg-white text-primary hover:bg-gray-50" asChild>
                 <Link href="/register-professional">Registrati Ora</Link>
               </Button>
             </div>
