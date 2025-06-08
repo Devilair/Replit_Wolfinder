@@ -7,6 +7,7 @@ import { useAuthPersistence } from "@/hooks/useAuthPersistence";
 import AdminLayout from "@/components/admin-layout";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
+import SearchPage from "@/pages/search";
 import Home from "@/pages/home";
 import Professionals from "@/pages/professionals";
 import ProfessionalProfile from "@/pages/professional-profile";
@@ -47,6 +48,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
+      <Route path="/search" component={SearchPage} />
       <Route path="/professionals" component={Professionals} />
       <Route path="/professional/:id" component={ProfessionalProfile} />
       <Route path="/reclama-profilo/:id" component={ClaimProfile} />
