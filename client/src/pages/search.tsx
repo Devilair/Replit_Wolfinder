@@ -57,6 +57,9 @@ export default function SearchPage() {
     limit: 20
   };
 
+  // Only execute search when there are actual search parameters
+  const hasSearchParams = searchTerm || (selectedCity && selectedCity !== 'all') || (selectedCategory && selectedCategory !== 'all');
+  
   const { data: professionals = [], isLoading } = useQuery({
     queryKey: ['/api/professionals/search', searchParams],
     queryFn: async () => {
@@ -70,7 +73,8 @@ export default function SearchPage() {
       const response = await fetch(`/api/professionals/search?${params}`);
       if (!response.ok) throw new Error('Failed to search professionals');
       return response.json();
-    }
+    },
+    enabled: !!hasSearchParams // Only run query when there are search parameters
   });
 
   const handleSearch = () => {
@@ -282,6 +286,21 @@ export default function SearchPage() {
                 compact={viewMode === 'list'}
               />
             ))}
+          </div>
+        ) : !hasSearchParams ? (
+          <div className="text-center py-12">
+            <div className="bg-primary/10 rounded-full p-6 w-24 h-24 mx-auto mb-4 flex items-center justify-center">
+              <Search className="h-12 w-12 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Inizia la tua ricerca</h3>
+            <p className="text-gray-600 mb-6">
+              Utilizza i filtri sopra per trovare il professionista perfetto per le tue esigenze.
+            </p>
+            <Button asChild>
+              <Link href="/">
+                Torna alla homepage
+              </Link>
+            </Button>
           </div>
         ) : (
           <div className="text-center py-12">
