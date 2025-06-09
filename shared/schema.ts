@@ -163,6 +163,10 @@ export const professionals = pgTable("professionals", {
   additionalCities: text("additional_cities").array(), // Città aggiuntive (non influenzano ricerca)
   province: text("province").notNull(),
   postalCode: text("postal_code").notNull(),
+  // Coordinate geografiche per ricerca su mappa
+  latitude: decimal("latitude", { precision: 10, scale: 8 }),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }),
+  geocodedAt: timestamp("geocoded_at"), // Quando è stato geocodificato l'indirizzo
   priceRangeMin: decimal("price_range_min", { precision: 10, scale: 2 }),
   priceRangeMax: decimal("price_range_max", { precision: 10, scale: 2 }),
   priceUnit: text("price_unit"), // "ora", "visita", "progetto"
