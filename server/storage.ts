@@ -66,6 +66,17 @@ export interface IStorage {
     sortBy?: 'rating' | 'reviewCount' | 'createdAt';
     sortOrder?: 'asc' | 'desc';
   }): Promise<ProfessionalSummary[]>;
+  
+  // Geographic search methods
+  searchProfessionalsNearby(params: {
+    latitude: number;
+    longitude: number;
+    radius: number;
+    categoryId?: number;
+    limit?: number;
+  }): Promise<(ProfessionalSummary & { distance: number; latitude: number; longitude: number })[]>;
+  
+  updateProfessionalCoordinates(id: number, latitude: number, longitude: number): Promise<void>;
   getProfessional(id: number): Promise<ProfessionalWithDetails | undefined>;
   getProfessionalByUserId(userId: number): Promise<Professional | undefined>;
   createProfessional(professional: InsertProfessional): Promise<Professional>;
@@ -291,6 +302,90 @@ export class DatabaseStorage implements IStorage {
     }
 
     return await query;
+  }
+
+  // Geographic search method using Haversine formula for distance calculation
+  async searchProfessionalsNearby(params: {
+    latitude: number;
+    longitude: number;
+    radius: number;
+    categoryId?: number;
+    limit?: number;
+  }): Promise<(ProfessionalSummary & { distance: number; latitude: number; longitude: number })[]> {
+    const { latitude, longitude, radius, categoryId, limit = 20 } = params;
+    
+    // SQL query with Haversine formula for distance calculation
+    const haversineDistance = sql`
+      (6371 * acos(
+        cos(radians(${latitude})) * 
+        cos(radians(${professionals.latitude})) * 
+        cos(radians(${professionals.longitude}) - radians(${longitude})) + 
+        sin(radians(${latitude})) * 
+        sin(radians(${professionals.latitude}))
+      ))
+    `;
+
+    let query = db
+      .select({
+        id: professionals.id,
+        businessName: professionals.businessName,
+        description: professionals.description,
+        rating: professionals.rating,
+        reviewCount: professionals.reviewCount,
+        profileViews: professionals.profileViews,
+        city: professionals.city,
+        province: professionals.province,
+        latitude: professionals.latitude,
+        longitude: professionals.longitude,
+        distance: haversineDistance,
+        category: {
+          id: categories.id,
+          name: categories.name,
+          slug: categories.slug,
+          icon: categories.icon,
+        },
+      })
+      .from(professionals)
+      .leftJoin(categories, eq(professionals.categoryId, categories.id))
+      .where(
+        and(
+          sql`${professionals.latitude} IS NOT NULL`,
+          sql`${professionals.longitude} IS NOT NULL`,
+          sql`${haversineDistance} <= ${radius}`
+        )
+      );
+
+    if (categoryId) {
+      query = query.where(
+        and(
+          sql`${professionals.latitude} IS NOT NULL`,
+          sql`${professionals.longitude} IS NOT NULL`,
+          sql`${haversineDistance} <= ${radius}`,
+          eq(professionals.categoryId, categoryId)
+        )
+      );
+    }
+
+    // Order by distance (closest first)
+    query = query.orderBy(haversineDistance);
+
+    if (limit) {
+      query = query.limit(limit);
+    }
+
+    return await query;
+  }
+
+  // Update professional coordinates
+  async updateProfessionalCoordinates(id: number, latitude: number, longitude: number): Promise<void> {
+    await db
+      .update(professionals)
+      .set({
+        latitude: latitude.toString(),
+        longitude: longitude.toString(),
+        geocodedAt: new Date()
+      })
+      .where(eq(professionals.id, id));
   }
 
   async getProfessional(id: number): Promise<ProfessionalWithDetails | undefined> {

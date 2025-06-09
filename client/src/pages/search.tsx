@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Search, MapPin, Star, Shield, Filter, SortAsc, Grid, List } from "lucide-react";
+import { Search, MapPin, Star, Shield, Filter, SortAsc, Grid, List, Map, Crosshair, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
+import { MapView } from "@/components/MapView";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 interface Category {
   id: number;

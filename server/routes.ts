@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { stripeService } from "./stripe-service";
+import { geocodingService } from "./geocoding-service";
 import Stripe from "stripe";
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -312,6 +313,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(category);
     } catch (error) {
       res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
+  // Geocode address endpoint
+  app.post("/api/geocode", async (req, res) => {
+    try {
+      const { address, city, province } = req.body;
+      
+      if (!address || !city) {
+        return res.status(400).json({ message: "Address and city are required" });
+      }
+
+      const result = await geocodingService.geocodeAddress(address, city, province || '');
+      
+      if (!result) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      res.status(500).json({ message: "Failed to geocode address" });
+    }
+  });
+
+  // Search professionals by location (nearby)
+  app.get("/api/professionals/nearby", async (req, res) => {
+    try {
+      const { lat, lng, radius = 10, categoryId, limit = 20 } = req.query;
+      
+      if (!lat || !lng) {
+        return res.status(400).json({ message: "Latitude and longitude are required" });
+      }
+
+      const professionals = await storage.searchProfessionalsNearby({
+        latitude: parseFloat(lat as string),
+        longitude: parseFloat(lng as string),
+        radius: parseFloat(radius as string),
+        categoryId: categoryId ? parseInt(categoryId as string) : undefined,
+        limit: parseInt(limit as string)
+      });
+
+      res.json(professionals);
+    } catch (error) {
+      console.error("Error searching nearby professionals:", error);
+      res.status(500).json({ message: "Failed to search nearby professionals" });
     }
   });
 
