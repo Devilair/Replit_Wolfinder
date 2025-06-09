@@ -258,25 +258,27 @@ export default function AdminProfessionals() {
   const professionalsData = professionals as { data: Professional[]; total: number; pages: number };
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestione Professionisti</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Gestione Professionisti</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
             {professionalsData?.total || 0} professionisti registrati
           </p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Button 
             onClick={() => setIsCreateDialogOpen(true)}
             size="sm"
+            className="flex-1 sm:flex-none"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Aggiungi Professionista
+            <span className="hidden sm:inline">Aggiungi Professionista</span>
+            <span className="sm:hidden">Aggiungi</span>
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="hidden sm:inline-flex">
             <Download className="h-4 w-4 mr-2" />
             Esporta
           </Button>
@@ -286,53 +288,55 @@ export default function AdminProfessionals() {
             onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/professionals'] })}
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            Aggiorna
+            <span className="hidden sm:inline">Aggiorna</span>
           </Button>
         </div>
       </div>
 
       {/* Filters */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex-1 min-w-[300px]">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="flex-1 sm:min-w-[250px]">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder="Cerca per nome, email o città..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 text-sm sm:text-base"
                 />
               </div>
             </div>
             
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Stato" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tutti gli stati</SelectItem>
-                <SelectItem value="approved">Verificati</SelectItem>
-                <SelectItem value="pending">In attesa</SelectItem>
-                <SelectItem value="rejected">Rifiutati</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-full sm:w-[150px] lg:w-[180px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Stato" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tutti gli stati</SelectItem>
+                  <SelectItem value="approved">Verificati</SelectItem>
+                  <SelectItem value="pending">In attesa</SelectItem>
+                  <SelectItem value="rejected">Rifiutati</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tutte le categorie</SelectItem>
-                {categories?.map((category: any) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger className="w-full sm:w-[150px] lg:w-[180px]">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tutte le categorie</SelectItem>
+                  {categories?.map((category: any) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-[180px]">

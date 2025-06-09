@@ -59,20 +59,20 @@ export default function Landing() {
               <img 
                 src="/attached_assets/logo_1749382291587.png" 
                 alt="Wolfinder" 
-                className="h-12 w-auto" 
+                className="h-8 sm:h-10 md:h-12 w-auto" 
               />
             </div>
-            <nav className="hidden md:flex space-x-8">
+            <nav className="hidden lg:flex space-x-8">
               <Link href="/about" className="text-gray-700 hover:text-primary transition-colors">Chi siamo</Link>
               <Link href="/professionals" className="text-gray-700 hover:text-primary transition-colors">Professionisti</Link>
               <Link href="/register-professional" className="text-gray-700 hover:text-primary transition-colors">Registrati</Link>
             </nav>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" asChild>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <Button variant="outline" size="sm" className="hidden sm:inline-flex" asChild>
                 <Link href="/login">Accedi</Link>
               </Button>
-              <Button asChild>
-                <Link href="/register-professional">Unisciti</Link>
+              <Button size="sm" asChild>
+                <Link href="/register-professional" className="text-xs sm:text-sm">Unisciti</Link>
               </Button>
             </div>
           </div>
@@ -80,59 +80,61 @@ export default function Landing() {
       </header>
 
       {/* Hero Section - Inspired by Trustpilot */}
-      <section className="relative py-16 bg-gradient-to-br from-orange-50 via-white to-gray-50">
+      <section className="relative py-8 sm:py-12 lg:py-16 bg-gradient-to-br from-orange-50 via-white to-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="flex justify-center items-center mb-6">
-              <div className="flex items-center">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="h-8 w-8 text-primary fill-primary" />
-                ))}
-                <span className="ml-3 text-lg font-semibold text-gray-700">Piattaforma Verificata</span>
+            <div className="flex justify-center items-center mb-4 sm:mb-6">
+              <div className="flex items-center flex-col sm:flex-row">
+                <div className="flex items-center">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} className="h-6 w-6 sm:h-8 sm:w-8 text-primary fill-primary" />
+                  ))}
+                </div>
+                <span className="mt-2 sm:mt-0 sm:ml-3 text-sm sm:text-lg font-semibold text-gray-700">Piattaforma Verificata</span>
               </div>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              Dietro ogni grande decisione<br />
-              c'è una <span className="text-primary">recensione autentica</span>
+            <h1 className="text-2xl sm:text-4xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight px-2">
+              Dietro ogni grande decisione<br className="hidden sm:block" />
+              <span className="sm:hidden"> </span>c'è una <span className="text-primary">recensione autentica</span>
             </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-xl text-gray-600 mb-6 sm:mb-8 max-w-4xl mx-auto leading-relaxed px-4">
               Wolfinder è la prima piattaforma italiana che mette la qualità al centro. 
               Solo professionisti verificati, recensioni autentiche e ranking meritocratico. 
               <strong> Zero pay-to-win</strong>.
             </p>
             
             {/* Stats Row - Trustpilot Style */}
-            <div className="flex flex-wrap justify-center items-center gap-8 mb-12 text-sm text-gray-600">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 mb-8 sm:mb-12 text-xs sm:text-sm text-gray-600 px-4">
               <div className="flex items-center">
-                <Shield className="h-5 w-5 text-primary mr-2" />
+                <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary mr-2" />
                 <span><strong>100%</strong> Professionisti verificati</span>
               </div>
               <div className="flex items-center">
-                <Users className="h-5 w-5 text-primary mr-2" />
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary mr-2" />
                 <span><strong>Solo</strong> recensioni autentiche</span>
               </div>
               <div className="flex items-center">
-                <Award className="h-5 w-5 text-primary mr-2" />
+                <Award className="h-4 w-4 sm:h-5 sm:w-5 text-primary mr-2" />
                 <span><strong>Ranking</strong> meritocratico</span>
               </div>
             </div>
 
             {/* Search Bar */}
-            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6 mb-12">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="md:col-span-2">
+            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-8 sm:mb-12 mx-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="sm:col-span-2 lg:col-span-2">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
                     <Input
                       placeholder="Cerca professionista, servizio..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
+                      className="pl-8 sm:pl-10 text-sm sm:text-base"
                     />
                   </div>
                 </div>
                 <Select value={selectedCity} onValueChange={setSelectedCity}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-sm sm:text-base">
                     <MapPin className="h-4 w-4" />
                     <SelectValue placeholder="Città" />
                   </SelectTrigger>
@@ -142,11 +144,11 @@ export default function Landing() {
                   </SelectContent>
                 </Select>
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-sm sm:text-base">
                     <SelectValue placeholder="Categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category: Category) => (
+                    {(categories as Category[]).map((category: Category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         {category.icon} {category.name}
                       </SelectItem>
@@ -154,27 +156,27 @@ export default function Landing() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleSearch} className="w-full mt-4" size="lg">
-                <Search className="h-5 w-5 mr-2" />
+              <Button onClick={handleSearch} className="w-full mt-3 sm:mt-4" size="lg">
+                <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Cerca Professionisti
               </Button>
             </div>
 
             {/* Value Propositions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-16 px-4">
               <div className="text-center">
-                <div className="bg-primary/10 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <Shield className="h-8 w-8 text-primary" />
+                <div className="bg-primary/10 rounded-full p-3 sm:p-4 w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 flex items-center justify-center">
+                  <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">100% Meritocratico</h3>
-                <p className="text-gray-600">Il ranking si basa solo su qualità e recensioni verificate, mai sui pagamenti</p>
+                <h3 className="text-base sm:text-lg font-semibold mb-2">100% Meritocratico</h3>
+                <p className="text-sm sm:text-base text-gray-600">Il ranking si basa solo su qualità e recensioni verificate, mai sui pagamenti</p>
               </div>
               <div className="text-center">
-                <div className="bg-primary/10 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <Award className="h-8 w-8 text-primary" />
+                <div className="bg-primary/10 rounded-full p-3 sm:p-4 w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 flex items-center justify-center">
+                  <Award className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">Professionisti Verificati</h3>
-                <p className="text-gray-600">Ogni professionista è verificato con documenti e controlli di identità</p>
+                <h3 className="text-base sm:text-lg font-semibold mb-2">Professionisti Verificati</h3>
+                <p className="text-sm sm:text-base text-gray-600">Ogni professionista è verificato con documenti e controlli di identità</p>
               </div>
               <div className="text-center">
                 <div className="bg-primary/10 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
