@@ -36,7 +36,14 @@ export default function SearchPage() {
   const [selectedCity, setSelectedCity] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("rating");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
+  
+  // Geographic search state
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [searchRadius, setSearchRadius] = useState("10");
+  const [locationAddress, setLocationAddress] = useState("");
+  const [searchLocation, setSearchLocation] = useState<[number, number] | null>(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
 
   // Parse URL parameters
   useEffect(() => {
@@ -60,8 +67,9 @@ export default function SearchPage() {
   };
 
   // Only execute search when there are actual search parameters
-  const hasSearchParams = searchTerm || (selectedCity && selectedCity !== 'all') || (selectedCategory && selectedCategory !== 'all');
+  const hasSearchParams = searchTerm || (selectedCity && selectedCity !== 'all') || (selectedCategory && selectedCategory !== 'all') || searchLocation;
   
+  // Regular text-based search
   const { data: professionals = [], isLoading } = useQuery({
     queryKey: ['/api/professionals/search', searchParams],
     queryFn: async () => {
@@ -76,8 +84,83 @@ export default function SearchPage() {
       if (!response.ok) throw new Error('Failed to search professionals');
       return response.json();
     },
-    enabled: !!hasSearchParams // Only run query when there are search parameters
+    enabled: !!hasSearchParams && !searchLocation // Only run when no geographic search
   });
+
+  // Geographic search for nearby professionals
+  const { data: nearbyProfessionals = [], isLoading: isLoadingNearby } = useQuery({
+    queryKey: ['/api/professionals/nearby', searchLocation, searchRadius, selectedCategory],
+    queryFn: async () => {
+      if (!searchLocation) return [];
+      
+      const params = new URLSearchParams({
+        lat: searchLocation[0].toString(),
+        lng: searchLocation[1].toString(),
+        radius: searchRadius,
+        limit: '20'
+      });
+      
+      if (selectedCategory && selectedCategory !== 'all') {
+        params.append('categoryId', selectedCategory);
+      }
+      
+      const response = await fetch(`/api/professionals/nearby?${params}`);
+      if (!response.ok) throw new Error('Failed to search nearby professionals');
+      return response.json();
+    },
+    enabled: !!searchLocation
+  });
+
+  // Use appropriate data source
+  const displayProfessionals = searchLocation ? nearbyProfessionals : professionals;
+  const isSearching = searchLocation ? isLoadingNearby : isLoading;
+
+  // Location detection function
+  const getUserLocation = () => {
+    setGettingLocation(true);
+    
+    if (!navigator.geolocation) {
+      alert('La geolocalizzazione non è supportata dal tuo browser');
+      setGettingLocation(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords: [number, number] = [position.coords.latitude, position.coords.longitude];
+        setUserLocation(coords);
+        setSearchLocation(coords);
+        setLocationAddress('La tua posizione attuale');
+        setGettingLocation(false);
+      },
+      (error) => {
+        console.error('Errore geolocalizzazione:', error);
+        alert('Impossibile rilevare la tua posizione. Assicurati di aver dato il permesso per la geolocalizzazione.');
+        setGettingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+    );
+  };
+
+  // Handle address selection from autocomplete
+  const handleAddressSelect = (result: {
+    address: string;
+    city: string;
+    province: string;
+    postalCode: string;
+    latitude: number;
+    longitude: number;
+  }) => {
+    setSearchLocation([result.latitude, result.longitude]);
+    setLocationAddress(result.address);
+  };
+
+  // Reset to text search
+  const resetToTextSearch = () => {
+    setSearchLocation(null);
+    setLocationAddress('');
+    setUserLocation(null);
+  };
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -158,6 +241,68 @@ export default function SearchPage() {
         {/* Search Filters */}
         <Card className="mb-6 sm:mb-8">
           <CardContent className="p-4 sm:p-6">
+            {/* Geographic Search Section */}
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h3 className="text-lg font-medium text-blue-900 mb-3">Ricerca Geografica</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="md:col-span-2">
+                  <AddressAutocomplete
+                    value={locationAddress}
+                    onChange={setLocationAddress}
+                    onSelect={handleAddressSelect}
+                    placeholder="Cerca per indirizzo o città..."
+                    className="w-full"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={getUserLocation}
+                    disabled={gettingLocation}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    {gettingLocation ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Crosshair className="h-4 w-4 mr-2" />
+                    )}
+                    La mia posizione
+                  </Button>
+                  {searchLocation && (
+                    <Button
+                      onClick={resetToTextSearch}
+                      variant="ghost"
+                      size="sm"
+                      className="px-3"
+                      title="Torna alla ricerca per città"
+                    >
+                      ✕
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              {searchLocation && (
+                <div className="mt-3 flex items-center gap-3">
+                  <span className="text-sm text-blue-700">Raggio di ricerca:</span>
+                  <Select value={searchRadius} onValueChange={setSearchRadius}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 km</SelectItem>
+                      <SelectItem value="10">10 km</SelectItem>
+                      <SelectItem value="20">20 km</SelectItem>
+                      <SelectItem value="50">50 km</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm text-green-600 font-medium">
+                    📍 Ricerca attiva per "{locationAddress}"
+                  </span>
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
               <div className="sm:col-span-2 lg:col-span-2">
                 <div className="relative">
@@ -233,6 +378,15 @@ export default function SearchPage() {
                 >
                   <List className="h-4 w-4" />
                 </Button>
+                <Button
+                  variant={viewMode === 'map' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('map')}
+                  disabled={!searchLocation}
+                  title={!searchLocation ? 'Seleziona una posizione per visualizzare la mappa' : 'Vista mappa'}
+                >
+                  <Map className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -242,16 +396,21 @@ export default function SearchPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-              {isLoading ? 'Ricerca in corso...' : `${professionals.length} professionisti trovati`}
+              {isSearching ? 'Ricerca in corso...' : `${displayProfessionals.length} professionisti trovati`}
+              {searchLocation && !isSearching && (
+                <span className="text-sm text-blue-600 block">
+                  Entro {searchRadius} km da {locationAddress}
+                </span>
+              )}
             </h1>
-            {(searchTerm || selectedCity || selectedCategory) && (
+            {(searchTerm || selectedCity || selectedCategory || searchLocation) && (
               <div className="flex flex-wrap gap-1 sm:gap-2 mt-2">
                 {searchTerm && (
                   <Badge variant="secondary" className="text-xs">
                     Ricerca: "{searchTerm}"
                   </Badge>
                 )}
-                {selectedCity && selectedCity !== 'all' && (
+                {selectedCity && selectedCity !== 'all' && !searchLocation && (
                   <Badge variant="secondary" className="text-xs">
                     <MapPin className="h-3 w-3 mr-1" />
                     {selectedCity}
@@ -263,12 +422,17 @@ export default function SearchPage() {
                     {(categories as any[]).find((c: any) => c.id.toString() === selectedCategory)?.name}
                   </Badge>
                 )}
+                {searchLocation && (
+                  <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                    📍 Ricerca geografica
+                  </Badge>
+                )}
               </div>
             )}
           </div>
         </div>
 
-        {isLoading ? (
+        {isSearching ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[...Array(6)].map((_, i) => (
               <Card key={i} className="animate-pulse">
@@ -276,19 +440,42 @@ export default function SearchPage() {
               </Card>
             ))}
           </div>
-        ) : professionals.length > 0 ? (
-          <div className={viewMode === 'grid' 
-            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
-            : "space-y-3 sm:space-y-4"
-          }>
-            {professionals.map((professional: Professional) => (
-              <ProfessionalCard 
-                key={professional.id} 
-                professional={professional} 
-                compact={viewMode === 'list'}
+        ) : displayProfessionals.length > 0 ? (
+          viewMode === 'map' ? (
+            <div className="h-96 rounded-lg overflow-hidden">
+              <MapView
+                professionals={displayProfessionals.map(p => ({
+                  ...p,
+                  latitude: p.latitude || 0,
+                  longitude: p.longitude || 0,
+                  address: p.address || `${p.city}, ${p.province}`
+                }))}
+                center={searchLocation || [44.4949, 12.0424]} // Default to Ferrara
+                zoom={searchLocation ? 12 : 8}
+                userLocation={userLocation || undefined}
+                className="w-full h-full"
               />
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className={viewMode === 'grid' 
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+              : "space-y-3 sm:space-y-4"
+            }>
+              {displayProfessionals.map((professional: Professional) => (
+                <div key={professional.id} className="relative">
+                  <ProfessionalCard 
+                    professional={professional} 
+                    compact={viewMode === 'list'}
+                  />
+                  {searchLocation && 'distance' in professional && (
+                    <div className="absolute top-2 right-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                      {(professional.distance as number).toFixed(1)} km
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )
         ) : !hasSearchParams ? (
           <div className="text-center py-12">
             <div className="bg-primary/10 rounded-full p-6 w-24 h-24 mx-auto mb-4 flex items-center justify-center">
