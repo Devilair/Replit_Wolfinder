@@ -444,13 +444,13 @@ export default function SearchPage() {
           viewMode === 'map' ? (
             <div className="h-96 rounded-lg overflow-hidden">
               <MapView
-                professionals={displayProfessionals.map(p => ({
+                professionals={displayProfessionals.map((p: any) => ({
                   ...p,
                   latitude: p.latitude || 0,
                   longitude: p.longitude || 0,
                   address: p.address || `${p.city}, ${p.province}`
                 }))}
-                center={searchLocation || [44.4949, 12.0424]} // Default to Ferrara
+                center={searchLocation || [44.4949, 12.0424]}
                 zoom={searchLocation ? 12 : 8}
                 userLocation={userLocation || undefined}
                 className="w-full h-full"
