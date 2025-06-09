@@ -91,25 +91,25 @@ export default function SearchPage() {
 
   const ProfessionalCard = ({ professional, compact = false }: { professional: Professional; compact?: boolean }) => (
     <Card className={`hover:shadow-lg transition-shadow ${compact ? '' : 'h-full'}`}>
-      <CardHeader className={compact ? 'pb-2' : ''}>
-        <div className="flex items-center justify-between">
-          <Badge variant="outline" className="text-xs">
+      <CardHeader className={`${compact ? 'pb-2 p-3 sm:p-4' : 'p-4 sm:p-6'}`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <Badge variant="outline" className="text-xs w-fit">
             {professional.category.icon} {professional.category.name}
           </Badge>
-          <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+          <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 w-fit">
             <Shield className="h-3 w-3 mr-1" />
             Verificato
           </Badge>
         </div>
-        <CardTitle className={compact ? 'text-base' : 'text-lg'}>
+        <CardTitle className={`${compact ? 'text-base' : 'text-lg'} mt-2 truncate`}>
           {professional.businessName || "Professionista"}
         </CardTitle>
       </CardHeader>
-      <CardContent className={compact ? 'pt-0' : ''}>
+      <CardContent className={`${compact ? 'pt-0 p-3 sm:p-4' : 'p-4 sm:p-6 pt-0'}`}>
         <p className={`text-gray-600 text-sm mb-3 ${compact ? 'line-clamp-1' : 'line-clamp-2'}`}>
           {professional.description}
         </p>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
           <div className="flex items-center">
             <Star className="h-4 w-4 text-yellow-500 mr-1" />
             <span className="text-sm font-medium">{professional.rating}</span>
@@ -148,25 +148,25 @@ export default function SearchPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Search Filters */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-              <div className="md:col-span-2">
+        <Card className="mb-6 sm:mb-8">
+          <CardContent className="p-4 sm:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
+              <div className="sm:col-span-2 lg:col-span-2">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
                   <Input
                     placeholder="Cerca professionista, servizio..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-8 sm:pl-10 text-sm sm:text-base"
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   />
                 </div>
               </div>
               <Select value={selectedCity} onValueChange={setSelectedCity}>
-                <SelectTrigger>
+                <SelectTrigger className="text-sm sm:text-base">
                   <MapPin className="h-4 w-4" />
                   <SelectValue placeholder="Tutte le città" />
                 </SelectTrigger>
@@ -177,7 +177,7 @@ export default function SearchPage() {
                 </SelectContent>
               </Select>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger>
+                <SelectTrigger className="text-sm sm:text-base">
                   <SelectValue placeholder="Tutte le categorie" />
                 </SelectTrigger>
                 <SelectContent>
@@ -233,28 +233,28 @@ export default function SearchPage() {
         </Card>
 
         {/* Results */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
               {isLoading ? 'Ricerca in corso...' : `${professionals.length} professionisti trovati`}
             </h1>
             {(searchTerm || selectedCity || selectedCategory) && (
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-1 sm:gap-2 mt-2">
                 {searchTerm && (
-                  <Badge variant="secondary">
+                  <Badge variant="secondary" className="text-xs">
                     Ricerca: "{searchTerm}"
                   </Badge>
                 )}
                 {selectedCity && selectedCity !== 'all' && (
-                  <Badge variant="secondary">
+                  <Badge variant="secondary" className="text-xs">
                     <MapPin className="h-3 w-3 mr-1" />
                     {selectedCity}
                   </Badge>
                 )}
                 {selectedCategory && selectedCategory !== 'all' && (
-                  <Badge variant="secondary">
-                    {categories.find((c: any) => c.id.toString() === selectedCategory)?.icon}{' '}
-                    {categories.find((c: any) => c.id.toString() === selectedCategory)?.name}
+                  <Badge variant="secondary" className="text-xs">
+                    {(categories as any[]).find((c: any) => c.id.toString() === selectedCategory)?.icon}{' '}
+                    {(categories as any[]).find((c: any) => c.id.toString() === selectedCategory)?.name}
                   </Badge>
                 )}
               </div>
@@ -263,17 +263,17 @@ export default function SearchPage() {
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[...Array(6)].map((_, i) => (
               <Card key={i} className="animate-pulse">
-                <CardContent className="h-48 bg-gray-100 rounded"></CardContent>
+                <CardContent className="h-40 sm:h-48 bg-gray-100 rounded"></CardContent>
               </Card>
             ))}
           </div>
         ) : professionals.length > 0 ? (
           <div className={viewMode === 'grid' 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            : "space-y-4"
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+            : "space-y-3 sm:space-y-4"
           }>
             {professionals.map((professional: Professional) => (
               <ProfessionalCard 

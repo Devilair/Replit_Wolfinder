@@ -402,12 +402,12 @@ export default function AdminProfessionals() {
       )}
 
       {/* Professionals List */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {professionalsData?.data?.map((professional) => (
           <Card key={professional.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-4 flex-1">
+            <CardContent className="p-3 sm:p-4 lg:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div className="flex items-start space-x-3 sm:space-x-4 flex-1">
                   <input
                     type="checkbox"
                     checked={selectedProfessionals.includes(professional.id)}
@@ -421,31 +421,33 @@ export default function AdminProfessionals() {
                     className="mt-1"
                   />
                   
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                         {professional.businessName}
                       </h3>
-                      <Badge 
-                        variant="outline" 
-                        className={`${getStatusColor(professional.verificationStatus)} border-0`}
-                      >
-                        {getStatusIcon(professional.verificationStatus)}
-                        <span className="ml-1 capitalize">
-                          {professional.verificationStatus}
-                        </span>
-                      </Badge>
-                      {!professional.isClaimed && (
-                        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                          Non reclamato
+                      <div className="flex flex-wrap gap-2">
+                        <Badge 
+                          variant="outline" 
+                          className={`${getStatusColor(professional.verificationStatus)} border-0 text-xs`}
+                        >
+                          {getStatusIcon(professional.verificationStatus)}
+                          <span className="ml-1 capitalize">
+                            {professional.verificationStatus}
+                          </span>
                         </Badge>
-                      )}
-                      {professional.isPremium && (
-                        <Badge variant="default" className="bg-purple-100 text-purple-800">
-                          Premium
-                        </Badge>
-                      )}
+                        {!professional.isClaimed && (
+                          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-xs">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Non reclamato
+                          </Badge>
+                        )}
+                        {professional.isPremium && (
+                          <Badge variant="default" className="bg-purple-100 text-purple-800 text-xs">
+                            Premium
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
