@@ -122,7 +122,40 @@ export default function EditProfessional() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateMutation.mutate(formData);
+    
+    const updateData = {
+      businessName: formData.businessName,
+      description: formData.description,
+      email: formData.email,
+      phoneFixed: formData.phoneFixed || null,
+      phoneMobile: formData.phoneMobile || null,
+      website: formData.website || null,
+      pec: formData.pec || null,
+      vatNumber: formData.vatNumber || null,
+      fiscalCode: formData.fiscalCode || null,
+      whatsappNumber: formData.whatsappNumber || null,
+      facebookUrl: formData.facebookUrl || null,
+      instagramUrl: formData.instagramUrl || null,
+      linkedinUrl: formData.linkedinUrl || null,
+      twitterUrl: formData.twitterUrl || null,
+      address: formData.address,
+      city: formData.city,
+      additionalCities: formData.additionalCities || null,
+      province: formData.province,
+      postalCode: formData.postalCode,
+      latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+      longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+      priceRangeMin: formData.priceRangeMin ? parseFloat(formData.priceRangeMin) : null,
+      priceRangeMax: formData.priceRangeMax ? parseFloat(formData.priceRangeMax) : null,
+      priceUnit: formData.priceUnit || null,
+      categoryId: parseInt(formData.categoryId),
+      isVerified: formData.isVerified,
+      verificationStatus: formData.verificationStatus,
+      isPremium: formData.isPremium,
+      adminNotes: formData.adminNotes
+    };
+
+    updateMutation.mutate(updateData);
   };
 
   const handleInputChange = (field: string, value: any) => {
