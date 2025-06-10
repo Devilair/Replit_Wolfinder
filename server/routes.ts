@@ -2762,7 +2762,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Get all badges with management options
-  app.get("/api/admin/badges", authService.requireRole(['admin']), async (req, res) => {
+  app.get("/api/admin/badges", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
     try {
       const badges = await storage.getBadges();
       res.json(badges);

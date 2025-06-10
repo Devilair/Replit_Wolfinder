@@ -161,19 +161,26 @@ export class AuthService {
     const token = authHeader && authHeader.split(' ')[1];
 
     if (!token) {
+      console.log('No token provided');
       return res.status(401).json({ error: 'Token di accesso richiesto' });
     }
 
     const decoded = this.verifyToken(token);
     if (!decoded) {
+      console.log('Token verification failed');
       return res.status(403).json({ error: 'Token non valido' });
     }
+
+    console.log('Decoded token:', decoded);
 
     try {
       const [user] = await db.select().from(users).where(eq(users.id, decoded.id)).limit(1);
       if (!user) {
+        console.log('User not found for ID:', decoded.id);
         return res.status(403).json({ error: 'Utente non trovato' });
       }
+
+      console.log('User found:', { id: user.id, email: user.email, role: user.role });
 
       req.user = {
         id: user.id,
