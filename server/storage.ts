@@ -1489,6 +1489,46 @@ export class DatabaseStorage implements IStorage {
 
     return activities;
   }
+
+  async createProfessionalWithoutUser(data: any): Promise<Professional> {
+    const [professional] = await db
+      .insert(professionals)
+      .values({
+        userId: null, // No user association for admin-created profiles
+        categoryId: data.categoryId,
+        businessName: data.businessName,
+        description: data.description || "",
+        email: data.email,
+        phoneFixed: data.phoneFixed || null,
+        phoneMobile: data.phoneMobile || null,
+        address: data.address || "",
+        city: data.city || "",
+        province: data.province || "",
+        postalCode: data.postalCode || "",
+        latitude: data.latitude || null,
+        longitude: data.longitude || null,
+        isClaimed: false,
+        isVerified: false,
+        verificationStatus: "pending",
+        profileClaimToken: data.profileClaimToken,
+        claimTokenExpiresAt: data.claimTokenExpiresAt,
+        autoNotificationEnabled: true,
+        rating: "0",
+        reviewCount: 0,
+        profileViews: 0,
+        profileCompleteness: "60"
+      })
+      .returning();
+    return professional;
+  }
+
+  async getUnclaimedProfessionals(): Promise<Professional[]> {
+    const result = await db
+      .select()
+      .from(professionals)
+      .where(eq(professionals.isClaimed, false));
+    return result;
+  }
 }
 
 export const storage = new DatabaseStorage();
