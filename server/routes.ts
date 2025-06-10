@@ -2750,13 +2750,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // BADGE SYSTEM ROUTES
   // =====================================================
 
-  // Get all badges
+  // Get all badges (public)
   app.get("/api/badges", async (req, res) => {
     try {
       const badges = await storage.getBadges();
       res.json(badges);
     } catch (error) {
       console.error("Error fetching badges:", error);
+      res.status(500).json({ message: "Failed to fetch badges" });
+    }
+  });
+
+  // Admin: Get all badges with management options
+  app.get("/api/admin/badges", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const badges = await storage.getBadges();
+      res.json(badges);
+    } catch (error) {
+      console.error("Error fetching admin badges:", error);
       res.status(500).json({ message: "Failed to fetch badges" });
     }
   });
