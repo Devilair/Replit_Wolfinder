@@ -149,6 +149,8 @@ export interface IStorage {
   getAdminProfessionals(params?: any): Promise<ProfessionalWithDetails[]>;
   updateProfessional(id: number, data: Partial<Professional>): Promise<Professional>;
   deleteProfessional(id: number): Promise<void>;
+  createProfessionalWithoutUser(data: any): Promise<Professional>;
+  getUnclaimedProfessionals(): Promise<Professional[]>;
   getAdminStats(): Promise<any>;
   getAdminDashboardStats(): Promise<{
     activeUsers: {
