@@ -16,6 +16,7 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import AdvancedDashboard from "@/pages/admin/advanced-dashboard";
 import AdminProfessionals from "@/pages/admin/professionals";
 import AddProfessional from "@/pages/admin/add-professional";
+import EditProfessional from "@/pages/admin/edit-professional";
 import AdminReviews from "@/pages/admin/reviews-advanced";
 import AdminCategories from "@/pages/admin/categories";
 import AdminSubscriptions from "@/pages/admin/subscriptions";
@@ -117,6 +118,11 @@ function Router() {
       <Route path="/admin/add-professional" component={() => (
         <AdminLayout>
           <AddProfessional />
+        </AdminLayout>
+      )} />
+      <Route path="/admin/professionals/:id/edit" component={() => (
+        <AdminLayout>
+          <EditProfessional />
         </AdminLayout>
       )} />
       <Route path="/admin/reviews" component={() => (

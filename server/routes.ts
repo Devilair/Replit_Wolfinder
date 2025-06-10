@@ -650,6 +650,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get single professional (admin only)
+  app.get("/api/admin/professionals/:id", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      const professional = await storage.getProfessional(professionalId);
+      
+      if (!professional) {
+        return res.status(404).json({ message: "Professional not found" });
+      }
+      
+      res.json(professional);
+    } catch (error) {
+      console.error("Error fetching professional:", error);
+      res.status(500).json({ message: "Failed to fetch professional" });
+    }
+  });
+
+  // Update professional (admin only)
+  app.put("/api/admin/professionals/:id", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      const updatedProfessional = await storage.updateProfessional(professionalId, updateData);
+      res.json(updatedProfessional);
+    } catch (error) {
+      console.error("Error updating professional:", error);
+      res.status(500).json({ message: "Failed to update professional" });
+    }
+  });
+
+  // Delete professional (admin only)
+  app.delete("/api/admin/professionals/:id", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      await storage.deleteProfessional(professionalId);
+      res.json({ message: "Professional deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting professional:", error);
+      res.status(500).json({ message: "Failed to delete professional" });
+    }
+  });
+
   // Create professional manually (admin only)
   app.post("/api/admin/professionals", async (req, res) => {
     try {
