@@ -8,16 +8,46 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Save, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Save, CheckCircle, XCircle, AlertTriangle, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix for default markers in Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+// Component to handle map clicks
+function LocationMarker({ position, setPosition }: { 
+  position: [number, number] | null; 
+  setPosition: (pos: [number, number]) => void 
+}) {
+  useMapEvents({
+    click(e) {
+      setPosition([e.latlng.lat, e.latlng.lng]);
+    },
+  });
+
+  return position === null ? null : (
+    <Marker position={position} />
+  );
+}
 
 export default function EditProfessional() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // State for map position
+  const [mapPosition, setMapPosition] = useState<[number, number] | null>(null);
 
   const [formData, setFormData] = useState({
     businessName: "",
@@ -97,8 +127,23 @@ export default function EditProfessional() {
         isPremium: professional.isPremium || false,
         adminNotes: professional.adminNotes || ""
       });
+      
+      // Set map position if coordinates exist
+      if (professional.latitude && professional.longitude) {
+        setMapPosition([professional.latitude, professional.longitude]);
+      }
     }
   }, [professional]);
+
+  // Handle map position changes
+  const handleMapPositionChange = (position: [number, number]) => {
+    setMapPosition(position);
+    setFormData(prev => ({
+      ...prev,
+      latitude: position[0].toString(),
+      longitude: position[1].toString()
+    }));
+  };
 
   // Update mutation
   const updateMutation = useMutation({
@@ -464,28 +509,64 @@ export default function EditProfessional() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="latitude">Latitudine</Label>
-                    <Input
-                      id="latitude"
-                      type="number"
-                      step="any"
-                      value={formData.latitude}
-                      onChange={(e) => handleInputChange('latitude', e.target.value)}
-                      placeholder="44.494900"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="longitude">Longitudine</Label>
-                    <Input
-                      id="longitude"
-                      type="number"
-                      step="any"
-                      value={formData.longitude}
-                      onChange={(e) => handleInputChange('longitude', e.target.value)}
-                      placeholder="12.042400"
-                    />
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Posizione su Mappa
+                  </Label>
+                  <div className="mt-2 space-y-4">
+                    <div className="h-64 w-full border rounded-lg overflow-hidden">
+                      <MapContainer
+                        center={mapPosition || [44.4949, 12.0424]} // Default to Ferrara if no position
+                        zoom={13}
+                        style={{ height: '100%', width: '100%' }}
+                      >
+                        <TileLayer
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <LocationMarker position={mapPosition} setPosition={handleMapPositionChange} />
+                      </MapContainer>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="latitude">Latitudine</Label>
+                        <Input
+                          id="latitude"
+                          type="number"
+                          step="any"
+                          value={formData.latitude}
+                          onChange={(e) => {
+                            handleInputChange('latitude', e.target.value);
+                            if (e.target.value && formData.longitude) {
+                              setMapPosition([parseFloat(e.target.value), parseFloat(formData.longitude)]);
+                            }
+                          }}
+                          placeholder="44.494900"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="longitude">Longitudine</Label>
+                        <Input
+                          id="longitude"
+                          type="number"
+                          step="any"
+                          value={formData.longitude}
+                          onChange={(e) => {
+                            handleInputChange('longitude', e.target.value);
+                            if (formData.latitude && e.target.value) {
+                              setMapPosition([parseFloat(formData.latitude), parseFloat(e.target.value)]);
+                            }
+                          }}
+                          placeholder="12.042400"
+                        />
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground">
+                      Clicca sulla mappa per impostare la posizione o inserisci le coordinate manualmente
+                    </p>
                   </div>
                 </div>
               </CardContent>
