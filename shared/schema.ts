@@ -1077,7 +1077,7 @@ export const professionalBadges = pgTable("professional_badges", {
   id: serial("id").primaryKey(),
   professionalId: integer("professional_id").references(() => professionals.id).notNull(),
   badgeId: integer("badge_id").references(() => badges.id).notNull(),
-  earnedAt: timestamp("earned_at").defaultNow().notNull(),
+  awardedAt: timestamp("awarded_at").defaultNow().notNull(),
   awardedBy: text("awarded_by").default("system"),
   metadataSnapshot: jsonb("metadata_snapshot"),
   isVisible: boolean("is_visible").default(true),
@@ -1108,7 +1108,7 @@ export const insertBadgeSchema = createInsertSchema(badges).omit({
 
 export const insertProfessionalBadgeSchema = createInsertSchema(professionalBadges).omit({ 
   id: true, 
-  earnedAt: true,
+  awardedAt: true,
   createdAt: true
 });
 
