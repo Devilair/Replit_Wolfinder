@@ -137,7 +137,7 @@ export class AuthService {
       const authUser: AuthUser = {
         id: user.id,
         email: user.email,
-        username: user.username || user.email,
+        username: user.email,
         name: user.name,
         role: user.role,
         isVerified: user.isVerified
@@ -178,7 +178,7 @@ export class AuthService {
       req.user = {
         id: user.id,
         email: user.email,
-        username: user.username || user.email,
+        username: user.email,
         name: user.name,
         role: user.role,
         isVerified: user.isVerified
