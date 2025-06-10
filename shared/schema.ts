@@ -1079,12 +1079,12 @@ export const professionalBadges = pgTable("professional_badges", {
   badgeId: integer("badge_id").references(() => badges.id).notNull(),
   awardedAt: timestamp("awarded_at").defaultNow().notNull(),
   awardedBy: text("awarded_by").default("system"),
-  metadataSnapshot: jsonb("metadata_snapshot"),
+  expiresAt: timestamp("expires_at"),
+  metadata: jsonb("metadata"),
   isVisible: boolean("is_visible").default(true),
   revokedAt: timestamp("revoked_at"),
   revokedBy: integer("revoked_by").references(() => users.id),
-  revokedReason: text("revoked_reason"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  revokeReason: text("revoke_reason"),
 }, (table) => ({
   uniqueProfessionalBadge: unique().on(table.professionalId, table.badgeId),
 }));

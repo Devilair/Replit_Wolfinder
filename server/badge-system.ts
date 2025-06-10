@@ -465,7 +465,7 @@ export class BadgeSystem {
         professionalId,
         badgeId: badge.id,
         awardedBy,
-        metadataSnapshot: metadata,
+        metadata: metadata,
         isVisible: true
       });
 

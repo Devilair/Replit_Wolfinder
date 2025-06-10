@@ -1084,7 +1084,7 @@ export class DatabaseStorage implements IStorage {
       professionalId,
       badgeId,
       awardedBy,
-      metadataSnapshot: metadata,
+      metadata: metadata,
       isVisible: true
     }).returning();
     return professionalBadge;
