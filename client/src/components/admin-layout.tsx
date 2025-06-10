@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 import { 
   LayoutDashboard, 
   Users, 
@@ -19,7 +20,8 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { toast } = useToast();
 
   const navigation = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard, current: location === "/admin" },
@@ -32,6 +34,32 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { name: "Audit Log", href: "/admin/audit-logs", icon: FileText, current: location === "/admin/audit-logs" },
     { name: "Impostazioni", href: "/admin/settings", icon: Settings, current: location === "/admin/settings" },
   ];
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Logout effettuato",
+          description: "Sei stato disconnesso con successo"
+        });
+        localStorage.removeItem('auth-token');
+        setLocation('/');
+      } else {
+        throw new Error('Errore durante il logout');
+      }
+    } catch (error) {
+      toast({
+        title: "Errore",
+        description: "Errore durante il logout",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -52,7 +80,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   Vai al Sito
                 </Button>
               </Link>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </Button>
