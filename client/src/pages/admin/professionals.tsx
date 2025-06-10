@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +60,7 @@ interface Professional {
 }
 
 export default function AdminProfessionals() {
+  const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -504,7 +506,7 @@ export default function AdminProfessionals() {
                   <Button 
                     size="sm" 
                     variant="outline"
-                    onClick={() => window.open(`/admin/professionals/${professional.id}/edit`, '_blank')}
+                    onClick={() => setLocation(`/admin/professionals/${professional.id}/edit`)}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
