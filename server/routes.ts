@@ -837,9 +837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/professional/profile-complete", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
     try {
       const user = req.user as any;
-      console.log("User in profile-complete:", user);
       const professional = await storage.getProfessionalByUserId(user.id);
-      console.log("Professional found:", professional);
       
       if (!professional) {
         return res.status(404).json({ message: "Professional profile not found" });
