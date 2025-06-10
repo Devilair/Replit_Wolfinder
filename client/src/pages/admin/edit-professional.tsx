@@ -36,11 +36,13 @@ export default function EditProfessional() {
   });
 
   // Fetch professional data
-  const { data: professional, isLoading } = useQuery({
+  const { data: professional, isLoading, error } = useQuery({
     queryKey: ['/api/admin/professionals', id],
     queryFn: () => apiRequest('GET', `/api/admin/professionals/${id}`),
     enabled: !!id
   });
+
+  console.log('Professional data:', { professional, isLoading, error, id });
 
   // Fetch categories for dropdown
   const { data: categories } = useQuery({
