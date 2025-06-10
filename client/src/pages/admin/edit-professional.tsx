@@ -25,13 +25,29 @@ export default function EditProfessional() {
     email: "",
     phoneFixed: "",
     phoneMobile: "",
+    website: "",
+    pec: "",
+    vatNumber: "",
+    fiscalCode: "",
+    whatsappNumber: "",
+    facebookUrl: "",
+    instagramUrl: "",
+    linkedinUrl: "",
+    twitterUrl: "",
     address: "",
     city: "",
+    additionalCities: "",
     province: "",
     postalCode: "",
+    latitude: "",
+    longitude: "",
+    priceRangeMin: "",
+    priceRangeMax: "",
+    priceUnit: "",
     categoryId: "",
     isVerified: false,
     verificationStatus: "pending",
+    isPremium: false,
     adminNotes: ""
   });
 
@@ -41,8 +57,6 @@ export default function EditProfessional() {
     queryFn: () => apiRequest('GET', `/api/admin/professionals/${id}`),
     enabled: !!id
   });
-
-  console.log('Professional data:', { professional, isLoading, error, id });
 
   // Fetch categories for dropdown
   const { data: categories } = useQuery({
@@ -58,13 +72,29 @@ export default function EditProfessional() {
         email: professional.email || "",
         phoneFixed: professional.phoneFixed || "",
         phoneMobile: professional.phoneMobile || "",
+        website: professional.website || "",
+        pec: professional.pec || "",
+        vatNumber: professional.vatNumber || "",
+        fiscalCode: professional.fiscalCode || "",
+        whatsappNumber: professional.whatsappNumber || "",
+        facebookUrl: professional.facebookUrl || "",
+        instagramUrl: professional.instagramUrl || "",
+        linkedinUrl: professional.linkedinUrl || "",
+        twitterUrl: professional.twitterUrl || "",
         address: professional.address || "",
         city: professional.city || "",
+        additionalCities: professional.additionalCities || "",
         province: professional.province || "",
         postalCode: professional.postalCode || "",
+        latitude: professional.latitude || "",
+        longitude: professional.longitude || "",
+        priceRangeMin: professional.priceRangeMin?.toString() || "",
+        priceRangeMax: professional.priceRangeMax?.toString() || "",
+        priceUnit: professional.priceUnit || "",
         categoryId: professional.categoryId?.toString() || "",
         isVerified: professional.isVerified || false,
         verificationStatus: professional.verificationStatus || "pending",
+        isPremium: professional.isPremium || false,
         adminNotes: professional.adminNotes || ""
       });
     }
@@ -221,6 +251,114 @@ export default function EditProfessional() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="website">Sito Web</Label>
+                    <Input
+                      id="website"
+                      type="url"
+                      value={formData.website}
+                      onChange={(e) => handleInputChange('website', e.target.value)}
+                      placeholder="https://www.esempio.it"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="pec">PEC</Label>
+                    <Input
+                      id="pec"
+                      type="email"
+                      value={formData.pec}
+                      onChange={(e) => handleInputChange('pec', e.target.value)}
+                      placeholder="nome@pec.it"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="vatNumber">Partita IVA</Label>
+                    <Input
+                      id="vatNumber"
+                      value={formData.vatNumber}
+                      onChange={(e) => handleInputChange('vatNumber', e.target.value)}
+                      placeholder="IT12345678901"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="fiscalCode">Codice Fiscale</Label>
+                    <Input
+                      id="fiscalCode"
+                      value={formData.fiscalCode}
+                      onChange={(e) => handleInputChange('fiscalCode', e.target.value)}
+                      placeholder="RSSMRA80A01H501U"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="whatsappNumber">WhatsApp</Label>
+                  <Input
+                    id="whatsappNumber"
+                    value={formData.whatsappNumber}
+                    onChange={(e) => handleInputChange('whatsappNumber', e.target.value)}
+                    placeholder="+39 333 1234567"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Social Media Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Social Media</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="facebookUrl">Facebook</Label>
+                    <Input
+                      id="facebookUrl"
+                      type="url"
+                      value={formData.facebookUrl}
+                      onChange={(e) => handleInputChange('facebookUrl', e.target.value)}
+                      placeholder="https://facebook.com/profilo"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="instagramUrl">Instagram</Label>
+                    <Input
+                      id="instagramUrl"
+                      type="url"
+                      value={formData.instagramUrl}
+                      onChange={(e) => handleInputChange('instagramUrl', e.target.value)}
+                      placeholder="https://instagram.com/profilo"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="linkedinUrl">LinkedIn</Label>
+                    <Input
+                      id="linkedinUrl"
+                      type="url"
+                      value={formData.linkedinUrl}
+                      onChange={(e) => handleInputChange('linkedinUrl', e.target.value)}
+                      placeholder="https://linkedin.com/in/profilo"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="twitterUrl">Twitter</Label>
+                    <Input
+                      id="twitterUrl"
+                      type="url"
+                      value={formData.twitterUrl}
+                      onChange={(e) => handleInputChange('twitterUrl', e.target.value)}
+                      placeholder="https://twitter.com/profilo"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <Label htmlFor="category">Categoria *</Label>
                   <Select 
@@ -282,6 +420,93 @@ export default function EditProfessional() {
                     />
                   </div>
                 </div>
+
+                <div>
+                  <Label htmlFor="additionalCities">Città Aggiuntive</Label>
+                  <Input
+                    id="additionalCities"
+                    value={formData.additionalCities}
+                    onChange={(e) => handleInputChange('additionalCities', e.target.value)}
+                    placeholder="Es: Bologna, Modena (separate da virgola)"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="latitude">Latitudine</Label>
+                    <Input
+                      id="latitude"
+                      type="number"
+                      step="any"
+                      value={formData.latitude}
+                      onChange={(e) => handleInputChange('latitude', e.target.value)}
+                      placeholder="44.494900"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="longitude">Longitudine</Label>
+                    <Input
+                      id="longitude"
+                      type="number"
+                      step="any"
+                      value={formData.longitude}
+                      onChange={(e) => handleInputChange('longitude', e.target.value)}
+                      placeholder="12.042400"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pricing Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Prezzi</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="priceRangeMin">Prezzo Minimo (€)</Label>
+                    <Input
+                      id="priceRangeMin"
+                      type="number"
+                      step="0.01"
+                      value={formData.priceRangeMin}
+                      onChange={(e) => handleInputChange('priceRangeMin', e.target.value)}
+                      placeholder="50.00"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="priceRangeMax">Prezzo Massimo (€)</Label>
+                    <Input
+                      id="priceRangeMax"
+                      type="number"
+                      step="0.01"
+                      value={formData.priceRangeMax}
+                      onChange={(e) => handleInputChange('priceRangeMax', e.target.value)}
+                      placeholder="200.00"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="priceUnit">Unità di Prezzo</Label>
+                  <Select 
+                    value={formData.priceUnit} 
+                    onValueChange={(value) => handleInputChange('priceUnit', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleziona unità" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hour">Per ora</SelectItem>
+                      <SelectItem value="project">Per progetto</SelectItem>
+                      <SelectItem value="consultation">Per consulenza</SelectItem>
+                      <SelectItem value="day">Per giorno</SelectItem>
+                      <SelectItem value="month">Per mese</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -302,6 +527,15 @@ export default function EditProfessional() {
                     id="isVerified"
                     checked={formData.isVerified}
                     onCheckedChange={(checked) => handleInputChange('isVerified', checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="isPremium">Premium</Label>
+                  <Switch
+                    id="isPremium"
+                    checked={formData.isPremium}
+                    onCheckedChange={(checked) => handleInputChange('isPremium', checked)}
                   />
                 </div>
 
