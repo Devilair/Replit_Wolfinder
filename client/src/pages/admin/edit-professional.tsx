@@ -145,6 +145,53 @@ export default function EditProfessional() {
     }));
   };
 
+  // Geocode address to get coordinates
+  const geocodeAddress = async () => {
+    if (!formData.address || !formData.city) {
+      toast({
+        title: "Errore",
+        description: "Inserisci almeno via e città per la geocodifica",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const fullAddress = `${formData.address}, ${formData.city}, ${formData.province}, Italia`;
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}&limit=1`);
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lng = parseFloat(data[0].lon);
+        
+        setMapPosition([lat, lng]);
+        setFormData(prev => ({
+          ...prev,
+          latitude: lat.toString(),
+          longitude: lng.toString()
+        }));
+        
+        toast({
+          title: "Geocodifica completata",
+          description: "Coordinate aggiornate in base all'indirizzo"
+        });
+      } else {
+        toast({
+          title: "Indirizzo non trovato",
+          description: "Impossibile trovare le coordinate per questo indirizzo",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Errore geocodifica",
+        description: "Errore durante la ricerca delle coordinate",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: (data: any) => apiRequest('PUT', `/api/admin/professionals/${id}`, data),
@@ -564,8 +611,21 @@ export default function EditProfessional() {
                       </div>
                     </div>
                     
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={geocodeAddress}
+                        className="flex items-center gap-2"
+                      >
+                        <MapPin className="h-4 w-4" />
+                        Trova coordinate dall'indirizzo
+                      </Button>
+                    </div>
+                    
                     <p className="text-sm text-muted-foreground">
-                      Clicca sulla mappa per impostare la posizione o inserisci le coordinate manualmente
+                      Clicca sulla mappa per impostare la posizione, usa il pulsante per geocodificare l'indirizzo, o inserisci le coordinate manualmente
                     </p>
                   </div>
                 </div>
