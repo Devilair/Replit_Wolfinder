@@ -124,10 +124,12 @@ export class AuthService {
       const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
       
       if (!user) {
+        console.log('User not found for email:', email);
         return { success: false, error: "Credenziali non valide" };
       }
 
       const isValidPassword = await this.verifyPassword(password, user.password);
+      
       if (!isValidPassword) {
         return { success: false, error: "Credenziali non valide" };
       }
