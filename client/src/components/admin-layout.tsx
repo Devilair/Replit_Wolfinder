@@ -47,7 +47,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           title: "Logout effettuato",
           description: "Sei stato disconnesso con successo"
         });
-        localStorage.removeItem('auth-token');
+        localStorage.removeItem('auth_token');
         setLocation('/');
       } else {
         throw new Error('Errore durante il logout');
