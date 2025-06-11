@@ -1317,7 +1317,40 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProfessional(id: number): Promise<void> {
-    await db.delete(professionals).where(eq(professionals.id, id));
+    // Get professional data to find associated user
+    const professional = await db.select().from(professionals).where(eq(professionals.id, id));
+    
+    if (professional.length === 0) {
+      throw new Error("Professional not found");
+    }
+
+    const userId = professional[0].userId;
+
+    // Start transaction for cascading delete
+    await db.transaction(async (tx) => {
+      // Delete all reviews for this professional
+      await tx.delete(reviews).where(eq(reviews.professionalId, id));
+      
+      // Delete professional badges
+      await tx.delete(professionalBadges).where(eq(professionalBadges.professionalId, id));
+      
+      // Delete subscription if exists
+      await tx.delete(subscriptions).where(eq(subscriptions.professionalId, id));
+      
+      // Delete transactions related to this professional
+      await tx.delete(transactions).where(eq(transactions.professionalId, id));
+      
+      // Delete professional notifications
+      await tx.delete(professionalNotifications).where(eq(professionalNotifications.professionalId, id));
+      
+      // Delete the professional record
+      await tx.delete(professionals).where(eq(professionals.id, id));
+      
+      // Delete the associated user account if it exists
+      if (userId) {
+        await tx.delete(users).where(eq(users.id, userId));
+      }
+    });
   }
 
   async getAdminStats(): Promise<any> {

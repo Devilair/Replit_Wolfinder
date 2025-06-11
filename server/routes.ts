@@ -4420,8 +4420,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .where(sql`${professionals.id} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`);
           break;
         case 'delete':
-          await db.delete(professionals)
-            .where(sql`${professionals.id} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`);
+          // Use the proper deleteProfessional method for each ID to ensure cascading delete
+          for (const id of ids) {
+            await storage.deleteProfessional(parseInt(id));
+          }
           break;
         default:
           return res.status(400).json({ error: "Invalid action" });
