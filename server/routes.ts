@@ -285,6 +285,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test email endpoint
+  app.post('/api/test-email', async (req, res) => {
+    try {
+      const { email, name, token } = req.body;
+      
+      await emailService.sendEmailVerification(
+        email,
+        name || 'Maria Luisa Pagni',
+        135, // professional ID
+        token
+      );
+      
+      res.json({ message: 'Email di verifica inviata con successo' });
+    } catch (error) {
+      console.error('Email test error:', error);
+      res.status(500).json({ error: 'Errore nell\'invio dell\'email' });
+    }
+  });
+
   app.get("/api/auth/profile", authService.authenticateToken, async (req, res) => {
     try {
       const user = req.user;
