@@ -31,6 +31,7 @@ import SubscriptionPlans from "@/pages/subscription-plans";
 import Register from "@/pages/auth/register";
 import Login from "@/pages/auth/login";
 import LoginPage from "@/pages/login";
+import Dashboard from "./pages/dashboard";
 import RegisterProfessional from "@/pages/register-professional";
 import BadgeDashboard from "@/pages/badge-dashboard";
 import ProfessionalDashboard from "@/pages/dashboard/professional";
@@ -82,7 +83,7 @@ function Router() {
       <Route path="/register-professional" component={RegisterProfessional} />
       
       {/* Professional Dashboard */}
-      <Route path="/dashboard" component={ProfessionalDashboard} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/dashboard/professional" component={ProfessionalDashboard} />
       <Route path="/dashboard/professional-advanced" component={ProfessionalDashboard} />
       <Route path="/badge-dashboard" component={BadgeDashboard} />

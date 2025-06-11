@@ -51,7 +51,7 @@ interface ProfessionalProfile {
   verificationStatus: string;
 }
 
-export function Dashboard() {
+export default function Dashboard() {
   const { data: profile, isLoading: profileLoading } = useQuery<ProfessionalProfile>({
     queryKey: ["/api/auth/profile"],
   });
