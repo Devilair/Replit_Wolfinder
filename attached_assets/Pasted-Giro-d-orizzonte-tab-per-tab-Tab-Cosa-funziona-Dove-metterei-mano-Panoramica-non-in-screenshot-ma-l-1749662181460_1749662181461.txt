@@ -1,0 +1,58 @@
+Giro d’orizzonte tab-per-tab
+Tab	Cosa funziona	Dove metterei mano
+Panoramica (non in screenshot ma l’abbiamo visto prima)	– Vista KPI rapida
+– Checklist prioritarie	– Evita n° 0 nudi (placeholder invito)
+– Micro-successo quando spunti una voce
+Profilo	– Split “Aziendali / Contatti / Indirizzo / Fiscali” leggibile
+– Banner viola dà personalità	– Sezione “Dati fiscali” vuota → callout giallo “aggiungi P. IVA (obbligatoria per badge Verified)”
+– Per campi “Non disponibile” usa un link inline “Aggiungi” anziché testo grigio statico
+Recensioni	– Stato vuoto pulito, icona chat spiega tutto	– Metti pulsante “Invita cliente” così non rimane schermata morta finché non arrivano review
+Analytics	– Performance mensile già mostra 3 metriche 🔥
+– Lock per feature Pro è chiaro	– Usa sparkline anche per 0 view (linea piatta) così l’utente “vede” il dato nascere la prima volta
+– Tooltip sul lock: “I trend mostrano andamenti giornalieri, utili per ottimizzare gli orari di pubblicazione”
+Servizi	– C’è visivamente un work-in-progress (“gestione servizi in sviluppo”)	– Aggiungi ETA (“Arriva a luglio”) o form beta-signup (“Vuoi testarli? Clicca qui”)
+Abbonamento	– Griglia piani molto chiara
+– Piano Free evidenziato	– Sottolinea che il ranking resta meritocratico in ogni piano (nota etica in fondo)
+– Metri­che concrete: “Analytics avanzate = grafico trend + CSV export”, ecc.
+
+Cosa scrivere a Replit (dev log / task list)
+Recensioni
+
+Endpoint “invite reviewer” + email template → UI bottone nel tab vuoto.
+
+Servizi
+
+Schema Drizzle services + CRUD API + pagina modale “Aggiungi servizio”.
+
+Analytics locked
+
+Flag plan dall’utente → se Premium mostra grafico LineChart.
+
+Placeholder copy
+
+Sostituire “Non disponibile” con link edit.
+
+Badge Verified flow
+
+Collegare upload documento + stato KYC al progress bar.
+
+Stripe checkout
+
+Piano Essentials/Pro/Studio con prezzi già in UI → manca session server-side + webhook.
+
+Scrivilo in un issue board trello/git: “feat: invite-reviewers”, “feat: services-crud” ecc.
+
+Cosa testare adesso (QA veloce)
+Flusso	Check
+Signup → verifica e-mail	Link valido, account verified=true
+Update profilo	Campi obbligatori, progress bar sale di % corretta
+Upload documento verifica	File size/format, mostra “in revisione”
+Invite cliente	Email sandbox ricevuta, review salva come pending
+Cambio piano Stripe (sandbox)	Session → redirect back → DB plan=pro
+Analytics	Dati view/click mockati compaiono, grafico si blocca se piano Free
+Responsive	Dashboard OK su 320 px e 1440 px
+Permessi	Utente Free non vede CSV export, Pro sì
+
+Metti questi step in un piccolo README “manual test sheet” finché non automatizzi con Playwright.
+
+In pratica: la UI è già bella pulita. Riempi i vuoti con CTA utili, collega le funzioni mancanti (invite, services, Stripe) e togli tutti i “0” piatti con copy ingaggiante. Così l’onboarding rimane fluido e il professionista capisce sempre il prossimo passo.

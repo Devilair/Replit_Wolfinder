@@ -623,19 +623,55 @@ export default function ProfessionalDashboard() {
                     <CardContent className="p-4 space-y-3">
                       <div className="border-b pb-2">
                         <span className="text-gray-600 text-sm">Telefono</span>
-                        <div className="font-semibold">{professionalData.phoneFixed || "Non disponibile"}</div>
+                        <div className="font-semibold">
+                          {professionalData.phoneFixed || (
+                            <button 
+                              onClick={openEditModal}
+                              className="text-blue-600 hover:text-blue-700 underline"
+                            >
+                              Aggiungi
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <div className="border-b pb-2">
                         <span className="text-gray-600 text-sm">Cellulare</span>
-                        <div className="font-semibold">{professionalData.phoneMobile || "Non disponibile"}</div>
+                        <div className="font-semibold">
+                          {professionalData.phoneMobile || (
+                            <button 
+                              onClick={openEditModal}
+                              className="text-blue-600 hover:text-blue-700 underline"
+                            >
+                              Aggiungi
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <div className="border-b pb-2">
                         <span className="text-gray-600 text-sm">Website</span>
-                        <div className="font-semibold text-blue-600">{professionalData.website || "Non disponibile"}</div>
+                        <div className="font-semibold text-blue-600">
+                          {professionalData.website || (
+                            <button 
+                              onClick={openEditModal}
+                              className="text-blue-600 hover:text-blue-700 underline"
+                            >
+                              Aggiungi
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <div>
                         <span className="text-gray-600 text-sm">WhatsApp</span>
-                        <div className="font-semibold text-green-600">{professionalData.whatsappNumber || "Non disponibile"}</div>
+                        <div className="font-semibold text-green-600">
+                          {professionalData.whatsappNumber || (
+                            <button 
+                              onClick={openEditModal}
+                              className="text-green-600 hover:text-green-700 underline"
+                            >
+                              Aggiungi
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -673,17 +709,57 @@ export default function ProfessionalDashboard() {
                       </h3>
                     </div>
                     <CardContent className="p-4 space-y-3">
+                      {!professionalData.vatNumber && !professionalData.pec && !professionalData.fiscalCode && (
+                        <Alert className="border-yellow-200 bg-yellow-50 mb-4">
+                          <AlertCircle className="h-4 w-4 text-yellow-600" />
+                          <AlertDescription className="text-yellow-800">
+                            <div className="flex items-center justify-between">
+                              <span>Aggiungi P.IVA (obbligatoria per badge Verified)</span>
+                              <Button size="sm" variant="outline" className="ml-4" onClick={openEditModal}>
+                                Aggiungi
+                              </Button>
+                            </div>
+                          </AlertDescription>
+                        </Alert>
+                      )}
                       <div className="border-b pb-2">
                         <span className="text-gray-600 text-sm">PEC</span>
-                        <div className="font-semibold">{professionalData.pec || "Non disponibile"}</div>
+                        <div className="font-semibold">
+                          {professionalData.pec || (
+                            <button 
+                              onClick={openEditModal}
+                              className="text-blue-600 hover:text-blue-700 underline"
+                            >
+                              Aggiungi
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <div className="border-b pb-2">
                         <span className="text-gray-600 text-sm">Partita IVA</span>
-                        <div className="font-semibold">{professionalData.vatNumber || "Non disponibile"}</div>
+                        <div className="font-semibold">
+                          {professionalData.vatNumber || (
+                            <button 
+                              onClick={openEditModal}
+                              className="text-blue-600 hover:text-blue-700 underline"
+                            >
+                              Aggiungi
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <div>
                         <span className="text-gray-600 text-sm">Codice Fiscale</span>
-                        <div className="font-semibold">{professionalData.fiscalCode || "Non disponibile"}</div>
+                        <div className="font-semibold">
+                          {professionalData.fiscalCode || (
+                            <button 
+                              onClick={openEditModal}
+                              className="text-blue-600 hover:text-blue-700 underline"
+                            >
+                              Aggiungi
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -730,7 +806,11 @@ export default function ProfessionalDashboard() {
                   <div className="text-center py-8">
                     <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500">Nessuna recensione ancora</p>
-                    <p className="text-sm text-gray-400">Le recensioni dei clienti appariranno qui</p>
+                    <p className="text-sm text-gray-400 mb-4">Le recensioni dei clienti appariranno qui</p>
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                      <Mail className="w-4 h-4 mr-2" />
+                      Invita Cliente
+                    </Button>
                   </div>
                 )}
               </CardContent>
@@ -751,15 +831,31 @@ export default function ProfessionalDashboard() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Visualizzazioni profilo</span>
-                      <span className="font-semibold">{professionalData?.profileViews || 0}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">{professionalData?.profileViews || 0}</span>
+                        {/* Sparkline anche per 0 views */}
+                        <div className="w-16 h-4 bg-gray-100 rounded">
+                          <div className="w-full h-full bg-blue-200 rounded opacity-50"></div>
+                        </div>
+                      </div>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Click su contatti</span>
-                      <span className="font-semibold">45</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">0</span>
+                        <div className="w-16 h-4 bg-gray-100 rounded">
+                          <div className="w-full h-full bg-green-200 rounded opacity-50"></div>
+                        </div>
+                      </div>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Richieste di preventivo</span>
-                      <span className="font-semibold">12</span>
+                      <span className="text-sm">Contatti ricevuti</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">0</span>
+                        <div className="w-16 h-4 bg-gray-100 rounded">
+                          <div className="w-full h-full bg-purple-200 rounded opacity-50"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -773,10 +869,16 @@ export default function ProfessionalDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-8">
-                    <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">Analytics dettagliati</p>
-                    <p className="text-sm text-gray-400">Disponibili con abbonamento Professional+</p>
+                  <div className="text-center py-8 relative group">
+                    <div className="absolute inset-0 bg-gray-100 rounded-lg opacity-30"></div>
+                    <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4 relative z-10" />
+                    <p className="text-gray-500 relative z-10">Analytics dettagliati</p>
+                    <p className="text-sm text-gray-400 relative z-10">Disponibili con abbonamento Professional+</p>
+                    
+                    {/* Tooltip on hover */}
+                    <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">
+                      I trend mostrano andamenti giornalieri, utili per ottimizzare gli orari di pubblicazione
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -796,7 +898,15 @@ export default function ProfessionalDashboard() {
                 <div className="text-center py-8">
                   <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-500">Gestione servizi in sviluppo</p>
-                  <p className="text-sm text-gray-400">Qui potrai gestire i tuoi servizi offerti</p>
+                  <p className="text-sm text-gray-400 mb-4">Qui potrai gestire i tuoi servizi offerti</p>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+                    <h4 className="font-semibold text-blue-900 mb-2">Arriva a Luglio 2025</h4>
+                    <p className="text-sm text-blue-700 mb-3">Vuoi essere tra i primi a testare la gestione servizi?</p>
+                    <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100">
+                      <Mail className="w-4 h-4 mr-2" />
+                      Iscriviti alla Beta
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -849,6 +959,26 @@ export default function ProfessionalDashboard() {
                       </CardContent>
                     </Card>
                   ))}
+                </div>
+                
+                {/* Nota etica */}
+                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-start">
+                    <CheckCircle className="w-5 h-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-green-900 mb-1">Ranking Meritocratico</h4>
+                      <p className="text-sm text-green-800">
+                        Il ranking resta sempre meritocratico in ogni piano. I professionisti emergono per qualità e recensioni autentiche, non per capacità di pagamento.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Dettagli funzionalità */}
+                <div className="mt-4 text-xs text-gray-500">
+                  <p><strong>Analytics avanzate:</strong> Grafici trend + CSV export per analisi approfondite</p>
+                  <p><strong>Badge esclusivi:</strong> Accesso a badge premium per evidenziare le tue specializzazioni</p>
+                  <p><strong>Gestione recensioni completa:</strong> Strumenti avanzati per rispondere e moderare feedback</p>
                 </div>
               </CardContent>
             </Card>
