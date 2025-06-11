@@ -183,10 +183,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/register-professional", async (req, res) => {
     try {
       const validatedData = req.body;
-      console.log('Registration data received:', JSON.stringify(validatedData, null, 2));
       
       if (!validatedData.acceptTerms || !validatedData.acceptPrivacy) {
-        console.log('Terms validation failed:', { acceptTerms: validatedData.acceptTerms, acceptPrivacy: validatedData.acceptPrivacy });
         return res.status(400).json({ error: "Devi accettare i termini di servizio e la privacy policy" });
       }
 
