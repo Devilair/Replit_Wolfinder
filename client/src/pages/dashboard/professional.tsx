@@ -371,9 +371,141 @@ export default function ProfessionalDashboard() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Gestione Attività - Sezione dedicata */}
+            <Card className="border-0 shadow-lg bg-white/90">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Building2 className="w-5 h-5 mr-2" />
+                  Gestione Attività
+                </CardTitle>
+                <p className="text-sm text-gray-600">Monitora e gestisci le tue attività professionali</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Attività recenti */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 border rounded-lg bg-blue-50">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-blue-900">Nuove Recensioni</h4>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                        {professionalData?.reviewCount || 0}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-blue-700 mb-3">Rispondi alle recensioni recenti per mantenere l'engagement</p>
+                    <Button size="sm" variant="outline" className="w-full border-blue-300 text-blue-700 hover:bg-blue-100">
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Gestisci Recensioni
+                    </Button>
+                  </div>
+
+                  <div className="p-4 border rounded-lg bg-green-50">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-green-900">Profilo Views</h4>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        {professionalData?.profileViews || 0}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-green-700 mb-3">Ottimizza il profilo per aumentare la visibilità</p>
+                    <Button size="sm" variant="outline" className="w-full border-green-300 text-green-700 hover:bg-green-100" onClick={openEditModal}>
+                      <Eye className="w-4 h-4 mr-2" />
+                      Ottimizza Profilo
+                    </Button>
+                  </div>
+
+                  <div className="p-4 border rounded-lg bg-purple-50">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-purple-900">Badge Progress</h4>
+                      <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                        {badges?.length || 0}/{badgeProgress?.length || 0}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-purple-700 mb-3">Sblocca nuovi badge per migliorare la credibilità</p>
+                    <Button size="sm" variant="outline" className="w-full border-purple-300 text-purple-700 hover:bg-purple-100" onClick={() => checkBadgesMutation.mutate()}>
+                      <Award className="w-4 h-4 mr-2" />
+                      Controlla Badge
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Azioni prioritarie */}
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold mb-3 flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-2 text-orange-500" />
+                    Azioni Prioritarie
+                  </h4>
+                  <div className="space-y-2">
+                    {(professionalData?.profileCompleteness || 50) < 100 && (
+                      <Alert className="border-orange-200 bg-orange-50">
+                        <AlertCircle className="h-4 w-4 text-orange-600" />
+                        <AlertDescription className="text-orange-800">
+                          <div className="flex items-center justify-between">
+                            <span>Completa il profilo per migliorare la visibilità ({professionalData?.profileCompleteness || 50}%)</span>
+                            <Button size="sm" variant="outline" className="ml-4" onClick={openEditModal}>
+                              Completa
+                            </Button>
+                          </div>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    
+                    {!professionalData?.isVerified && (
+                      <Alert className="border-yellow-200 bg-yellow-50">
+                        <Shield className="h-4 w-4 text-yellow-600" />
+                        <AlertDescription className="text-yellow-800">
+                          <div className="flex items-center justify-between">
+                            <span>Verifica l'identità professionale per aumentare la fiducia dei clienti</span>
+                            <Button size="sm" variant="outline" className="ml-4">
+                              Verifica Ora
+                            </Button>
+                          </div>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {!professionalData?.subscription && (
+                      <Alert className="border-blue-200 bg-blue-50">
+                        <Crown className="h-4 w-4 text-blue-600" />
+                        <AlertDescription className="text-blue-800">
+                          <div className="flex items-center justify-between">
+                            <span>Aggiorna l'abbonamento per accedere a funzionalità premium</span>
+                            <Button size="sm" variant="outline" className="ml-4" onClick={() => setActiveTab("subscription")}>
+                              Upgrade
+                            </Button>
+                          </div>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                </div>
+
+                {/* Statistiche attività settimanali */}
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold mb-3 flex items-center">
+                    <BarChart3 className="w-4 h-4 mr-2 text-blue-500" />
+                    Attività Questa Settimana
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-2xl font-bold text-gray-900">{professionalData?.profileViews || 0}</div>
+                      <div className="text-xs text-gray-600">Visualizzazioni</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-2xl font-bold text-gray-900">{professionalData?.reviewCount || 0}</div>
+                      <div className="text-xs text-gray-600">Nuove Recensioni</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-2xl font-bold text-gray-900">{badges?.length || 0}</div>
+                      <div className="text-xs text-gray-600">Badge Conquistati</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-2xl font-bold text-gray-900">{professionalData?.profileCompleteness || 50}%</div>
+                      <div className="text-xs text-gray-600">Profilo Completo</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
-
-
 
           {/* Profile Tab */}
           <TabsContent value="profile" className="space-y-6">
