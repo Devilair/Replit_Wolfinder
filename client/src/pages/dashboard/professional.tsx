@@ -138,19 +138,7 @@ export default function ProfessionalDashboard() {
     });
   };
 
-  // Check if user should see tour on first visit
-  useEffect(() => {
-    const tourCompleted = localStorage.getItem('wolfinder_tour_completed');
-    const isFirstVisit = !tourCompleted;
-    
-    if (isFirstVisit && professionalData) {
-      // Wait a bit for the UI to settle, then start tour
-      const timer = setTimeout(() => {
-        startTour();
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [professionalData]);
+
   const [activeTab, setActiveTab] = useState("overview");
   const [showTour, setShowTour] = useState(false);
   const [tourStep, setTourStep] = useState(0);
@@ -173,6 +161,20 @@ export default function ProfessionalDashboard() {
   const { data: professionalData, isLoading } = useQuery<ProfessionalData>({
     queryKey: ["/api/professional/profile-complete"],
   });
+
+  // Check if user should see tour on first visit
+  useEffect(() => {
+    const tourCompleted = localStorage.getItem('wolfinder_tour_completed');
+    const isFirstVisit = !tourCompleted;
+    
+    if (isFirstVisit && professionalData && !isLoading) {
+      // Wait a bit for the UI to settle, then start tour
+      const timer = setTimeout(() => {
+        startTour();
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [professionalData, isLoading]);
 
   // Mock data for reviews and analytics
   const { data: reviews } = useQuery({
@@ -336,10 +338,10 @@ export default function ProfessionalDashboard() {
           <TabsList className="grid w-full grid-cols-6 bg-white/50 backdrop-blur-sm border">
             <TabsTrigger value="overview">Panoramica</TabsTrigger>
             <TabsTrigger value="profile">Profilo</TabsTrigger>
-            <TabsTrigger value="reviews">Recensioni</TabsTrigger>
+            <TabsTrigger id="reviews-tab" value="reviews">Recensioni</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="services">Servizi</TabsTrigger>
-            <TabsTrigger value="subscription">Abbonamento</TabsTrigger>
+            <TabsTrigger id="subscription-tab" value="subscription">Abbonamento</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -504,7 +506,7 @@ export default function ProfessionalDashboard() {
                     </Button>
                   </div>
 
-                  <div className="p-4 border rounded-lg bg-purple-50">
+                  <div id="badge-progress" className="p-4 border rounded-lg bg-purple-50">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-semibold text-purple-900">Badge Progress</h4>
                       <Badge variant="secondary" className="bg-purple-100 text-purple-800">
@@ -883,7 +885,7 @@ export default function ProfessionalDashboard() {
                     <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500">Nessuna recensione ancora</p>
                     <p className="text-sm text-gray-400 mb-4">Le recensioni dei clienti appariranno qui</p>
-                    <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Button id="invite-client" className="bg-blue-600 hover:bg-blue-700">
                       <Mail className="w-4 h-4 mr-2" />
                       Invita Cliente
                     </Button>
@@ -1060,6 +1062,94 @@ export default function ProfessionalDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Tour Overlay */}
+        {showTour && (
+          <div className="fixed inset-0 z-50 pointer-events-none">
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+            
+            {/* Tour Content */}
+            <div className="relative h-full">
+              {tourSteps.map((step, index) => {
+                if (index !== tourStep) return null;
+                
+                const element = document.getElementById(step.id);
+                if (!element) return null;
+                
+                const rect = element.getBoundingClientRect();
+                const isBottom = step.position === "bottom";
+                
+                return (
+                  <div key={step.id}>
+                    {/* Highlight element */}
+                    <div 
+                      className="absolute border-4 border-blue-500 rounded-lg shadow-lg bg-white bg-opacity-10"
+                      style={{
+                        top: rect.top - 4,
+                        left: rect.left - 4,
+                        width: rect.width + 8,
+                        height: rect.height + 8,
+                        zIndex: 51
+                      }}
+                    />
+                    
+                    {/* Tour tooltip */}
+                    <div 
+                      className="absolute pointer-events-auto"
+                      style={{
+                        top: isBottom ? rect.bottom + 15 : rect.top - 120,
+                        left: Math.max(20, Math.min(rect.left, window.innerWidth - 320)),
+                        zIndex: 52
+                      }}
+                    >
+                      <div className="bg-white rounded-lg shadow-xl p-4 max-w-xs border">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold text-gray-900">{step.title}</h3>
+                          <button 
+                            onClick={endTour}
+                            className="text-gray-400 hover:text-gray-600 text-lg"
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-4">{step.description}</p>
+                        
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">
+                            {tourStep + 1} di {tourSteps.length}
+                          </span>
+                          <div className="flex gap-2">
+                            {tourStep > 0 && (
+                              <Button size="sm" variant="outline" onClick={() => setTourStep(tourStep - 1)}>
+                                Indietro
+                              </Button>
+                            )}
+                            <Button size="sm" onClick={nextTourStep}>
+                              {tourStep === tourSteps.length - 1 ? "Fine" : "Avanti"}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Help Button - Always accessible */}
+        <div className="fixed bottom-6 right-6 z-40">
+          <Button
+            onClick={startTour}
+            size="sm"
+            className="rounded-full w-12 h-12 shadow-lg bg-blue-600 hover:bg-blue-700"
+            title="Aiuto e tour guidato"
+          >
+            ?
+          </Button>
+        </div>
 
         {/* Edit Modal */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
