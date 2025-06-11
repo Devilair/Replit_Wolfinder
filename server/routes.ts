@@ -190,7 +190,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create user first
       const userResult = await authService.registerUser({
-        name: `${validatedData.firstName} ${validatedData.lastName}`,
+        name: validatedData.businessName,
         username: validatedData.email, // Use email as username for professionals
         email: validatedData.email,
         password: validatedData.password,
@@ -228,7 +228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const emailSent = await emailService.sendEmailVerification(
         userResult.user!.id,
         validatedData.email,
-        `${validatedData.firstName} ${validatedData.lastName}`,
+        validatedData.businessName,
         verificationToken,
         professional.id
       );
