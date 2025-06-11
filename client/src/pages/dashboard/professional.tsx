@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,8 +76,84 @@ interface SubscriptionPlan {
 
 export default function ProfessionalDashboard() {
   const { toast } = useToast();
+
+  // Tour steps configuration
+  const tourSteps = [
+    {
+      id: "profile-completeness",
+      title: "Completa il tuo profilo",
+      description: "Aumenta la completezza del profilo per migliorare la visibilità nei risultati di ricerca.",
+      position: "bottom"
+    },
+    {
+      id: "reviews-tab",
+      title: "Gestisci le recensioni",
+      description: "Qui trovi tutte le recensioni dei clienti e puoi invitarne di nuovi.",
+      position: "bottom"
+    },
+    {
+      id: "invite-client",
+      title: "Invita il primo cliente",
+      description: "Inizia subito invitando un cliente a lasciare una recensione.",
+      position: "top"
+    },
+    {
+      id: "badge-progress",
+      title: "Guadagna badge",
+      description: "I badge mostrano la tua credibilità e esperienza ai potenziali clienti.",
+      position: "bottom"
+    },
+    {
+      id: "subscription-tab",
+      title: "Strumenti avanzati",
+      description: "Scopri gli strumenti premium per far crescere la tua attività.",
+      position: "bottom"
+    }
+  ];
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Tour functions
+  const startTour = () => {
+    setShowTour(true);
+    setTourStep(0);
+  };
+  
+  const nextTourStep = () => {
+    if (tourStep < tourSteps.length - 1) {
+      setTourStep(tourStep + 1);
+    } else {
+      endTour();
+    }
+  };
+  
+  const endTour = () => {
+    setShowTour(false);
+    setTourStep(0);
+    // Save that user has seen the tour
+    localStorage.setItem('wolfinder_tour_completed', 'true');
+    toast({
+      title: "Tour completato",
+      description: "Ora conosci tutte le funzioni principali della dashboard!",
+    });
+  };
+
+  // Check if user should see tour on first visit
+  useEffect(() => {
+    const tourCompleted = localStorage.getItem('wolfinder_tour_completed');
+    const isFirstVisit = !tourCompleted;
+    
+    if (isFirstVisit && professionalData) {
+      // Wait a bit for the UI to settle, then start tour
+      const timer = setTimeout(() => {
+        startTour();
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [professionalData]);
   const [activeTab, setActiveTab] = useState("overview");
+  const [showTour, setShowTour] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
   const [formData, setFormData] = useState({
     businessName: "",
     description: "",
@@ -230,7 +306,7 @@ export default function ProfessionalDashboard() {
           <p className="text-gray-600">Benvenuto, {professionalData?.businessName || professionalData?.email}</p>
           
           {/* Profile completeness */}
-          <div className="mt-4 p-4 bg-white rounded-lg border">
+          <div id="profile-completeness" className="mt-4 p-4 bg-white rounded-lg border">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Completezza profilo</span>
               <div className="flex items-center gap-2">

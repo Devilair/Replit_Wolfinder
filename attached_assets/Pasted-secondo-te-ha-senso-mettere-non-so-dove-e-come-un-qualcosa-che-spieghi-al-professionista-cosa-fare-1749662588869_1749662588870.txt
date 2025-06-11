@@ -1,0 +1,65 @@
+secondo te ha senso mettere (non so dove e come) un qualcosa che spieghi al professionista cosa fare? tipo suggerimenti per non trovarsi spaesato all'interno della dashboard? cosa mi consigli?
+
+ChatGPT ha detto:
+Assolutamente sì: anche se la UI è pulita, chi entra per la prima volta rischia comunque di guardarsi intorno e pensare “okay… e adesso?”. Ecco qualche modo “low-friction” per guidarlo senza trasformare la dashboard in un parco giochi di pop-up.
+
+1. Mini-tour one-shot
+Quando mostrarlo Solo al primo login (flag in DB) o quando rilasci una feature grossa.
+
+Come Overlay semitrasparente che evidenzia 4-5 punti chiave in sequenza:
+
+Progress bar → “Completa il profilo per guadagnare visibilità”.
+
+Tab Recensioni → “Qui gestisci i feedback dei clienti”.
+
+Bottone “Invita Cliente” → “Invita con un clic, niente spam”.
+
+Badge Progress → “Guadagna reputazione con obiettivi reali”.
+
+Tab Abbonamento → “Strumenti avanzati? Li trovi qui”.
+
+Una libreria tipo Shepherd.js o Intro.js fa il lavoro in mezza giornata e non ti costringe a scrivere codice su misura.
+
+2. Tips contestuali (inline, zero pop-up)
+Icona “?” in ogni card che ne ha bisogno (hover ➜ tooltip di due righe).
+Esempio: sulla card “Rating Medio” → “Media di categoria = 4,2 ⭐: puntiamo almeno lì!”.
+
+Link “Scopri di più” che apre un mini-drawer a destra con 3 bullet pratici e, se vuoi, un video di 30″.
+
+3. Checklist “Setup rapido”
+L’hai quasi già fatta con “Azioni Prioritarie”:
+spostala magari in un piccolo widget fixed a destra con checkbox che si barrano live. Una volta al 100 %, il widget sparisce. Così non ingombra chi è già dentro da tempo.
+
+4. Email di benvenuto con “3 cose da fare ora”
+Molti utenti aprono la dash, la chiudono e tornano dopo giorni. Una mail 5 minuti dopo la registrazione con:
+
+Carica logo + descrizione breve.
+
+Invita primo cliente.
+
+Verifica identità per badge.
+
+…rimette il focus anche fuori dall’app.
+
+5. “Aiuto” sempre visibile ma discreto
+Piccolo pulsante chat/FAQ in basso a destra (favicon del lupo? 🐺) → apre:
+
+quick search docs (“Come verifico la P. IVA?”)
+
+form contatto umano.
+
+Se il professionista trova la risposta da solo, bene; altrimenti può scriverti senza cercare la mail nei footer.
+
+6. Progressi celebrati (ma senza fireworks)
+Quando raggiunge 100 % profilo → toast “Profilo completo! Ora sei più visibile nei risultati 🙌”.
+
+Primo badge ottenuto → confetti leggerissimi + link “Scopri come scalare al badge Argento”.
+
+Quale scegliere?
+Mini-tour: copre gli spaesati al primo login.
+
+Tips inline: restano utili anche dopo.
+
+Checklist: gamifica il setup.
+
+Se devi partire da qualcosa oggi, io butterei giù il mini-tour: è veloce, non intrusivo dopo la prima volta e toglie subito l’effetto “e ora?”.
