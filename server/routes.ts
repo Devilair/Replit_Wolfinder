@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { stripeService } from "./stripe-service";
 import { geocodingService } from "./geocoding-service";
+import { emailService } from "./email-service";
+import { authService } from "./auth";
 import Stripe from "stripe";
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -19,7 +21,6 @@ import {
   requireApiAccess 
 } from "./middleware/plan-guard";
 
-import { authService } from "./auth";
 import multer from "multer";
 import express from "express";
 import { badgeSystem } from "./badge-system";
@@ -116,6 +117,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/verify-email/:token - Verify email address
+  app.get('/api/verify-email/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+
+      if (!token) {
+        return res.status(400).json({ error: "Token di verifica richiesto" });
+      }
+
+      const result = await authService.verifyEmailToken(token);
+
+      if (result.success) {
+        res.json({
+          success: true,
+          message: "Email verificata con successo! Il tuo account è ora attivo.",
+          userId: result.userId
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          error: result.error
+        });
+      }
+    } catch (error) {
+      console.error('Email verification error:', error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
   app.post("/api/auth/register", async (req, res) => {
     try {
       const { name, username, email, password, userType, acceptTerms, businessName, categoryId } = req.body;
@@ -192,11 +222,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         geocodedAt: validatedData.latitude && validatedData.longitude ? new Date() : null
       });
 
+      // Genera e invia email di verifica
+      const verificationToken = await authService.createEmailVerificationToken(userResult.user!.id);
+      
+      const emailSent = await emailService.sendEmailVerification(
+        userResult.user!.id,
+        validatedData.email,
+        `${validatedData.firstName} ${validatedData.lastName}`,
+        verificationToken
+      );
+
       res.status(201).json({
-        message: "Registrazione professionale completata con successo",
+        message: "Registrazione completata! Controlla la tua email per verificare l'account.",
         user: userResult.user,
         professional,
-        token: userResult.token
+        token: userResult.token,
+        emailSent,
+        verificationRequired: true
       });
     } catch (error) {
       console.error('Professional registration error:', error);
