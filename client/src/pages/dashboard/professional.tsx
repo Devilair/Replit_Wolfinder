@@ -307,6 +307,9 @@ export default function ProfessionalDashboard() {
                           <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                         ))}
                       </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Media nella tua categoria: 4.2 ⭐
+                      </p>
                     </div>
                     <Star className="w-8 h-8 text-yellow-600" />
                   </div>
@@ -327,8 +330,9 @@ export default function ProfessionalDashboard() {
                         </Badge>
                       ) : (
                         <div className="mt-1">
-                          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 mb-1">
-                            ⏳ In verifica
+                          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 mb-1 flex items-center">
+                            <div className="w-3 h-3 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin mr-1"></div>
+                            In verifica
                           </Badge>
                           <p className="text-xs text-gray-500">
                             Documento in revisione, ~24h
@@ -386,16 +390,28 @@ export default function ProfessionalDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="p-4 border rounded-lg bg-blue-50">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-blue-900">Nuove Recensioni</h4>
+                      <h4 className="font-semibold text-blue-900">Recensioni</h4>
                       <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                         {professionalData?.reviewCount || 0}
                       </Badge>
                     </div>
-                    <p className="text-sm text-blue-700 mb-3">Rispondi alle recensioni recenti per mantenere l'engagement</p>
-                    <Button size="sm" variant="outline" className="w-full border-blue-300 text-blue-700 hover:bg-blue-100">
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      Gestisci Recensioni
-                    </Button>
+                    {(professionalData?.reviewCount || 0) === 0 ? (
+                      <>
+                        <p className="text-sm text-blue-700 mb-3">Ancora nessuna recensione: invita il tuo primo cliente</p>
+                        <Button size="sm" variant="outline" className="w-full border-blue-300 text-blue-700 hover:bg-blue-100">
+                          <MessageSquare className="w-4 h-4 mr-2" />
+                          Invita Cliente
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm text-blue-700 mb-3">Rispondi alle recensioni recenti per mantenere l'engagement</p>
+                        <Button size="sm" variant="outline" className="w-full border-blue-300 text-blue-700 hover:bg-blue-100">
+                          <MessageSquare className="w-4 h-4 mr-2" />
+                          Gestisci Recensioni
+                        </Button>
+                      </>
+                    )}
                   </div>
 
                   <div className="p-4 border rounded-lg bg-green-50">
@@ -416,10 +432,31 @@ export default function ProfessionalDashboard() {
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-semibold text-purple-900">Badge Progress</h4>
                       <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                        {badges?.length || 0}/{badgeProgress?.length || 0}
+                        {Array.isArray(badges) ? badges.length : 0}/{Array.isArray(badgeProgress) ? badgeProgress.length : 0}
                       </Badge>
                     </div>
-                    <p className="text-sm text-purple-700 mb-3">Sblocca nuovi badge per migliorare la credibilità</p>
+                    {Array.isArray(badgeProgress) && badgeProgress.length > 0 ? (
+                      <>
+                        <div className="flex space-x-1 mb-2">
+                          {badgeProgress.slice(0, 5).map((badge, index) => (
+                            <div key={index} className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                              badge.earned ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-400 border-2 border-dashed border-gray-300'
+                            }`}>
+                              {badge.earned ? '✓' : '?'}
+                            </div>
+                          ))}
+                          {badgeProgress.length > 5 && <span className="text-xs text-purple-600">+{badgeProgress.length - 5}</span>}
+                        </div>
+                        <p className="text-sm text-purple-700 mb-1">
+                          Prossimo badge: <span className="font-medium">{badgeProgress.find(b => !b.earned)?.badge?.name || 'Tutti completati!'}</span>
+                        </p>
+                        <p className="text-xs text-purple-600 mb-3">
+                          {badgeProgress.find(b => !b.earned) ? `Manca 1 recensione` : 'Complimenti, tutti i badge sbloccati!'}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-purple-700 mb-3">Inizia a guadagnare badge per migliorare la credibilità</p>
+                    )}
                     <Button size="sm" variant="outline" className="w-full border-purple-300 text-purple-700 hover:bg-purple-100" onClick={() => checkBadgesMutation.mutate()}>
                       <Award className="w-4 h-4 mr-2" />
                       Controlla Badge
@@ -439,7 +476,14 @@ export default function ProfessionalDashboard() {
                         <AlertCircle className="h-4 w-4 text-orange-600" />
                         <AlertDescription className="text-orange-800">
                           <div className="flex items-center justify-between">
-                            <span>Completa il profilo per migliorare la visibilità ({professionalData?.profileCompleteness || 50}%)</span>
+                            <div>
+                              <div>Profilo al {professionalData?.profileCompleteness || 50}% - Prossimo step:</div>
+                              <div className="text-sm font-medium">
+                                {(professionalData?.profileCompleteness || 50) < 60 ? "Aggiungi descrizione dettagliata → +15%" :
+                                 (professionalData?.profileCompleteness || 50) < 80 ? "Carica foto profilo → +20%" : 
+                                 "Completa tutti i contatti → +20%"}
+                              </div>
+                            </div>
                             <Button size="sm" variant="outline" className="ml-4" onClick={openEditModal}>
                               Completa
                             </Button>
@@ -463,12 +507,15 @@ export default function ProfessionalDashboard() {
                     )}
 
                     {!professionalData?.subscription && (
-                      <Alert className="border-blue-200 bg-blue-50">
-                        <Crown className="h-4 w-4 text-blue-600" />
+                      <Alert className="border-blue-200 bg-blue-50 hover:shadow-md transition-all duration-200 hover:border-blue-300 cursor-pointer group" onClick={() => setActiveTab("subscription")}>
+                        <Crown className="h-4 w-4 text-blue-600 group-hover:text-blue-700" />
                         <AlertDescription className="text-blue-800">
                           <div className="flex items-center justify-between">
-                            <span>Aggiorna l'abbonamento per accedere a funzionalità premium</span>
-                            <Button size="sm" variant="outline" className="ml-4" onClick={() => setActiveTab("subscription")}>
+                            <div>
+                              <div className="font-medium mb-1">Sblocca il potenziale del tuo profilo</div>
+                              <div className="text-sm">🔝 Posizionamento prioritario nei risultati • 📊 Analytics avanzate • ⭐ Badge esclusivi</div>
+                            </div>
+                            <Button size="sm" variant="outline" className="ml-4 group-hover:bg-blue-100" onClick={(e) => { e.stopPropagation(); setActiveTab("subscription"); }}>
                               Upgrade
                             </Button>
                           </div>
@@ -484,24 +531,32 @@ export default function ProfessionalDashboard() {
                     <BarChart3 className="w-4 h-4 mr-2 text-blue-500" />
                     Attività Questa Settimana
                   </h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="text-2xl font-bold text-gray-900">{professionalData?.profileViews || 0}</div>
-                      <div className="text-xs text-gray-600">Visualizzazioni</div>
+                  {((professionalData?.profileViews || 0) === 0 && (professionalData?.reviewCount || 0) === 0) ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <div className="text-4xl mb-2">📊</div>
+                      <div className="text-sm">I dati arrivano dopo le prime interazioni</div>
+                      <div className="text-xs mt-1">Completa il profilo e inizia a ricevere visualizzazioni</div>
                     </div>
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="text-2xl font-bold text-gray-900">{professionalData?.reviewCount || 0}</div>
-                      <div className="text-xs text-gray-600">Nuove Recensioni</div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <div className="text-2xl font-bold text-gray-900">{professionalData?.profileViews || 0}</div>
+                        <div className="text-xs text-gray-600">Visualizzazioni</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <div className="text-2xl font-bold text-gray-900">{professionalData?.reviewCount || 0}</div>
+                        <div className="text-xs text-gray-600">Nuove Recensioni</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <div className="text-2xl font-bold text-gray-900">{Array.isArray(badges) ? badges.length : 0}</div>
+                        <div className="text-xs text-gray-600">Badge Conquistati</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <div className="text-2xl font-bold text-gray-900">{professionalData?.profileCompleteness || 50}%</div>
+                        <div className="text-xs text-gray-600">Profilo Completo</div>
+                      </div>
                     </div>
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="text-2xl font-bold text-gray-900">{badges?.length || 0}</div>
-                      <div className="text-xs text-gray-600">Badge Conquistati</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="text-2xl font-bold text-gray-900">{professionalData?.profileCompleteness || 50}%</div>
-                      <div className="text-xs text-gray-600">Profilo Completo</div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
