@@ -40,6 +40,51 @@ export class EmailService {
       .where(eq(professionalNotifications.id, notificationId));
   }
 
+  async sendEmailVerification(
+    userId: number,
+    email: string,
+    name: string,
+    verificationToken: string
+  ): Promise<boolean> {
+    if (!this.mailService) {
+      console.warn("SendGrid non configurato - email di verifica non inviata");
+      return false;
+    }
+
+    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5000'}/verify-email?token=${verificationToken}`;
+    
+    const notificationData: InsertProfessionalNotification = {
+      userId,
+      type: 'email_verification',
+      status: 'pending',
+      content: {
+        subject: 'Verifica il tuo indirizzo email - Wolfinder',
+        recipient: email,
+        verificationUrl
+      }
+    };
+
+    try {
+      const notification = await this.logNotification(notificationData);
+
+      const emailContent = this.generateEmailVerificationContent(name, verificationUrl);
+      
+      await this.mailService.send({
+        to: email,
+        from: 'noreply@wolfinder.it',
+        subject: 'Verifica il tuo indirizzo email - Wolfinder',
+        html: emailContent.html,
+        text: emailContent.text
+      });
+
+      await this.updateNotificationStatus(notification.id, 'sent');
+      return true;
+    } catch (error) {
+      console.error('Errore invio email verifica:', error);
+      return false;
+    }
+  }
+
   async sendNewReviewNotification(
     professionalId: number,
     reviewId: number,
@@ -584,6 +629,86 @@ export class EmailService {
     `;
     
     return { subject, html, text };
+  }
+
+  private generateEmailVerificationContent(name: string, verificationUrl: string) {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; color: #333; line-height: 1.6; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background: #f9fafb; }
+            .button { 
+              display: inline-block; 
+              background: #2563eb; 
+              color: white; 
+              padding: 12px 24px; 
+              text-decoration: none; 
+              border-radius: 6px; 
+              margin: 20px 0; 
+            }
+            .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Wolfinder</h1>
+              <p>Verifica il tuo indirizzo email</p>
+            </div>
+            
+            <div class="content">
+              <h2>Ciao ${name},</h2>
+              
+              <p>Benvenuto su Wolfinder! Per completare la registrazione e attivare il tuo account professionale, verifica il tuo indirizzo email cliccando sul pulsante qui sotto:</p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${verificationUrl}" class="button">VERIFICA EMAIL</a>
+              </div>
+              
+              <p>Se il pulsante non funziona, copia e incolla questo link nel tuo browser:</p>
+              <p style="background: white; padding: 10px; border-radius: 4px; word-break: break-all; font-size: 14px;">
+                ${verificationUrl}
+              </p>
+              
+              <p><strong>Importante:</strong> Questo link è valido per 24 ore. Se non verifichi il tuo account entro questo periodo, dovrai registrarti nuovamente.</p>
+              
+              <p>Se non ti sei registrato su Wolfinder, ignora questa email.</p>
+            </div>
+            
+            <div class="footer">
+              <p>Wolfinder - La piattaforma di fiducia per professionisti in Italia</p>
+              <p>Questa email è stata inviata automaticamente, non rispondere a questo indirizzo.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const textContent = `
+Wolfinder - Verifica il tuo indirizzo email
+
+Ciao ${name},
+
+Benvenuto su Wolfinder! Per completare la registrazione e attivare il tuo account professionale, verifica il tuo indirizzo email visitando questo link:
+
+${verificationUrl}
+
+Questo link è valido per 24 ore. Se non verifichi il tuo account entro questo periodo, dovrai registrarti nuovamente.
+
+Se non ti sei registrato su Wolfinder, ignora questa email.
+
+Wolfinder - La piattaforma di fiducia per professionisti in Italia
+    `;
+
+    return {
+      html: htmlContent,
+      text: textContent
+    };
   }
 }
 

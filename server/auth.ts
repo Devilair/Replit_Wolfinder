@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { db } from './db';
 import { users, professionals } from '@shared/schema';
 import { eq } from 'drizzle-orm';
@@ -49,6 +50,58 @@ export class AuthService {
       return jwt.verify(token, this.JWT_SECRET);
     } catch {
       return null;
+    }
+  }
+
+  generateEmailVerificationToken(): string {
+    return crypto.randomBytes(32).toString('hex');
+  }
+
+  async createEmailVerificationToken(userId: number): Promise<string> {
+    const token = this.generateEmailVerificationToken();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 ore
+
+    await db
+      .update(users)
+      .set({
+        emailVerificationToken: token,
+        emailVerificationExpires: expiresAt
+      })
+      .where(eq(users.id, userId));
+
+    return token;
+  }
+
+  async verifyEmailToken(token: string): Promise<{ success: boolean; userId?: number; error?: string }> {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.emailVerificationToken, token));
+
+      if (!user) {
+        return { success: false, error: "Token di verifica non valido" };
+      }
+
+      if (!user.emailVerificationExpires || user.emailVerificationExpires < new Date()) {
+        return { success: false, error: "Token di verifica scaduto" };
+      }
+
+      // Verifica l'email e rimuove il token
+      await db
+        .update(users)
+        .set({
+          isVerified: true,
+          emailVerifiedAt: new Date(),
+          emailVerificationToken: null,
+          emailVerificationExpires: null
+        })
+        .where(eq(users.id, user.id));
+
+      return { success: true, userId: user.id };
+    } catch (error) {
+      console.error('Error verifying email token:', error);
+      return { success: false, error: "Errore interno del server" };
     }
   }
 
