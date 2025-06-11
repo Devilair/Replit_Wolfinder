@@ -171,7 +171,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: userResult.error });
       }
 
-      // Create professional profile
+      // Determine province based on city
+      const province = validatedData.city === "Ferrara" ? "FE" : "LI";
+      
+      // Create professional profile with geocoding data
       const professional = await storage.createProfessional({
         userId: userResult.user!.id,
         categoryId: validatedData.categoryId,
@@ -182,8 +185,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: validatedData.email,
         address: validatedData.address,
         city: validatedData.city,
-        province: "IT", // Default province for Italy
-        postalCode: "00000" // Default postal code, can be updated later
+        province: province,
+        postalCode: validatedData.postalCode || "00000",
+        latitude: validatedData.latitude,
+        longitude: validatedData.longitude,
+        geocodedAt: validatedData.latitude && validatedData.longitude ? new Date() : null
       });
 
       res.status(201).json({

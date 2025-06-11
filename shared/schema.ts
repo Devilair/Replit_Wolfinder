@@ -663,9 +663,9 @@ export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 
-// Audit Log types
-export type AuditLog = typeof auditLogs.$inferSelect;
-export type InsertAuditLog = typeof auditLogs.$inferInsert;
+// Audit Log types (first definition)
+export type AuditLogEntry = typeof auditLogs.$inferSelect;
+export type InsertAuditLogEntry = typeof auditLogs.$inferInsert;
 export type AdminAction = typeof adminActions.$inferSelect;
 export type InsertAdminAction = typeof adminActions.$inferInsert;
 
@@ -1046,6 +1046,13 @@ export const professionalRegistrationSchema = z.object({
   city: z.string().min(2, "La città deve avere almeno 2 caratteri"),
   address: z.string().min(5, "L'indirizzo deve avere almeno 5 caratteri"),
   description: z.string().min(10, "La descrizione deve avere almeno 10 caratteri"),
+  
+  // Geocoding data (opzionali - aggiunti automaticamente dal form)
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  postalCode: z.string().optional(),
+  streetName: z.string().optional(),
+  streetNumber: z.string().optional(),
   
   // Consensi
   privacyConsent: z.boolean().refine(val => val === true, "Devi accettare i termini di servizio"),
