@@ -311,6 +311,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual verification endpoint for testing
+  app.post('/api/verify-manual', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: 'Utente non trovato' });
+      }
+
+      await storage.updateUser(user.id, { isVerified: true });
+      
+      res.json({ 
+        message: 'Account verificato manualmente con successo',
+        email: email,
+        verified: true
+      });
+    } catch (error) {
+      console.error('Manual verification error:', error);
+      res.status(500).json({ error: 'Errore nella verifica manuale' });
+    }
+  });
+
   app.get("/api/auth/profile", authService.authenticateToken, async (req, res) => {
     try {
       const user = req.user;
