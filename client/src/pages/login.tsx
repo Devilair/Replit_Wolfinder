@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 
@@ -45,6 +45,9 @@ export default function Login() {
       
       // Store token
       localStorage.setItem("authToken", data.token);
+      
+      // Invalidate and refetch queries to update authentication state
+      queryClient.invalidateQueries();
       
       // Redirect based on role
       if (data.user.role === "professional") {
