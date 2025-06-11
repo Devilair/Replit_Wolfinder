@@ -44,7 +44,8 @@ export class EmailService {
     userId: number,
     email: string,
     name: string,
-    verificationToken: string
+    verificationToken: string,
+    professionalId?: number
   ): Promise<boolean> {
     if (!this.mailService) {
       console.warn("SendGrid non configurato - email di verifica non inviata");
@@ -54,14 +55,12 @@ export class EmailService {
     const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5000'}/verify-email?token=${verificationToken}`;
     
     const notificationData: InsertProfessionalNotification = {
-      userId,
-      type: 'email_verification',
-      status: 'pending',
-      content: {
-        subject: 'Verifica il tuo indirizzo email - Wolfinder',
-        recipient: email,
-        verificationUrl
-      }
+      professionalId: professionalId || null,
+      notificationType: 'email_verification',
+      recipientEmail: email,
+      subject: 'Verifica il tuo indirizzo email - Wolfinder',
+      content: `Ciao ${name}, clicca sul link per verificare il tuo account: ${verificationUrl}`,
+      status: 'pending'
     };
 
     try {

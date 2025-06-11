@@ -229,7 +229,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userResult.user!.id,
         validatedData.email,
         `${validatedData.firstName} ${validatedData.lastName}`,
-        verificationToken
+        verificationToken,
+        professional.id
       );
 
       res.status(201).json({
