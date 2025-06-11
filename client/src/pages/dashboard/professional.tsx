@@ -121,9 +121,47 @@ export default function ProfessionalDashboard() {
   
   const nextTourStep = () => {
     if (tourStep < tourSteps.length - 1) {
-      setTourStep(tourStep + 1);
+      const nextStep = tourStep + 1;
+      const nextStepData = tourSteps[nextStep];
+      
+      // Switch tab if necessary before advancing
+      if (nextStepData.id === 'invite-client') {
+        setActiveTab('reviews');
+      } else if (nextStepData.id === 'badge-progress') {
+        setActiveTab('overview');
+      } else if (nextStepData.id === 'subscription-tab') {
+        setActiveTab('subscription');
+      }
+      
+      // Wait a bit for tab change, then advance
+      setTimeout(() => {
+        setTourStep(nextStep);
+      }, 300);
     } else {
       endTour();
+    }
+  };
+
+  const previousTourStep = () => {
+    if (tourStep > 0) {
+      const prevStep = tourStep - 1;
+      const prevStepData = tourSteps[prevStep];
+      
+      // Switch tab if necessary before going back
+      if (prevStepData.id === 'profile-completeness') {
+        setActiveTab('overview');
+      } else if (prevStepData.id === 'invite-client') {
+        setActiveTab('reviews');
+      } else if (prevStepData.id === 'badge-progress') {
+        setActiveTab('overview');
+      } else if (prevStepData.id === 'subscription-tab') {
+        setActiveTab('subscription');
+      }
+      
+      // Wait a bit for tab change, then go back
+      setTimeout(() => {
+        setTourStep(prevStep);
+      }, 300);
     }
   };
   
@@ -1115,13 +1153,22 @@ export default function ProfessionalDashboard() {
                         </div>
                         <p className="text-sm text-gray-600 mb-4">{step.description}</p>
                         
+                        {/* Show tab switch hint */}
+                        {((tourStep === 1 && step.id === 'invite-client') || 
+                          (tourStep === 2 && step.id === 'badge-progress') || 
+                          (tourStep === 4 && step.id === 'subscription-tab')) && (
+                          <div className="text-xs text-blue-600 mb-3 italic">
+                            💡 Il tour passerà automaticamente al tab corretto
+                          </div>
+                        )}
+                        
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-gray-500">
                             {tourStep + 1} di {tourSteps.length}
                           </span>
                           <div className="flex gap-2">
                             {tourStep > 0 && (
-                              <Button size="sm" variant="outline" onClick={() => setTourStep(tourStep - 1)}>
+                              <Button size="sm" variant="outline" onClick={previousTourStep}>
                                 Indietro
                               </Button>
                             )}
