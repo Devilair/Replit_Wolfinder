@@ -291,10 +291,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { email, name, token } = req.body;
       
       await emailService.sendEmailVerification(
+        128, // user ID
         email,
         name || 'Maria Luisa Pagni',
-        135, // professional ID
-        token
+        token,
+        135 // professional ID
       );
       
       res.json({ message: 'Email di verifica inviata con successo' });

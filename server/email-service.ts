@@ -70,7 +70,7 @@ export class EmailService {
       
       await this.mailService.send({
         to: email,
-        from: 'noreply@wolfinder.it',
+        from: 'info@wolfinder.it',
         subject: 'Verifica il tuo indirizzo email - Wolfinder',
         html: emailContent.html,
         text: emailContent.text
