@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { Eye, EyeOff, User, Briefcase, ChevronRight, ChevronLeft } from "lucide-react";
+import { Eye, EyeOff, User, Briefcase, ChevronRight, ChevronLeft, MapPin } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { professionalRegistrationSchema, type ProfessionalRegistrationData, type Category } from "@shared/schema";
@@ -15,12 +15,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AddressInput } from "@/components/ui/address-input";
+import type { AddressComponents } from "@/hooks/useAddressAutocomplete";
 
 export default function RegisterProfessional() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
+  const [selectedAddress, setSelectedAddress] = useState<AddressComponents | null>(null);
 
   const form = useForm<ProfessionalRegistrationData>({
     resolver: zodResolver(professionalRegistrationSchema),
@@ -67,7 +70,18 @@ export default function RegisterProfessional() {
   });
 
   const onSubmit = (data: ProfessionalRegistrationData) => {
-    registerMutation.mutate(data);
+    // Aggiungi i dati dell'indirizzo geocodificato
+    const formDataWithGeocode = {
+      ...data,
+      address: selectedAddress?.formattedAddress || data.address,
+      latitude: selectedAddress?.latitude,
+      longitude: selectedAddress?.longitude,
+      postalCode: selectedAddress?.postalCode,
+      streetName: selectedAddress?.street,
+      streetNumber: selectedAddress?.streetNumber
+    };
+    
+    registerMutation.mutate(formDataWithGeocode);
   };
 
   const cities = ["Ferrara", "Livorno"]; // Solo le città supportate
@@ -296,9 +310,17 @@ export default function RegisterProfessional() {
                       name="address"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Indirizzo</FormLabel>
+                          <FormLabel>Indirizzo Completo</FormLabel>
                           <FormControl>
-                            <Input placeholder="Via Roma 123" {...field} />
+                            <AddressInput
+                              value={field.value}
+                              onChange={(addressData) => {
+                                setSelectedAddress(addressData);
+                                field.onChange(addressData?.formattedAddress || '');
+                              }}
+                              cityFilter={form.watch('city')}
+                              placeholder="Inizia a digitare l'indirizzo (es. Via Roma 123)..."
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
