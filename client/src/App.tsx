@@ -8,6 +8,7 @@ import AdminLayout from "@/components/admin-layout";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import SearchPage from "@/pages/search";
+import VerifyEmail from "@/pages/verify-email";
 import Home from "@/pages/home";
 import Professionals from "@/pages/professionals";
 import ProfessionalProfile from "@/pages/professional-profile";
@@ -77,6 +78,7 @@ function Router() {
       <Route path="/auth/register" component={Register} />
       <Route path="/auth/login" component={Login} />
       <Route path="/login" component={LoginPage} />
+      <Route path="/verify-email" component={VerifyEmail} />
       <Route path="/register-professional" component={RegisterProfessional} />
       
       {/* Professional Dashboard */}
