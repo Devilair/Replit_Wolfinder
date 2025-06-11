@@ -1057,7 +1057,8 @@ export const professionalRegistrationSchema = z.object({
   streetNumber: z.string().optional(),
   
   // Consensi
-  privacyConsent: z.boolean().refine(val => val === true, "Devi accettare i termini di servizio"),
+  acceptTerms: z.boolean().refine(val => val === true, "Devi accettare i termini di servizio"),
+  acceptPrivacy: z.boolean().refine(val => val === true, "Devi accettare l'informativa sulla privacy"),
   marketingConsent: z.boolean().optional()
 });
 

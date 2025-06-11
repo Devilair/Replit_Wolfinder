@@ -39,7 +39,8 @@ export default function RegisterProfessional() {
       city: "",
       address: "",
       description: "",
-      privacyConsent: false,
+      acceptTerms: false,
+      acceptPrivacy: false,
       marketingConsent: false
     }
   });
@@ -349,7 +350,7 @@ export default function RegisterProfessional() {
                     <div className="space-y-4 pt-6 border-t">
                       <FormField
                         control={form.control}
-                        name="privacyConsent"
+                        name="acceptTerms"
                         render={({ field }) => (
                           <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                             <FormControl>
@@ -363,8 +364,28 @@ export default function RegisterProfessional() {
                                 Accetto i{" "}
                                 <Link href="/privacy" className="text-blue-600 hover:underline">
                                   Termini di Servizio
-                                </Link>{" "}
-                                e l'{" "}
+                                </Link>
+                              </FormLabel>
+                              <FormMessage />
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="acceptPrivacy"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                Accetto l'{" "}
                                 <Link href="/privacy" className="text-blue-600 hover:underline">
                                   Informativa sulla Privacy
                                 </Link>
