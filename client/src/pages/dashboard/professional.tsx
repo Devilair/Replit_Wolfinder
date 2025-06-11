@@ -513,7 +513,7 @@ export default function ProfessionalDashboard() {
                           <div className="flex items-center justify-between">
                             <div>
                               <div className="font-medium mb-1">Sblocca il potenziale del tuo profilo</div>
-                              <div className="text-sm">🔝 Posizionamento prioritario nei risultati • 📊 Analytics avanzate • ⭐ Badge esclusivi</div>
+                              <div className="text-sm">📊 Analytics avanzate • ⭐ Badge esclusivi • 💬 Gestione recensioni completa</div>
                             </div>
                             <Button size="sm" variant="outline" className="ml-4 group-hover:bg-blue-100" onClick={(e) => { e.stopPropagation(); setActiveTab("subscription"); }}>
                               Upgrade
