@@ -44,70 +44,86 @@ export function useAddressAutocomplete() {
 
     setIsLoading(true);
     try {
-      // Estrae il numero civico se presente nella query
-      const numberMatch = searchQuery.match(/(\d+)\s*$/);
-      const streetNumber = numberMatch ? numberMatch[1] : '';
-      const streetPart = numberMatch ? searchQuery.replace(/\s*\d+\s*$/, '').trim() : searchQuery;
+      // Estrae il numero civico se presente alla fine della query
+      const numberMatch = searchQuery.match(/(.+?)\s+(\d+)\s*$/);
+      const streetNumber = numberMatch ? numberMatch[2] : '';
+      const streetPart = numberMatch ? numberMatch[1].trim() : searchQuery;
 
       let allSuggestions: AddressSuggestion[] = [];
 
-      // Prima ricerca: cerca solo la strada senza numero civico per ottenere più risultati
+      // Sempre cerca prima la strada senza numero civico
       const streetResponse = await fetch(
         `https://nominatim.openstreetmap.org/search?` +
         `q=${encodeURIComponent(streetPart)}&` +
         `format=json&` +
         `countrycodes=IT&` +
         `addressdetails=1&` +
-        `limit=8&` +
+        `limit=5&` +
         `bounded=1&` +
         `viewbox=6.5,47.5,18.5,35.5` // Bounding box per l'Italia
       );
       
       const streetData = await streetResponse.json();
-      
-      // Se abbiamo un numero civico, proviamo anche una ricerca con l'indirizzo completo
-      if (streetNumber) {
-        const fullResponse = await fetch(
-          `https://nominatim.openstreetmap.org/search?` +
-          `q=${encodeURIComponent(searchQuery)}&` +
-          `format=json&` +
-          `countrycodes=IT&` +
-          `addressdetails=1&` +
-          `limit=3&` +
-          `bounded=1&` +
-          `viewbox=6.5,47.5,18.5,35.5`
-        );
-        
-        const fullData = await fullResponse.json();
-        
-        // Combina i risultati, dando priorità a quelli con numero civico esatto
-        allSuggestions = [
-          ...fullData.filter((item: AddressSuggestion) => 
-            item.address?.house_number === streetNumber
-          ),
-          ...fullData.filter((item: AddressSuggestion) => 
-            !item.address?.house_number || item.address.house_number !== streetNumber
-          ),
-          ...streetData.map((item: AddressSuggestion) => ({
-            ...item,
-            // Aggiungi il numero civico digitato se non presente
-            address: {
-              ...item.address,
-              house_number: item.address?.house_number || streetNumber
-            },
-            display_name: item.address?.house_number 
-              ? item.display_name 
-              : `${streetNumber} ${item.display_name}`
-          }))
-        ];
+
+      if (streetNumber && streetData.length > 0) {
+        // Se abbiamo un numero civico, crea suggerimenti con quel numero
+        allSuggestions = streetData.map((item: AddressSuggestion) => {
+          // Controlla se la strada corrisponde
+          const roadMatches = item.address?.road?.toLowerCase().includes(streetPart.toLowerCase());
+          
+          if (roadMatches) {
+            return {
+              ...item,
+              address: {
+                ...item.address,
+                house_number: streetNumber
+              },
+              display_name: `${item.address?.road || streetPart} ${streetNumber}, ${item.address?.city || item.address?.town || item.address?.village || ''}, ${item.address?.state || ''}, ${item.address?.country || 'Italia'}`,
+              place_id: `${item.place_id}_${streetNumber}` // ID univoco per il numero civico
+            };
+          }
+          return item;
+        }).filter(Boolean);
+
+        // Aggiungi anche ricerca specifica per numero civico se esiste
+        try {
+          const houseResponse = await fetch(
+            `https://nominatim.openstreetmap.org/search?` +
+            `street=${encodeURIComponent(streetNumber + ' ' + streetPart)}&` +
+            `format=json&` +
+            `countrycodes=IT&` +
+            `addressdetails=1&` +
+            `limit=2&` +
+            `bounded=1&` +
+            `viewbox=6.5,47.5,18.5,35.5`
+          );
+          
+          const houseData = await houseResponse.json();
+          
+          // Aggiungi risultati specifici del numero civico all'inizio
+          allSuggestions = [
+            ...houseData.filter((item: AddressSuggestion) => 
+              item.address?.house_number === streetNumber
+            ),
+            ...allSuggestions
+          ];
+        } catch (houseError) {
+          console.log('Ricerca specifica numero civico fallita, continuo con risultati strada');
+        }
       } else {
         allSuggestions = streetData;
       }
 
-      // Rimuovi duplicati basandosi su place_id
-      const uniqueSuggestions = allSuggestions.filter((item, index, self) => 
-        index === self.findIndex(t => t.place_id === item.place_id)
-      );
+      // Rimuovi duplicati basandosi su place_id ma mantieni quelli con numeri civici diversi
+      const uniqueSuggestions = allSuggestions.filter((item, index, self) => {
+        const duplicateIndex = self.findIndex(t => 
+          t.place_id === item.place_id || 
+          (t.address?.road === item.address?.road && 
+           t.address?.house_number === item.address?.house_number &&
+           t.address?.city === item.address?.city)
+        );
+        return duplicateIndex === index;
+      });
 
       setSuggestions(uniqueSuggestions.slice(0, 5));
     } catch (error) {

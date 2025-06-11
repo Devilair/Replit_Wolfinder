@@ -4390,8 +4390,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Professional not found" });
       }
 
-      // Delete professional (this will cascade delete related data)
-      await db.delete(professionals).where(eq(professionals.id, professionalId));
+      // Use the proper deleteProfessional method to ensure cascading delete
+      await storage.deleteProfessional(professionalId);
 
       res.json({ success: true });
     } catch (error) {
