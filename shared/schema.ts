@@ -14,6 +14,8 @@ export const users = pgTable("users", {
   // Enhanced authentication fields
   isEmailVerified: boolean("is_email_verified").default(false),
   emailVerifiedAt: timestamp("email_verified_at"),
+  emailVerificationToken: text("email_verification_token"),
+  emailVerificationExpires: timestamp("email_verification_expires"),
   isPhoneVerified: boolean("is_phone_verified").default(false),
   phone: text("phone"),
   mfaEnabled: boolean("mfa_enabled").default(false),
