@@ -133,17 +133,23 @@ export function AddressInput({
                   <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium text-gray-900 truncate">
-                      {suggestion.address?.road && suggestion.address?.house_number
-                        ? `${suggestion.address.road} ${suggestion.address.house_number}`
-                        : suggestion.address?.road || 'Indirizzo sconosciuto'
+                      {suggestion.address?.house_number 
+                        ? `${suggestion.address.road || 'Via'} ${suggestion.address.house_number}`
+                        : suggestion.address?.road || suggestion.display_name.split(',')[0]
                       }
                     </div>
                     <div className="text-xs text-gray-500 truncate">
                       {[
                         suggestion.address?.postcode,
-                        suggestion.address?.city || suggestion.address?.town || suggestion.address?.village
+                        suggestion.address?.city || suggestion.address?.town || suggestion.address?.village,
+                        suggestion.address?.state
                       ].filter(Boolean).join(' - ')}
                     </div>
+                    {suggestion.address?.house_number && (
+                      <div className="text-xs text-blue-600 font-medium">
+                        Numero civico: {suggestion.address.house_number}
+                      </div>
+                    )}
                   </div>
                 </div>
               </button>
