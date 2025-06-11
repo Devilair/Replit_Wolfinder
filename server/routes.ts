@@ -334,6 +334,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // SendGrid diagnostic endpoint
+  app.post('/api/test-sendgrid', async (req, res) => {
+    try {
+      const { MailService } = require('@sendgrid/mail');
+      const sgMail = new MailService();
+      
+      if (!process.env.SENDGRID_API_KEY) {
+        return res.status(500).json({ 
+          error: 'SENDGRID_API_KEY non configurato',
+          configured: false
+        });
+      }
+      
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+      
+      const msg = {
+        to: 'professionistatest@wolfinder.it',
+        from: 'info@wolfinder.it',
+        subject: 'Test SendGrid - Wolfinder',
+        text: 'Questo è un test diretto di SendGrid',
+        html: '<strong>Questo è un test diretto di SendGrid</strong>',
+      };
+
+      const response = await sgMail.send(msg);
+      
+      res.json({
+        success: true,
+        statusCode: response[0].statusCode,
+        headers: response[0].headers,
+        message: 'Email inviata con successo tramite SendGrid diretto'
+      });
+      
+    } catch (error) {
+      console.error('SendGrid test error:', error);
+      res.status(500).json({
+        error: 'Errore nel test SendGrid',
+        details: error.message,
+        response: error.response?.body || null
+      });
+    }
+  });
+
   app.get("/api/auth/profile", authService.authenticateToken, async (req, res) => {
     try {
       const user = req.user;

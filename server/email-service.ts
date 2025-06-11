@@ -68,7 +68,13 @@ export class EmailService {
 
       const emailContent = this.generateEmailVerificationContent(name, verificationUrl);
       
-      await this.mailService.send({
+      console.log('Tentativo invio email:', {
+        to: email,
+        from: 'info@wolfinder.it',
+        subject: 'Verifica il tuo indirizzo email - Wolfinder'
+      });
+      
+      const response = await this.mailService.send({
         to: email,
         from: 'info@wolfinder.it',
         subject: 'Verifica il tuo indirizzo email - Wolfinder',
@@ -76,10 +82,17 @@ export class EmailService {
         text: emailContent.text
       });
 
+      console.log('SendGrid response:', response[0]?.statusCode, response[0]?.headers);
       await this.updateNotificationStatus(notification.id, 'sent');
       return true;
     } catch (error) {
-      console.error('Errore invio email verifica:', error);
+      console.error('Errore invio email verifica dettagliato:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.body
+      });
+      
+      await this.updateNotificationStatus(notification.id, 'failed', error.message);
       return false;
     }
   }
