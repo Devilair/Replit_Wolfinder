@@ -290,7 +290,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, name, token } = req.body;
       
-      await emailService.sendEmailVerification(
+      console.log(`Tentativo invio email a: ${email}`);
+      
+      const result = await emailService.sendEmailVerification(
         128, // user ID
         email,
         name || 'Maria Luisa Pagni',
@@ -298,10 +300,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         135 // professional ID
       );
       
-      res.json({ message: 'Email di verifica inviata con successo' });
+      if (result) {
+        res.json({ message: 'Email di verifica inviata con successo', success: true });
+      } else {
+        res.status(500).json({ error: 'Errore nell\'invio dell\'email', success: false });
+      }
     } catch (error) {
       console.error('Email test error:', error);
-      res.status(500).json({ error: 'Errore nell\'invio dell\'email' });
+      res.status(500).json({ error: 'Errore nell\'invio dell\'email', success: false });
     }
   });
 
