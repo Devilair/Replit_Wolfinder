@@ -202,14 +202,12 @@ export default function ProfessionalDashboard() {
 
   // Check if user should see tour on first visit
   useEffect(() => {
-    const tourCompleted = localStorage.getItem('wolfinder_tour_completed');
-    const isFirstVisit = !tourCompleted;
-    
-    if (isFirstVisit && professionalData && !isLoading) {
+    // For testing - always show tour (remove this later)
+    if (professionalData && !isLoading) {
       // Wait a bit for the UI to settle, then start tour
       const timer = setTimeout(() => {
         startTour();
-      }, 1500);
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [professionalData, isLoading]);
