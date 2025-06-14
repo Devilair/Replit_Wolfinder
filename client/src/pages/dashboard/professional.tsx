@@ -127,7 +127,9 @@ export default function ProfessionalDashboard() {
   };
 
   const renderVerificationBadge = () => {
-    const status = professionalData?.verificationStatus || 'not_verified';
+    // Fix the inconsistency: use isVerified flag as primary source of truth
+    const isActuallyVerified = professionalData?.isVerified === true;
+    const status = isActuallyVerified ? 'verified' : (professionalData?.verificationStatus || 'not_verified');
     
     switch (status) {
       case 'verified':
@@ -175,7 +177,9 @@ export default function ProfessionalDashboard() {
   };
 
   const renderVerificationActions = () => {
-    const status = professionalData?.verificationStatus || 'not_verified';
+    // Use the same logic as verification badge
+    const isActuallyVerified = professionalData?.isVerified === true;
+    const status = isActuallyVerified ? 'verified' : (professionalData?.verificationStatus || 'not_verified');
     
     if (status === 'verified') {
       return null;
