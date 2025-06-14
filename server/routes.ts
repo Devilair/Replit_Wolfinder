@@ -449,6 +449,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (error) {
         console.error('Document upload error:', error);
+        console.error('Request body:', req.body);
+        console.error('Request file:', req.file);
         res.status(500).json({ error: "Errore nel caricamento del documento" });
       }
     }

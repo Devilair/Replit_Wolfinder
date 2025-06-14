@@ -1179,3 +1179,7 @@ export type ProfessionalPlan = typeof professionalPlans.$inferSelect;
 export type InsertProfessionalPlan = z.infer<typeof insertProfessionalPlanSchema>;
 export type Event = typeof events.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
+
+// Verification documents types
+export type VerificationDocument = typeof verificationDocuments.$inferSelect;
+export type InsertVerificationDocument = typeof verificationDocuments.$inferInsert;
