@@ -4877,8 +4877,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // File viewing endpoint (for iframe and preview)
-  app.get('/api/files/:documentId', authService.authenticateToken, async (req: any, res) => {
+  app.get('/api/files/:documentId', async (req: any, res) => {
     try {
+      // Extract token from query parameter or Authorization header
+      let token = req.query.token || req.headers.authorization?.replace('Bearer ', '');
+      
+      if (!token) {
+        return res.status(401).json({ error: 'Token di accesso richiesto' });
+      }
+
+      // Verify token manually since we're not using middleware
+      let user;
+      try {
+        user = authService.verifyToken(token);
+      } catch (error) {
+        return res.status(401).json({ error: 'Token non valido' });
+      }
+
       const documentId = parseInt(req.params.documentId);
       const document = await storage.getVerificationDocument(documentId);
       
@@ -4887,8 +4902,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if user has permission to view this file
-      const isAdmin = req.user.role === 'admin' || req.user.role === 'moderator';
-      const isProfessionalOwner = req.user.role === 'professional' && document.professionalId === req.user.id;
+      const isAdmin = user.role === 'admin' || user.role === 'moderator';
+      const isProfessionalOwner = user.role === 'professional' && document.professionalId === user.id;
       
       if (!isAdmin && !isProfessionalOwner) {
         return res.status(403).json({ error: 'Non autorizzato' });

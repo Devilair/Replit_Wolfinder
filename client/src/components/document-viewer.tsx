@@ -16,7 +16,11 @@ export function DocumentViewer({ fileName, originalFileName, fileSize, documentI
   const [zoom, setZoom] = useState(100);
   const [rotation, setRotation] = useState(0);
 
-  const fileUrl = documentId ? `/api/files/${documentId}` : `/uploads/${fileName}`;
+  // Get token for authenticated requests
+  const token = localStorage.getItem('authToken');
+  const fileUrl = documentId 
+    ? `/api/files/${documentId}${token ? `?token=${encodeURIComponent(token)}` : ''}` 
+    : `/uploads/${fileName}`;
   const fileToCheck = originalFileName || fileName;
   
   // Analyze file type
