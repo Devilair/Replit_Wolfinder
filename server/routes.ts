@@ -4876,6 +4876,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // File download with original filename
+  app.get('/api/files/download/:documentId', authService.authenticateToken, async (req: any, res) => {
+    try {
+      const documentId = parseInt(req.params.documentId);
+      const document = await storage.getVerificationDocument(documentId);
+      
+      if (!document) {
+        return res.status(404).json({ error: 'Documento non trovato' });
+      }
+
+      // Check if user has permission to download this file
+      const isAdmin = req.user.role === 'admin' || req.user.role === 'moderator';
+      const isProfessionalOwner = req.user.role === 'professional' && document.professionalId === req.user.id;
+      
+      if (!isAdmin && !isProfessionalOwner) {
+        return res.status(403).json({ error: 'Non autorizzato' });
+      }
+
+      const filePath = path.join(process.cwd(), 'uploads', document.fileName);
+      const originalFileName = document.originalFileName || document.fileName;
+      
+      res.setHeader('Content-Disposition', `attachment; filename="${originalFileName}"`);
+      res.setHeader('Content-Type', document.mimeType || 'application/octet-stream');
+      
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      res.status(500).json({ error: 'Errore nel download del file' });
+    }
+  });
+
   // Admin verification document routes
   app.get('/api/admin/verification-documents/pending', authService.authenticateToken, authService.requireRole(['admin', 'moderator']), async (req: any, res) => {
     try {

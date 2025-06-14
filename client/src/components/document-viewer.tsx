@@ -7,18 +7,20 @@ interface DocumentViewerProps {
   fileName: string;
   originalFileName?: string;
   fileSize: number;
+  documentId?: number;
   trigger?: React.ReactNode;
 }
 
-export function DocumentViewer({ fileName, originalFileName, fileSize, trigger }: DocumentViewerProps) {
+export function DocumentViewer({ fileName, originalFileName, fileSize, documentId, trigger }: DocumentViewerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [zoom, setZoom] = useState(100);
   const [rotation, setRotation] = useState(0);
 
   const fileUrl = `/uploads/${fileName}`;
-  const isImage = /\.(jpg|jpeg|tiff)$/i.test(fileName);
-  const isPdf = /\.pdf$/i.test(fileName);
-  const isWordDoc = /\.(doc|docx)$/i.test(fileName);
+  const fileToCheck = originalFileName || fileName;
+  const isImage = /\.(jpg|jpeg|tiff)$/i.test(fileToCheck);
+  const isPdf = /\.pdf$/i.test(fileToCheck);
+  const isWordDoc = /\.(doc|docx)$/i.test(fileToCheck);
   
   // Determine if file can be previewed
   const canPreview = isImage || isPdf;
@@ -90,7 +92,15 @@ export function DocumentViewer({ fileName, originalFileName, fileSize, trigger }
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => window.open(fileUrl, '_blank')}
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = fileUrl;
+                  link.download = originalFileName || fileName;
+                  link.target = '_blank';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
               >
                 Apri in nuova scheda
               </Button>
@@ -149,12 +159,16 @@ export function DocumentViewer({ fileName, originalFileName, fileSize, trigger }
                 <div className="flex gap-2 justify-center">
                   <Button
                     onClick={() => {
-                      const link = document.createElement('a');
-                      link.href = fileUrl;
-                      link.download = originalFileName || fileName;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
+                      if (documentId) {
+                        window.open(`/api/files/download/${documentId}`, '_blank');
+                      } else {
+                        const link = document.createElement('a');
+                        link.href = fileUrl;
+                        link.download = originalFileName || fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }
                     }}
                     variant="default"
                   >
