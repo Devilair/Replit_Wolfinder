@@ -1238,6 +1238,38 @@ export class DatabaseStorage implements IStorage {
     return [];
   }
 
+  // Notification methods
+  async createNotification(notification: {
+    professionalId: number;
+    type: string;
+    title: string;
+    message: string;
+    read: boolean;
+    createdAt: Date;
+  }): Promise<void> {
+    try {
+      await db.insert(notifications).values(notification);
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      throw error;
+    }
+  }
+
+  async getNotifications(professionalId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.professionalId, professionalId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async markNotificationAsRead(notificationId: number): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.id, notificationId));
+  }
+
   // Admin methods implementation
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt));

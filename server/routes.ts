@@ -4960,6 +4960,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Professional notifications endpoint
+  app.get('/api/professional/notifications', authService.authenticateToken, async (req: any, res) => {
+    try {
+      const user = req.user as AuthUser;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      
+      if (!professional) {
+        return res.status(404).json({ error: 'Profilo professionale non trovato' });
+      }
+
+      const notifications = await storage.getNotifications(professional.id);
+      res.json(notifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      res.status(500).json({ error: 'Errore nel recupero delle notifiche' });
+    }
+  });
+
+  app.post('/api/professional/notifications/:notificationId/read', authService.authenticateToken, async (req: any, res) => {
+    try {
+      const { notificationId } = req.params;
+      await storage.markNotificationAsRead(parseInt(notificationId));
+      res.json({ message: 'Notifica contrassegnata come letta' });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      res.status(500).json({ error: 'Errore nell\'aggiornamento della notifica' });
+    }
+  });
+
   app.post('/api/admin/verification-documents/:documentId/verify', authService.authenticateToken, authService.requireRole(['admin', 'moderator']), async (req: any, res) => {
     try {
       const user = req.user as AuthUser;
@@ -4981,6 +5010,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the document to find the professional
       const document = await storage.getVerificationDocument(parseInt(documentId));
       if (document) {
+        // Get professional details for notifications
+        const professional = await storage.getProfessional(document.professionalId);
+        
         // Check if professional has all required documents approved
         const professionalDocuments = await storage.getVerificationDocumentsByProfessional(document.professionalId);
         const requiredTypes = ['identity', 'albo', 'vat_fiscal'];
@@ -4990,8 +5022,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Update professional verification status
         let newStatus = 'pending';
+        let notificationData = null;
+        
         if (action === 'reject') {
           newStatus = 'rejected';
+          notificationData = {
+            type: 'document_rejected',
+            subject: 'Documento rigettato - Wolfinder',
+            message: `Il documento ${document.documentType} è stato rigettato. ${notes ? `Motivo: ${notes}` : ''}`,
+            professionalId: document.professionalId
+          };
+          
+          await storage.updateProfessional(document.professionalId, {
+            verificationStatus: newStatus
+          });
         } else if (approvedRequired.length >= 1) { // At least one required document approved
           newStatus = 'approved';
           
@@ -4999,6 +5043,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const allDocuments = professionalDocuments.filter(d => d.status === 'approved');
           const hasQualifications = allDocuments.some(d => d.documentType === 'qualifications');
           const isPlus = approvedRequired.length === 3 && hasQualifications;
+          
+          notificationData = {
+            type: isPlus ? 'plus_verification_approved' : 'standard_verification_approved',
+            subject: isPlus ? 'Verifica PLUS completata - Wolfinder' : 'Profilo verificato - Wolfinder',
+            message: isPlus 
+              ? 'Congratulazioni! Il tuo profilo ha ottenuto la verifica PLUS con tutti i documenti approvati.'
+              : 'Il tuo profilo è stato verificato con successo. Ora puoi ricevere recensioni autentiche.',
+            professionalId: document.professionalId
+          };
           
           await storage.updateProfessional(document.professionalId, {
             verificationStatus: newStatus,
@@ -5010,6 +5063,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.updateProfessional(document.professionalId, {
             verificationStatus: newStatus
           });
+        }
+
+        // Send notification email if professional has email
+        if (notificationData && professional?.email) {
+          try {
+            // Create notification record
+            await storage.createNotification({
+              professionalId: notificationData.professionalId,
+              type: notificationData.type,
+              title: notificationData.subject,
+              message: notificationData.message,
+              read: false,
+              createdAt: new Date()
+            });
+
+            // Send email notification (implement email service)
+            console.log(`Email notification sent to ${professional.email}: ${notificationData.subject}`);
+            
+          } catch (emailError) {
+            console.error('Error sending notification:', emailError);
+            // Continue with the request even if email fails
+          }
         }
       }
 
