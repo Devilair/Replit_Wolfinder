@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Eye, X, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
 
@@ -16,28 +16,39 @@ export function DocumentViewer({ fileName, originalFileName, fileSize, documentI
   const [zoom, setZoom] = useState(100);
   const [rotation, setRotation] = useState(0);
 
-  const fileUrl = `/uploads/${fileName}`;
+  const fileUrl = documentId ? `/api/files/${documentId}` : `/uploads/${fileName}`;
   const fileToCheck = originalFileName || fileName;
-  const isImage = /\.(jpg|jpeg|tiff)$/i.test(fileToCheck);
+  
+  // Analyze file type
+  const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|tiff)$/i.test(fileToCheck);
   const isPdf = /\.pdf$/i.test(fileToCheck);
   const isWordDoc = /\.(doc|docx)$/i.test(fileToCheck);
   
   // Determine if file can be previewed
   const canPreview = isImage || isPdf;
 
+  // GESTIONE COMPLETAMENTE MANUALE - NO DialogTrigger
+  const handleViewClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen(true);
+  };
 
+  const handleDownloadClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (documentId) {
+      window.open(`/api/files/download/${documentId}`, '_blank');
+    } else {
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = originalFileName || fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
-  const defaultTrigger = (
-    <Button size="sm" variant="outline">
-      <Eye className="h-4 w-4 mr-2" />
-      Visualizza
-    </Button>
-  );
-
-  const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 200));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 50));
-  const handleRotate = () => setRotation(prev => (prev + 90) % 360);
-  
   const getFileTypeDescription = () => {
     if (isImage) return "Immagine";
     if (isPdf) return "Documento PDF";
@@ -45,151 +56,132 @@ export function DocumentViewer({ fileName, originalFileName, fileSize, documentI
     return "Documento";
   };
 
-  // RIMUOVO la logica di download diretto - tutti i file devono aprire il modale
+  // COMPONENTE TRIGGER PERSONALIZZATO
+  const ViewTrigger = () => {
+    if (trigger) {
+      return (
+        <div onClick={handleViewClick} style={{ cursor: 'pointer' }}>
+          {trigger}
+        </div>
+      );
+    }
+    
+    return (
+      <Button size="sm" variant="outline" onClick={handleViewClick}>
+        <Eye className="h-4 w-4 mr-2" />
+        Visualizza
+      </Button>
+    );
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {trigger || defaultTrigger}
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0">
-        <DialogHeader className="p-4 pb-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="text-lg">{originalFileName || fileName}</DialogTitle>
-              <DialogDescription className="text-sm text-gray-500">
-                {getFileTypeDescription()} - {(fileSize / 1024 / 1024).toFixed(2)} MB
-              </DialogDescription>
+    <>
+      <ViewTrigger />
+      
+      {/* DIALOG COMPLETAMENTE SEPARATO DAL TRIGGER */}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          <DialogHeader className="p-4 pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-lg">{originalFileName || fileName}</DialogTitle>
+                <DialogDescription className="text-sm text-gray-500">
+                  {getFileTypeDescription()} - {(fileSize / 1024 / 1024).toFixed(2)} MB
+                </DialogDescription>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {isImage && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setZoom(Math.max(25, zoom - 25))}
+                    >
+                      <ZoomOut className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm text-gray-500 min-w-[60px] text-center">
+                      {zoom}%
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setZoom(Math.min(400, zoom + 25))}
+                    >
+                      <ZoomIn className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setRotation((rotation + 90) % 360)}
+                    >
+                      <RotateCw className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+                
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDownloadClick}
+                >
+                  Scarica
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            
-            <div className="flex items-center gap-2">
-              {isImage && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleZoomOut}
-                    disabled={zoom <= 50}
-                  >
-                    <ZoomOut className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm font-medium min-w-[3rem] text-center">
-                    {zoom}%
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleZoomIn}
-                    disabled={zoom >= 200}
-                  >
-                    <ZoomIn className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleRotate}
-                  >
-                    <RotateCw className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  const link = document.createElement('a');
-                  link.href = fileUrl;
-                  link.download = originalFileName || fileName;
-                  link.target = '_blank';
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
-              >
-                Apri in nuova scheda
-              </Button>
-            </div>
-          </div>
-        </DialogHeader>
-        
-        <div className="flex-1 p-4 overflow-auto">
-          {isImage ? (
-            <div className="flex justify-center">
-              <img
-                src={fileUrl}
-                alt={fileName}
-                className="max-w-full h-auto border rounded-lg shadow-sm"
-                style={{
-                  transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
-                  transformOrigin: 'center center',
-                  transition: 'transform 0.2s ease'
-                }}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y3ZjdmNyIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbW1hZ2luZSBub24gZGlzcG9uaWJpbGU8L3RleHQ+Cjwvc3ZnPg==';
-                }}
-              />
-            </div>
-          ) : isPdf ? (
-            <div className="w-full h-[70vh]">
-              <iframe
-                src={fileUrl}
-                className="w-full h-full border rounded-lg"
-                title={fileName}
-              />
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-gray-300 rounded-lg">
-              <div className="text-center">
-                <div className="mb-4">
-                  <div className="w-16 h-16 mx-auto bg-gray-100 rounded-lg flex items-center justify-center mb-3">
-                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <p className="text-lg font-medium text-gray-900 mb-1">
-                    {getFileTypeDescription()}
-                  </p>
-                  <p className="text-sm text-gray-500 mb-1">
-                    {(fileSize / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                </div>
-                <p className="text-sm text-gray-600 mb-4">
-                  {isWordDoc ? 
-                    "I documenti Word possono essere scaricati e aperti con Microsoft Word o applicazioni compatibili" :
-                    "Questo tipo di file non supporta l'anteprima inline"
-                  }
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <Button
-                    onClick={() => {
-                      if (documentId) {
-                        window.open(`/api/files/download/${documentId}`, '_blank');
-                      } else {
-                        const link = document.createElement('a');
-                        link.href = fileUrl;
-                        link.download = originalFileName || fileName;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                      }
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-auto p-4 pt-0">
+            {canPreview ? (
+              <div className="flex items-center justify-center min-h-[400px] bg-gray-50 rounded-lg">
+                {isImage && (
+                  <img
+                    src={fileUrl}
+                    alt={originalFileName || fileName}
+                    className="max-w-full max-h-full object-contain"
+                    style={{
+                      transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
+                      transition: 'transform 0.2s ease-in-out'
                     }}
-                    variant="default"
-                  >
-                    Scarica file
-                  </Button>
-                  <Button
-                    onClick={() => window.open(fileUrl, '_blank')}
-                    variant="outline"
-                  >
-                    Apri in nuova scheda
+                  />
+                )}
+                
+                {isPdf && (
+                  <iframe
+                    src={fileUrl}
+                    className="w-full h-[600px] border-0 rounded"
+                    title={originalFileName || fileName}
+                  />
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-50 rounded-lg">
+                <div className="text-center">
+                  <Eye className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Anteprima non disponibile
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Questo tipo di file non può essere visualizzato in anteprima. 
+                    Puoi scaricarlo per aprirlo con l'applicazione appropriata.
+                  </p>
+                  <Button onClick={handleDownloadClick}>
+                    Scarica {getFileTypeDescription()}
                   </Button>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
