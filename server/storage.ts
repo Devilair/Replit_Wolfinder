@@ -1585,6 +1585,61 @@ export class DatabaseStorage implements IStorage {
       .where(eq(verificationDocuments.professionalId, professionalId))
       .orderBy(desc(verificationDocuments.createdAt));
   }
+
+  async getPendingVerificationDocuments(): Promise<any[]> {
+    const documents = await db
+      .select({
+        id: verificationDocuments.id,
+        professionalId: verificationDocuments.professionalId,
+        documentType: verificationDocuments.documentType,
+        fileName: verificationDocuments.fileName,
+        filePath: verificationDocuments.filePath,
+        fileSize: verificationDocuments.fileSize,
+        mimeType: verificationDocuments.mimeType,
+        status: verificationDocuments.status,
+        createdAt: verificationDocuments.createdAt,
+        professional: {
+          id: professionals.id,
+          businessName: professionals.businessName,
+          email: professionals.email,
+          city: professionals.city,
+          category: {
+            id: categories.id,
+            name: categories.name
+          }
+        }
+      })
+      .from(verificationDocuments)
+      .leftJoin(professionals, eq(verificationDocuments.professionalId, professionals.id))
+      .leftJoin(categories, eq(professionals.categoryId, categories.id))
+      .where(eq(verificationDocuments.status, 'pending'))
+      .orderBy(desc(verificationDocuments.createdAt));
+    
+    return documents;
+  }
+
+  async updateVerificationDocument(documentId: number, updates: any): Promise<void> {
+    await db
+      .update(verificationDocuments)
+      .set(updates)
+      .where(eq(verificationDocuments.id, documentId));
+  }
+
+  async getVerificationDocument(documentId: number): Promise<any> {
+    const [document] = await db
+      .select()
+      .from(verificationDocuments)
+      .where(eq(verificationDocuments.id, documentId));
+    return document;
+  }
+
+  async getVerificationDocumentsByProfessional(professionalId: number): Promise<any[]> {
+    const documents = await db
+      .select()
+      .from(verificationDocuments)
+      .where(eq(verificationDocuments.professionalId, professionalId));
+    return documents;
+  }
 }
 
 export const storage = new DatabaseStorage();

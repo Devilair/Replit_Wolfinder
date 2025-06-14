@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { stripeService } from "./stripe-service";
 import { geocodingService } from "./geocoding-service";
 import { emailService } from "./email-service";
-import { authService } from "./auth";
+import { authService, AuthUser } from "./auth";
 import Stripe from "stripe";
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -4769,6 +4769,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error creating audit log:', error);
       res.status(500).json({ message: 'Failed to create audit log' });
+    }
+  });
+
+  // Admin verification document routes
+  app.get('/api/admin/verification-documents/pending', authService.authenticateToken, authService.requireRole(['admin', 'moderator']), async (req: any, res) => {
+    try {
+      const pendingDocuments = await storage.getPendingVerificationDocuments();
+      res.json(pendingDocuments);
+    } catch (error) {
+      console.error('Error fetching pending documents:', error);
+      res.status(500).json({ error: 'Errore nel recupero dei documenti' });
+    }
+  });
+
+  app.post('/api/admin/verification-documents/:documentId/verify', authService.authenticateToken, authService.requireRole(['admin', 'moderator']), async (req: any, res) => {
+    try {
+      const user = req.user as AuthUser;
+      const { documentId } = req.params;
+      const { action, notes } = req.body;
+
+      if (!action || !['approve', 'reject'].includes(action)) {
+        return res.status(400).json({ error: 'Azione non valida' });
+      }
+
+      // Update document status
+      await storage.updateVerificationDocument(parseInt(documentId), {
+        status: action === 'approve' ? 'approved' : 'rejected',
+        rejectionReason: action === 'reject' ? notes : null,
+        reviewedBy: user.id,
+        reviewedAt: new Date()
+      });
+
+      // Get the document to find the professional
+      const document = await storage.getVerificationDocument(parseInt(documentId));
+      if (document) {
+        // Check if professional has all required documents approved
+        const professionalDocuments = await storage.getVerificationDocumentsByProfessional(document.professionalId);
+        const requiredTypes = ['identity', 'albo', 'vat_fiscal'];
+        const approvedRequired = professionalDocuments.filter(d => 
+          requiredTypes.includes(d.documentType) && d.status === 'approved'
+        );
+
+        // Update professional verification status
+        let newStatus = 'pending';
+        if (action === 'reject') {
+          newStatus = 'rejected';
+        } else if (approvedRequired.length >= 1) { // At least one required document approved
+          newStatus = 'approved';
+          
+          // Check for PLUS verification (all 4 documents)
+          const allDocuments = professionalDocuments.filter(d => d.status === 'approved');
+          const hasQualifications = allDocuments.some(d => d.documentType === 'qualifications');
+          const isPlus = approvedRequired.length === 3 && hasQualifications;
+          
+          await storage.updateProfessional(document.professionalId, {
+            verificationStatus: newStatus,
+            verificationDate: new Date(),
+            verifiedBy: user.id,
+            isPremium: isPlus // PLUS verification gets premium features
+          });
+        } else {
+          await storage.updateProfessional(document.professionalId, {
+            verificationStatus: newStatus
+          });
+        }
+      }
+
+      res.json({ message: 'Documento verificato con successo' });
+    } catch (error) {
+      console.error('Error verifying document:', error);
+      res.status(500).json({ error: 'Errore durante la verifica del documento' });
     }
   });
 
