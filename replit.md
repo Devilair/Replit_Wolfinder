@@ -130,6 +130,7 @@ Wolfinder is a comprehensive professional directory platform built for the Itali
 ## Changelog
 
 - June 14, 2025. Initial setup
+- June 14, 2025. Professional verification system implemented with document upload functionality, fixed data inconsistency bug
 
 ## User Preferences
 
