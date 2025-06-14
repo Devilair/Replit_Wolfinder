@@ -4876,98 +4876,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // File viewing endpoint (for iframe and preview)
-  app.get('/api/files/:documentId', async (req: any, res) => {
+  // Simple document viewing endpoint
+  app.get('/api/view-document/:documentId', async (req, res) => {
     try {
-      // Extract token from query parameter or Authorization header
-      let token = req.query.token || req.headers.authorization?.replace('Bearer ', '');
-      
+      const documentId = parseInt(req.params.documentId);
+      const token = req.query.token as string;
+
       if (!token) {
-        return res.status(401).json({ error: 'Token di accesso richiesto' });
+        return res.status(401).json({ error: 'Token richiesto' });
       }
 
-      // Verify token manually since we're not using middleware
-      let user;
-      try {
-        user = authService.verifyToken(token);
-      } catch (error) {
+      const decoded = authService.verifyToken(token);
+      if (!decoded) {
         return res.status(401).json({ error: 'Token non valido' });
       }
 
-      const documentId = parseInt(req.params.documentId);
       const document = await storage.getVerificationDocument(documentId);
-      
       if (!document) {
         return res.status(404).json({ error: 'Documento non trovato' });
       }
 
-      // Check if user has permission to view this file
-      const isAdmin = user.role === 'admin' || user.role === 'moderator';
-      const isProfessionalOwner = user.role === 'professional' && document.professionalId === user.id;
-      
-      if (!isAdmin && !isProfessionalOwner) {
-        return res.status(403).json({ error: 'Non autorizzato' });
-      }
-
       const filePath = path.join(process.cwd(), 'uploads', document.fileName);
-      
-      // Check if file exists
       if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ error: 'File fisico non trovato' });
+        return res.status(404).json({ error: 'File non trovato' });
       }
 
-      // Set appropriate headers for viewing
-      const ext = path.extname(document.fileName).toLowerCase();
-      let contentType = 'application/octet-stream';
-      
-      if (ext === '.pdf') contentType = 'application/pdf';
-      else if (['.jpg', '.jpeg'].includes(ext)) contentType = 'image/jpeg';
-      else if (ext === '.png') contentType = 'image/png';
-      else if (ext === '.tiff') contentType = 'image/tiff';
-      
-      // Force inline viewing, no download
-      res.setHeader('Content-Type', contentType);
+      // Force inline viewing for PDFs
+      const isPdf = document.fileName.toLowerCase().endsWith('.pdf');
+      res.setHeader('Content-Type', isPdf ? 'application/pdf' : 'image/jpeg');
       res.setHeader('Content-Disposition', 'inline');
-      res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
       
-      // Send file directly
       res.sendFile(filePath);
     } catch (error) {
-      console.error('Error serving file for viewing:', error);
-      res.status(500).json({ error: 'Errore nel caricamento del file' });
+      console.error('Error viewing document:', error);
+      res.status(500).json({ error: 'Errore server' });
     }
   });
 
-  // File download with original filename
-  app.get('/api/files/download/:documentId', authService.authenticateToken, async (req: any, res) => {
+  // Simple document download endpoint
+  app.get('/api/download-document/:documentId', async (req, res) => {
     try {
       const documentId = parseInt(req.params.documentId);
+      const token = req.query.token as string;
+
+      if (!token) {
+        return res.status(401).json({ error: 'Token richiesto' });
+      }
+
+      const decoded = authService.verifyToken(token);
+      if (!decoded) {
+        return res.status(401).json({ error: 'Token non valido' });
+      }
+
       const document = await storage.getVerificationDocument(documentId);
-      
       if (!document) {
         return res.status(404).json({ error: 'Documento non trovato' });
       }
 
-      // Check if user has permission to download this file
-      const isAdmin = req.user.role === 'admin' || req.user.role === 'moderator';
-      const isProfessionalOwner = req.user.role === 'professional' && document.professionalId === req.user.id;
-      
-      if (!isAdmin && !isProfessionalOwner) {
-        return res.status(403).json({ error: 'Non autorizzato' });
+      const filePath = path.join(process.cwd(), 'uploads', document.fileName);
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'File non trovato' });
       }
 
-      const filePath = path.join(process.cwd(), 'uploads', document.fileName);
-      const originalFileName = document.originalFileName || document.fileName;
-      
-      res.setHeader('Content-Disposition', `attachment; filename="${originalFileName}"`);
-      res.setHeader('Content-Type', document.mimeType || 'application/octet-stream');
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${document.originalFileName}"`);
       
       res.sendFile(filePath);
     } catch (error) {
-      console.error('Error downloading file:', error);
-      res.status(500).json({ error: 'Errore nel download del file' });
+      console.error('Error downloading document:', error);
+      res.status(500).json({ error: 'Errore server' });
     }
   });
 
