@@ -134,6 +134,7 @@ Wolfinder is a comprehensive professional directory platform built for the Itali
 - June 14, 2025. Initial setup
 - June 14, 2025. Professional verification system implemented with document upload functionality, fixed data inconsistency bug
 - June 14, 2025. Document viewer system completed with file format restrictions (PDF, JPG, JPEG, TIFF, DOC, DOCX), original filename preservation for downloads, and comprehensive admin interface for document verification
+- June 14, 2025. Fixed document download system: files now download with original names instead of hash filenames, added dedicated download endpoint, enhanced DocumentViewer component with proper trigger configuration
 
 ## User Preferences
 
