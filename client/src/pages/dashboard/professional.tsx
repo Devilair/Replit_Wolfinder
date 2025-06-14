@@ -1619,16 +1619,31 @@ function VerificationDocumentUpload({
       formData.append('file', selectedFile);
       formData.append('type', type);
 
-      await apiRequest('POST', '/api/professional/upload-verification-document', formData);
+      // Use fetch directly for file uploads instead of apiRequest
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/professional/upload-verification-document', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
+      }
+
       setUploaded(true);
       toast({
         title: "Documento caricato",
         description: `${title} caricato con successo`
       });
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: "Errore caricamento",
-        description: "Riprova più tardi",
+        description: error instanceof Error ? error.message : "Riprova più tardi",
         variant: "destructive"
       });
     } finally {
