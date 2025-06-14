@@ -1593,6 +1593,7 @@ export class DatabaseStorage implements IStorage {
         professionalId: verificationDocuments.professionalId,
         documentType: verificationDocuments.documentType,
         fileName: verificationDocuments.fileName,
+        originalFileName: verificationDocuments.originalFileName,
         filePath: verificationDocuments.filePath,
         fileSize: verificationDocuments.fileSize,
         mimeType: verificationDocuments.mimeType,

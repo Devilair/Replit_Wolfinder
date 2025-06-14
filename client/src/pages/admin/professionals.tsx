@@ -647,6 +647,7 @@ function PendingDocumentsVerification() {
               <div className="flex flex-col gap-2 shrink-0">
                 <DocumentViewer
                   fileName={doc.fileName}
+                  originalFileName={doc.originalFileName}
                   fileSize={doc.fileSize}
                 />
                 

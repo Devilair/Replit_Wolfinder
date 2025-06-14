@@ -420,6 +420,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ error: "Documento richiesto" });
         }
 
+        // Validate file type - only PDF, images (JPG, JPEG, TIFF) and Word docs (DOC, DOCX)
+        const allowedMimeTypes = [
+          'application/pdf',
+          'image/jpeg',
+          'image/jpg', 
+          'image/tiff',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+        
+        if (!allowedMimeTypes.includes(req.file.mimetype)) {
+          console.log('Invalid file type:', req.file.mimetype);
+          return res.status(400).json({ 
+            error: "Formato file non supportato. Carica solo PDF, immagini (JPG, JPEG, TIFF) o documenti Word (DOC, DOCX)" 
+          });
+        }
+
         const { type } = req.body;
         console.log('Document type from body:', type);
         
@@ -440,6 +457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           professionalId: professional.id,
           documentType: type,
           fileName: req.file.filename,
+          originalFileName: req.file.originalname,
           filePath: req.file.path,
           fileSize: req.file.size,
           mimeType: req.file.mimetype,
