@@ -42,7 +42,10 @@ export function DocumentViewer({ fileName, originalFileName, fileSize, documentI
     e.preventDefault();
     e.stopPropagation();
     if (documentId) {
-      window.open(`/api/files/download/${documentId}`, '_blank');
+      const downloadUrl = token 
+        ? `/api/files/download/${documentId}?token=${encodeURIComponent(token)}`
+        : `/api/files/download/${documentId}`;
+      window.open(downloadUrl, '_blank');
     } else {
       const link = document.createElement('a');
       link.href = fileUrl;
@@ -159,21 +162,14 @@ export function DocumentViewer({ fileName, originalFileName, fileSize, documentI
                 )}
                 
                 {isPdf && (
-                  <object
-                    data={fileUrl}
-                    type="application/pdf"
-                    className="w-full h-[600px] rounded"
-                  >
-                    <div className="text-center text-gray-500 p-8">
-                      <p>Il browser non supporta la visualizzazione PDF.</p>
-                      <button 
-                        onClick={handleDownloadClick}
-                        className="text-blue-600 hover:underline mt-2 inline-block"
-                      >
-                        Scarica il documento
-                      </button>
-                    </div>
-                  </object>
+                  <div className="w-full h-[600px] border rounded overflow-hidden">
+                    <iframe
+                      src={`${fileUrl}#view=FitH`}
+                      className="w-full h-full border-0"
+                      title={originalFileName || fileName}
+                      style={{ backgroundColor: '#f5f5f5' }}
+                    />
+                  </div>
                 )}
               </div>
             ) : (
