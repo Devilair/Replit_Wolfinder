@@ -1590,12 +1590,19 @@ function VerificationDocumentUpload({
     const selectedFile = event.target.files?.[0];
     if (!selectedFile) return;
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    // Validate file type - only PDF, images (JPG, JPEG, TIFF) and Word docs (DOC, DOCX)
+    const allowedTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/jpg', 
+      'image/tiff',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
     if (!allowedTypes.includes(selectedFile.type)) {
       toast({
         title: "Formato non supportato",
-        description: "Carica solo file PDF, JPG o PNG",
+        description: "Carica solo PDF, immagini (JPG, JPEG, TIFF) o documenti Word (DOC, DOCX)",
         variant: "destructive"
       });
       return;
@@ -1665,7 +1672,7 @@ function VerificationDocumentUpload({
       <div className="flex items-center gap-3">
         <Input
           type="file"
-          accept=".pdf,.jpg,.jpeg,.png"
+          accept=".pdf,.jpg,.jpeg,.tiff,.doc,.docx"
           onChange={handleFileUpload}
           disabled={uploading || uploaded}
           className="flex-1"

@@ -636,7 +636,7 @@ function PendingDocumentsVerification() {
                 <div className="mb-4">
                   <span className="font-medium text-sm">File:</span>
                   <div className="mt-1 p-2 bg-gray-50 rounded flex items-center gap-2">
-                    <span className="text-sm">{doc.fileName}</span>
+                    <span className="text-sm">{doc.originalFileName || doc.fileName}</span>
                     <span className="text-xs text-gray-500">
                       ({(doc.fileSize / 1024 / 1024).toFixed(2)} MB)
                     </span>
