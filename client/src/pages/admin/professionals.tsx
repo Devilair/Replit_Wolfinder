@@ -644,14 +644,10 @@ function PendingDocumentsVerification() {
               </div>
 
               <div className="flex flex-col gap-2 shrink-0">
-                <Button
-                  size="sm"
-                  onClick={() => window.open(`/uploads/${doc.fileName}`, '_blank')}
-                  variant="outline"
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  Visualizza
-                </Button>
+                <DocumentViewer
+                  fileName={doc.fileName}
+                  fileSize={doc.fileSize}
+                />
                 
                 <Button
                   size="sm"

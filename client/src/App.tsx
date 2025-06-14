@@ -16,6 +16,7 @@ import ClaimProfile from "@/pages/claim-profile";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdvancedDashboard from "@/pages/admin/advanced-dashboard";
 import AdminProfessionals from "@/pages/admin/professionals";
+import AdminProfessionalView from "@/pages/admin/professional-view";
 import AddProfessional from "@/pages/admin/add-professional";
 import EditProfessional from "@/pages/admin/edit-professional";
 import AdminReviews from "@/pages/admin/reviews-advanced";
@@ -110,6 +111,16 @@ function Router() {
       <Route path="/admin/professionals" component={() => (
         <AdminLayout>
           <AdminProfessionals />
+        </AdminLayout>
+      )} />
+      <Route path="/admin/professionals/:id" component={() => (
+        <AdminLayout>
+          <AdminProfessionalView />
+        </AdminLayout>
+      )} />
+      <Route path="/admin/professionals/:id/edit" component={() => (
+        <AdminLayout>
+          <EditProfessional />
         </AdminLayout>
       )} />
       <Route path="/admin/professionals-advanced" component={() => (
