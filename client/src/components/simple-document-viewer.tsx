@@ -83,14 +83,24 @@ export function SimpleDocumentViewer({ fileName, originalFileName, fileSize, doc
           
           <div className="flex-1 p-4 pt-0">
             {isPdf && (
-              <div className="w-full h-[600px] border rounded">
-                <embed
-                  src={viewUrl}
+              <div className="w-full h-[600px] border rounded overflow-hidden bg-gray-50">
+                <object
+                  data={viewUrl}
                   type="application/pdf"
-                  width="100%"
-                  height="100%"
-                  className="rounded"
-                />
+                  className="w-full h-full"
+                >
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center p-4">
+                      <p className="text-gray-600 mb-4">
+                        Il browser non supporta la visualizzazione PDF.
+                      </p>
+                      <Button onClick={handleDownload} variant="outline">
+                        <Download className="h-4 w-4 mr-2" />
+                        Scarica PDF
+                      </Button>
+                    </div>
+                  </div>
+                </object>
               </div>
             )}
             
