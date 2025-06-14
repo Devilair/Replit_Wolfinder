@@ -10,7 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import CreateProfessionalDialog from "./CreateProfessionalDialog";
-import { DocumentViewer } from "@/components/document-viewer";
+import { SimpleDocumentViewer } from "@/components/simple-document-viewer";
 import { 
   Search, 
   Filter, 
@@ -645,7 +645,7 @@ function PendingDocumentsVerification() {
               </div>
 
               <div className="flex flex-col gap-2 shrink-0">
-                <DocumentViewer
+                <SimpleDocumentViewer
                   fileName={doc.fileName}
                   originalFileName={doc.originalFileName}
                   fileSize={doc.fileSize}
