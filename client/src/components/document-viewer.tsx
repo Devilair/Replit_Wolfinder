@@ -33,6 +33,14 @@ export function DocumentViewer({ fileName, fileSize, trigger }: DocumentViewerPr
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 200));
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 50));
   const handleRotate = () => setRotation(prev => (prev + 90) % 360);
+  
+  const getFileTypeDescription = () => {
+    if (isImage) return "Immagine";
+    if (isPdf) return "Documento PDF";
+    if (isOfficeDoc) return "Documento Office";
+    if (isText) return "File di testo";
+    return "Documento";
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -120,18 +128,48 @@ export function DocumentViewer({ fileName, fileSize, trigger }: DocumentViewerPr
           ) : (
             <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-gray-300 rounded-lg">
               <div className="text-center">
-                <p className="text-lg font-medium text-gray-600 mb-2">
-                  Anteprima non disponibile
+                <div className="mb-4">
+                  <div className="w-16 h-16 mx-auto bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <p className="text-lg font-medium text-gray-900 mb-1">
+                    {getFileTypeDescription()}
+                  </p>
+                  <p className="text-sm text-gray-500 mb-1">
+                    {(fileSize / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">
+                  {isOfficeDoc ? 
+                    "I documenti Office possono essere scaricati e aperti con le applicazioni appropriate" :
+                    isText ?
+                    "Il file di testo può essere scaricato e aperto in un editor" :
+                    "Questo tipo di file non supporta l'anteprima inline"
+                  }
                 </p>
-                <p className="text-sm text-gray-500 mb-4">
-                  Tipo di file non supportato per l'anteprima inline
-                </p>
-                <Button
-                  onClick={() => window.open(fileUrl, '_blank')}
-                  variant="outline"
-                >
-                  Scarica file
-                </Button>
+                <div className="flex gap-2 justify-center">
+                  <Button
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = fileUrl;
+                      link.download = fileName;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    variant="default"
+                  >
+                    Scarica file
+                  </Button>
+                  <Button
+                    onClick={() => window.open(fileUrl, '_blank')}
+                    variant="outline"
+                  >
+                    Apri in nuova scheda
+                  </Button>
+                </div>
               </div>
             </div>
           )}

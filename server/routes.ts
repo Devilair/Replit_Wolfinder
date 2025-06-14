@@ -1767,9 +1767,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         '.png': 'image/png',
         '.gif': 'image/gif',
         '.webp': 'image/webp',
+        '.bmp': 'image/bmp',
+        '.svg': 'image/svg+xml',
         '.doc': 'application/msword',
         '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        '.txt': 'text/plain'
+        '.xls': 'application/vnd.ms-excel',
+        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        '.ppt': 'application/vnd.ms-powerpoint',
+        '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        '.txt': 'text/plain',
+        '.csv': 'text/csv'
       };
       
       const contentType = mimeTypes[ext] || 'application/octet-stream';
@@ -1777,6 +1784,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Stream the file
       const fileStream = fs.createReadStream(filePath);
+      
+      fileStream.on('error', (error) => {
+        console.error('Error streaming file:', error);
+        if (!res.headersSent) {
+          res.status(500).json({ message: "Error serving file" });
+        }
+      });
+      
       fileStream.pipe(res);
       
     } catch (error) {
