@@ -50,7 +50,7 @@ export function DocumentViewer({ fileName, originalFileName, fileSize, trigger }
         <DialogHeader className="p-4 pb-2">
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle className="text-lg">{fileName}</DialogTitle>
+              <DialogTitle className="text-lg">{originalFileName || fileName}</DialogTitle>
               <p className="text-sm text-gray-500">
                 {(fileSize / 1024 / 1024).toFixed(2)} MB
               </p>
