@@ -43,6 +43,31 @@ export function DocumentViewer({ fileName, originalFileName, fileSize, documentI
     return "Documento";
   };
 
+  // Se il file non può essere visualizzato in anteprima, scarica direttamente
+  if (!canPreview && !trigger) {
+    return (
+      <Button 
+        size="sm" 
+        variant="outline"
+        onClick={() => {
+          if (documentId) {
+            window.open(`/api/files/download/${documentId}`, '_blank');
+          } else {
+            const link = document.createElement('a');
+            link.href = fileUrl;
+            link.download = originalFileName || fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }
+        }}
+      >
+        <Eye className="h-4 w-4 mr-2" />
+        Scarica
+      </Button>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
