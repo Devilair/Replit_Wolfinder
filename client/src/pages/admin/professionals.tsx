@@ -650,12 +650,6 @@ function PendingDocumentsVerification() {
                   originalFileName={doc.originalFileName}
                   fileSize={doc.fileSize}
                   documentId={doc.id}
-                  trigger={
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4 mr-2" />
-                      Visualizza
-                    </Button>
-                  }
                 />
                 
                 <Button
