@@ -4876,6 +4876,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // File viewing endpoint (for iframe and preview)
+  app.get('/api/files/:documentId', authService.authenticateToken, async (req: any, res) => {
+    try {
+      const documentId = parseInt(req.params.documentId);
+      const document = await storage.getVerificationDocument(documentId);
+      
+      if (!document) {
+        return res.status(404).json({ error: 'Documento non trovato' });
+      }
+
+      // Check if user has permission to view this file
+      const isAdmin = req.user.role === 'admin' || req.user.role === 'moderator';
+      const isProfessionalOwner = req.user.role === 'professional' && document.professionalId === req.user.id;
+      
+      if (!isAdmin && !isProfessionalOwner) {
+        return res.status(403).json({ error: 'Non autorizzato' });
+      }
+
+      const filePath = path.join(process.cwd(), 'uploads', document.fileName);
+      
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'File fisico non trovato' });
+      }
+
+      // Set appropriate headers for viewing
+      const ext = path.extname(document.fileName).toLowerCase();
+      let contentType = 'application/octet-stream';
+      
+      if (ext === '.pdf') contentType = 'application/pdf';
+      else if (['.jpg', '.jpeg'].includes(ext)) contentType = 'image/jpeg';
+      else if (ext === '.png') contentType = 'image/png';
+      else if (ext === '.tiff') contentType = 'image/tiff';
+      
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', 'inline'); // For viewing, not download
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error('Error serving file for viewing:', error);
+      res.status(500).json({ error: 'Errore nel caricamento del file' });
+    }
+  });
+
   // File download with original filename
   app.get('/api/files/download/:documentId', authService.authenticateToken, async (req: any, res) => {
     try {
