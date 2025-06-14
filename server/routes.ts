@@ -394,28 +394,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/professional/upload-verification-document", 
     authService.authenticateToken,
     authService.requireRole(['professional']),
-    upload.single('document'),
+    upload.single('file'),
     async (req, res) => {
       try {
+        console.log('=== Upload Document Debug ===');
+        console.log('Request body:', req.body);
+        console.log('Request file:', req.file);
+        console.log('Request headers:', req.headers);
+        
         const user = req.user as any;
+        console.log('User from token:', user);
+        
         const professional = await storage.getProfessionalByUserId(user.id);
+        console.log('Professional found:', professional);
         
         if (!professional) {
+          console.log('Professional not found for user ID:', user.id);
           return res.status(404).json({ error: "Profilo professionale non trovato" });
         }
 
         if (!req.file) {
+          console.log('No file received in request');
           return res.status(400).json({ error: "Documento richiesto" });
         }
 
         const { type } = req.body;
+        console.log('Document type from body:', type);
+        
         if (!type) {
+          console.log('No document type provided');
           return res.status(400).json({ error: "Tipo documento richiesto" });
         }
 
         // Validate document type
         const validTypes = ['identity', 'albo', 'vat_fiscal', 'qualifications'];
         if (!validTypes.includes(type)) {
+          console.log('Invalid document type:', type, 'Valid types:', validTypes);
           return res.status(400).json({ error: "Tipo documento non valido" });
         }
 
