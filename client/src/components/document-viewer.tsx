@@ -26,16 +26,7 @@ export function DocumentViewer({ fileName, originalFileName, fileSize, documentI
   const canPreview = isImage || isPdf;
 
   const defaultTrigger = (
-    <Button 
-      size="sm" 
-      variant="outline"
-      onClick={(e) => {
-        console.log("DocumentViewer trigger clicked");
-        e.preventDefault();
-        e.stopPropagation();
-        setIsOpen(true);
-      }}
-    >
+    <Button size="sm" variant="outline">
       <Eye className="h-4 w-4 mr-2" />
       Visualizza
     </Button>
