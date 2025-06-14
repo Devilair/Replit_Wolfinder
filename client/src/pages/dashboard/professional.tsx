@@ -112,6 +112,89 @@ export default function ProfessionalDashboard() {
   ];
   
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
+  const [uploadingDocument, setUploadingDocument] = useState(false);
+  
+  // Verification helper functions
+  const getVerificationStatusText = (status: string | undefined) => {
+    switch (status) {
+      case 'verified': return 'Verificato';
+      case 'pending': return 'In verifica';
+      case 'rejected': return 'Rigettato';
+      case 'not_verified':
+      default: return 'Non verificato';
+    }
+  };
+
+  const renderVerificationBadge = () => {
+    const status = professionalData?.verificationStatus || 'not_verified';
+    
+    switch (status) {
+      case 'verified':
+        return (
+          <Badge variant="default" className="mt-1 bg-green-100 text-green-800">
+            ✓ Verificato
+          </Badge>
+        );
+      case 'pending':
+        return (
+          <div className="mt-1">
+            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 mb-1 flex items-center">
+              <div className="w-3 h-3 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin mr-1"></div>
+              In verifica
+            </Badge>
+            <p className="text-xs text-gray-500">
+              Documento in revisione, ~24h
+            </p>
+          </div>
+        );
+      case 'rejected':
+        return (
+          <div className="mt-1">
+            <Badge variant="destructive" className="mb-1">
+              ✗ Rigettato
+            </Badge>
+            <p className="text-xs text-red-500">
+              Documenti non validi, riprova
+            </p>
+          </div>
+        );
+      case 'not_verified':
+      default:
+        return (
+          <div className="mt-1">
+            <Badge variant="outline" className="mb-1">
+              In attesa
+            </Badge>
+            <p className="text-xs text-gray-500">
+              Carica i documenti per verificare
+            </p>
+          </div>
+        );
+    }
+  };
+
+  const renderVerificationActions = () => {
+    const status = professionalData?.verificationStatus || 'not_verified';
+    
+    if (status === 'verified') {
+      return null;
+    }
+
+    return (
+      <div className="mt-4 pt-4 border-t">
+        <Button 
+          onClick={() => setShowVerificationDialog(true)}
+          className="w-full"
+          variant={status === 'rejected' ? 'destructive' : 'default'}
+        >
+          {status === 'pending' ? 'Gestisci Documenti' : 
+           status === 'rejected' ? 'Carica Nuovi Documenti' : 
+           'Inizia Verifica'}
+        </Button>
+      </div>
+    );
+  };
   
   // Tour functions
   const startTour = () => {
@@ -438,26 +521,13 @@ export default function ProfessionalDashboard() {
                     <div>
                       <p className="text-sm font-medium text-gray-600">Stato Verifica</p>
                       <p className="text-2xl font-bold text-gray-900">
-                        {professionalData?.isVerified ? "Verificato" : "In verifica"}
+                        {getVerificationStatusText(professionalData?.verificationStatus)}
                       </p>
-                      {professionalData?.isVerified ? (
-                        <Badge variant="default" className="mt-1 bg-green-100 text-green-800">
-                          ✓ Verificato
-                        </Badge>
-                      ) : (
-                        <div className="mt-1">
-                          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 mb-1 flex items-center">
-                            <div className="w-3 h-3 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin mr-1"></div>
-                            In verifica
-                          </Badge>
-                          <p className="text-xs text-gray-500">
-                            Documento in revisione, ~24h
-                          </p>
-                        </div>
-                      )}
+                      {renderVerificationBadge()}
                     </div>
                     <Shield className="w-8 h-8 text-purple-600" />
                   </div>
+                  {renderVerificationActions()}
                 </CardContent>
               </Card>
             </div>
