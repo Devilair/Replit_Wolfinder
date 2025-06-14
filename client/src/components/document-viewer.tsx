@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Eye, X, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
 
@@ -25,6 +25,8 @@ export function DocumentViewer({ fileName, originalFileName, fileSize, documentI
   // Determine if file can be previewed
   const canPreview = isImage || isPdf;
 
+
+
   const defaultTrigger = (
     <Button size="sm" variant="outline">
       <Eye className="h-4 w-4 mr-2" />
@@ -43,30 +45,7 @@ export function DocumentViewer({ fileName, originalFileName, fileSize, documentI
     return "Documento";
   };
 
-  // Se il file non può essere visualizzato in anteprima, scarica direttamente
-  if (!canPreview && !trigger) {
-    return (
-      <Button 
-        size="sm" 
-        variant="outline"
-        onClick={() => {
-          if (documentId) {
-            window.open(`/api/files/download/${documentId}`, '_blank');
-          } else {
-            const link = document.createElement('a');
-            link.href = fileUrl;
-            link.download = originalFileName || fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          }
-        }}
-      >
-        <Eye className="h-4 w-4 mr-2" />
-        Scarica
-      </Button>
-    );
-  }
+  // RIMUOVO la logica di download diretto - tutti i file devono aprire il modale
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -78,9 +57,9 @@ export function DocumentViewer({ fileName, originalFileName, fileSize, documentI
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="text-lg">{originalFileName || fileName}</DialogTitle>
-              <p className="text-sm text-gray-500">
-                {(fileSize / 1024 / 1024).toFixed(2)} MB
-              </p>
+              <DialogDescription className="text-sm text-gray-500">
+                {getFileTypeDescription()} - {(fileSize / 1024 / 1024).toFixed(2)} MB
+              </DialogDescription>
             </div>
             
             <div className="flex items-center gap-2">
