@@ -1619,20 +1619,8 @@ function VerificationDocumentUpload({
       formData.append('file', selectedFile);
       formData.append('type', type);
 
-      // Use fetch directly for file uploads instead of apiRequest
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/professional/upload-verification-document', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Upload failed');
-      }
+      // Use apiRequest which now supports FormData
+      await apiRequest('POST', '/api/professional/upload-verification-document', formData);
 
       setUploaded(true);
       toast({
