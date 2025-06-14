@@ -79,7 +79,8 @@ export const verificationDocuments = pgTable("verification_documents", {
   id: serial("id").primaryKey(),
   professionalId: integer("professional_id").notNull().references(() => professionals.id, { onDelete: "cascade" }),
   documentType: text("document_type").notNull(), // identity_card, professional_certificate, business_license
-  fileName: text("file_name").notNull(),
+  fileName: text("file_name").notNull(), // stored filename (with hash)
+  originalFileName: text("original_file_name"), // original filename from user
   filePath: text("file_path").notNull(),
   fileSize: integer("file_size"),
   mimeType: text("mime_type"),

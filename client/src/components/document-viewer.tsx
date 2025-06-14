@@ -5,20 +5,20 @@ import { Eye, X, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
 
 interface DocumentViewerProps {
   fileName: string;
+  originalFileName?: string;
   fileSize: number;
   trigger?: React.ReactNode;
 }
 
-export function DocumentViewer({ fileName, fileSize, trigger }: DocumentViewerProps) {
+export function DocumentViewer({ fileName, originalFileName, fileSize, trigger }: DocumentViewerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [zoom, setZoom] = useState(100);
   const [rotation, setRotation] = useState(0);
 
   const fileUrl = `/uploads/${fileName}`;
-  const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(fileName);
+  const isImage = /\.(jpg|jpeg|tiff)$/i.test(fileName);
   const isPdf = /\.pdf$/i.test(fileName);
-  const isOfficeDoc = /\.(doc|docx|xls|xlsx|ppt|pptx)$/i.test(fileName);
-  const isText = /\.(txt|csv)$/i.test(fileName);
+  const isWordDoc = /\.(doc|docx)$/i.test(fileName);
   
   // Determine if file can be previewed
   const canPreview = isImage || isPdf;
@@ -37,8 +37,7 @@ export function DocumentViewer({ fileName, fileSize, trigger }: DocumentViewerPr
   const getFileTypeDescription = () => {
     if (isImage) return "Immagine";
     if (isPdf) return "Documento PDF";
-    if (isOfficeDoc) return "Documento Office";
-    if (isText) return "File di testo";
+    if (isWordDoc) return "Documento Word";
     return "Documento";
   };
 
@@ -142,10 +141,8 @@ export function DocumentViewer({ fileName, fileSize, trigger }: DocumentViewerPr
                   </p>
                 </div>
                 <p className="text-sm text-gray-600 mb-4">
-                  {isOfficeDoc ? 
-                    "I documenti Office possono essere scaricati e aperti con le applicazioni appropriate" :
-                    isText ?
-                    "Il file di testo può essere scaricato e aperto in un editor" :
+                  {isWordDoc ? 
+                    "I documenti Word possono essere scaricati e aperti con Microsoft Word o applicazioni compatibili" :
                     "Questo tipo di file non supporta l'anteprima inline"
                   }
                 </p>
