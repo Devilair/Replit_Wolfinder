@@ -1517,14 +1517,14 @@ export default function ProfessionalDashboard() {
                 />
                 
                 <VerificationDocumentUpload
-                  type="professional_registration"
+                  type="albo"
                   title="Iscrizione Albo Professionale"
                   description="Certificato di iscrizione all'ordine/albo professionale"
                   required
                 />
                 
                 <VerificationDocumentUpload
-                  type="tax_code"
+                  type="vat_fiscal"
                   title="Partita IVA / Codice Fiscale"
                   description="Documento attestante la Partita IVA o codice fiscale"
                   required
@@ -1616,9 +1616,8 @@ function VerificationDocumentUpload({
 
     try {
       const formData = new FormData();
-      formData.append('document', selectedFile);
+      formData.append('file', selectedFile);
       formData.append('type', type);
-      formData.append('title', title);
 
       await apiRequest('POST', '/api/professional/upload-verification-document', formData);
       setUploaded(true);

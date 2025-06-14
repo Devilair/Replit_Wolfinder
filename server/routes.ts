@@ -408,21 +408,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ error: "Documento richiesto" });
         }
 
-        const { documentType } = req.body;
-        if (!documentType) {
+        const { type } = req.body;
+        if (!type) {
           return res.status(400).json({ error: "Tipo documento richiesto" });
         }
 
         // Validate document type
-        const validTypes = ['identity_document', 'professional_certificate', 'vat_registration', 'business_license'];
-        if (!validTypes.includes(documentType)) {
+        const validTypes = ['identity', 'albo', 'vat_fiscal', 'qualifications'];
+        if (!validTypes.includes(type)) {
           return res.status(400).json({ error: "Tipo documento non valido" });
         }
 
         // Save document to database
         const document = await storage.saveVerificationDocument({
           professionalId: professional.id,
-          documentType,
+          documentType: type,
           fileName: req.file.filename,
           filePath: req.file.path,
           fileSize: req.file.size,
