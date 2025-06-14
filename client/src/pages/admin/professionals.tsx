@@ -68,18 +68,6 @@ export default function AdminProfessionals() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProfessionals, setSelectedProfessionals] = useState<number[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newProfessional, setNewProfessional] = useState({
-    businessName: '',
-    email: '',
-    phoneFixed: '',
-    phoneMobile: '',
-    address: '',
-    city: '',
-    province: '',
-    categoryId: '',
-    description: '',
-    website: ''
-  });
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -99,103 +87,51 @@ export default function AdminProfessionals() {
     queryKey: ['/api/categories']
   });
 
-  const createProfessionalMutation = useMutation({
-    mutationFn: async (data: typeof newProfessional) => {
-      return apiRequest("POST", "/api/admin/professionals", data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Successo",
-        description: "Professionista creato con successo",
-      });
-      setIsCreateDialogOpen(false);
-      setNewProfessional({
-        businessName: '',
-        email: '',
-        phoneFixed: '',
-        phoneMobile: '',
-        address: '',
-        city: '',
-        province: '',
-        categoryId: '',
-        description: '',
-        website: ''
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/professionals'] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Errore",
-        description: "Errore nella creazione del professionista",
-        variant: "destructive",
-      });
-    },
+  // Query for pending verification documents with notification count
+  const { data: pendingDocuments } = useQuery({
+    queryKey: ['/api/admin/verification-documents/pending'],
+    refetchInterval: 30000
   });
 
-  const verifyProfessionalMutation = useMutation({
-    mutationFn: async ({ id, status, notes }: { id: number; status: 'approved' | 'rejected'; notes?: string }) => {
-      return apiRequest("PATCH", `/api/admin/professionals/${id}/verify`, { status, notes });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Professionista aggiornato",
-        description: "Lo stato di verifica è stato modificato con successo",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/professionals'] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Errore",
-        description: "Impossibile aggiornare il professionista",
-        variant: "destructive",
-      });
-    }
-  });
+  const pendingCount = pendingDocuments?.length || 0;
 
   const deleteProfessionalMutation = useMutation({
-    mutationFn: async (id: number) => {
-      return apiRequest("DELETE", `/api/admin/professionals/${id}`);
-    },
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/admin/professionals/${id}`),
     onSuccess: () => {
       toast({
         title: "Professionista eliminato",
-        description: "Il professionista è stato rimosso dal sistema",
+        description: "Il professionista è stato rimosso con successo",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/professionals'] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Errore",
-        description: "Impossibile eliminare il professionista",
+        description: error.message || "Errore durante l'eliminazione",
         variant: "destructive",
       });
-    }
+    },
   });
 
   const bulkActionMutation = useMutation({
-    mutationFn: async ({ action, ids }: { action: string; ids: number[] }) => {
-      return apiRequest("POST", "/api/admin/professionals/bulk-action", { action, ids });
-    },
+    mutationFn: ({ action, ids }: { action: string; ids: number[] }) => 
+      apiRequest("POST", "/api/admin/professionals/bulk-action", { action, ids }),
     onSuccess: () => {
       toast({
         title: "Azione completata",
         description: "L'azione è stata eseguita sui professionisti selezionati",
       });
-      setSelectedProfessionals([]);
       queryClient.invalidateQueries({ queryKey: ['/api/admin/professionals'] });
+      setSelectedProfessionals([]);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Errore",
-        description: "Impossibile eseguire l'azione richiesta",
+        description: error.message || "Errore durante l'esecuzione dell'azione",
         variant: "destructive",
       });
-    }
+    },
   });
-
-  const handleVerify = (id: number, status: 'approved' | 'rejected', notes?: string) => {
-    verifyProfessionalMutation.mutate({ id, status, notes });
-  };
 
   const handleDelete = (id: number) => {
     if (confirm("Sei sicuro di voler eliminare questo professionista?")) {
@@ -298,55 +234,51 @@ export default function AdminProfessionals() {
       {/* Filters */}
       <Card>
         <CardContent className="p-3 sm:p-4">
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <div className="flex-1 sm:min-w-[250px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Cerca per nome, email o città..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 text-sm sm:text-base"
-                />
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Cerca professionisti..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 text-sm"
+              />
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full sm:w-[150px] lg:w-[180px]">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Stato" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tutti gli stati</SelectItem>
-                  <SelectItem value="approved">Verificati</SelectItem>
-                  <SelectItem value="pending">In attesa</SelectItem>
-                  <SelectItem value="rejected">Rifiutati</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="w-full sm:w-[150px] lg:w-[180px]">
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tutte le categorie</SelectItem>
-                  {categories?.map((category: any) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="text-sm">
+                <SelectValue placeholder="Stato verifica" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tutti gli stati</SelectItem>
+                <SelectItem value="verified">Verificati</SelectItem>
+                <SelectItem value="pending">In attesa</SelectItem>
+                <SelectItem value="rejected">Rifiutati</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger className="text-sm">
+                <SelectValue placeholder="Categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tutte le categorie</SelectItem>
+                {categories?.map((category: any) => (
+                  <SelectItem key={category.id} value={category.id.toString()}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="text-sm">
                 <SelectValue placeholder="Ordina per" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="newest">Più recenti</SelectItem>
-                <SelectItem value="oldest">Più vecchi</SelectItem>
+                <SelectItem value="oldest">Meno recenti</SelectItem>
+                <SelectItem value="name">Nome A-Z</SelectItem>
                 <SelectItem value="rating">Valutazione</SelectItem>
                 <SelectItem value="reviews">Recensioni</SelectItem>
                 <SelectItem value="completeness">Completezza profilo</SelectItem>
@@ -403,189 +335,351 @@ export default function AdminProfessionals() {
         </Card>
       )}
 
-      {/* Professionals List */}
-      <div className="space-y-3 sm:space-y-4">
-        {professionalsData?.data?.map((professional) => (
-          <Card key={professional.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                <div className="flex items-start space-x-3 sm:space-x-4 flex-1">
-                  <input
-                    type="checkbox"
-                    checked={selectedProfessionals.includes(professional.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedProfessionals([...selectedProfessionals, professional.id]);
-                      } else {
-                        setSelectedProfessionals(selectedProfessionals.filter(id => id !== professional.id));
-                      }
-                    }}
-                    className="mt-1"
-                  />
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
-                        {professional.businessName}
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        <Badge 
-                          variant="outline" 
-                          className={`${getStatusColor(professional.verificationStatus)} border-0 text-xs`}
-                        >
-                          {getStatusIcon(professional.verificationStatus)}
-                          <span className="ml-1 capitalize">
-                            {professional.verificationStatus}
-                          </span>
-                        </Badge>
-                        {!professional.isClaimed && (
-                          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-xs">
-                            <AlertTriangle className="h-3 w-3 mr-1" />
-                            Non reclamato
-                          </Badge>
-                        )}
-                        {professional.isPremium && (
-                          <Badge variant="default" className="bg-purple-100 text-purple-800 text-xs">
-                            Premium
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        {professional.email}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        {professional.phoneMobile || professional.phoneFixed || 'N/A'}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        {professional.city}
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Star className="h-4 w-4 text-yellow-500" />
-                        <span>{professional.rating}/5</span>
-                        <span className="text-gray-500">({professional.reviewCount} recensioni)</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Categoria:</span> {professional.category.name}
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Completezza:</span> {professional.profileCompleteness}%
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        {formatDate(professional.createdAt)}
-                      </div>
-                    </div>
+      {/* Tabs for different views */}
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="all">Tutti i Professionisti</TabsTrigger>
+          <TabsTrigger value="pending-verification" className="relative">
+            Documenti da Verificare
+            {pendingCount > 0 && (
+              <Badge className="ml-2 bg-red-500 text-white text-xs px-1.5 py-0.5 h-5 min-w-5">
+                {pendingCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="pending-claims">Richieste Claim</TabsTrigger>
+        </TabsList>
 
-                    {professional.subscription && (
-                      <div className="mt-2">
-                        <Badge variant="outline" className="text-xs">
-                          Piano {professional.subscription.plan.name} - {professional.subscription.status}
-                        </Badge>
+        <TabsContent value="all" className="space-y-4">
+          {/* Professionals List */}
+          <div className="space-y-3 sm:space-y-4">
+            {professionalsData?.data?.map((professional) => (
+              <Card key={professional.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-3 sm:p-4 lg:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                    <div className="flex items-start space-x-3 sm:space-x-4 flex-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedProfessionals.includes(professional.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedProfessionals([...selectedProfessionals, professional.id]);
+                          } else {
+                            setSelectedProfessionals(selectedProfessionals.filter(id => id !== professional.id));
+                          }
+                        }}
+                        className="mt-1"
+                      />
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
+                            {professional.businessName}
+                          </h3>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge 
+                              variant="outline" 
+                              className={`${getStatusColor(professional.verificationStatus)} border-0 text-xs`}
+                            >
+                              {getStatusIcon(professional.verificationStatus)}
+                              <span className="ml-1 capitalize">
+                                {professional.verificationStatus}
+                              </span>
+                            </Badge>
+                            {!professional.isClaimed && (
+                              <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-xs">
+                                <AlertTriangle className="h-3 w-3 mr-1" />
+                                Non reclamato
+                              </Badge>
+                            )}
+                            {professional.isPremium && (
+                              <Badge variant="default" className="bg-purple-100 text-purple-800 text-xs">
+                                Premium
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs sm:text-sm text-gray-600 mb-3">
+                          <div className="flex items-center gap-1">
+                            <Mail className="h-3 w-3 text-gray-400" />
+                            <span className="truncate">{professional.email}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Phone className="h-3 w-3 text-gray-400" />
+                            <span>{professional.phoneFixed}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3 text-gray-400" />
+                            <span>{professional.city}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3 text-gray-400" />
+                            <span>{formatDate(professional.createdAt)}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm">
+                          <div className="flex items-center gap-1">
+                            <Star className="h-3 w-3 text-yellow-400 fill-current" />
+                            <span className="font-medium">{professional.rating}</span>
+                            <span className="text-gray-500">({professional.reviewCount} recensioni)</span>
+                          </div>
+                          <div className="text-gray-600">
+                            Profilo completato al <span className="font-medium">{professional.profileCompleteness}%</span>
+                          </div>
+                          <div className="text-gray-600">
+                            Categoria: <span className="font-medium">{professional.category?.name}</span>
+                          </div>
+                        </div>
                       </div>
-                    )}
+                    </div>
+                    
+                    <div className="flex flex-row sm:flex-col gap-2 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setLocation(`/admin/professionals/${professional.id}`)}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <Eye className="h-3 w-3 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Visualizza</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setLocation(`/admin/professionals/${professional.id}/edit`)}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <Edit className="h-3 w-3 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Modifica</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(professional.id)}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Elimina</span>
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          {/* Pagination */}
+          {professionalsData?.pages > 1 && (
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-700">
+                    Pagina {currentPage} di {professionalsData.pages}
+                  </p>
+                  <div className="flex space-x-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                    >
+                      Precedente
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      disabled={currentPage === professionalsData.pages}
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                    >
+                      Successiva
+                    </Button>
                   </div>
                 </div>
-                
-                <div className="flex gap-2 ml-4">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => window.open(`/professional/${professional.id}`, '_blank')}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => setLocation(`/admin/professionals/${professional.id}/edit`)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  
-                  {professional.verificationStatus === 'pending' && (
-                    <>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        className="text-green-600 hover:text-green-700"
-                        onClick={() => handleVerify(professional.id, 'approved')}
-                        disabled={verifyProfessionalMutation.isPending}
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        className="text-red-600 hover:text-red-700"
-                        onClick={() => handleVerify(professional.id, 'rejected')}
-                        disabled={verifyProfessionalMutation.isPending}
-                      >
-                        <XCircle className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                  
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    className="text-red-600 hover:text-red-700"
-                    onClick={() => handleDelete(professional.id)}
-                    disabled={deleteProfessionalMutation.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
-      {/* Pagination */}
-      {professionalsData && professionalsData.pages > 1 && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">
-                Pagina {currentPage} di {professionalsData.pages}
-              </span>
-              <div className="flex gap-2">
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                >
-                  Precedente
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  disabled={currentPage === professionalsData.pages}
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                >
-                  Successiva
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="pending-verification" className="space-y-4">
+          <PendingDocumentsVerification />
+        </TabsContent>
+
+        <TabsContent value="pending-claims" className="space-y-4">
+          <div className="text-center py-8 text-gray-500">
+            Funzionalità in sviluppo
+          </div>
+        </TabsContent>
+      </Tabs>
       
       {/* Create Professional Dialog */}
       <CreateProfessionalDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
       />
+    </div>
+  );
+}
+
+// Component for pending document verification
+function PendingDocumentsVerification() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Query for pending verification documents
+  const { data: pendingDocuments, isLoading } = useQuery({
+    queryKey: ['/api/admin/verification-documents/pending'],
+    refetchInterval: 30000 // Auto-refresh every 30 seconds
+  });
+
+  // Mutation for approving/rejecting documents
+  const verifyDocumentMutation = useMutation({
+    mutationFn: async ({ documentId, action, notes }: { 
+      documentId: number; 
+      action: 'approve' | 'reject'; 
+      notes?: string; 
+    }) => {
+      return apiRequest('POST', `/api/admin/verification-documents/${documentId}/verify`, { action, notes });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Documento verificato",
+        description: "Lo stato del documento è stato aggiornato",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/verification-documents/pending'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/professionals'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Errore durante la verifica del documento",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleVerifyDocument = (documentId: number, action: 'approve' | 'reject', notes?: string) => {
+    verifyDocumentMutation.mutate({ documentId, action, notes });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="animate-pulse">
+            <div className="h-32 bg-gray-200 rounded"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const documents = pendingDocuments || [];
+
+  if (documents.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          Nessun documento in attesa
+        </h3>
+        <p className="text-gray-500">
+          Tutti i documenti sono stati verificati
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium text-gray-900">
+          Documenti in attesa di verifica ({documents.length})
+        </h3>
+        <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
+          <Clock className="h-3 w-3 mr-1" />
+          {documents.length} pendenti
+        </Badge>
+      </div>
+
+      {documents.map((doc: any) => (
+        <Card key={doc.id} className="border-l-4 border-l-yellow-400">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <h4 className="font-semibold text-gray-900">
+                    {doc.professional?.businessName}
+                  </h4>
+                  <Badge variant="outline" className="text-xs">
+                    {doc.documentType}
+                  </Badge>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mb-4">
+                  <div>
+                    <span className="font-medium">Email:</span> {doc.professional?.email}
+                  </div>
+                  <div>
+                    <span className="font-medium">Città:</span> {doc.professional?.city}
+                  </div>
+                  <div>
+                    <span className="font-medium">Categoria:</span> {doc.professional?.category?.name}
+                  </div>
+                  <div>
+                    <span className="font-medium">Caricato:</span> {new Date(doc.createdAt).toLocaleDateString('it-IT')}
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <span className="font-medium text-sm">File:</span>
+                  <div className="mt-1 p-2 bg-gray-50 rounded flex items-center gap-2">
+                    <span className="text-sm">{doc.fileName}</span>
+                    <span className="text-xs text-gray-500">
+                      ({(doc.fileSize / 1024 / 1024).toFixed(2)} MB)
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 shrink-0">
+                <Button
+                  size="sm"
+                  onClick={() => window.open(`/uploads/${doc.fileName}`, '_blank')}
+                  variant="outline"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Visualizza
+                </Button>
+                
+                <Button
+                  size="sm"
+                  onClick={() => handleVerifyDocument(doc.id, 'approve')}
+                  disabled={verifyDocumentMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Approva
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => {
+                    const notes = prompt('Motivo del rifiuto (opzionale):');
+                    handleVerifyDocument(doc.id, 'reject', notes || undefined);
+                  }}
+                  disabled={verifyDocumentMutation.isPending}
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Rifiuta
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
