@@ -37,7 +37,9 @@ Wolfinder is a comprehensive professional directory platform built for the Itali
 - Account lockout and security event logging
 
 ### Professional Management
-- Comprehensive professional profiles with verification system
+- Comprehensive professional profiles with two-tier verification system
+- Standard verification: one document (identity, professional registry, or VAT/fiscal code)
+- PLUS verification: all four documents for enhanced credibility and visibility
 - Badge system for achievements and quality indicators
 - Subscription-based feature gating
 - Geographic search with Nominatim geocoding

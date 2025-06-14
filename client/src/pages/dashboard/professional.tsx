@@ -138,6 +138,12 @@ export default function ProfessionalDashboard() {
             ✓ Verificato
           </Badge>
         );
+      case 'verified_plus':
+        return (
+          <Badge variant="default" className="mt-1 bg-purple-100 text-purple-800">
+            ✓ Verificato PLUS
+          </Badge>
+        );
       case 'pending':
         return (
           <div className="mt-1">
@@ -147,6 +153,18 @@ export default function ProfessionalDashboard() {
             </Badge>
             <p className="text-xs text-gray-500">
               Documento in revisione, ~24h
+            </p>
+          </div>
+        );
+      case 'pending_plus':
+        return (
+          <div className="mt-1">
+            <Badge variant="secondary" className="bg-purple-100 text-purple-800 mb-1 flex items-center">
+              <div className="w-3 h-3 border-2 border-purple-600 border-t-transparent rounded-full animate-spin mr-1"></div>
+              In verifica PLUS
+            </Badge>
+            <p className="text-xs text-gray-500">
+              Tutti i documenti in revisione, ~24h
             </p>
           </div>
         );
@@ -181,7 +199,7 @@ export default function ProfessionalDashboard() {
     const isActuallyVerified = professionalData?.isVerified === true;
     const status = isActuallyVerified ? 'verified' : (professionalData?.verificationStatus || 'not_verified');
     
-    if (status === 'verified') {
+    if (status === 'verified' || status === 'verified_plus') {
       return null;
     }
 
@@ -192,7 +210,7 @@ export default function ProfessionalDashboard() {
           className="w-full"
           variant={status === 'rejected' ? 'destructive' : 'default'}
         >
-          {status === 'pending' ? 'Gestisci Documenti' : 
+          {status === 'pending' || status === 'pending_plus' ? 'Gestisci Documenti' : 
            status === 'rejected' ? 'Carica Nuovi Documenti' : 
            'Inizia Verifica'}
         </Button>

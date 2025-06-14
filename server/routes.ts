@@ -482,7 +482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Profilo professionale non trovato" });
       }
 
-      if (professional.verificationStatus === 'verified') {
+      if (professional.verificationStatus === 'verified' || professional.verificationStatus === 'verified_plus') {
         return res.status(400).json({ error: "Profilo già verificato" });
       }
 
@@ -492,12 +492,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Almeno un documento deve essere caricato per richiedere la verifica" });
       }
 
-      // Update verification status to pending
+      // Determine verification level based on uploaded documents
+      const documentTypes = documents.map(doc => doc.documentType);
+      const hasIdentity = documentTypes.includes('identity');
+      const hasAlbo = documentTypes.includes('albo');
+      const hasVatOrFiscal = documentTypes.includes('vat_fiscal');
+      const hasQualifications = documentTypes.includes('qualifications');
+
+      // Check for Plus verification (all 4 documents)
+      const isPlusVerification = hasIdentity && hasAlbo && hasVatOrFiscal && hasQualifications;
+      
+      // Check for basic verification (at least identity, albo, or vat_fiscal)
+      const isBasicVerification = hasIdentity || hasAlbo || hasVatOrFiscal;
+
+      if (!isBasicVerification) {
+        return res.status(400).json({ 
+          error: "Per la verifica è necessario caricare almeno uno tra: documento identità, certificato albo professionale, o documento P.IVA/codice fiscale" 
+        });
+      }
+
+      const verificationLevel = isPlusVerification ? 'pending_plus' : 'pending';
+
+      // Update verification status
       await storage.updateProfessional(professional.id, {
-        verificationStatus: 'pending'
+        verificationStatus: verificationLevel
       });
 
-      res.json({ message: "Richiesta di verifica inviata con successo" });
+      const message = isPlusVerification 
+        ? "Richiesta di verifica PLUS inviata con successo (tutti i documenti caricati)"
+        : "Richiesta di verifica standard inviata con successo";
+
+      res.json({ message, level: isPlusVerification ? 'plus' : 'standard' });
     } catch (error) {
       console.error('Error submitting verification:', error);
       res.status(500).json({ error: "Errore nell'invio della richiesta di verifica" });
