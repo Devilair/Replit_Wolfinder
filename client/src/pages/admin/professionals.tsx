@@ -649,6 +649,7 @@ function PendingDocumentsVerification() {
                   fileName={doc.fileName}
                   originalFileName={doc.originalFileName}
                   fileSize={doc.fileSize}
+                  documentId={doc.id}
                 />
                 
                 <Button

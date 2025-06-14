@@ -3,6 +3,7 @@ import { useLocation, useParams } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DocumentViewer } from "@/components/document-viewer";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -279,12 +280,24 @@ export default function AdminProfessionalView() {
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-600">
-                      File: {doc.fileName} ({(doc.fileSize / 1024 / 1024).toFixed(2)} MB)
+                      File: {doc.originalFileName || doc.fileName} ({(doc.fileSize / 1024 / 1024).toFixed(2)} MB)
                     </p>
                     <p className="text-xs text-gray-500">
                       Caricato il {formatDate(doc.createdAt)}
                     </p>
                   </div>
+                  <DocumentViewer
+                    fileName={doc.fileName}
+                    originalFileName={doc.originalFileName}
+                    fileSize={doc.fileSize}
+                    documentId={doc.id}
+                    trigger={
+                      <Button variant="outline" size="sm">
+                        <Eye className="h-4 w-4 mr-2" />
+                        Visualizza
+                      </Button>
+                    }
+                  />
                 </div>
               ))}
             </div>
