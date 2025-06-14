@@ -159,11 +159,21 @@ export function DocumentViewer({ fileName, originalFileName, fileSize, documentI
                 )}
                 
                 {isPdf && (
-                  <iframe
-                    src={fileUrl}
-                    className="w-full h-[600px] border-0 rounded"
-                    title={originalFileName || fileName}
-                  />
+                  <object
+                    data={fileUrl}
+                    type="application/pdf"
+                    className="w-full h-[600px] rounded"
+                  >
+                    <div className="text-center text-gray-500 p-8">
+                      <p>Il browser non supporta la visualizzazione PDF.</p>
+                      <button 
+                        onClick={handleDownloadClick}
+                        className="text-blue-600 hover:underline mt-2 inline-block"
+                      >
+                        Scarica il documento
+                      </button>
+                    </div>
+                  </object>
                 )}
               </div>
             ) : (

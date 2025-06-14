@@ -4925,8 +4925,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       else if (ext === '.png') contentType = 'image/png';
       else if (ext === '.tiff') contentType = 'image/tiff';
       
+      // Force inline viewing, no download
       res.setHeader('Content-Type', contentType);
-      res.setHeader('Content-Disposition', 'inline'); // For viewing, not download
+      res.setHeader('Content-Disposition', 'inline');
+      res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      // Send file directly
       res.sendFile(filePath);
     } catch (error) {
       console.error('Error serving file for viewing:', error);
