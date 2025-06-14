@@ -6,6 +6,8 @@ import { geocodingService } from "./geocoding-service";
 import { emailService } from "./email-service";
 import { authService, AuthUser } from "./auth";
 import Stripe from "stripe";
+import path from "path";
+import fs from "fs";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -1734,6 +1736,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating review status:", error);
       res.status(500).json({ message: "Failed to update review status" });
+    }
+  });
+
+  // File serving endpoint
+  app.get("/uploads/:filename", async (req, res) => {
+    try {
+      const filename = req.params.filename;
+      const filePath = path.join(process.cwd(), 'uploads', filename);
+      
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: "File not found" });
+      }
+
+      // Get file stats
+      const stats = fs.statSync(filePath);
+      const fileSize = stats.size;
+      
+      // Set appropriate headers
+      res.setHeader('Content-Length', fileSize);
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      
+      // Determine content type based on file extension
+      const ext = path.extname(filename).toLowerCase();
+      const mimeTypes: { [key: string]: string } = {
+        '.pdf': 'application/pdf',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.txt': 'text/plain'
+      };
+      
+      const contentType = mimeTypes[ext] || 'application/octet-stream';
+      res.setHeader('Content-Type', contentType);
+      
+      // Stream the file
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+      
+    } catch (error) {
+      console.error("Error serving file:", error);
+      res.status(500).json({ message: "Error serving file" });
     }
   });
 

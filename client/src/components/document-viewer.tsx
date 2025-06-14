@@ -15,8 +15,13 @@ export function DocumentViewer({ fileName, fileSize, trigger }: DocumentViewerPr
   const [rotation, setRotation] = useState(0);
 
   const fileUrl = `/uploads/${fileName}`;
-  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName);
+  const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(fileName);
   const isPdf = /\.pdf$/i.test(fileName);
+  const isOfficeDoc = /\.(doc|docx|xls|xlsx|ppt|pptx)$/i.test(fileName);
+  const isText = /\.(txt|csv)$/i.test(fileName);
+  
+  // Determine if file can be previewed
+  const canPreview = isImage || isPdf;
 
   const defaultTrigger = (
     <Button size="sm" variant="outline">
