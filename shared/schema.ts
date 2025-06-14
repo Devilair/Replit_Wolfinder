@@ -173,7 +173,7 @@ export const professionals = pgTable("professionals", {
   priceRangeMax: decimal("price_range_max", { precision: 10, scale: 2 }),
   priceUnit: text("price_unit"), // "ora", "visita", "progetto"
   isVerified: boolean("is_verified").default(false).notNull(),
-  verificationStatus: text("verification_status").default("pending").notNull(), // 'pending', 'verified', 'rejected'
+  verificationStatus: text("verification_status").default("not_verified").notNull(), // 'not_verified', 'pending', 'verified', 'rejected'
   verificationNotes: text("verification_notes"),
   verificationDate: timestamp("verification_date"),
   verifiedBy: integer("verified_by").references(() => users.id),

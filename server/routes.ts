@@ -391,12 +391,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Professional verification routes
-  app.post("/api/auth/professionals/upload-document", 
+  app.post("/api/professional/upload-verification-document", 
     authService.authenticateToken,
     authService.requireRole(['professional']),
     upload.single('document'),
     async (req, res) => {
       try {
+        const user = req.user as any;
+        const professional = await storage.getProfessionalByUserId(user.id);
+        
+        if (!professional) {
+          return res.status(404).json({ error: "Profilo professionale non trovato" });
+        }
+
         if (!req.file) {
           return res.status(400).json({ error: "Documento richiesto" });
         }
@@ -406,13 +413,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ error: "Tipo documento richiesto" });
         }
 
-        // Here you would normally save to cloud storage and update verification status
-        // For now, we'll just return success
+        // Validate document type
+        const validTypes = ['identity_document', 'professional_certificate', 'vat_registration', 'business_license'];
+        if (!validTypes.includes(documentType)) {
+          return res.status(400).json({ error: "Tipo documento non valido" });
+        }
+
+        // Save document to database
+        const document = await storage.saveVerificationDocument({
+          professionalId: professional.id,
+          documentType,
+          fileName: req.file.filename,
+          filePath: req.file.path,
+          fileSize: req.file.size,
+          mimeType: req.file.mimetype,
+          status: 'pending'
+        });
+
+        // Update professional verification status to pending if it's not_verified
+        if (professional.verificationStatus === 'not_verified') {
+          await storage.updateProfessional(professional.id, {
+            verificationStatus: 'pending'
+          });
+        }
+
         res.json({
           message: "Documento caricato con successo",
-          fileName: req.file.filename,
-          documentType,
-          status: "pending_review"
+          document: {
+            id: document.id,
+            documentType: document.documentType,
+            fileName: document.fileName,
+            status: document.status,
+            createdAt: document.createdAt
+          }
         });
       } catch (error) {
         console.error('Document upload error:', error);
@@ -420,6 +453,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   );
+
+  // Get verification documents for current professional
+  app.get("/api/professional/verification-documents", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      
+      if (!professional) {
+        return res.status(404).json({ error: "Profilo professionale non trovato" });
+      }
+
+      const documents = await storage.getVerificationDocuments(professional.id);
+      res.json(documents);
+    } catch (error) {
+      console.error('Error fetching verification documents:', error);
+      res.status(500).json({ error: "Errore nel recupero dei documenti" });
+    }
+  });
+
+  // Submit verification request
+  app.post("/api/professional/submit-verification", authService.authenticateToken, authService.requireRole(['professional']), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const professional = await storage.getProfessionalByUserId(user.id);
+      
+      if (!professional) {
+        return res.status(404).json({ error: "Profilo professionale non trovato" });
+      }
+
+      if (professional.verificationStatus === 'verified') {
+        return res.status(400).json({ error: "Profilo già verificato" });
+      }
+
+      // Check if at least one document is uploaded
+      const documents = await storage.getVerificationDocuments(professional.id);
+      if (!documents || documents.length === 0) {
+        return res.status(400).json({ error: "Almeno un documento deve essere caricato per richiedere la verifica" });
+      }
+
+      // Update verification status to pending
+      await storage.updateProfessional(professional.id, {
+        verificationStatus: 'pending'
+      });
+
+      res.json({ message: "Richiesta di verifica inviata con successo" });
+    } catch (error) {
+      console.error('Error submitting verification:', error);
+      res.status(500).json({ error: "Errore nell'invio della richiesta di verifica" });
+    }
+  });
 
   // Get statistics
   app.get("/api/stats", async (req, res) => {

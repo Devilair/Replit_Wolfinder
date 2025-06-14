@@ -3,13 +3,15 @@ import {
   users, professionals, categories, reviews, badges, professionalBadges,
   consumers, plans, professionalPlans, events,
   subscriptionPlans, subscriptions, transactions, claimRequests, professionalNotifications,
+  verificationDocuments,
   type User, type InsertUser, type Professional, type InsertProfessional,
   type Category, type InsertCategory, type Review, type InsertReview,
   type Badge, type InsertBadge, type ProfessionalBadge, type InsertProfessionalBadge,
   type Consumer, type InsertConsumer, type Plan, type InsertPlan,
   type ProfessionalPlan, type InsertProfessionalPlan, type Event, type InsertEvent,
   type SubscriptionPlan, type InsertSubscriptionPlan, type Subscription, type InsertSubscription,
-  type Transaction, type InsertTransaction, type ClaimRequest, type InsertClaimRequest
+  type Transaction, type InsertTransaction, type ClaimRequest, type InsertClaimRequest,
+  type VerificationDocument, type InsertVerificationDocument
 } from "@shared/schema";
 import { eq, and, or, like, desc, asc, isNull, sql, count, gte, lte } from "drizzle-orm";
 import crypto from "crypto";
@@ -179,6 +181,10 @@ export interface IStorage {
     };
   }>;
   getRecentActivity(): Promise<any[]>;
+
+  // Verification documents methods
+  saveVerificationDocument(document: InsertVerificationDocument): Promise<VerificationDocument>;
+  getVerificationDocuments(professionalId: number): Promise<VerificationDocument[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1561,6 +1567,23 @@ export class DatabaseStorage implements IStorage {
       .from(professionals)
       .where(eq(professionals.isClaimed, false));
     return result;
+  }
+
+  // Verification documents methods
+  async saveVerificationDocument(document: InsertVerificationDocument): Promise<VerificationDocument> {
+    const [savedDocument] = await db
+      .insert(verificationDocuments)
+      .values(document)
+      .returning();
+    return savedDocument;
+  }
+
+  async getVerificationDocuments(professionalId: number): Promise<VerificationDocument[]> {
+    return await db
+      .select()
+      .from(verificationDocuments)
+      .where(eq(verificationDocuments.professionalId, professionalId))
+      .orderBy(desc(verificationDocuments.createdAt));
   }
 }
 
