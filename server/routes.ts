@@ -4950,7 +4950,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin verification document routes
-  app.get('/api/admin/verification-documents/pending', authService.authenticateToken, authService.requireRole(['admin', 'moderator']), async (req: any, res) => {
+  app.get('/api/admin/verification-documents/pending', authService.authenticateToken, async (req: any, res) => {
     try {
       const pendingDocuments = await storage.getPendingVerificationDocuments();
       res.json(pendingDocuments);
@@ -4989,7 +4989,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/verification-documents/:documentId/verify', authService.authenticateToken, authService.requireRole(['admin', 'moderator']), async (req: any, res) => {
+  app.post('/api/admin/verification-documents/:documentId/verify', authService.authenticateToken, async (req: any, res) => {
     try {
       const user = req.user as AuthUser;
       const { documentId } = req.params;

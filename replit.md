@@ -137,6 +137,7 @@ Wolfinder is a comprehensive professional directory platform built for the Itali
 - June 14, 2025. Fixed document download system: files now download with original names instead of hash filenames, added dedicated download endpoint, enhanced DocumentViewer component with proper trigger configuration
 - June 14, 2025. Completely rewritten DocumentViewer component: eliminated DialogTrigger causing automatic downloads, implemented manual event handling with separate view and download functions, fixed PDF preview functionality
 - June 14, 2025. Document viewer authentication fixed: added JWT token support in query parameters for iframe requests, created dedicated `/api/files/:documentId` endpoint with proper authentication and permissions, replaced iframe with object tag for better PDF viewing without forced downloads
+- June 14, 2025. Workflow di verifica documenti completato: sistema di notifiche email automatiche per approvazione/rifiuto, aggiornamento status professionista (not_verified → approved → verified/plus), badge dinamici nella dashboard professionale, endpoint notifiche per tracking completo
 
 ## User Preferences
 

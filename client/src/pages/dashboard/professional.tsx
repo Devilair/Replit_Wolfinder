@@ -127,13 +127,18 @@ export default function ProfessionalDashboard() {
   };
 
   const renderVerificationBadge = () => {
-    // Fix the inconsistency: use isVerified flag as primary source of truth
-    const isActuallyVerified = professionalData?.isVerified === true;
-    const status = isActuallyVerified ? 'verified' : (professionalData?.verificationStatus || 'not_verified');
+    // Use verificationStatus as primary source - more accurate than isVerified flag
+    const status = professionalData?.verificationStatus || 'not_verified';
+    const isPremium = professionalData?.isPremium === true;
     
     switch (status) {
+      case 'approved':
       case 'verified':
-        return (
+        return isPremium ? (
+          <Badge variant="default" className="mt-1 bg-purple-100 text-purple-800">
+            ✓ Verificato PLUS
+          </Badge>
+        ) : (
           <Badge variant="default" className="mt-1 bg-green-100 text-green-800">
             ✓ Verificato
           </Badge>
