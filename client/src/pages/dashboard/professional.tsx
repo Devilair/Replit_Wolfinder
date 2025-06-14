@@ -195,6 +195,31 @@ export default function ProfessionalDashboard() {
       </div>
     );
   };
+
+  const handleSubmitVerification = async () => {
+    setUploadingDocument(true);
+    try {
+      await apiRequest('POST', '/api/professional/submit-verification');
+      
+      // Update professional status to pending
+      queryClient.invalidateQueries({ queryKey: ['/api/professional/profile-complete'] });
+      
+      toast({
+        title: "Verifica inviata",
+        description: "I tuoi documenti sono stati inviati per la verifica. Riceverai una risposta entro 24 ore.",
+      });
+      
+      setShowVerificationDialog(false);
+    } catch (error) {
+      toast({
+        title: "Errore invio",
+        description: "Riprova più tardi",
+        variant: "destructive"
+      });
+    } finally {
+      setUploadingDocument(false);
+    }
+  };
   
   // Tour functions
   const startTour = () => {
@@ -1433,7 +1458,205 @@ export default function ProfessionalDashboard() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Verification Dialog */}
+        <Dialog open={showVerificationDialog} onOpenChange={setShowVerificationDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Verifica Professionale
+              </DialogTitle>
+              <DialogDescription>
+                Carica i documenti richiesti per verificare la tua identità professionale
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              <Alert className="border-blue-200 bg-blue-50">
+                <AlertCircle className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-800">
+                  <strong>Documenti richiesti per professionisti italiani:</strong>
+                  <ul className="mt-2 space-y-1 text-sm">
+                    <li>• Documento di identità (carta d'identità, patente o passaporto)</li>
+                    <li>• Certificato di iscrizione all'albo professionale</li>
+                    <li>• Partita IVA o codice fiscale</li>
+                    <li>• Attestati di qualificazione (opzionale)</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+
+              <div className="grid gap-4">
+                <VerificationDocumentUpload
+                  type="identity"
+                  title="Documento di Identità"
+                  description="Carta d'identità, patente o passaporto valido"
+                  required
+                />
+                
+                <VerificationDocumentUpload
+                  type="professional_registration"
+                  title="Iscrizione Albo Professionale"
+                  description="Certificato di iscrizione all'ordine/albo professionale"
+                  required
+                />
+                
+                <VerificationDocumentUpload
+                  type="tax_code"
+                  title="Partita IVA / Codice Fiscale"
+                  description="Documento attestante la Partita IVA o codice fiscale"
+                  required
+                />
+                
+                <VerificationDocumentUpload
+                  type="qualifications"
+                  title="Attestati di Qualificazione"
+                  description="Diplomi, certificazioni o attestati professionali (opzionale)"
+                  required={false}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowVerificationDialog(false)}
+                  className="flex-1"
+                >
+                  Annulla
+                </Button>
+                <Button 
+                  onClick={handleSubmitVerification}
+                  disabled={uploadingDocument}
+                  className="flex-1"
+                >
+                  {uploadingDocument ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      Caricamento...
+                    </>
+                  ) : (
+                    'Invia per Verifica'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
+    </div>
+  );
+}
+
+// Verification Document Upload Component
+function VerificationDocumentUpload({ 
+  type, 
+  title, 
+  description, 
+  required = true 
+}: {
+  type: string;
+  title: string;
+  description: string;
+  required?: boolean;
+}) {
+  const { toast } = useToast();
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploaded, setUploaded] = useState(false);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (!selectedFile) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    if (!allowedTypes.includes(selectedFile.type)) {
+      toast({
+        title: "Formato non supportato",
+        description: "Carica solo file PDF, JPG o PNG",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (selectedFile.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File troppo grande",
+        description: "La dimensione massima è 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setFile(selectedFile);
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('document', selectedFile);
+      formData.append('type', type);
+      formData.append('title', title);
+
+      await apiRequest('POST', '/api/professional/upload-verification-document', formData);
+      setUploaded(true);
+      toast({
+        title: "Documento caricato",
+        description: `${title} caricato con successo`
+      });
+    } catch (error) {
+      toast({
+        title: "Errore caricamento",
+        description: "Riprova più tardi",
+        variant: "destructive"
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="border rounded-lg p-4 space-y-3">
+      <div className="flex items-start justify-between">
+        <div>
+          <h4 className="font-medium text-gray-900 flex items-center gap-2">
+            {title}
+            {required && <span className="text-red-500 text-sm">*</span>}
+          </h4>
+          <p className="text-sm text-gray-600">{description}</p>
+        </div>
+        
+        {uploaded ? (
+          <Badge variant="default" className="bg-green-100 text-green-800">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Caricato
+          </Badge>
+        ) : (
+          <Badge variant="outline">
+            {required ? 'Richiesto' : 'Opzionale'}
+          </Badge>
+        )}
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Input
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          onChange={handleFileUpload}
+          disabled={uploading || uploaded}
+          className="flex-1"
+        />
+        
+        {uploading && (
+          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        )}
+      </div>
+
+      {file && (
+        <div className="text-sm text-gray-600">
+          File selezionato: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+        </div>
+      )}
     </div>
   );
 }
