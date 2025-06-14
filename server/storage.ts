@@ -1640,6 +1640,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(verificationDocuments.professionalId, professionalId));
     return documents;
   }
+
+  async getPendingVerificationDocumentsCount(): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(verificationDocuments)
+      .where(eq(verificationDocuments.status, 'pending'));
+    return result?.count || 0;
+  }
 }
 
 export const storage = new DatabaseStorage();

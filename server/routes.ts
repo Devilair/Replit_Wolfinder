@@ -1737,6 +1737,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin notification counts
+  app.get("/api/admin/notification-counts", async (req, res) => {
+    try {
+      const [pendingDocuments, pendingReviews] = await Promise.all([
+        storage.getPendingVerificationDocumentsCount(),
+        storage.getPendingReviewsCount()
+      ]);
+      
+      res.json({
+        pendingDocuments,
+        pendingReviews,
+        total: pendingDocuments + pendingReviews
+      });
+    } catch (error) {
+      console.error("Error fetching notification counts:", error);
+      res.status(500).json({ 
+        pendingDocuments: 0,
+        pendingReviews: 0,
+        total: 0
+      });
+    }
+  });
+
   // Admin Users Management
   app.get("/api/admin/users", async (req, res) => {
     try {

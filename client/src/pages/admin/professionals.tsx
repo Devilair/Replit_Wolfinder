@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import CreateProfessionalDialog from "./CreateProfessionalDialog";
+import { DocumentViewer } from "@/components/document-viewer";
 import { 
   Search, 
   Filter, 

@@ -1,7 +1,9 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { 
   LayoutDashboard, 
   Users, 
@@ -23,11 +25,29 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
 
+  // Query per i conteggi delle notifiche
+  const { data: notificationCounts } = useQuery({
+    queryKey: ['/api/admin/notification-counts'],
+    refetchInterval: 30000, // Aggiorna ogni 30 secondi
+  });
+
   const navigation = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard, current: location === "/admin" },
     { name: "Analytics Avanzate", href: "/admin/advanced", icon: LayoutDashboard, current: location === "/admin/advanced" },
-    { name: "Professionisti", href: "/admin/professionals", icon: UserCheck, current: location === "/admin/professionals" },
-    { name: "Recensioni", href: "/admin/reviews", icon: MessageSquare, current: location === "/admin/reviews" },
+    { 
+      name: "Professionisti", 
+      href: "/admin/professionals", 
+      icon: UserCheck, 
+      current: location === "/admin/professionals" || location.startsWith("/admin/professionals/"),
+      badge: notificationCounts?.pendingDocuments > 0 ? notificationCounts.pendingDocuments : null
+    },
+    { 
+      name: "Recensioni", 
+      href: "/admin/reviews", 
+      icon: MessageSquare, 
+      current: location === "/admin/reviews",
+      badge: notificationCounts?.pendingReviews > 0 ? notificationCounts.pendingReviews : null
+    },
     { name: "Categorie", href: "/admin/categories", icon: Building2, current: location === "/admin/categories" },
     { name: "Abbonamenti", href: "/admin/subscriptions", icon: CreditCard, current: location === "/admin/subscriptions" },
     { name: "Utenti", href: "/admin/users", icon: Users, current: location === "/admin/users" },
@@ -98,18 +118,25 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               return (
                 <Link key={item.name} href={item.href}>
                   <div
-                    className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
+                    className={`group flex items-center justify-between px-2 py-2 text-sm font-medium rounded-md transition-colors ${
                       item.current
                         ? "bg-blue-100 text-blue-900"
                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                     }`}
                   >
-                    <Icon
-                      className={`mr-3 h-5 w-5 ${
-                        item.current ? "text-blue-500" : "text-gray-400 group-hover:text-gray-500"
-                      }`}
-                    />
-                    {item.name}
+                    <div className="flex items-center">
+                      <Icon
+                        className={`mr-3 h-5 w-5 ${
+                          item.current ? "text-blue-500" : "text-gray-400 group-hover:text-gray-500"
+                        }`}
+                      />
+                      {item.name}
+                    </div>
+                    {item.badge && (
+                      <Badge variant="destructive" className="ml-2 px-2 py-1 text-xs">
+                        {item.badge}
+                      </Badge>
+                    )}
                   </div>
                 </Link>
               );
