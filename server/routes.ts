@@ -26,6 +26,7 @@ import {
 import multer from "multer";
 import express from "express";
 import { badgeSystem } from "./badge-system";
+import { badgeCalculator } from "./badge-calculator";
 import { 
   insertProfessionalSchema, 
   insertReviewSchema, 
@@ -1290,6 +1291,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching reviews:", error);
       res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  // Calculate badges automatically for a professional
+  app.post("/api/professionals/:id/calculate-badges", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      
+      if (isNaN(professionalId)) {
+        return res.status(400).json({ message: "ID professionista non valido" });
+      }
+
+      console.log(`Starting badge calculation for professional ${professionalId}`);
+      const results = await badgeCalculator.calculateBadgesForProfessional(professionalId);
+      
+      res.json({
+        message: "Calcolo badge completato",
+        results: results.map(r => ({
+          badgeId: r.badgeId,
+          earned: r.earned,
+          progress: r.progress,
+          requirements: r.requirements,
+          missingRequirements: r.missingRequirements
+        }))
+      });
+    } catch (error) {
+      console.error("Error calculating badges:", error);
+      res.status(500).json({ error: "Errore nel calcolo dei badge" });
     }
   });
 
