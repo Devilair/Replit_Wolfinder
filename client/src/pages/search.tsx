@@ -61,6 +61,22 @@ export default function SearchPage() {
     }
   }, [location]);
 
+  // Auto-search quando cambiano i filtri
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (searchTerm.trim()) params.append('search', searchTerm.trim());
+    if (selectedCity && selectedCity !== 'all') params.append('city', selectedCity);
+    if (selectedCategory && selectedCategory !== 'all') params.append('categoryId', selectedCategory);
+    
+    const queryString = params.toString();
+    const newUrl = `/search${queryString ? `?${queryString}` : ''}`;
+    
+    // Aggiorna l'URL solo se è diverso da quello attuale
+    if (window.location.pathname + window.location.search !== newUrl) {
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [searchTerm, selectedCity, selectedCategory]);
+
   const { data: categories = [] } = useQuery({
     queryKey: ['/api/categories'],
   });
@@ -173,18 +189,19 @@ export default function SearchPage() {
 
   const handleSearch = () => {
     const params = new URLSearchParams();
-    if (searchTerm) params.append('search', searchTerm);
-    if (selectedCity) params.append('city', selectedCity);
-    if (selectedCategory) params.append('categoryId', selectedCategory);
+    if (searchTerm.trim()) params.append('search', searchTerm.trim());
+    if (selectedCity && selectedCity !== 'all') params.append('city', selectedCity);
+    if (selectedCategory && selectedCategory !== 'all') params.append('categoryId', selectedCategory);
     
-    window.history.pushState({}, '', `/search?${params.toString()}`);
+    const queryString = params.toString();
+    window.location.href = `/search${queryString ? `?${queryString}` : ''}`;
   };
 
   const handleClearFilters = () => {
     setSearchTerm("");
-    setSelectedCity("");
-    setSelectedCategory("");
-    window.history.pushState({}, '', '/search');
+    setSelectedCity("all");
+    setSelectedCategory("all");
+    window.location.href = '/search';
   };
 
   const ProfessionalCard = ({ professional, compact = false }: { professional: Professional; compact?: boolean }) => (
