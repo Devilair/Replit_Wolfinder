@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Star, MapPin, Phone, Mail, Globe, Award, Users, TrendingUp, Eye, Calendar, Shield, ChevronRight, ExternalLink, Heart, User, Target, CheckCircle, Building, Smartphone, MessageCircle, Flag, Share2, ThumbsUp } from "lucide-react";
 import { motion } from "framer-motion";
 import ReviewModal from "@/components/ReviewModal";
+import InteractiveMap from "@/components/InteractiveMap";
 
 export default function ProfessionalProfile() {
   const { id } = useParams();
@@ -561,14 +562,25 @@ export default function ProfessionalProfile() {
                         </div>
                       </div>
 
-                      {/* Placeholder per mappa interattiva */}
-                      <div className="bg-gray-100 rounded-xl h-64 flex items-center justify-center border border-gray-200">
-                        <div className="text-center text-gray-500">
-                          <MapPin className="w-8 h-8 mx-auto mb-2" />
-                          <p>Mappa interattiva</p>
-                          <p className="text-sm">In arrivo</p>
+                      {/* Mappa interattiva */}
+                      {professional?.latitude && professional?.longitude ? (
+                        <InteractiveMap
+                          latitude={parseFloat(professional.latitude)}
+                          longitude={parseFloat(professional.longitude)}
+                          professionalName={`${professional?.firstName || ""} ${professional?.lastName || ""}`.trim() || professional?.businessName || "Professionista"}
+                          address={professional.address || ""}
+                          city={professional.city || ""}
+                          height="320px"
+                        />
+                      ) : (
+                        <div className="bg-gray-100 rounded-xl h-64 flex items-center justify-center border border-gray-200">
+                          <div className="text-center text-gray-500">
+                            <MapPin className="w-8 h-8 mx-auto mb-2" />
+                            <p>Posizione non disponibile</p>
+                            <p className="text-sm">Coordinate non geocodificate</p>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
                       {/* Città aggiuntive */}
                       {professional?.additionalCities && professional.additionalCities.length > 0 && (
