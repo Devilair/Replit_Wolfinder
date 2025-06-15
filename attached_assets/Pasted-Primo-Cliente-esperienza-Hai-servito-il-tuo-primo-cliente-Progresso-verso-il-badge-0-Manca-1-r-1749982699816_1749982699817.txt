@@ -1,0 +1,204 @@
+Primo Cliente
+esperienza
+Hai servito il tuo primo cliente
+Progresso verso il badge
+0%
+Manca 1 recensione per ottenere questo badge
+
+Requisiti:
+
+•
+Ricevere almeno 1 recensione
+Cliente Fedele
+esperienza
+Hai clienti che tornano da te
+Progresso verso il badge
+0%
+Progresso: 0%
+
+Requisiti:
+
+•
+Ricevere recensioni da clienti ricorrenti
+Veterano
+esperienza
+Anni di esperienza nel settore
+Progresso verso il badge
+0%
+Progresso: 0%
+
+Requisiti:
+
+•
+Profilo attivo da oltre 2 anni
+•
+Almeno 50 recensioni
+Maestro
+esperienza
+Decenni di esperienza
+Progresso verso il badge
+0%
+Progresso: 0%
+
+Requisiti:
+
+•
+Profilo attivo da oltre 5 anni
+•
+Almeno 200 recensioni
+Eccellenza
+qualita
+Qualità costantemente alta
+Progresso verso il badge
+0%
+Progresso: 0%
+
+Requisiti:
+
+•
+Rating medio >= 4.8
+•
+Almeno 20 recensioni
+Perfezione
+qualita
+Standard di qualità impeccabili
+Progresso verso il badge
+0%
+Progresso: 0%
+
+Requisiti:
+
+•
+Rating medio >= 4.9
+•
+Almeno 50 recensioni
+Veloce Risposta
+qualita
+Tempi di risposta eccellenti
+Progresso verso il badge
+0%
+Progresso: 0%
+
+Requisiti:
+
+•
+Tempo medio risposta < 2 ore
+•
+Almeno 30 conversazioni
+Sempre Disponibile
+qualita
+Disponibilità costante
+Progresso verso il badge
+0%
+Progresso: 0%
+
+Requisiti:
+
+•
+Tasso di risposta > 95%
+•
+Profilo attivo quotidianamente
+Popolare
+engagement
+Molto ricercato dai clienti
+Progresso verso il badge
+8%
+Servono 460 visualizzazioni in più
+
+Requisiti:
+
+•
+Almeno 100 visualizzazioni profilo al mese
+Influencer
+engagement
+Grande influenza nel settore
+Progresso verso il badge
+2%
+Servono 1960 visualizzazioni in più
+
+Requisiti:
+
+•
+Almeno 500 visualizzazioni profilo al mese
+•
+Condivisioni social attive
+Comunicatore
+engagement
+Ottima comunicazione con i clienti
+Progresso verso il badge
+0%
+Progresso: 0%
+
+Requisiti:
+
+•
+Almeno 50 conversazioni completate
+•
+Feedback positivo sulla comunicazione
+Referenze Oro
+engagement
+Molte raccomandazioni
+Progresso verso il badge
+0%
+Progresso: 0%
+
+Requisiti:
+
+•
+Almeno 20 recensioni con raccomandazione esplicita
+Profilo Premium
+eccellenza
+Profilo verificato e completo
+Progresso verso il badge
+0%
+Progresso: 0%
+
+Requisiti:
+
+•
+Profilo 100% completato
+•
+Documenti verificati
+•
+Abbonamento Premium
+Leader di Categoria
+eccellenza
+Il migliore nella tua categoria
+Progresso verso il badge
+0%
+Progresso: 0%
+
+Requisiti:
+
+•
+Top 3 nella categoria per rating
+•
+Almeno 100 recensioni
+Innovatore
+eccellenza
+Tecniche innovative e moderne
+Progresso verso il badge
+72%
+Progresso: 72%
+
+Requisiti:
+
+•
+Portfolio con progetti innovativi
+•
+Feedback su innovazione
+Hall of Fame
+eccellenza
+Leggenda della piattaforma
+Progresso verso il badge
+0%
+Progresso: 0%
+
+Requisiti:
+
+•
+Rating >= 4.9
+•
+Oltre 500 recensioni
+•
+Profilo attivo da oltre 3 anni
