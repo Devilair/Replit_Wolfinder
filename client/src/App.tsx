@@ -56,6 +56,7 @@ function Router() {
       <Route path="/" component={Landing} />
       <Route path="/search" component={SearchPage} />
       <Route path="/professionals" component={Professionals} />
+      <Route path="/professionals/:id" component={ProfessionalProfile} />
       <Route path="/professional/:id" component={ProfessionalProfile} />
       <Route path="/reclama-profilo/:id" component={ClaimProfile} />
       <Route path="/demo/subscription-limits" component={ProfessionalSubscriptionDemo} />
