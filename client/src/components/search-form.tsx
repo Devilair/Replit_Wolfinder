@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin } from "lucide-react";
 
 export default function SearchForm() {
-  const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
   const [city, setCity] = useState("");
 
@@ -19,9 +17,6 @@ export default function SearchForm() {
     const queryString = params.toString();
     const targetUrl = `/search${queryString ? `?${queryString}` : ''}`;
     
-    console.log('SEARCH FORM DEBUG:', { search, city, queryString, targetUrl });
-    
-    // Usa window.location.href invece di setLocation per garantire che i parametri URL vengano preservati
     window.location.href = targetUrl;
   };
 

@@ -47,26 +47,22 @@ export default function SearchPage() {
 
   // Parse URL parameters
   useEffect(() => {
-    console.log('URL PARSING DEBUG - location:', location);
-    const params = new URLSearchParams(location.split('?')[1] || '');
+    const params = new URLSearchParams(window.location.search);
     const urlSearch = params.get('search') || '';
     const urlCity = params.get('city') || '';
     const urlCategory = params.get('category') || params.get('categoryId');
-    
-    console.log('URL PARAMS DEBUG:', { urlSearch, urlCity, urlCategory });
     
     setSearchTerm(urlSearch);
     
     // Normalizza il nome della città per il dropdown
     if (urlCity) {
       const normalizedCity = urlCity.toLowerCase();
-      console.log('CITY NORMALIZATION:', { original: urlCity, normalized: normalizedCity });
       if (normalizedCity === 'livorno') {
         setSelectedCity('Livorno');
       } else if (normalizedCity === 'ferrara') {
         setSelectedCity('Ferrara');
       } else {
-        setSelectedCity(urlCity); // Mantieni il valore originale se non corrisponde
+        setSelectedCity(urlCity);
       }
     } else {
       setSelectedCity('all');
@@ -78,7 +74,7 @@ export default function SearchPage() {
     } else {
       setSelectedCategory('all');
     }
-  }, [location]);
+  }, []);
 
   // Auto-search quando cambiano i filtri
   useEffect(() => {
