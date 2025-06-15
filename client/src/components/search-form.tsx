@@ -21,7 +21,8 @@ export default function SearchForm() {
     
     console.log('SEARCH FORM DEBUG:', { search, city, queryString, targetUrl });
     
-    setLocation(targetUrl);
+    // Usa window.location.href invece di setLocation per garantire che i parametri URL vengano preservati
+    window.location.href = targetUrl;
   };
 
   return (
