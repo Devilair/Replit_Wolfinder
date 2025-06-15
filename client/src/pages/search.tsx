@@ -48,28 +48,34 @@ export default function SearchPage() {
   // Parse URL parameters
   useEffect(() => {
     const params = new URLSearchParams(location.split('?')[1] || '');
-    setSearchTerm(params.get('search') || '');
-    setSelectedCity(params.get('city') || 'all');
-    setSelectedCategory(params.get('categoryId') || 'all');
+    const urlSearch = params.get('search') || '';
+    const urlCity = params.get('city') || '';
+    
+    setSearchTerm(urlSearch);
+    setSelectedCity(urlCity || 'all');
+    
+    // Se è specificata una categoria nell'URL, impostala
+    const urlCategory = params.get('category') || params.get('categoryId');
+    if (urlCategory) {
+      setSelectedCategory(urlCategory);
+    }
   }, [location]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ['/api/categories'],
   });
 
+  // Crea parametri di ricerca sempre - anche vuoti per mostrare tutti i professionisti
   const searchParams = {
-    search: searchTerm,
+    search: searchTerm || undefined,
     city: selectedCity === 'all' ? undefined : selectedCity,
     categoryId: selectedCategory === 'all' ? undefined : parseInt(selectedCategory),
     sortBy,
     sortOrder: 'desc',
-    limit: 20
+    limit: 50
   };
 
-  // Check if we have specific search parameters
-  const hasSearchParams = searchTerm || (selectedCity && selectedCity !== 'all') || (selectedCategory && selectedCategory !== 'all') || searchLocation;
-  
-  // Regular text-based search
+  // Esegui sempre la ricerca - se non ci sono parametri, mostra tutti i professionisti
   const { data: searchResults = [], isLoading: isLoadingSearch } = useQuery({
     queryKey: ['/api/professionals/search', searchParams],
     queryFn: async () => {
@@ -83,29 +89,12 @@ export default function SearchPage() {
       const response = await fetch(`/api/professionals/search?${params}`);
       if (!response.ok) throw new Error('Failed to search professionals');
       return response.json();
-    },
-    enabled: !!hasSearchParams && !searchLocation // Only run when we have search criteria
+    }
   });
 
-  // Show all professionals when no filters are applied
-  const { data: allProfessionals = [], isLoading: isLoadingAll } = useQuery({
-    queryKey: ['/api/professionals/search', { sortBy: 'rating', limit: 50 }],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        sortBy: 'rating',
-        sortOrder: 'desc',
-        limit: '50'
-      });
-      const response = await fetch(`/api/professionals/search?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch professionals');
-      return response.json();
-    },
-    enabled: !hasSearchParams && !searchLocation // Only run when no search criteria
-  });
-
-  // Use search results when available, otherwise show all professionals
-  const professionals = hasSearchParams ? searchResults : allProfessionals;
-  const isLoading = hasSearchParams ? isLoadingSearch : isLoadingAll;
+  // Usa sempre i risultati della ricerca - anche vuoti
+  const professionals = searchResults;
+  const isLoading = isLoadingSearch;
 
   // Geographic search for nearby professionals
   const { data: nearbyProfessionals = [], isLoading: isLoadingNearby } = useQuery({

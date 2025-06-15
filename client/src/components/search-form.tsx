@@ -13,12 +13,12 @@ export default function SearchForm() {
     e.preventDefault();
     
     const params = new URLSearchParams();
-    if (search) params.append('search', search);
-    if (city) params.append('city', city);
+    if (search.trim()) params.append('search', search.trim());
+    if (city.trim()) params.append('city', city.trim());
     
     const queryString = params.toString();
 
-    setLocation(`/professionals${queryString ? `?${queryString}` : ''}`);
+    setLocation(`/search${queryString ? `?${queryString}` : ''}`);
   };
 
   return (
