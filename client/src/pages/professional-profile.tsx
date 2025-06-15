@@ -342,13 +342,13 @@ export default function ProfessionalProfile() {
                     <div className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl">
                       <span className="font-medium text-gray-700">Nella città</span>
                       <Badge className="bg-blue-600 text-white text-lg px-3 py-1">
-                        #{ranking.cityRank} di {ranking.cityTotal}
+                        #{ranking?.cityRank || 0} di {ranking?.cityTotal || 0}
                       </Badge>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl">
                       <span className="font-medium text-gray-700">Nella categoria</span>
                       <Badge className="bg-purple-600 text-white text-lg px-3 py-1">
-                        #{ranking.categoryRank} di {ranking.categoryTotal}
+                        #{ranking?.categoryRank || 0} di {ranking?.categoryTotal || 0}
                       </Badge>
                     </div>
                   </CardContent>
@@ -368,20 +368,20 @@ export default function ProfessionalProfile() {
                 <CardContent className="p-6 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
-                      <div className="text-2xl font-bold text-blue-600 mb-1">{professional.profileViews}</div>
+                      <div className="text-2xl font-bold text-blue-600 mb-1">{professional?.profileViews || 0}</div>
                       <div className="text-xs text-gray-600">Visualizzazioni</div>
                     </div>
                     <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
-                      <div className="text-2xl font-bold text-green-600 mb-1">{professional.reviewCount}</div>
+                      <div className="text-2xl font-bold text-green-600 mb-1">{professional?.reviewCount || 0}</div>
                       <div className="text-xs text-gray-600">Recensioni</div>
                     </div>
                     <div className="text-center p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl">
-                      <div className="text-2xl font-bold text-yellow-600 mb-1">{parseFloat(professional.rating).toFixed(1)}</div>
+                      <div className="text-2xl font-bold text-yellow-600 mb-1">{professional?.rating ? parseFloat(professional.rating).toFixed(1) : '0.0'}</div>
                       <div className="text-xs text-gray-600">Rating medio</div>
                     </div>
                     <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
                       <div className="text-2xl font-bold text-purple-600 mb-1">
-                        {new Date(professional.createdAt).getFullYear()}
+                        {professional?.createdAt ? new Date(professional.createdAt).getFullYear() : 'N/A'}
                       </div>
                       <div className="text-xs text-gray-600">Anno iscrizione</div>
                     </div>
