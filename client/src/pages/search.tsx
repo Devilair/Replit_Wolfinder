@@ -47,15 +47,20 @@ export default function SearchPage() {
 
   // Parse URL parameters
   useEffect(() => {
+    console.log('URL PARSING DEBUG - location:', location);
     const params = new URLSearchParams(location.split('?')[1] || '');
     const urlSearch = params.get('search') || '';
     const urlCity = params.get('city') || '';
+    const urlCategory = params.get('category') || params.get('categoryId');
+    
+    console.log('URL PARAMS DEBUG:', { urlSearch, urlCity, urlCategory });
     
     setSearchTerm(urlSearch);
     
     // Normalizza il nome della città per il dropdown
     if (urlCity) {
       const normalizedCity = urlCity.toLowerCase();
+      console.log('CITY NORMALIZATION:', { original: urlCity, normalized: normalizedCity });
       if (normalizedCity === 'livorno') {
         setSelectedCity('Livorno');
       } else if (normalizedCity === 'ferrara') {
@@ -68,7 +73,6 @@ export default function SearchPage() {
     }
     
     // Se è specificata una categoria nell'URL, impostala
-    const urlCategory = params.get('category') || params.get('categoryId');
     if (urlCategory) {
       setSelectedCategory(urlCategory);
     } else {
