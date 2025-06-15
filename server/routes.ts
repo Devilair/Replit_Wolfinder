@@ -5073,11 +5073,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             professionalId: document.professionalId
           };
           
+          // CRITICAL FIX: Auto-claim profile when verified if registered by the professional themselves
+          // Logic: If professional has a userId (self-registered), auto-claim on verification
+          const shouldAutoClaim = professional?.userId !== null && !professional?.isClaimed;
+          
           await storage.updateProfessional(document.professionalId, {
             verificationStatus: newStatus,
             verificationDate: new Date(),
             verifiedBy: user.id,
-            isPremium: isPlus // PLUS verification gets premium features
+            isPremium: isPlus, // PLUS verification gets premium features
+            // Auto-claim if self-registered professional gets verified
+            isClaimed: shouldAutoClaim ? true : professional?.isClaimed,
+            claimedAt: shouldAutoClaim ? new Date() : professional?.claimedAt,
+            claimedBy: shouldAutoClaim ? professional.userId : professional?.claimedBy
           });
         } else {
           await storage.updateProfessional(document.professionalId, {
