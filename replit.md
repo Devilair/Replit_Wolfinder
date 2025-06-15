@@ -139,6 +139,7 @@ Wolfinder is a comprehensive professional directory platform built for the Itali
 - June 14, 2025. Document viewer authentication fixed: added JWT token support in query parameters for iframe requests, created dedicated `/api/files/:documentId` endpoint with proper authentication and permissions, replaced iframe with object tag for better PDF viewing without forced downloads
 - June 14, 2025. Workflow di verifica documenti completato: sistema di notifiche email automatiche per approvazione/rifiuto, aggiornamento status professionista (not_verified → approved → verified/plus), badge dinamici nella dashboard professionale, endpoint notifiche per tracking completo
 - June 15, 2025. Sistema di upload documenti completamente funzionante: risolti problemi autenticazione professionale, supporto completo formati file (PDF, JPG, JPEG, TIFF, PNG, DOC, DOCX), badge "Verificato" appare correttamente per status "approved", workflow end-to-end operativo
+- June 15, 2025. RISOLTO PROBLEMA CRITICO: inconsistenza dati verifica tra dashboard, admin e frontend eliminata. Implementata logica auto-claim: professionisti auto-registrati (con userId) vengono automaticamente marcati come "reclamati" quando verificati. Sincronizzazione completa isVerified=true quando verificationStatus=approved. Coerenza dati garantita su tutta la piattaforma
 
 ## User Preferences
 

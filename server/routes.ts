@@ -5082,6 +5082,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             verificationDate: new Date(),
             verifiedBy: user.id,
             isPremium: isPlus, // PLUS verification gets premium features
+            isVerified: true, // CRITICAL FIX: Set isVerified=true when approved
             // Auto-claim if self-registered professional gets verified
             isClaimed: shouldAutoClaim ? true : professional?.isClaimed,
             claimedAt: shouldAutoClaim ? new Date() : professional?.claimedAt,
