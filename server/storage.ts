@@ -188,6 +188,10 @@ export interface IStorage {
   
   // Admin pending actions
   getAdminPendingActions(): Promise<any[]>;
+  
+  // Professional ranking methods
+  getProfessionalsByCity(city: string): Promise<Professional[]>;
+  getProfessionalsByCategory(categoryId: number): Promise<Professional[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1792,6 +1796,31 @@ export class DatabaseStorage implements IStorage {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       })
       .slice(0, 10); // Massimo 10 azioni
+  }
+
+  // Professional ranking methods
+  async getProfessionalsByCity(city: string): Promise<Professional[]> {
+    return await db
+      .select()
+      .from(professionals)
+      .leftJoin(categories, eq(professionals.categoryId, categories.id))
+      .where(eq(professionals.city, city))
+      .then(rows => rows.map(row => ({
+        ...row.professionals,
+        category: row.categories
+      })));
+  }
+
+  async getProfessionalsByCategory(categoryId: number): Promise<Professional[]> {
+    return await db
+      .select()
+      .from(professionals)
+      .leftJoin(categories, eq(professionals.categoryId, categories.id))
+      .where(eq(professionals.categoryId, categoryId))
+      .then(rows => rows.map(row => ({
+        ...row.professionals,
+        category: row.categories
+      })));
   }
 }
 
