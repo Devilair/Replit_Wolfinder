@@ -11,19 +11,24 @@ export default function ProfessionalProfile() {
   const { id } = useParams();
   
   const { data: professional, isLoading: loadingProfessional } = useQuery({
-    queryKey: ["/api/professionals", id],
+    queryKey: [`/api/professionals/${id}`],
   });
 
   const { data: badges, isLoading: loadingBadges } = useQuery({
-    queryKey: ["/api/professionals", id, "badges"],
+    queryKey: [`/api/professionals/${id}/badges`],
   });
 
   const { data: reviews, isLoading: loadingReviews } = useQuery({
-    queryKey: ["/api/professionals", id, "reviews"],
+    queryKey: [`/api/professionals/${id}/reviews`],
   });
 
   const { data: ranking, isLoading: loadingRanking } = useQuery({
-    queryKey: ["/api/professionals", id, "ranking"],
+    queryKey: [`/api/professionals/${id}/ranking`],
+  });
+
+  const { data: category, isLoading: loadingCategory } = useQuery({
+    queryKey: [`/api/categories/${professional?.categoryId}`],
+    enabled: !!professional?.categoryId,
   });
 
   if (loadingProfessional || loadingBadges || loadingReviews || loadingRanking) {
@@ -62,6 +67,13 @@ export default function ProfessionalProfile() {
       </div>
     );
   }
+
+  // Debug: log dei dati per verificare la struttura
+  console.log("Professional data:", professional);
+  console.log("Category data:", category);
+  console.log("Reviews data:", reviews);
+  console.log("Badges data:", badges);
+  console.log("Ranking data:", ranking);
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -149,7 +161,7 @@ export default function ProfessionalProfile() {
               </h1>
               <div className="flex items-center justify-center lg:justify-start gap-3 mb-4">
                 <Badge className="bg-white/20 text-white border-white/30 text-lg px-4 py-2 backdrop-blur-sm">
-                  {professional?.category?.name || "Categoria"}
+                  {category?.name || "Categoria"}
                 </Badge>
                 {professional?.isVerified && (
                   <Badge className="bg-green-500/90 text-white border-green-400/50 text-lg px-4 py-2">
