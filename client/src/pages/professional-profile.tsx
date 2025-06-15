@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Star, MapPin, Phone, Mail, Globe, Award, Users, TrendingUp, Eye, Calendar, Shield, ChevronRight, ExternalLink, Heart } from "lucide-react";
+import { Star, MapPin, Phone, Mail, Globe, Award, Users, TrendingUp, Eye, Calendar, Shield, ChevronRight, ExternalLink, Heart, User, Target, CheckCircle, Building, Smartphone, MessageCircle, Flag, Share2, ThumbsUp } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ProfessionalProfile() {
@@ -24,6 +24,14 @@ export default function ProfessionalProfile() {
 
   const { data: ranking, isLoading: loadingRanking } = useQuery({
     queryKey: [`/api/professionals/${id}/ranking`],
+  });
+
+  const { data: specializations } = useQuery({
+    queryKey: [`/api/professionals/${id}/specializations`],
+  });
+
+  const { data: certifications } = useQuery({
+    queryKey: [`/api/professionals/${id}/certifications`],
   });
 
   if (loadingProfessional || loadingBadges || loadingReviews || loadingRanking) {
@@ -375,14 +383,14 @@ export default function ProfessionalProfile() {
                   </div>
 
                   {/* Specializzazioni */}
-                  {specializations && specializations.length > 0 && (
+                  {specializations && Array.isArray(specializations) && specializations.length > 0 && (
                     <div className="mb-8">
                       <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <Target className="w-5 h-5 text-indigo-600" />
                         Specializzazioni
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {specializations?.map((spec: any, index: number) => (
+                        {specializations.map((spec: any, index: number) => (
                           <div key={spec.id || index} className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl border border-indigo-100">
                             <h4 className="font-semibold text-indigo-800 mb-2">{spec.specialization?.name || spec.name}</h4>
                             {spec.experienceYears && (
@@ -398,14 +406,14 @@ export default function ProfessionalProfile() {
                   )}
 
                   {/* Certificazioni */}
-                  {certifications && certifications.length > 0 && (
+                  {certifications && Array.isArray(certifications) && certifications.length > 0 && (
                     <div>
                       <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <Award className="w-5 h-5 text-indigo-600" />
                         Certificazioni e Albo
                       </h3>
                       <div className="space-y-4">
-                        {certifications?.map((cert: any, index: number) => (
+                        {certifications.map((cert: any, index: number) => (
                           <div key={cert.id || index} className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
