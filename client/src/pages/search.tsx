@@ -66,11 +66,11 @@ export default function SearchPage() {
     limit: 20
   };
 
-  // Only execute search when there are actual search parameters
+  // Check if we have specific search parameters
   const hasSearchParams = searchTerm || (selectedCity && selectedCity !== 'all') || (selectedCategory && selectedCategory !== 'all') || searchLocation;
   
   // Regular text-based search
-  const { data: professionals = [], isLoading } = useQuery({
+  const { data: searchResults = [], isLoading: isLoadingSearch } = useQuery({
     queryKey: ['/api/professionals/search', searchParams],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -84,8 +84,23 @@ export default function SearchPage() {
       if (!response.ok) throw new Error('Failed to search professionals');
       return response.json();
     },
-    enabled: !!hasSearchParams && !searchLocation // Only run when no geographic search
+    enabled: !!hasSearchParams && !searchLocation // Only run when we have search criteria
   });
+
+  // Show all professionals when no filters are applied
+  const { data: allProfessionals = [], isLoading: isLoadingAll } = useQuery({
+    queryKey: ['/api/professionals/featured'],
+    queryFn: async () => {
+      const response = await fetch('/api/professionals?limit=50&sortBy=rating&sortOrder=desc');
+      if (!response.ok) throw new Error('Failed to fetch professionals');
+      return response.json();
+    },
+    enabled: !hasSearchParams && !searchLocation // Only run when no search criteria
+  });
+
+  // Use search results when available, otherwise show all professionals
+  const professionals = hasSearchParams ? searchResults : allProfessionals;
+  const isLoading = hasSearchParams ? isLoadingSearch : isLoadingAll;
 
   // Geographic search for nearby professionals
   const { data: nearbyProfessionals = [], isLoading: isLoadingNearby } = useQuery({
@@ -111,9 +126,9 @@ export default function SearchPage() {
     enabled: !!searchLocation
   });
 
-  // Use appropriate data source
+  // Use appropriate data source based on search type
   const displayProfessionals = searchLocation ? nearbyProfessionals : professionals;
-  const isSearching = searchLocation ? isLoadingNearby : isLoading;
+  const isSearchingDisplay = searchLocation ? isLoadingNearby : isLoading;
 
   // Location detection function
   const getUserLocation = () => {
@@ -396,8 +411,8 @@ export default function SearchPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-              {isSearching ? 'Ricerca in corso...' : `${displayProfessionals.length} professionisti trovati`}
-              {searchLocation && !isSearching && (
+              {isSearchingDisplay ? 'Ricerca in corso...' : `${displayProfessionals.length} professionisti trovati`}
+              {searchLocation && !isSearchingDisplay && (
                 <span className="text-sm text-blue-600 block">
                   Entro {searchRadius} km da {locationAddress}
                 </span>
@@ -432,7 +447,7 @@ export default function SearchPage() {
           </div>
         </div>
 
-        {isSearching ? (
+        {isSearchingDisplay ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[...Array(6)].map((_, i) => (
               <Card key={i} className="animate-pulse">
