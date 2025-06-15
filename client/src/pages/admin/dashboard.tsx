@@ -96,92 +96,65 @@ export default function AdminDashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* KPI Cards */}
+        {/* Metriche Operative Uniche */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Utenti Attivi</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {stats?.activeUsers.month.toLocaleString() || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {stats?.activeUsers.changePercent && stats.activeUsers.changePercent > 0 ? '+' : ''}
-                {stats?.activeUsers.changePercent}% dal mese scorso
-              </p>
-              <div className="mt-2 text-sm text-gray-600">
-                Oggi: {stats?.activeUsers.today || 0} | 
-                Settimana: {stats?.activeUsers.week || 0}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Recensioni</CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">
-                {stats?.reviews.total.toLocaleString() || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {stats?.reviews.newToday || 0} nuove oggi
-              </p>
-              <div className="mt-2 flex gap-3 text-sm">
-                <span className="text-green-600">
-                  ✓ {stats?.reviews.verified || 0}
-                </span>
-                <span className="text-orange-600">
-                  ⏳ {stats?.reviews.pending || 0}
-                </span>
-                <span className="text-red-600">
-                  ✗ {stats?.reviews.rejected || 0}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Professionisti</CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Attività Oggi</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {stats?.professionals.total.toLocaleString() || 0}
+                {stats?.activeUsers.today || 0}
               </div>
               <p className="text-xs text-muted-foreground">
-                {stats?.professionals.newThisWeek || 0} nuovi questa settimana
+                {stats?.activeUsers.changePercent > 0 ? '+' : ''}{stats?.activeUsers.changePercent || 0}% vs ieri
               </p>
-              <div className="mt-2 flex gap-3 text-sm">
-                <span className="text-green-600">
-                  ✓ {stats?.professionals.verified || 0}
-                </span>
-                <span className="text-orange-600">
-                  ⏳ {stats?.professionals.pending || 0}
-                </span>
-              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ricavi</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Tempo Medio Verifica</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                {stats?.reviews.averageVerificationTime || 0}h
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Documenti professionali
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Crescita Settimanale</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-purple-600">
-                €{stats?.revenue.monthToDate.toLocaleString() || 0}
+                +{stats?.professionals.newThisWeek || 0}
               </div>
               <p className="text-xs text-muted-foreground">
-                Proiezione: €{stats?.revenue.projectedMonthly.toLocaleString() || 0}
+                Nuovi professionisti
               </p>
-              <div className="mt-2 text-sm text-gray-600">
-                Conversione: {stats?.revenue.subscriptionConversion || 0}%
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Conversione</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">
+                {stats?.revenue.subscriptionConversion || 0}%
               </div>
+              <p className="text-xs text-muted-foreground">
+                Abbonamenti attivati
+              </p>
             </CardContent>
           </Card>
         </div>
