@@ -185,6 +185,9 @@ export interface IStorage {
   // Verification documents methods
   saveVerificationDocument(document: InsertVerificationDocument): Promise<VerificationDocument>;
   getVerificationDocuments(professionalId: number): Promise<VerificationDocument[]>;
+  
+  // Admin pending actions
+  getAdminPendingActions(): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1688,6 +1691,107 @@ export class DatabaseStorage implements IStorage {
       .from(verificationDocuments)
       .where(eq(verificationDocuments.status, 'pending'));
     return result?.count || 0;
+  }
+
+  // Get pending admin actions - real data only
+  async getAdminPendingActions(): Promise<any[]> {
+    const actions: any[] = [];
+
+    // 1. Documenti di verifica pending
+    const pendingDocs = await db
+      .select({
+        id: verificationDocuments.id,
+        type: sql<string>`'verification_document'`,
+        professionalName: professionals.businessName,
+        documentType: verificationDocuments.documentType,
+        createdAt: verificationDocuments.createdAt,
+        professionalId: professionals.id
+      })
+      .from(verificationDocuments)
+      .leftJoin(professionals, eq(verificationDocuments.professionalId, professionals.id))
+      .where(eq(verificationDocuments.status, 'pending'))
+      .orderBy(desc(verificationDocuments.createdAt))
+      .limit(10);
+
+    actions.push(...pendingDocs.map(doc => ({
+      id: `doc_${doc.id}`,
+      type: 'verification_document',
+      title: `Verifica documento ${doc.documentType}`,
+      description: `${doc.professionalName} - ${doc.documentType}`,
+      createdAt: doc.createdAt,
+      priority: 'high',
+      actionUrl: `/admin/professionals/${doc.professionalId}`,
+      icon: 'Shield'
+    })));
+
+    // 2. Recensioni pending/segnalate (se esistono)
+    try {
+      const pendingReviews = await db
+        .select({
+          id: reviews.id,
+          type: sql<string>`'review'`,
+          professionalName: professionals.businessName,
+          rating: reviews.rating,
+          createdAt: reviews.createdAt,
+          professionalId: professionals.id
+        })
+        .from(reviews)
+        .leftJoin(professionals, eq(reviews.professionalId, professionals.id))
+        .where(eq(reviews.isModerated, false))
+        .orderBy(desc(reviews.createdAt))
+        .limit(5);
+
+      actions.push(...pendingReviews.map(review => ({
+        id: `review_${review.id}`,
+        type: 'review',
+        title: `Recensione da moderare`,
+        description: `${review.professionalName} - ${review.rating} stelle`,
+        createdAt: review.createdAt,
+        priority: 'medium',
+        actionUrl: `/admin/reviews`,
+        icon: 'Star'
+      })));
+    } catch (error) {
+      console.log('No pending reviews to moderate');
+    }
+
+    // 3. Professionisti non verificati (nuove registrazioni)
+    const unverifiedProfessionals = await db
+      .select({
+        id: professionals.id,
+        type: sql<string>`'professional'`,
+        businessName: professionals.businessName,
+        verificationStatus: professionals.verificationStatus,
+        createdAt: professionals.createdAt
+      })
+      .from(professionals)
+      .where(eq(professionals.verificationStatus, 'not_verified'))
+      .orderBy(desc(professionals.createdAt))
+      .limit(5);
+
+    actions.push(...unverifiedProfessionals.map(prof => ({
+      id: `prof_${prof.id}`,
+      type: 'professional',
+      title: `Nuovo professionista registrato`,
+      description: `${prof.businessName} - Non verificato`,
+      createdAt: prof.createdAt,
+      priority: 'low',
+      actionUrl: `/admin/professionals/${prof.id}`,
+      icon: 'UserCheck'
+    })));
+
+    // Ordina per data (più recenti prima) e priorità
+    return actions
+      .sort((a, b) => {
+        // Prima per priorità
+        const priorityOrder = { high: 3, medium: 2, low: 1 };
+        const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
+        if (priorityDiff !== 0) return priorityDiff;
+        
+        // Poi per data
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      })
+      .slice(0, 10); // Massimo 10 azioni
   }
 }
 

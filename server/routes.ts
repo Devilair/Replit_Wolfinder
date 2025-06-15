@@ -1944,6 +1944,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get pending admin actions - real data only
+  app.get("/api/admin/pending-actions", async (req, res) => {
+    try {
+      const actions = await storage.getAdminPendingActions();
+      res.json(actions);
+    } catch (error) {
+      console.error("Error fetching pending actions:", error);
+      res.status(500).json({ message: "Failed to fetch pending actions" });
+    }
+  });
+
   // Get pending reviews for admin
   app.get("/api/admin/pending-reviews", async (req, res) => {
     try {

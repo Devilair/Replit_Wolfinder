@@ -49,6 +49,12 @@ export default function AdminDashboard() {
     queryKey: ['/api/admin/dashboard-stats'],
   });
 
+  // Query per azioni pending reali dal database
+  const { data: pendingActions, isLoading: actionsLoading } = useQuery({
+    queryKey: ['/api/admin/pending-actions'],
+    refetchInterval: 30000, // Aggiorna ogni 30 secondi
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
@@ -200,29 +206,83 @@ export default function AdminDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between py-2">
-                      <div className="flex items-center gap-3">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span className="text-sm">Nuovo professionista verificato</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">2 min fa</span>
+                  {actionsLoading ? (
+                    <div className="space-y-4">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="animate-pulse flex items-center space-x-3 py-2">
+                          <div className="h-4 w-4 bg-gray-200 rounded-full"></div>
+                          <div className="h-4 bg-gray-200 rounded flex-1"></div>
+                          <div className="h-3 w-16 bg-gray-200 rounded"></div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex items-center justify-between py-2">
-                      <div className="flex items-center gap-3">
-                        <Star className="h-4 w-4 text-yellow-500" />
-                        <span className="text-sm">Nuova recensione da moderare</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">5 min fa</span>
+                  ) : (
+                    <div className="space-y-4">
+                      {pendingActions && pendingActions.length > 0 ? (
+                        pendingActions.slice(0, 5).map((action) => {
+                          const getIcon = (iconName: string) => {
+                            switch (iconName) {
+                              case 'Shield': return <Shield className="h-4 w-4 text-blue-500" />;
+                              case 'Star': return <Star className="h-4 w-4 text-yellow-500" />;
+                              case 'UserCheck': return <CheckCircle className="h-4 w-4 text-green-500" />;
+                              default: return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+                            }
+                          };
+
+                          const getPriorityColor = (priority: string) => {
+                            switch (priority) {
+                              case 'high': return 'text-red-600';
+                              case 'medium': return 'text-yellow-600';
+                              case 'low': return 'text-gray-600';
+                              default: return 'text-gray-600';
+                            }
+                          };
+
+                          const timeAgo = (date: string) => {
+                            const now = new Date();
+                            const actionDate = new Date(date);
+                            const diffInMinutes = Math.floor((now.getTime() - actionDate.getTime()) / 60000);
+                            
+                            if (diffInMinutes < 60) return `${diffInMinutes} min fa`;
+                            if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} ore fa`;
+                            return `${Math.floor(diffInMinutes / 1440)} giorni fa`;
+                          };
+
+                          return (
+                            <div key={action.id} className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 -mx-2 cursor-pointer">
+                              <div className="flex items-center gap-3">
+                                {getIcon(action.icon)}
+                                <div>
+                                  <span className="text-sm font-medium">{action.title}</span>
+                                  <p className="text-xs text-gray-500">{action.description}</p>
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end">
+                                <span className="text-xs text-muted-foreground">{timeAgo(action.createdAt)}</span>
+                                <span className={`text-xs font-medium ${getPriorityColor(action.priority)}`}>
+                                  {action.priority === 'high' ? 'Urgente' : action.priority === 'medium' ? 'Medio' : 'Basso'}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-6">
+                          <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                          <p className="text-sm text-gray-500">Nessuna azione pending</p>
+                          <p className="text-xs text-gray-400">Tutto sotto controllo!</p>
+                        </div>
+                      )}
+                      
+                      {pendingActions && pendingActions.length > 5 && (
+                        <div className="pt-2 border-t">
+                          <Button variant="ghost" size="sm" className="w-full text-xs">
+                            Vedi tutte le {pendingActions.length} azioni →
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center justify-between py-2">
-                      <div className="flex items-center gap-3">
-                        <AlertTriangle className="h-4 w-4 text-orange-500" />
-                        <span className="text-sm">Segnalazione da verificare</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">15 min fa</span>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
 
