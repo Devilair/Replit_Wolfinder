@@ -17,8 +17,11 @@ export default function SearchForm() {
     if (city.trim()) params.append('city', city.trim());
     
     const queryString = params.toString();
-
-    setLocation(`/search${queryString ? `?${queryString}` : ''}`);
+    const targetUrl = `/search${queryString ? `?${queryString}` : ''}`;
+    
+    console.log('SEARCH FORM DEBUG:', { search, city, queryString, targetUrl });
+    
+    setLocation(targetUrl);
   };
 
   return (
