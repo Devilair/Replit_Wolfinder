@@ -1047,7 +1047,7 @@ export const professionalRegistrationSchema = z.object({
   phoneFixed: z.string().optional(),
   phoneMobile: z.string().optional(),
   city: z.string().min(2, "La città deve avere almeno 2 caratteri"),
-  address: z.string().min(5, "L'indirizzo deve avere almeno 5 caratteri"),
+  address: z.string().min(2, "L'indirizzo deve avere almeno 2 caratteri"),
   description: z.string().min(10, "La descrizione deve avere almeno 10 caratteri"),
   
   // Geocoding data (opzionali - aggiunti automaticamente dal form)

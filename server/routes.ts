@@ -216,7 +216,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Determine province based on city
       const province = validatedData.city === "Ferrara" ? "FE" : "LI";
       
-      // Create professional profile with geocoding data
+      // Fallback coordinates if geocoding fails or is incomplete
+      let latitude = validatedData.latitude;
+      let longitude = validatedData.longitude;
+      let geocodedAt = validatedData.latitude && validatedData.longitude ? new Date() : null;
+      
+      if (!latitude || !longitude) {
+        // Use city center coordinates as fallback
+        if (validatedData.city === "Ferrara") {
+          latitude = 44.8381;
+          longitude = 11.6198;
+        } else if (validatedData.city === "Livorno") {
+          latitude = 43.5485;
+          longitude = 10.3106;
+        }
+        geocodedAt = new Date();
+      }
+      
+      // Create professional profile
       const professional = await storage.createProfessional({
         userId: userResult.user!.id,
         categoryId: validatedData.categoryId,
@@ -228,10 +245,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         address: validatedData.address,
         city: validatedData.city,
         province: province,
-        postalCode: validatedData.postalCode || "00000",
-        latitude: validatedData.latitude,
-        longitude: validatedData.longitude,
-        geocodedAt: validatedData.latitude && validatedData.longitude ? new Date() : null
+        postalCode: validatedData.postalCode || (validatedData.city === "Ferrara" ? "44121" : "57100"),
+        latitude: latitude?.toString(),
+        longitude: longitude?.toString(),
+        geocodedAt: geocodedAt
       });
 
       // Genera e invia email di verifica
