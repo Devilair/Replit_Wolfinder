@@ -2498,12 +2498,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Professional not found" });
       }
 
-      // Simple ranking based on available data
+      // Get ranking data by city
+      const cityProfessionals = await storage.getProfessionalsByCity(professional.city);
+      const cityRank = cityProfessionals
+        .sort((a, b) => {
+          const ratingA = parseFloat(a.rating || "0");
+          const ratingB = parseFloat(b.rating || "0");
+          if (ratingB !== ratingA) return ratingB - ratingA;
+          return (b.reviewCount || 0) - (a.reviewCount || 0);
+        })
+        .findIndex(p => p.id === professionalId) + 1;
+
+      // Get ranking data by category
+      const categoryProfessionals = await storage.getProfessionalsByCategory(professional.categoryId);
+      const categoryRank = categoryProfessionals
+        .sort((a, b) => {
+          const ratingA = parseFloat(a.rating || "0");
+          const ratingB = parseFloat(b.rating || "0");
+          if (ratingB !== ratingA) return ratingB - ratingA;
+          return (b.reviewCount || 0) - (a.reviewCount || 0);
+        })
+        .findIndex(p => p.id === professionalId) + 1;
+
       const ranking = {
         rating: parseFloat(professional.rating || "0"),
         reviewCount: professional.reviewCount || 0,
         profileViews: professional.profileViews || 0,
-        rank: Math.max(1, Math.floor(Math.random() * 100)) // Placeholder until proper ranking system
+        cityRank,
+        cityTotal: cityProfessionals.length,
+        categoryRank,
+        categoryTotal: categoryProfessionals.length
       };
       
       res.json(ranking);
