@@ -1,684 +1,423 @@
+import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useParams, useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Globe, 
-  Star, 
-  MessageSquare,
-  Clock,
-  Shield,
-  User,
-  Building,
-  CheckCircle,
-  AlertCircle,
-  ArrowLeft,
-  ExternalLink,
-  Users,
-  Calendar,
-  Award,
-  Filter,
-  Search,
-  TrendingUp,
-  Phone as PhoneIcon,
-  Mail as MailIcon,
-  Globe as GlobeIcon,
-  Share,
-  Flag,
-  MapIcon,
-  Trophy,
-  Verified,
-  Medal,
-  Crown,
-  Activity,
-  UserCheck,
-  ThumbsUp,
-  MessageCircle,
-  ShieldCheck
-} from "lucide-react";
-import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Star, MapPin, Phone, Mail, Globe, Award, Users, TrendingUp, Eye, Calendar, Shield, ChevronRight, ExternalLink, Heart } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function ProfessionalProfile() {
   const { id } = useParams();
-  const [, setLocation] = useLocation();
-  const [starFilter, setStarFilter] = useState<string>("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<string>("newest");
-  const { user, isAuthenticated } = useAuth();
-
-  // Fetch professional data
-  const { data: professional, isLoading } = useQuery({
-    queryKey: [`/api/professionals/${id}`],
-    enabled: !!id,
+  
+  const { data: professional, isLoading: loadingProfessional } = useQuery({
+    queryKey: ["/api/professionals", id],
   });
 
-  // Fetch reviews
-  const { data: reviews = [], isLoading: reviewsLoading } = useQuery({
-    queryKey: [`/api/professionals/${id}/reviews`],
-    enabled: !!id,
+  const { data: badges, isLoading: loadingBadges } = useQuery({
+    queryKey: ["/api/professionals", id, "badges"],
   });
 
-  // Fetch badges
-  const { data: badges = [] } = useQuery({
-    queryKey: [`/api/professionals/${id}/badges`],
-    enabled: !!id,
+  const { data: reviews, isLoading: loadingReviews } = useQuery({
+    queryKey: ["/api/professionals", id, "reviews"],
   });
 
-  // Fetch ranking data
-  const { data: rankingData } = useQuery({
-    queryKey: [`/api/professionals/${id}/ranking`],
-    enabled: !!id,
+  const { data: ranking, isLoading: loadingRanking } = useQuery({
+    queryKey: ["/api/professionals", id, "ranking"],
   });
 
-  // Fetch category for ranking
-  const { data: categoryStats } = useQuery({
-    queryKey: [`/api/categories/${professional?.categoryId}/stats`],
-    enabled: !!professional?.categoryId,
-  });
-
-  if (isLoading) {
+  if (loadingProfessional || loadingBadges || loadingReviews || loadingRanking) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 font-medium">Caricamento profilo...</p>
+        </motion.div>
       </div>
     );
   }
 
   if (!professional) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Professionista non trovato</h1>
-          <p className="text-gray-600 mb-4">Il professionista che stai cercando non esiste.</p>
-          <Button onClick={() => setLocation("/search")}>Torna alla ricerca</Button>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Users className="w-10 h-10 text-red-500" />
+          </div>
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+            Professionista non trovato
+          </h1>
+          <p className="text-gray-500 max-w-md">Il professionista che stai cercando non esiste o non è più disponibile nella nostra piattaforma.</p>
+        </motion.div>
       </div>
     );
   }
 
-  const handleBackNavigation = () => {
-    setLocation("/search");
-  };
-
   const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${
-          i < Math.floor(rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-        }`}
-      />
-    ));
-  };
-
-  // Calculate star distribution
-  const getStarDistribution = () => {
-    if (!reviews || reviews.length === 0) {
-      return { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-    }
-
-    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-    reviews.forEach((review: any) => {
-      const rating = Math.round(review.rating);
-      if (rating >= 1 && rating <= 5) {
-        distribution[rating as keyof typeof distribution]++;
-      }
-    });
-
-    return distribution;
-  };
-
-  const starDistribution = getStarDistribution();
-  const totalReviews = reviews.length;
-
-  // Filter and sort reviews
-  const getFilteredReviews = () => {
-    if (!reviews || reviews.length === 0) return [];
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
     
-    let filtered = [...reviews];
-
-    if (starFilter !== "all") {
-      const targetRating = parseInt(starFilter);
-      filtered = filtered.filter((review: any) => review.rating === targetRating);
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(<Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />);
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(<Star key={i} className="w-4 h-4 fill-yellow-400/50 text-yellow-400" />);
+      } else {
+        stars.push(<Star key={i} className="w-4 h-4 text-gray-300" />);
+      }
     }
-
-    if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter((review: any) => 
-        review.content?.toLowerCase().includes(searchLower) ||
-        review.title?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    switch (sortBy) {
-      case "newest":
-        filtered.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        break;
-      case "oldest":
-        filtered.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-        break;
-      case "highest":
-        filtered.sort((a: any, b: any) => b.rating - a.rating);
-        break;
-      case "lowest":
-        filtered.sort((a: any, b: any) => a.rating - b.rating);
-        break;
-    }
-
-    return filtered;
+    return stars;
   };
 
-  const filteredReviews = getFilteredReviews();
-
-  // Calculate rankings
-  const getCityRanking = () => {
-    if (rankingData?.cityRank) {
-      return {
-        rank: rankingData.cityRank,
-        total: rankingData.cityTotal,
-        percentage: `Top ${Math.round((rankingData.cityRank / rankingData.cityTotal) * 100)}%`
-      };
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
     }
-    return { rank: "N/A", total: "N/A", percentage: "N/A" };
   };
 
-  const getCategoryRanking = () => {
-    if (rankingData?.categoryRank) {
-      return {
-        rank: rankingData.categoryRank,
-        total: rankingData.categoryTotal,
-        percentage: `Top ${Math.round((rankingData.categoryRank / rankingData.categoryTotal) * 100)}%`
-      };
-    }
-    return { rank: "N/A", total: "N/A", percentage: "N/A" };
-  };
-
-  const cityRanking = getCityRanking();
-  const categoryRanking = getCategoryRanking();
-
-  // Badge rendering function
-  const renderBadges = () => {
-    if (!badges || badges.length === 0) {
-      return (
-        <div className="text-center py-4">
-          <p className="text-gray-500">Nessun badge ottenuto</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {badges.map((badge: any) => (
-          <TooltipProvider key={badge.id}>
-            <Tooltip>
-              <TooltipTrigger>
-                <div className="flex flex-col items-center p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border hover:shadow-md transition-shadow">
-                  <div className="w-12 h-12 mb-2 flex items-center justify-center">
-                    {getBadgeIcon(badge.type)}
-                  </div>
-                  <p className="text-sm font-medium text-center">{badge.name}</p>
-                  {badge.earnedAt && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(badge.earnedAt).toLocaleDateString('it-IT')}
-                    </p>
-                  )}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">{badge.description}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ))}
-      </div>
-    );
-  };
-
-  const getBadgeIcon = (type: string) => {
-    switch (type) {
-      case 'verified':
-        return <CheckCircle className="w-8 h-8 text-green-600" />;
-      case 'top_performer':
-        return <Trophy className="w-8 h-8 text-yellow-600" />;
-      case 'highly_rated':
-        return <Star className="w-8 h-8 text-yellow-500" />;
-      case 'responsive':
-        return <MessageCircle className="w-8 h-8 text-blue-600" />;
-      case 'active':
-        return <Activity className="w-8 h-8 text-green-500" />;
-      case 'trusted':
-        return <ShieldCheck className="w-8 h-8 text-purple-600" />;
-      default:
-        return <Medal className="w-8 h-8 text-gray-600" />;
-    }
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header Navigation */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <Button
-            variant="ghost"
-            onClick={handleBackNavigation}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Torna ai risultati
-          </Button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Hero Header Section */}
+      <motion.div 
+        className="relative overflow-hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+      >
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800">
+          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20" />
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-8">
-            
-            {/* 1. Header Identità Professionale */}
-            <Card>
-              <CardContent className="p-8">
-                <div className="flex items-start gap-6">
-                  <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-3xl">
-                    {professional.businessName?.[0] || professional.user?.name?.[0] || "P"}
-                  </div>
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h1 className="text-3xl font-bold text-gray-900">
-                        {professional.businessName || professional.user?.name}
-                      </h1>
-                      {professional.isVerified && (
-                        <Badge className="bg-green-100 text-green-800 border-green-200">
-                          <Verified className="w-3 h-3 mr-1" />
-                          Verificato
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <p className="text-xl text-blue-600 font-medium mb-2">
-                      {professional.category?.name}
-                    </p>
-                    
-                    <div className="flex items-center gap-2 text-gray-600 mb-4">
-                      <MapPin className="w-4 h-4" />
-                      <span>{professional.city}</span>
-                    </div>
-
-                    {/* Posizionamento */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                      <div className="bg-blue-50 p-4 rounded-lg">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Crown className="w-4 h-4 text-blue-600" />
-                          <span className="text-sm font-medium text-blue-600">Ranking nella città</span>
-                        </div>
-                        <p className="text-2xl font-bold text-blue-900">
-                          {cityRanking.rank}° su {cityRanking.total} a {professional.city}
-                        </p>
-                      </div>
-                      
-                      <div className="bg-purple-50 p-4 rounded-lg">
-                        <div className="flex items-center gap-2 mb-1">
-                          <TrendingUp className="w-4 h-4 text-purple-600" />
-                          <span className="text-sm font-medium text-purple-600">Ranking nella categoria</span>
-                        </div>
-                        <p className="text-2xl font-bold text-purple-900">
-                          {categoryRanking.rank}° tra i {categoryRanking.total} {professional.category?.name}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Rating e Azioni */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center">
-                            {renderStars(parseFloat(professional.rating || "0"))}
-                          </div>
-                          <span className="font-bold text-xl text-gray-900">
-                            {parseFloat(professional.rating || "0").toFixed(1)}
-                          </span>
-                          <span className="text-gray-600">
-                            su {professional.reviewCount || 0} recensioni
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-3">
-                        {!professional.isClaimed && (
-                          <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50">
-                            Reclama Profilo
-                          </Button>
-                        )}
-                        <Button className="bg-blue-600 hover:bg-blue-700">
-                          <MessageSquare className="w-4 h-4 mr-2" />
-                          Lascia una recensione
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+        
+        {/* Content */}
+        <div className="relative max-w-7xl mx-auto px-4 py-16">
+          <motion.div 
+            className="flex flex-col lg:flex-row items-center gap-8 text-white"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* Avatar */}
+            <motion.div 
+              className="flex-shrink-0"
+              variants={itemVariants}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="relative">
+                <div className="w-40 h-40 bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-sm rounded-3xl flex items-center justify-center text-5xl font-bold shadow-2xl border border-white/20">
+                  {professional?.businessName?.substring(0, 2).toUpperCase() || "PR"}
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* 2. Sezione Medaglie e Badge */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2">
-                  <Medal className="w-5 h-5 text-yellow-600" />
-                  Medaglie e Riconoscimenti
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {renderBadges()}
-              </CardContent>
-            </Card>
-
-            {/* 3. Bio e Presentazione Professionale */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl">Presentazione Professionale</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {professional.description && (
-                  <div>
-                    <h4 className="font-medium mb-2">Chi sono</h4>
-                    <p className="text-gray-700 leading-relaxed">{professional.description}</p>
-                  </div>
+                {professional?.isVerified && (
+                  <motion.div 
+                    className="absolute -top-2 -right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.5, type: "spring", stiffness: 500 }}
+                  >
+                    <Shield className="w-6 h-6 text-white" />
+                  </motion.div>
                 )}
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="font-medium mb-2">Esperienza professionale</h4>
-                    <p className="text-gray-600">
-                      In attività dal {new Date(professional.createdAt).getFullYear()}
-                    </p>
-                  </div>
-                  
-                  {professional.category && (
-                    <div>
-                      <h4 className="font-medium mb-2">Categoria professionale</h4>
-                      <p className="text-gray-600">{professional.category.name}</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </motion.div>
+            
+            {/* Info */}
+            <motion.div className="flex-1 text-center lg:text-left" variants={itemVariants}>
+              <h1 className="text-5xl lg:text-6xl font-bold mb-4 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                {professional?.businessName || "Professionista"}
+              </h1>
+              <div className="flex items-center justify-center lg:justify-start gap-3 mb-4">
+                <Badge className="bg-white/20 text-white border-white/30 text-lg px-4 py-2 backdrop-blur-sm">
+                  {professional?.category?.name || "Categoria"}
+                </Badge>
+                {professional?.isVerified && (
+                  <Badge className="bg-green-500/90 text-white border-green-400/50 text-lg px-4 py-2">
+                    <Award className="w-4 h-4 mr-2" />
+                    Verificato
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="flex items-center justify-center lg:justify-start gap-3 mb-6 text-blue-100">
+                <MapPin className="w-5 h-5" />
+                <span className="text-lg">{professional?.city || "Città"}, {professional?.province || "Provincia"}</span>
+              </div>
 
-            {/* 4. Contatti & Studio */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl">Contatti & Studio</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    {professional.businessName && (
-                      <div className="flex items-center gap-3">
-                        <Building className="w-5 h-5 text-gray-400" />
-                        <div>
-                          <p className="font-medium">Nome studio</p>
-                          <p className="text-gray-600">{professional.businessName}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center gap-3">
-                      <MapPin className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <p className="font-medium">Ubicazione</p>
-                        <p className="text-gray-600">{professional.city}, {professional.province}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    {professional.phoneFixed && (
-                      <div className="flex items-center gap-3">
-                        <PhoneIcon className="w-5 h-5 text-gray-400" />
-                        <div>
-                          <p className="font-medium">Telefono</p>
-                          <a href={`tel:${professional.phoneFixed}`} className="text-blue-600 hover:underline">
-                            {professional.phoneFixed}
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {professional.email && (
-                      <div className="flex items-center gap-3">
-                        <MailIcon className="w-5 h-5 text-gray-400" />
-                        <div>
-                          <p className="font-medium">Email</p>
-                          <a href={`mailto:${professional.email}`} className="text-blue-600 hover:underline">
-                            {professional.email}
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {professional.website && (
-                      <div className="flex items-center gap-3">
-                        <GlobeIcon className="w-5 h-5 text-gray-400" />
-                        <div>
-                          <p className="font-medium">Sito web</p>
-                          <a href={professional.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                            Visita il sito
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+              {/* Rating */}
+              <div className="flex items-center justify-center lg:justify-start gap-4 mb-8">
+                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+                  <div className="flex">{renderStars(parseFloat(professional?.rating || "0"))}</div>
+                  <span className="font-bold text-lg">{parseFloat(professional?.rating || "0").toFixed(1)}</span>
                 </div>
-              </CardContent>
-            </Card>
+                <span className="text-blue-100">
+                  {professional?.reviewCount || 0} recensioni • {professional?.profileViews || 0} visualizzazioni
+                </span>
+              </div>
 
-            {/* 5. Recensioni */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">Recensioni ({totalReviews})</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center">
-                      {renderStars(parseFloat(professional.rating || "0"))}
-                    </div>
-                    <span className="font-bold text-lg">
-                      {parseFloat(professional.rating || "0").toFixed(1)}
-                    </span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {/* Review Filters */}
-                <div className="flex flex-wrap gap-4 mb-6">
-                  <Select value={starFilter} onValueChange={setStarFilter}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Filtra per stelle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tutte le stelle</SelectItem>
-                      <SelectItem value="5">5 stelle</SelectItem>
-                      <SelectItem value="4">4 stelle</SelectItem>
-                      <SelectItem value="3">3 stelle</SelectItem>
-                      <SelectItem value="2">2 stelle</SelectItem>
-                      <SelectItem value="1">1 stella</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Ordina per" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="newest">Più recenti</SelectItem>
-                      <SelectItem value="oldest">Più vecchie</SelectItem>
-                      <SelectItem value="highest">Voto più alto</SelectItem>
-                      <SelectItem value="lowest">Voto più basso</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <div className="flex-1 min-w-[200px]">
-                    <Input
-                      placeholder="Cerca nelle recensioni..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
+              {/* Contact Actions */}
+              <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
+                {professional?.phoneFixed && (
+                  <Button size="lg" className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm">
+                    <Phone className="w-4 h-4 mr-2" />
+                    Chiama ora
+                  </Button>
+                )}
+                {professional?.email && (
+                  <Button variant="outline" size="lg" className="bg-transparent border-white/50 text-white hover:bg-white/10">
+                    <Mail className="w-4 h-4 mr-2" />
+                    Invia email
+                  </Button>
+                )}
+                {professional?.website && (
+                  <Button variant="outline" size="lg" className="bg-transparent border-white/50 text-white hover:bg-white/10">
+                    <Globe className="w-4 h-4 mr-2" />
+                    Sito web
+                    <ExternalLink className="w-3 h-3 ml-1" />
+                  </Button>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </motion.div>
 
-                {/* Reviews List */}
-                <div className="space-y-6">
-                  {filteredReviews.length > 0 ? (
-                    filteredReviews.map((review: any) => (
-                      <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                              <User className="w-5 h-5 text-blue-600" />
+      {/* Main Content */}
+      <motion.div 
+        className="max-w-7xl mx-auto px-4 py-12"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Main Column */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* About Section */}
+            {professional?.description && (
+              <motion.div variants={itemVariants}>
+                <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-white to-blue-50/30">
+                  <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                    <CardTitle className="text-2xl flex items-center gap-3">
+                      <Users className="w-6 h-6" />
+                      Chi siamo
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-8">
+                    <p className="text-gray-700 text-lg leading-relaxed">{professional.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Badges Section */}
+            {badges && badges.length > 0 && (
+              <motion.div variants={itemVariants}>
+                <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-white to-purple-50/30">
+                  <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+                    <CardTitle className="text-2xl flex items-center gap-3">
+                      <Award className="w-6 h-6" />
+                      Badge e Riconoscimenti
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {badges?.map((badgeData: any, index: number) => (
+                        <motion.div 
+                          key={badgeData?.badge?.id || index}
+                          className="group relative bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          whileHover={{ y: -5 }}
+                        >
+                          <div className="text-center">
+                            <div className="text-4xl mb-4 transform group-hover:scale-110 transition-transform duration-300">
+                              {badgeData?.badge?.icon || "🏆"}
                             </div>
-                            <div>
-                              <p className="font-medium">Utente verificato</p>
-                              <div className="flex items-center gap-2">
-                                {renderStars(review.rating)}
-                                <span className="text-sm text-gray-500">
-                                  {new Date(review.createdAt).toLocaleDateString('it-IT')}
-                                </span>
+                            <h4 className="font-bold text-lg mb-2 text-gray-800">{badgeData?.badge?.name || "Badge"}</h4>
+                            <p className="text-sm text-gray-600">{badgeData?.badge?.description || "Riconoscimento"}</p>
+                          </div>
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-purple-400/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Reviews Section */}
+            <motion.div variants={itemVariants}>
+              <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-white to-yellow-50/30">
+                <CardHeader className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
+                  <CardTitle className="text-2xl flex items-center gap-3">
+                    <Star className="w-6 h-6" />
+                    Recensioni ({professional?.reviewCount || 0})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-8">
+                  {reviews && reviews.length > 0 ? (
+                    <div className="space-y-6">
+                      {reviews?.map((review: any, index: number) => (
+                        <motion.div 
+                          key={review?.id || index}
+                          className="bg-gradient-to-r from-white to-gray-50/50 p-6 rounded-2xl shadow-lg border border-gray-100"
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                                  {review?.user?.name?.substring(0, 1).toUpperCase() || "U"}
+                                </div>
+                                <div>
+                                  <span className="font-bold text-gray-800">{review?.user?.name || "Utente"}</span>
+                                  <div className="flex items-center gap-1 mt-1">
+                                    {renderStars(review?.rating || 0)}
+                                  </div>
+                                </div>
                               </div>
+                              <p className="text-gray-700 text-lg leading-relaxed">{review?.content || "Nessun commento"}</p>
+                            </div>
+                            <div className="text-right ml-4">
+                              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                                {review?.createdAt ? new Date(review.createdAt).toLocaleDateString('it-IT') : "Data non disponibile"}
+                              </span>
                             </div>
                           </div>
-                          
-                          <Badge variant="outline" className="text-green-600 border-green-200">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Verificata
-                          </Badge>
-                        </div>
-                        
-                        {review.title && (
-                          <h4 className="font-medium mb-2">{review.title}</h4>
-                        )}
-                        
-                        <p className="text-gray-700 leading-relaxed mb-3">{review.content}</p>
-                        
-                        {review.response && (
-                          <div className="bg-blue-50 p-4 rounded-lg mt-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Building className="w-4 h-4 text-blue-600" />
-                              <span className="text-sm font-medium text-blue-600">Risposta del professionista</span>
-                            </div>
-                            <p className="text-gray-700 text-sm">{review.response.content}</p>
-                            <p className="text-xs text-gray-500 mt-2">
-                              {new Date(review.response.createdAt).toLocaleDateString('it-IT')}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ))
+                        </motion.div>
+                      ))}
+                    </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">Nessuna recensione trovata con i filtri selezionati.</p>
+                    <div className="text-center py-16">
+                      <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Star className="w-10 h-10 text-gray-400" />
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-600 mb-2">Nessuna recensione ancora</h3>
+                      <p className="text-gray-500 max-w-md mx-auto">
+                        Sii il primo a condividere la tua esperienza con questo professionista
+                      </p>
                     </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* 7. Azioni Utente */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex flex-wrap gap-4 justify-center">
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Lascia una recensione
-                  </Button>
-                  
-                  <Button variant="outline">
-                    <Share className="w-4 h-4 mr-2" />
-                    Condividi profilo
-                  </Button>
-                  
-                  <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
-                    <Flag className="w-4 h-4 mr-2" />
-                    Segnala professionista
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Rating Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Distribuzione valutazioni</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {[5, 4, 3, 2, 1].map((stars) => {
-                    const count = starDistribution[stars as keyof typeof starDistribution];
-                    const percentage = totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
-                    return (
-                      <div key={stars} className="flex items-center gap-3">
-                        <span className="text-sm w-6">{stars}</span>
-                        <Star className="w-4 h-4 text-yellow-400" />
-                        <div className="flex-1 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-yellow-400 h-2 rounded-full" 
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                        <span className="text-sm text-gray-600 w-10">{count}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+          <div className="space-y-8">
+            {/* Ranking Card */}
+            {ranking && (
+              <motion.div variants={itemVariants}>
+                <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-white to-green-50/30">
+                  <CardHeader className="bg-gradient-to-r from-green-600 to-teal-600 text-white">
+                    <CardTitle className="text-xl flex items-center gap-3">
+                      <TrendingUp className="w-5 h-5" />
+                      Posizionamento
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl">
+                      <span className="font-medium text-gray-700">Nella città</span>
+                      <Badge className="bg-blue-600 text-white text-lg px-3 py-1">
+                        #{ranking.cityRank} di {ranking.cityTotal}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl">
+                      <span className="font-medium text-gray-700">Nella categoria</span>
+                      <Badge className="bg-purple-600 text-white text-lg px-3 py-1">
+                        #{ranking.categoryRank} di {ranking.categoryTotal}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
-            {/* 6. Affidabilità e Stato */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Affidabilità</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <span className="text-sm">Identità verificata</span>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <Shield className="w-5 h-5 text-blue-600" />
-                  <span className="text-sm">Nessuna segnalazione attiva</span>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-purple-600" />
-                  <span className="text-sm">Tempo medio verifica: 12h</span>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <Activity className="w-5 h-5 text-green-600" />
-                  <span className="text-sm">
-                    Su Wolfinder dal {new Date(professional.createdAt).toLocaleDateString('it-IT', { 
-                      month: 'long', 
-                      year: 'numeric' 
-                    })}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Stats Card */}
+            <motion.div variants={itemVariants}>
+              <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-white to-indigo-50/30">
+                <CardHeader className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
+                  <CardTitle className="text-xl flex items-center gap-3">
+                    <Users className="w-5 h-5" />
+                    Statistiche
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+                      <div className="text-2xl font-bold text-blue-600 mb-1">{professional.profileViews}</div>
+                      <div className="text-xs text-gray-600">Visualizzazioni</div>
+                    </div>
+                    <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+                      <div className="text-2xl font-bold text-green-600 mb-1">{professional.reviewCount}</div>
+                      <div className="text-xs text-gray-600">Recensioni</div>
+                    </div>
+                    <div className="text-center p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl">
+                      <div className="text-2xl font-bold text-yellow-600 mb-1">{parseFloat(professional.rating).toFixed(1)}</div>
+                      <div className="text-xs text-gray-600">Rating medio</div>
+                    </div>
+                    <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
+                      <div className="text-2xl font-bold text-purple-600 mb-1">
+                        {new Date(professional.createdAt).getFullYear()}
+                      </div>
+                      <div className="text-xs text-gray-600">Anno iscrizione</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* CTA Card */}
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 text-white">
+                <CardContent className="p-8 text-center">
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Heart className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">Hai lavorato con questo professionista?</h3>
+                  <p className="text-pink-100 mb-6 leading-relaxed">
+                    La tua recensione aiuta altri utenti a fare la scelta giusta
+                  </p>
+                  <Button 
+                    size="lg" 
+                    className="w-full bg-white text-pink-600 hover:bg-pink-50 font-bold text-lg py-3 shadow-lg"
+                  >
+                    Scrivi recensione
+                    <ChevronRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
