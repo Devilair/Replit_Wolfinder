@@ -89,9 +89,14 @@ export default function SearchPage() {
 
   // Show all professionals when no filters are applied
   const { data: allProfessionals = [], isLoading: isLoadingAll } = useQuery({
-    queryKey: ['/api/professionals/featured'],
+    queryKey: ['/api/professionals/search', { sortBy: 'rating', limit: 50 }],
     queryFn: async () => {
-      const response = await fetch('/api/professionals?limit=50&sortBy=rating&sortOrder=desc');
+      const params = new URLSearchParams({
+        sortBy: 'rating',
+        sortOrder: 'desc',
+        limit: '50'
+      });
+      const response = await fetch(`/api/professionals/search?${params}`);
       if (!response.ok) throw new Error('Failed to fetch professionals');
       return response.json();
     },
