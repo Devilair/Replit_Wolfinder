@@ -73,7 +73,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       ];
-      console.log('File upload debug - mimetype:', file.mimetype);
+
       if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
       } else {

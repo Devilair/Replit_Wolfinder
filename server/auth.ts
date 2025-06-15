@@ -218,7 +218,6 @@ export class AuthService {
     }
 
     const decoded = this.verifyToken(token);
-    console.log('Auth debug - decoded token:', decoded);
     if (!decoded) {
       return res.status(403).json({ error: 'Token non valido' });
     }
@@ -247,20 +246,14 @@ export class AuthService {
 
   requireRole = (roles: string[]) => {
     return (req: Request & { user?: AuthUser }, res: Response, next: NextFunction) => {
-      console.log('Role check debug - user:', req.user);
-      console.log('Role check debug - required roles:', roles);
-      console.log('Role check debug - user role:', req.user?.role);
-      
       if (!req.user) {
         return res.status(401).json({ error: 'Autenticazione richiesta' });
       }
 
       if (!roles.includes(req.user.role)) {
-        console.log('Role check failed - user role not in allowed roles');
         return res.status(403).json({ error: 'Permessi insufficienti' });
       }
 
-      console.log('Role check passed');
       next();
     };
   };
