@@ -64,11 +64,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fileSize: 10 * 1024 * 1024, // 10MB limit
     },
     fileFilter: (req, file, cb) => {
-      const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+      const allowedTypes = [
+        'application/pdf',
+        'image/jpeg',
+        'image/jpg', 
+        'image/tiff',
+        'image/png',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      console.log('File upload debug - mimetype:', file.mimetype);
       if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
       } else {
-        cb(new Error('Tipo di file non supportato'));
+        cb(new Error('Tipo di file non supportato. Formati accettati: PDF, JPG, JPEG, TIFF, PNG, DOC, DOCX'));
       }
     }
   });
