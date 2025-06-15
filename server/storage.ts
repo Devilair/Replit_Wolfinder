@@ -1248,7 +1248,15 @@ export class DatabaseStorage implements IStorage {
     createdAt: Date;
   }): Promise<void> {
     try {
-      await db.insert(notifications).values(notification);
+      await db.insert(professionalNotifications).values({
+        professionalId: notification.professionalId,
+        notificationType: notification.type,
+        recipientEmail: '', // Will be filled when sending
+        subject: notification.title,
+        content: notification.message,
+        status: 'pending',
+        createdAt: notification.createdAt
+      });
     } catch (error) {
       console.error('Error creating notification:', error);
       throw error;
@@ -1258,16 +1266,16 @@ export class DatabaseStorage implements IStorage {
   async getNotifications(professionalId: number): Promise<any[]> {
     return await db
       .select()
-      .from(notifications)
-      .where(eq(notifications.professionalId, professionalId))
-      .orderBy(desc(notifications.createdAt));
+      .from(professionalNotifications)
+      .where(eq(professionalNotifications.professionalId, professionalId))
+      .orderBy(desc(professionalNotifications.createdAt));
   }
 
   async markNotificationAsRead(notificationId: number): Promise<void> {
     await db
-      .update(notifications)
-      .set({ read: true })
-      .where(eq(notifications.id, notificationId));
+      .update(professionalNotifications)
+      .set({ status: 'sent' })
+      .where(eq(professionalNotifications.id, notificationId));
   }
 
   // Admin methods implementation

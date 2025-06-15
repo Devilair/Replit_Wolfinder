@@ -118,6 +118,7 @@ export default function ProfessionalDashboard() {
   // Verification helper functions
   const getVerificationStatusText = (status: string | undefined) => {
     switch (status) {
+      case 'approved':
       case 'verified': return 'Verificato';
       case 'pending': return 'In verifica';
       case 'rejected': return 'Rigettato';
@@ -200,11 +201,11 @@ export default function ProfessionalDashboard() {
   };
 
   const renderVerificationActions = () => {
-    // Use the same logic as verification badge
-    const isActuallyVerified = professionalData?.isVerified === true;
+    // Check both isVerified and verificationStatus for approved status
+    const isActuallyVerified = professionalData?.isVerified === true || professionalData?.verificationStatus === 'approved';
     const status = isActuallyVerified ? 'verified' : (professionalData?.verificationStatus || 'not_verified');
     
-    if (status === 'verified' || status === 'verified_plus') {
+    if (status === 'verified' || status === 'verified_plus' || professionalData?.verificationStatus === 'approved') {
       return null;
     }
 
