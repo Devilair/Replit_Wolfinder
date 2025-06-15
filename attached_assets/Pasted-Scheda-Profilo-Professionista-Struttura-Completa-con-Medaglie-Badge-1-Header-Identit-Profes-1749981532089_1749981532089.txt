@@ -1,0 +1,103 @@
+Scheda Profilo Professionista – Struttura Completa (con Medaglie/Badge)
+🔹 1. Header Identità Professionale
+Nome e Cognome
+
+Categoria professionale (es. Avvocato – Diritto Penale)
+
+Città (es. Ferrara)
+
+Foto profilo / Logo studio
+
+📊 Posizionamento:
+
+🏆 Ranking nella città (es. "3° su 47 a Ferrara")
+
+📈 Ranking nella categoria (es. "5° tra i 102 Avvocati")
+
+🔘 [Bottone “Reclama Profilo”] (visibile se isClaimed = false && isActive = true)
+
+⭐ Valutazione media (es. 4.8 su 12 recensioni)
+
+🏅 2. Sezione Medaglie e Badge
+In stile “decorazioni militari”, con icone visive, colore e tooltip:
+
+🟢 Badge standard (automatici)
+✔️ Verificato (documentazione approvata)
+
+🪪 Iscrizione Ordine confermata
+
+🧾 Recensioni verificate ricevute
+
+📅 Attività recente (profilo aggiornato negli ultimi 30 giorni)
+
+🟣 Badge meritocratici
+🥇 Professionista Top 3 città
+
+🏅 Alta soddisfazione (rating medio ≥ 4.8 su min. 10 recensioni)
+
+🔥 Recensionista attivo (10+ recensioni negli ultimi 6 mesi)
+
+💬 Risposte alle recensioni (se abilitata la funzione)
+
+🛡️ Zero segnalazioni (nessuna segnalazione negativa attiva)
+
+✅ Ogni badge con tooltip esplicativo al passaggio mouse/tap
+
+🔹 3. Bio e Presentazione Professionale
+📝 Testo libero (max 600-800 caratteri)
+
+📌 Specializzazioni dichiarate (es. successioni, condominio, ecc.)
+
+📆 Esperienza professionale (es. “In attività dal 2009”)
+
+🏛️ Iscrizione all’Albo (n° iscrizione, ordine di appartenenza)
+
+🔹 4. Contatti & Studio
+🏢 Nome studio
+
+🗺️ Città + zona (no via completa se privacy)
+
+☎️ Telefono (click-to-call)
+
+📧 Email pubblica o form di contatto
+
+🌐 Sito web (se inserito)
+
+📍 Geolocalizzazione su mappa non-Google (es. Leaflet/OpenStreetMap o soluzione custom)
+
+🔹 5. Recensioni
+⭐ Media stelle
+
+📊 Distribuzione voti (5 → 1 stelle, grafico orizzontale)
+
+🔽 Lista recensioni utente:
+
+Nome utente (o “Utente verificato”)
+
+Voto in stelle
+
+Testo
+
+Data
+
+Badge: “Recensione Verificata” (se allegata prova)
+
+Eventuale risposta del professionista
+
+🔎 Filtri recensioni: “Più recenti / Verificate / Con risposta / Più votate”
+
+🔹 6. Affidabilità e Stato
+✅ Identità verificata
+
+✅ Attività e iscrizione confermata
+
+🛡️ Nessuna segnalazione attiva
+
+⏳ Tempo medio di verifica recensioni ricevute (es. 12h)
+
+🔹 7. Azioni Utente
+✍️ Lascia una recensione (solo se loggato)
+
+⚠️ Segnala professionista (form interno)
+
+🔗 Condividi profilo (link, social, WhatsApp)
