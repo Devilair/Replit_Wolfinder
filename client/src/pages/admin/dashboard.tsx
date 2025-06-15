@@ -297,15 +297,21 @@ export default function AdminDashboard() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Nuovi professionisti</span>
-                      <span className="text-sm font-semibold text-green-600">+12 questa settimana</span>
+                      <span className="text-sm font-semibold text-green-600">
+                        +{stats?.professionals.newThisWeek || 0} questa settimana
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Recensioni verificate</span>
-                      <span className="text-sm font-semibold text-blue-600">+45 questo mese</span>
+                      <span className="text-sm font-semibold text-blue-600">
+                        {stats?.reviews.verified || 0} totali
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Abbonamenti attivi</span>
-                      <span className="text-sm font-semibold text-purple-600">89% retention</span>
+                      <span className="text-sm text-gray-600">Conversione abbonamenti</span>
+                      <span className="text-sm font-semibold text-purple-600">
+                        {stats?.revenue.subscriptionConversion || 0}% conversion
+                      </span>
                     </div>
                   </div>
                 </CardContent>
