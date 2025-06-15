@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Star, MapPin, Phone, Mail, Globe, Award, Users, TrendingUp, Eye, Calendar, Shield, ChevronRight, ExternalLink, Heart, User, Target, CheckCircle, Building, Smartphone, MessageCircle, Flag, Share2, ThumbsUp } from "lucide-react";
 import { motion } from "framer-motion";
+import ReviewModal from "@/components/ReviewModal";
 
 export default function ProfessionalProfile() {
   const { id } = useParams();
+  const [showReviewModal, setShowReviewModal] = useState(false);
   
   const { data: professional, isLoading: loadingProfessional } = useQuery({
     queryKey: [`/api/professionals/${id}`],
@@ -739,6 +742,14 @@ export default function ProfessionalProfile() {
           </div>
         </div>
       </motion.div>
+
+      {/* Review Modal */}
+      <ReviewModal
+        open={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        professionalId={id || ""}
+        professionalName={`${professional?.firstName || ""} ${professional?.lastName || ""}`.trim() || professional?.businessName || "Professionista"}
+      />
     </div>
   );
 }

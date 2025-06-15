@@ -5148,6 +5148,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload professional photo
+  app.post("/api/professionals/upload-photo", upload.single('photo'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Nessun file caricato" });
+      }
+
+      const professionalId = parseInt(req.body.professionalId);
+      if (isNaN(professionalId)) {
+        return res.status(400).json({ error: "ID professionista non valido" });
+      }
+
+      // Validate file type for photos
+      const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedMimeTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ error: "Formato file non supportato. Usa JPG, PNG o WebP" });
+      }
+
+      // Validate file size (5MB max)
+      if (req.file.size > 5 * 1024 * 1024) {
+        return res.status(400).json({ error: "File troppo grande (max 5MB)" });
+      }
+
+      // Generate photo URL
+      const photoUrl = `/uploads/${req.file.filename}`;
+
+      // Update professional with photo URL
+      await storage.updateProfessional(professionalId, {
+        profilePhotoUrl: photoUrl
+      });
+
+      res.json({ 
+        success: true, 
+        photoUrl: photoUrl,
+        message: "Foto caricata con successo" 
+      });
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      res.status(500).json({ error: "Errore durante l'upload della foto" });
+    }
+  });
+
+  // Delete professional photo
+  app.delete("/api/professionals/:id/photo", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      if (isNaN(professionalId)) {
+        return res.status(400).json({ error: "ID professionista non valido" });
+      }
+
+      await storage.updateProfessional(professionalId, {
+        profilePhotoUrl: null
+      });
+
+      res.json({ 
+        success: true,
+        message: "Foto rimossa con successo" 
+      });
+    } catch (error) {
+      console.error("Error deleting photo:", error);
+      res.status(500).json({ error: "Errore durante la rimozione della foto" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
