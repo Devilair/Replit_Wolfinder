@@ -52,12 +52,27 @@ export default function SearchPage() {
     const urlCity = params.get('city') || '';
     
     setSearchTerm(urlSearch);
-    setSelectedCity(urlCity || 'all');
+    
+    // Normalizza il nome della città per il dropdown
+    if (urlCity) {
+      const normalizedCity = urlCity.toLowerCase();
+      if (normalizedCity === 'livorno') {
+        setSelectedCity('Livorno');
+      } else if (normalizedCity === 'ferrara') {
+        setSelectedCity('Ferrara');
+      } else {
+        setSelectedCity(urlCity); // Mantieni il valore originale se non corrisponde
+      }
+    } else {
+      setSelectedCity('all');
+    }
     
     // Se è specificata una categoria nell'URL, impostala
     const urlCategory = params.get('category') || params.get('categoryId');
     if (urlCategory) {
       setSelectedCategory(urlCategory);
+    } else {
+      setSelectedCategory('all');
     }
   }, [location]);
 
@@ -67,6 +82,8 @@ export default function SearchPage() {
     if (searchTerm.trim()) params.append('search', searchTerm.trim());
     if (selectedCity && selectedCity !== 'all') params.append('city', selectedCity);
     if (selectedCategory && selectedCategory !== 'all') params.append('categoryId', selectedCategory);
+    
+    console.log('SEARCH DEBUG:', { searchTerm, selectedCity, selectedCategory, params: params.toString() });
     
     const queryString = params.toString();
     const newUrl = `/search${queryString ? `?${queryString}` : ''}`;
