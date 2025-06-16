@@ -3,7 +3,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { Eye, EyeOff, User, Briefcase, ChevronRight, ChevronLeft, MapPin } from "lucide-react";
+import { Eye, EyeOff, User, Briefcase, ChevronRight, ChevronLeft, MapPin, Map } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { professionalRegistrationSchema, type ProfessionalRegistrationData, type Category } from "@shared/schema";
@@ -22,7 +24,7 @@ export default function RegisterProfessional() {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
-  // Removed selectedAddress state - using simple text input
+  const [mapPosition, setMapPosition] = useState<[number, number]>([44.8381, 11.6198]); // Default to Ferrara
 
   const form = useForm<ProfessionalRegistrationData>({
     resolver: zodResolver(professionalRegistrationSchema),
@@ -74,6 +76,16 @@ export default function RegisterProfessional() {
   };
 
   const cities = ["Ferrara", "Livorno"]; // Solo le città supportate
+
+  // Update map when city changes
+  useEffect(() => {
+    const selectedCity = form.watch('city');
+    if (selectedCity === "Ferrara") {
+      setMapPosition([44.8381, 11.6198]);
+    } else if (selectedCity === "Livorno") {
+      setMapPosition([43.5485, 10.3106]);
+    }
+  }, [form.watch('city')]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -310,6 +322,35 @@ export default function RegisterProfessional() {
                         </FormItem>
                       )}
                     />
+
+                    {/* Mappa di anteprima posizione */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Map className="w-4 h-4" />
+                        <span className="text-sm font-medium">Posizione su mappa</span>
+                      </div>
+                      <div className="h-64 rounded-lg overflow-hidden border">
+                        <MapContainer
+                          center={mapPosition}
+                          zoom={13}
+                          style={{ height: '100%', width: '100%' }}
+                          key={`${mapPosition[0]}-${mapPosition[1]}`}
+                        >
+                          <TileLayer
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                          />
+                          <Marker position={mapPosition}>
+                            <Popup>
+                              {form.watch('city')} - {form.watch('address') || 'Inserisci indirizzo'}
+                            </Popup>
+                          </Marker>
+                        </MapContainer>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        La mappa mostra il centro di {form.watch('city')}. La posizione esatta verrà determinata durante la verifica del profilo.
+                      </p>
+                    </div>
 
                     <FormField
                       control={form.control}
