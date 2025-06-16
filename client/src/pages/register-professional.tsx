@@ -15,15 +15,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AddressInput } from "@/components/ui/address-input";
-import type { AddressComponents } from "@/hooks/useAddressAutocomplete";
+// Removed AddressInput and AddressComponents imports - using simple text input
 
 export default function RegisterProfessional() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
-  const [selectedAddress, setSelectedAddress] = useState<AddressComponents | null>(null);
+  // Removed selectedAddress state - using simple text input
 
   const form = useForm<ProfessionalRegistrationData>({
     resolver: zodResolver(professionalRegistrationSchema),
@@ -71,18 +70,7 @@ export default function RegisterProfessional() {
   });
 
   const onSubmit = (data: ProfessionalRegistrationData) => {
-    // Aggiungi i dati dell'indirizzo geocodificato
-    const formDataWithGeocode = {
-      ...data,
-      address: selectedAddress?.formattedAddress || data.address,
-      latitude: selectedAddress?.latitude,
-      longitude: selectedAddress?.longitude,
-      postalCode: selectedAddress?.postalCode,
-      streetName: selectedAddress?.street,
-      streetNumber: selectedAddress?.streetNumber
-    };
-    
-    registerMutation.mutate(formDataWithGeocode);
+    registerMutation.mutate(data);
   };
 
   const cities = ["Ferrara", "Livorno"]; // Solo le città supportate
@@ -313,14 +301,9 @@ export default function RegisterProfessional() {
                         <FormItem>
                           <FormLabel>Indirizzo Completo</FormLabel>
                           <FormControl>
-                            <AddressInput
-                              value={field.value}
-                              onChange={(addressData) => {
-                                setSelectedAddress(addressData);
-                                field.onChange(addressData?.formattedAddress || '');
-                              }}
-                              cityFilter={form.watch('city')}
-                              placeholder="Inizia a digitare l'indirizzo (es. Via Roma 123)..."
+                            <Input
+                              {...field}
+                              placeholder="Via Bologna 123, Ferrara"
                             />
                           </FormControl>
                           <FormMessage />
