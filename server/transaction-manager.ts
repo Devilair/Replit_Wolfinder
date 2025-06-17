@@ -72,17 +72,17 @@ export class TransactionManager {
     return this.executeTransaction(async (tx) => {
       // 1. Create user account
       const [user] = await tx.insert(users).values({
-        email: userData.email,
-        password: userData.password, // Should be hashed before calling this
-        name: userData.businessName || userData.email,
+        email: data.userData.email,
+        password: data.userData.password, // Should be hashed before calling this
+        name: data.professionalData.businessName || data.userData.email,
         role: 'professional'
       }).returning();
 
       // 2. Create professional profile linked to user
       const [professional] = await tx.insert(professionals).values({
         userId: user.id,
-        email: userData.email,
-        businessName: userData.businessName,
+        email: data.professionalData.email,
+        businessName: data.professionalData.businessName,
         categoryId: userData.categoryId,
         city: userData.city,
         address: userData.address,

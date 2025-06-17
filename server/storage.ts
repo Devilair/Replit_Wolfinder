@@ -2286,7 +2286,7 @@ export class DatabaseStorage implements IStorage {
       );
     
     return expired.map(row => ({
-      ...row.subscriptions,
+      ...row.subscriptions!,
       plan: row.subscription_plans!,
       professional: row.professionals!,
       transactions: []
