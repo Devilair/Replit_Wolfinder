@@ -369,19 +369,19 @@ export default function AdvancedDashboard() {
                       <div className="flex justify-between items-center">
                         <span className="text-sm">Conversione Premium</span>
                         <Badge variant="outline">
-                          {advancedMetrics.businessMetrics.premiumConversionRate}%
+                          {advancedMetrics.businessMetrics?.premiumConversionRate || 0}%
                         </Badge>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm">Utenti attivi giornalieri</span>
                         <span className="font-medium">
-                          {advancedMetrics.userEngagement.dailyActiveUsers}
+                          {advancedMetrics.userEngagement?.dailyActiveUsers || 0}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm">Durata sessione media</span>
                         <span className="font-medium">
-                          {advancedMetrics.userEngagement.avgSessionDuration}min
+                          {advancedMetrics.userEngagement?.avgSessionDuration || '0'}min
                         </span>
                       </div>
                     </div>
@@ -559,7 +559,7 @@ export default function AdvancedDashboard() {
               </CardHeader>
               <CardContent className="text-center">
                 <div className="text-3xl font-bold text-green-600">
-                  {advancedMetrics?.systemPerformance.avgResponseTime || '0'}ms
+                  {advancedMetrics?.systemPerformance?.avgResponseTime || '0'}ms
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">Tempo medio API</p>
               </CardContent>
@@ -571,7 +571,7 @@ export default function AdvancedDashboard() {
               </CardHeader>
               <CardContent className="text-center">
                 <div className="text-3xl font-bold text-green-600">
-                  {advancedMetrics?.systemPerformance.uptime || '0'}%
+                  {advancedMetrics?.systemPerformance?.uptime || '0'}%
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">Disponibilità</p>
               </CardContent>
@@ -583,7 +583,7 @@ export default function AdvancedDashboard() {
               </CardHeader>
               <CardContent className="text-center">
                 <div className="text-3xl font-bold text-green-600">
-                  {advancedMetrics?.systemPerformance.errorRate || '0'}%
+                  {advancedMetrics?.systemPerformance?.errorRate || '0'}%
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">Errori sistema</p>
               </CardContent>
