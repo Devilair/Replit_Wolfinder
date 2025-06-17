@@ -6,7 +6,6 @@ import {
   subscriptions,
   reviews,
   auditLogs,
-  notifications,
   usageTracking
 } from '@shared/schema';
 import { eq, and, inArray, count, avg } from 'drizzle-orm';
@@ -55,27 +54,28 @@ export class TransactionManager {
    * Professional Registration Transaction
    * Handles user creation + professional profile + initial verification status
    */
-  async createProfessionalWithUser(userData: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    businessName: string;
-    categoryId: number;
-    city: string;
-    address: string;
-    phoneFixed?: string;
-    phoneMobile?: string;
-    description: string;
-  }): Promise<{ userId: number; professionalId: number }> {
+  async createProfessionalRegistration(userData: {
+    userData: {
+      email: string;
+      password: string;
+      role: string;
+    };
+    professionalData: {
+      businessName: string;
+      categoryId: number;
+      email: string;
+      address: string;
+      city: string;
+      description: string;
+    };
+  }): Promise<{ user: any; professional: any }> {
     
     return this.executeTransaction(async (tx) => {
       // 1. Create user account
       const [user] = await tx.insert(users).values({
         email: userData.email,
         password: userData.password, // Should be hashed before calling this
-        firstName: userData.firstName,
-        lastName: userData.lastName,
+        name: userData.businessName || userData.email,
         role: 'professional'
       }).returning();
 
@@ -139,7 +139,7 @@ export class TransactionManager {
           rejectionReason: action === 'reject' ? reason : null,
           updatedAt: new Date()
         })
-        .where(inArray(documents.id, documentIds));
+        .where(inArray(verificationDocuments.id, documentIds));
 
       // 2. Get professional current state
       const [professional] = await tx.select()
@@ -152,11 +152,11 @@ export class TransactionManager {
 
       // 3. Calculate new verification status
       const approvedDocsCount = await tx.select({ count: count() })
-        .from(documents)
+        .from(verificationDocuments)
         .where(
           and(
-            eq(documents.professionalId, professionalId),
-            eq(documents.status, 'approved')
+            eq(verificationDocuments.professionalId, professionalId),
+            eq(verificationDocuments.status, 'approved')
           )
         );
 
@@ -200,16 +200,8 @@ export class TransactionManager {
         }
       });
 
-      // 6. Add notification record for email sending
-      await tx.insert(notifications).values({
-        userId: professional.userId,
-        type: action === 'approve' ? 'verification_approved' : 'verification_rejected',
-        title: action === 'approve' ? 'Documenti Approvati' : 'Documenti Respinti',
-        message: action === 'approve' 
-          ? 'I tuoi documenti sono stati verificati con successo!'
-          : `I tuoi documenti sono stati respinti. Motivo: ${reason || 'Non specificato'}`,
-        isRead: false
-      });
+      // 6. Document verification completed successfully
+      // Notification would be handled by email service separately
 
     }, 'processDocumentVerification');
   }
