@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { createHash, randomBytes } from 'crypto';
 
 // In-memory Redis-like storage for refresh tokens

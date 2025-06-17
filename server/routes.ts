@@ -5269,6 +5269,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // TEST ENDPOINT - Auth Manager Verification
+  app.post("/api/test/auth-manager", async (req, res) => {
+    try {
+      console.log('🔬 Testing Auth Manager...');
+      
+      // Mock test user
+      const testUser = {
+        id: 999,
+        email: 'test@wolfinder.it',
+        role: 'professional' as const
+      };
+      
+      // Test token generation
+      const tokens = await authManager.generateTokens(testUser);
+      
+      // Test token verification
+      const payload = authManager.verifyAccessToken(tokens.accessToken);
+      
+      if (!payload) {
+        throw new Error('Token verification failed');
+      }
+      
+      // Test refresh
+      const newTokens = await authManager.refreshTokens(tokens.refreshToken);
+      
+      if (!newTokens) {
+        throw new Error('Token refresh failed');
+      }
+      
+      // Get stats
+      const stats = authManager.getTokenStats();
+      
+      res.json({
+        success: true,
+        tests: {
+          tokenGeneration: !!tokens.accessToken,
+          tokenVerification: payload.userId === testUser.id,
+          tokenRefresh: !!newTokens.accessToken,
+          differentTokens: tokens.accessToken !== newTokens.accessToken
+        },
+        stats,
+        message: 'Auth Manager test completed successfully'
+      });
+      
+    } catch (error) {
+      console.error('Auth Manager test failed:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        message: 'Auth Manager test failed'
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
