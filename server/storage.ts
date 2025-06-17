@@ -505,9 +505,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProfessional(insertProfessional: InsertProfessional): Promise<Professional> {
+    // Auto-claim logic: if professional has userId (self-registered), mark as claimed
+    const professionalData = insertProfessional.userId ? {
+      ...insertProfessional,
+      isClaimed: true,
+      claimedAt: new Date(),
+      claimedBy: insertProfessional.userId
+    } : insertProfessional;
+
     const [professional] = await db
       .insert(professionals)
-      .values(insertProfessional)
+      .values(professionalData)
       .returning();
     return professional;
   }
