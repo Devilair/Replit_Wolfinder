@@ -6,6 +6,8 @@ import { Link, useLocation } from "wouter";
 import { Eye, EyeOff, User, Briefcase, ChevronRight, ChevronLeft, MapPin, Map } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
+import type { AddressSuggestion } from "@/hooks/useAddressSearch";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { professionalRegistrationSchema, type ProfessionalRegistrationData, type Category } from "@shared/schema";
@@ -25,6 +27,7 @@ export default function RegisterProfessional() {
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
   const [mapPosition, setMapPosition] = useState<[number, number]>([44.8381, 11.6198]); // Default to Ferrara
+  const [selectedAddress, setSelectedAddress] = useState<AddressSuggestion | null>(null);
 
   const form = useForm<ProfessionalRegistrationData>({
     resolver: zodResolver(professionalRegistrationSchema),
@@ -72,7 +75,15 @@ export default function RegisterProfessional() {
   });
 
   const onSubmit = (data: ProfessionalRegistrationData) => {
-    registerMutation.mutate(data);
+    // Include precise coordinates from selected address if available
+    const submissionData = {
+      ...data,
+      latitude: selectedAddress?.latitude,
+      longitude: selectedAddress?.longitude,
+      postalCode: selectedAddress?.province
+    };
+    
+    registerMutation.mutate(submissionData);
   };
 
   const cities = ["Ferrara", "Livorno"]; // Solo le città supportate
@@ -313,9 +324,17 @@ export default function RegisterProfessional() {
                         <FormItem>
                           <FormLabel>Indirizzo Completo</FormLabel>
                           <FormControl>
-                            <Input
-                              {...field}
+                            <AddressAutocomplete
+                              value={field.value}
+                              onChange={(address, suggestion) => {
+                                field.onChange(address);
+                                setSelectedAddress(suggestion || null);
+                                if (suggestion) {
+                                  setMapPosition([suggestion.latitude, suggestion.longitude]);
+                                }
+                              }}
                               placeholder="Via Bologna 123, Ferrara"
+                              cityFilter={form.watch('city')}
                             />
                           </FormControl>
                           <FormMessage />
