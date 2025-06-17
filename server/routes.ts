@@ -5110,59 +5110,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
           requiredTypes.includes(d.documentType) && d.status === 'approved'
         );
 
-        // Update professional verification status
-        let newStatus = 'pending';
-        let notificationData = null;
+        // Import the state manager at the top of the file
+      const { professionalStateManager } = require('./professional-state-manager');
+      
+      let notificationData = null;
+      
+      if (action === 'reject') {
+        notificationData = {
+          type: 'document_rejected',
+          subject: 'Documento rigettato - Wolfinder',
+          message: `Il documento ${document.documentType} è stato rigettato. ${notes ? `Motivo: ${notes}` : ''}`,
+          professionalId: document.professionalId
+        };
         
-        if (action === 'reject') {
-          newStatus = 'rejected';
-          notificationData = {
-            type: 'document_rejected',
-            subject: 'Documento rigettato - Wolfinder',
-            message: `Il documento ${document.documentType} è stato rigettato. ${notes ? `Motivo: ${notes}` : ''}`,
-            professionalId: document.professionalId
-          };
-          
-          await storage.updateProfessional(document.professionalId, {
-            verificationStatus: newStatus
-          });
-        } else if (approvedRequired.length >= 1) { // At least one required document approved
-          newStatus = 'approved';
-          
-          // Check for PLUS verification (all 4 documents)
-          const allDocuments = professionalDocuments.filter(d => d.status === 'approved');
-          const hasQualifications = allDocuments.some(d => d.documentType === 'qualifications');
-          const isPlus = approvedRequired.length === 3 && hasQualifications;
-          
-          notificationData = {
-            type: isPlus ? 'plus_verification_approved' : 'standard_verification_approved',
-            subject: isPlus ? 'Verifica PLUS completata - Wolfinder' : 'Profilo verificato - Wolfinder',
-            message: isPlus 
-              ? 'Congratulazioni! Il tuo profilo ha ottenuto la verifica PLUS con tutti i documenti approvati.'
-              : 'Il tuo profilo è stato verificato con successo. Ora puoi ricevere recensioni autentiche.',
-            professionalId: document.professionalId
-          };
-          
-          // CRITICAL FIX: Auto-claim profile when verified if registered by the professional themselves
-          // Logic: If professional has a userId (self-registered), auto-claim on verification
-          const shouldAutoClaim = professional?.userId !== null && !professional?.isClaimed;
-          
-          await storage.updateProfessional(document.professionalId, {
-            verificationStatus: newStatus,
-            verificationDate: new Date(),
-            verifiedBy: user.id,
-            isPremium: isPlus, // PLUS verification gets premium features
-            isVerified: true, // CRITICAL FIX: Set isVerified=true when approved
-            // Auto-claim if self-registered professional gets verified
-            isClaimed: shouldAutoClaim ? true : professional?.isClaimed,
-            claimedAt: shouldAutoClaim ? new Date() : professional?.claimedAt,
-            claimedBy: shouldAutoClaim ? professional.userId : professional?.claimedBy
-          });
-        } else {
-          await storage.updateProfessional(document.professionalId, {
-            verificationStatus: newStatus
-          });
-        }
+        // Use atomic state manager for rejection
+        await professionalStateManager.handleDocumentRejection(
+          document.professionalId,
+          user.id,
+          notes
+        );
+      } else if (approvedRequired.length >= 1) {
+        // Check for PLUS verification (all 4 documents)
+        const allDocuments = professionalDocuments.filter(d => d.status === 'approved');
+        const hasQualifications = allDocuments.some(d => d.documentType === 'qualifications');
+        const isPlus = approvedRequired.length === 3 && hasQualifications;
+        
+        notificationData = {
+          type: isPlus ? 'plus_verification_approved' : 'standard_verification_approved',
+          subject: isPlus ? 'Verifica PLUS completata - Wolfinder' : 'Profilo verificato - Wolfinder',
+          message: isPlus 
+            ? 'Congratulazioni! Il tuo profilo ha ottenuto la verifica PLUS con tutti i documenti approvati.'
+            : 'Il tuo profilo è stato verificato con successo. Ora puoi ricevere recensioni autentiche.',
+          professionalId: document.professionalId
+        };
+        
+        // Use atomic state manager for approval
+        await professionalStateManager.handleDocumentApproval(
+          document.professionalId,
+          approvedRequired,
+          hasQualifications,
+          professional,
+          user.id
+        );
+      }
 
         // Send notification email if professional has email
         if (notificationData && professional?.email) {
