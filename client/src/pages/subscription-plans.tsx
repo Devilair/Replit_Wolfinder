@@ -176,7 +176,7 @@ export default function SubscriptionPlans() {
     return (
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-4xl mx-auto px-4">
-          <Elements stripe={stripePromise} options={{ clientSecret }}>
+          <Elements stripe={getStripePromise()} options={{ clientSecret }}>
             <CheckoutForm planId={selectedPlan} clientSecret={clientSecret} />
           </Elements>
         </div>

@@ -219,7 +219,7 @@ export default function SubscriptionCheckout() {
   }
 
   return (
-    <Elements stripe={stripePromise} options={{ clientSecret }}>
+    <Elements stripe={getStripePromise()} options={{ clientSecret }}>
       <CheckoutForm plan={plan} billingType={billingType} />
     </Elements>
   );
