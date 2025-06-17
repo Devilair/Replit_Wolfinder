@@ -5,8 +5,7 @@ import {
   verificationDocuments, 
   subscriptions,
   reviews,
-  auditLogs,
-  usageTracking
+  auditLogs
 } from '@shared/schema';
 import { eq, and, inArray, count, avg } from 'drizzle-orm';
 
@@ -119,7 +118,7 @@ export class TransactionManager {
 
   /**
    * Document Verification Transaction
-   * Handles document approval/rejection + professional state update + notifications
+   * Handles document approval/rejection + professional state update
    */
   async processDocumentVerification(
     professionalId: number,
@@ -192,12 +191,13 @@ export class TransactionManager {
         action: `document_${action}`,
         entityType: 'professional',
         entityId: professionalId,
-        details: {
+        oldValues: JSON.stringify({ status: professional.verificationStatus }),
+        newValues: JSON.stringify({
           documentIds,
           previousStatus: professional.verificationStatus,
           newStatus: newVerificationStatus,
           reason: reason || null
-        }
+        })
       });
 
       // 6. Document verification completed successfully
@@ -318,16 +318,8 @@ export class TransactionManager {
         })
         .where(eq(professionals.id, reviewData.professionalId));
 
-      // 3. Create notification for professional
-      await tx.insert(notifications).values({
-        userId: null, // Will be resolved to professional's userId
-        type: 'new_review',
-        title: 'Nuova Recensione Ricevuta',
-        message: `Hai ricevuto una nuova recensione da verificare`,
-        isRead: false,
-        entityType: 'review',
-        entityId: review.id
-      });
+      // 3. Review submission completed successfully
+      // Notification would be handled by email service separately
 
       // 4. Log review submission
       await tx.insert(auditLogs).values({
@@ -335,10 +327,10 @@ export class TransactionManager {
         action: 'review_submitted',
         entityType: 'review',
         entityId: review.id,
-        details: {
+        newValues: JSON.stringify({
           professionalId: reviewData.professionalId,
           rating: reviewData.rating
-        }
+        })
       });
 
       return review.id;

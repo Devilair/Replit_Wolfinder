@@ -7,6 +7,7 @@ import { emailService } from "./email-service";
 import { authService, AuthUser } from "./auth";
 import { authManager, type TokenPayload } from './auth-manager';
 import { transactionManager } from './transaction-manager';
+import { transactionManagerTest } from './test-transaction-manager';
 import { categories } from '@shared/schema';
 import Stripe from "stripe";
 import path from "path";
