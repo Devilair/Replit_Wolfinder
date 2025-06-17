@@ -1,5 +1,6 @@
-import * as jwt from 'jsonwebtoken';
 import { createHash, randomBytes } from 'crypto';
+// Import the working AuthService to use its JWT methods
+import { authService } from './auth';
 
 // In-memory Redis-like storage for refresh tokens
 // In production, replace with actual Redis
