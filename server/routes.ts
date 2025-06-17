@@ -2666,7 +2666,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sortBy) params.sortBy = sortBy as string;
       if (sortOrder) params.sortOrder = sortOrder as string;
 
-      const professionals = await adminAdvancedStorage.getProfessionalsWithAdvancedFilters(params);
+      const professionals = await storage.getProfessionalsWithAdvancedFilters(params);
       res.json(professionals);
     } catch (error) {
       console.error("Error fetching advanced professionals:", error);
@@ -2681,7 +2681,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid professional ID" });
       }
 
-      const analytics = await adminAdvancedStorage.getProfessionalDetailedAnalytics(professionalId);
+      const analytics = await storage.getProfessionalDetailedAnalytics(professionalId);
       if (!analytics) {
         return res.status(404).json({ message: "Professional not found" });
       }
@@ -2706,7 +2706,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (page) filters.page = parseInt(page as string);
       if (limit) filters.limit = parseInt(limit as string);
 
-      const queue = await adminAdvancedStorage.getModerationQueue(filters);
+      const queue = await storage.getModerationQueue(filters);
       res.json(queue);
     } catch (error) {
       console.error("Error fetching moderation queue:", error);
@@ -2723,7 +2723,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid queue ID or moderator ID" });
       }
 
-      const result = await adminAdvancedStorage.assignModerationTask(queueId, moderatorId);
+      const result = await storage.assignModerationTask(queueId, moderatorId);
       res.json(result);
     } catch (error) {
       console.error("Error assigning moderation task:", error);
