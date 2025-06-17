@@ -2751,7 +2751,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Security and Fraud Detection
   app.get("/api/admin/security/suspicious-activity", async (req, res) => {
     try {
-      const patterns = await adminAdvancedStorage.detectSuspiciousActivity();
+      const patterns = await storage.detectSuspiciousActivity();
       res.json(patterns);
     } catch (error) {
       console.error("Error detecting suspicious activity:", error);
@@ -2767,7 +2767,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing required fields" });
       }
 
-      const event = await adminAdvancedStorage.createSecurityEvent({
+      const event = await storage.createSecurityEvent({
         type,
         userId,
         ipAddress,
@@ -2794,7 +2794,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const dateRange: [Date, Date] = [new Date(startDate as string), new Date(endDate as string)];
-      const data = await adminAdvancedStorage.getBusinessIntelligenceData(dateRange);
+      const data = await storage.getBusinessIntelligenceData(dateRange);
       res.json(data);
     } catch (error) {
       console.error("Error fetching business intelligence data:", error);
@@ -2805,7 +2805,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // System Alerts Management
   app.get("/api/admin/alerts", async (req, res) => {
     try {
-      const alerts = await adminAdvancedStorage.getActiveAlerts();
+      const alerts = await storage.getActiveAlerts();
       res.json(alerts);
     } catch (error) {
       console.error("Error fetching alerts:", error);
@@ -2821,7 +2821,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing required fields" });
       }
 
-      const alert = await adminAdvancedStorage.createSystemAlert({
+      const alert = await storage.createSystemAlert({
         type,
         severity,
         title,
@@ -2845,7 +2845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid alert ID or resolved by user ID" });
       }
 
-      const result = await adminAdvancedStorage.resolveAlert(alertId, resolvedBy);
+      const result = await storage.resolveAlert(alertId, resolvedBy);
       res.json(result);
     } catch (error) {
       console.error("Error resolving alert:", error);
@@ -2862,7 +2862,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing required fields" });
       }
 
-      const activity = await adminAdvancedStorage.logAdminActivity({
+      const activity = await storage.logAdminActivity({
         adminId,
         action,
         targetType,
@@ -2893,7 +2893,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (page) filters.page = parseInt(page as string);
       if (limit) filters.limit = parseInt(limit as string);
 
-      const logs = await adminAdvancedStorage.getAdminActivityLog(filters);
+      const logs = await storage.getAdminActivityLog(filters);
       res.json(logs);
     } catch (error) {
       console.error("Error fetching admin activity log:", error);
