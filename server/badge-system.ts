@@ -354,7 +354,7 @@ export class BadgeSystem {
       fiveStarPercentage: recentReviews.length > 0 
         ? (recentReviews.filter(r => r.rating === 5).length / recentReviews.length) * 100 
         : 0,
-      isVerified: professional.isVerified,
+      isVerified: professional.verificationStatus === 'approved' || professional.verificationStatus === 'verified',
       subscriptionActive: true, // Will be calculated from subscription table
       calculatedAt: new Date()
     };

@@ -267,7 +267,7 @@ export default function ProfessionalProfile() {
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     
                     {/* Badge Standard */}
-                    {professional?.isVerified && (
+                    {(professional?.verificationStatus === 'approved' || professional?.verificationStatus === 'verified') && (
                       <div className="group relative bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200 hover:shadow-lg transition-all duration-300">
                         <div className="text-center">
                           <div className="text-3xl mb-2">✅</div>

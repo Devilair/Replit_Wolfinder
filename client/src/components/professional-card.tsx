@@ -37,7 +37,7 @@ export default function ProfessionalCard({ professional }: ProfessionalCardProps
               </div>
             </div>
           </div>
-          {professional.isVerified && (
+          {(professional.verificationStatus === 'approved' || professional.verificationStatus === 'verified') && (
             <Badge className="bg-green-100 text-green-700">
               <Shield className="w-3 h-3 mr-1" />
               Verificato
