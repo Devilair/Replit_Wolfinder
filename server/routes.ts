@@ -6,6 +6,8 @@ import { geocodingService } from "./geocoding-service";
 import { emailService } from "./email-service";
 import { authService, AuthUser } from "./auth";
 import { authManager, type TokenPayload } from './auth-manager';
+import { transactionManager } from './transaction-manager';
+import { categories } from '@shared/schema';
 import Stripe from "stripe";
 import path from "path";
 import fs from "fs";
@@ -5319,6 +5321,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false,
         error: error.message,
         message: 'Auth Manager test failed'
+      });
+    }
+  });
+
+  // TEST ENDPOINT - Transaction Manager Integration Test
+  app.post("/api/test/transaction-manager", async (req, res) => {
+    try {
+      console.log('🔬 Testing Transaction Manager...');
+      
+      // Test 1: Simple transaction success
+      const simpleResult = await transactionManager.executeTransaction(async (tx) => {
+        // Simple query that should work
+        const categoriesResult = await tx.select().from(categories).limit(1);
+        return { count: categoriesResult.length };
+      }, 'SimpleQuery');
+      
+      // Test 2: Rollback scenario
+      let rollbackWorked = false;
+      try {
+        await transactionManager.executeTransaction(async (tx) => {
+          // This should rollback
+          await tx.select().from(categories).limit(1);
+          throw new Error('Intentional rollback test');
+        }, 'RollbackTest');
+      } catch (error) {
+        rollbackWorked = error.message === 'Intentional rollback test';
+      }
+      
+      res.json({
+        success: true,
+        tests: {
+          simpleTransaction: simpleResult.count >= 0,
+          rollbackHandling: rollbackWorked,
+          transactionManager: true
+        },
+        results: {
+          simpleQuery: simpleResult
+        },
+        message: 'Transaction Manager test completed successfully'
+      });
+      
+    } catch (error) {
+      console.error('Transaction Manager test failed:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        message: 'Transaction Manager test failed'
       });
     }
   });

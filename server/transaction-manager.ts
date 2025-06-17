@@ -2,7 +2,7 @@ import { db } from './db';
 import { 
   users,
   professionals, 
-  documents, 
+  verificationDocuments, 
   subscriptions,
   reviews,
   auditLogs,
