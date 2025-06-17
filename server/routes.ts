@@ -9,9 +9,12 @@ import { authManager, type TokenPayload } from './auth-manager';
 import { transactionManager } from './transaction-manager';
 import { transactionManagerTest } from './test-transaction-manager';
 import { fileUploadManager } from './file-upload-manager';
-import { categories, professionals, users, reviews, subscriptions, subscriptionPlans, claimRequests, badges, professionalBadges } from '@shared/schema';
+import { pool, db } from "./db";
+import { 
+  users, professionals, categories, reviews, subscriptions, subscriptionPlans, 
+  claimRequests, badges, professionalBadges, auditLogs
+} from "@shared/schema";
 import { eq, and, or, like, desc, asc, isNull, sql, count, gte, lte, inArray } from "drizzle-orm";
-import { db } from "./db";
 import Stripe from "stripe";
 import path from "path";
 import fs from "fs";
@@ -47,10 +50,8 @@ import {
   insertPlanSchema,
   insertProfessionalPlanSchema,
   insertEventSchema,
-  type InsertClaimRequest,
-  auditLogs
+  type InsertClaimRequest
 } from "@shared/schema";
-import { ilike } from "drizzle-orm";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -5226,7 +5227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Auth Manager test failed:', error);
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         message: 'Auth Manager test failed'
       });
     }
@@ -5253,7 +5254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('Intentional rollback test');
         }, 'RollbackTest');
       } catch (error) {
-        rollbackWorked = error.message === 'Intentional rollback test';
+        rollbackWorked = error instanceof Error && error.message === 'Intentional rollback test';
       }
       
       res.json({
@@ -5273,7 +5274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Transaction Manager test failed:', error);
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         message: 'Transaction Manager test failed'
       });
     }
