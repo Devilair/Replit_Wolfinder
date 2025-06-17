@@ -686,53 +686,73 @@ export class DatabaseStorage implements IStorage {
 
       const awardedBadges: string[] = [];
 
-      // Check for Profile Complete badge
-      const hasDescription = professional.description && professional.description.length >= 50;
-      const hasContactInfo = professional.phoneFixed || professional.phoneMobile;
-      const hasAddress = professional.address && professional.city;
-      const hasBusinessInfo = professional.businessName;
-
-      if (hasDescription && hasContactInfo && hasAddress && hasBusinessInfo) {
-        const profileCompleteBadge = await db.select().from(badges).where(eq(badges.slug, 'complete-profile')).limit(1);
-        if (profileCompleteBadge.length > 0) {
+      // Check for "Primo Cliente" badge (should be awarded when profile is claimed and verified)
+      if (professional.verificationStatus === 'approved' && professional.isClaimed) {
+        const primoBadge = await db.select().from(badges).where(eq(badges.slug, 'primo-cliente')).limit(1);
+        if (primoBadge.length > 0) {
           const existingAward = await db
             .select()
             .from(professionalBadges)
             .where(
               and(
                 eq(professionalBadges.professionalId, professionalId),
-                eq(professionalBadges.badgeId, profileCompleteBadge[0].id),
+                eq(professionalBadges.badgeId, primoBadge[0].id),
                 isNull(professionalBadges.revokedAt)
               )
             )
             .limit(1);
 
           if (existingAward.length === 0) {
-            await this.awardBadge(professionalId, profileCompleteBadge[0].id);
-            awardedBadges.push("Profilo Completo");
+            await this.awardBadge(professionalId, primoBadge[0].id);
+            awardedBadges.push("Primo Cliente");
           }
         }
       }
 
-      // Check for First Review badge
-      if (professional.reviewCount && professional.reviewCount >= 1) {
-        const firstReviewBadge = await db.select().from(badges).where(eq(badges.slug, 'first-review')).limit(1);
-        if (firstReviewBadge.length > 0) {
+      // Check for "Popolare" badge (100+ profile views)
+      if (professional.profileViews >= 100) {
+        const popolareBadge = await db.select().from(badges).where(eq(badges.slug, 'popolare')).limit(1);
+        if (popolareBadge.length > 0) {
           const existingAward = await db
             .select()
             .from(professionalBadges)
             .where(
               and(
                 eq(professionalBadges.professionalId, professionalId),
-                eq(professionalBadges.badgeId, firstReviewBadge[0].id),
+                eq(professionalBadges.badgeId, popolareBadge[0].id),
                 isNull(professionalBadges.revokedAt)
               )
             )
             .limit(1);
 
           if (existingAward.length === 0) {
-            await this.awardBadge(professionalId, firstReviewBadge[0].id);
-            awardedBadges.push("Prima Recensione");
+            await this.awardBadge(professionalId, popolareBadge[0].id);
+            awardedBadges.push("Popolare");
+          }
+        }
+      }
+
+      // Check for "Veterano" badge (profile active for 1+ year)
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      if (professional.createdAt <= oneYearAgo) {
+        const veteranoBadge = await db.select().from(badges).where(eq(badges.slug, 'veterano')).limit(1);
+        if (veteranoBadge.length > 0) {
+          const existingAward = await db
+            .select()
+            .from(professionalBadges)
+            .where(
+              and(
+                eq(professionalBadges.professionalId, professionalId),
+                eq(professionalBadges.badgeId, veteranoBadge[0].id),
+                isNull(professionalBadges.revokedAt)
+              )
+            )
+            .limit(1);
+
+          if (existingAward.length === 0) {
+            await this.awardBadge(professionalId, veteranoBadge[0].id);
+            awardedBadges.push("Veterano");
           }
         }
       }

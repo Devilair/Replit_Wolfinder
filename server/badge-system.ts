@@ -372,6 +372,9 @@ export class BadgeSystem {
         case 'first_review_received':
           satisfied = metrics.reviewsCount >= 1;
           break;
+        case 'profile_verified_and_claimed':
+          satisfied = metrics.isVerified && metrics.isClaimed;
+          break;
         case 'positive_reviews_gte_10':
           satisfied = metrics.reviewsCount >= 10 && metrics.avgRating >= 4;
           break;
