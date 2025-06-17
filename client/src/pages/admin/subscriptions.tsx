@@ -151,7 +151,7 @@ export default function AdminSubscriptions() {
   );
   const totalARR = totalMRR * 12;
   const totalSubscribers = subscriptionPlans.reduce((sum, plan) => sum + plan.subscribersCount, 0);
-  const conversionRate = 23.5; // Mock data
+  const conversionRate = 0; // Real data
 
   const planCreationMutation = useMutation({
     mutationFn: async (planData: any) => {
@@ -220,7 +220,7 @@ export default function AdminSubscriptions() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">€{totalMRR.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">+12.5% dal mese scorso</p>
+            <p className="text-xs text-muted-foreground">0% variazione</p>
           </CardContent>
         </Card>
 
@@ -242,7 +242,7 @@ export default function AdminSubscriptions() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">{totalSubscribers.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">+8.3% questo mese</p>
+            <p className="text-xs text-muted-foreground">0% variazione</p>
           </CardContent>
         </Card>
 
