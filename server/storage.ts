@@ -1414,6 +1414,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Admin dashboard stats methods
+  async getTotalUsersCount(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(users);
+    return result[0]?.count || 0;
+  }
+
   async getActiveUsersCount(startDate: Date, endDate: Date): Promise<number> {
     const result = await db.select({ count: sql<number>`count(*)` })
       .from(users)
@@ -1689,11 +1695,18 @@ export class DatabaseStorage implements IStorage {
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
+    // Calcoli reali dal database
+    const totalUsers = await this.getTotalUsersCount();
+    const totalProfessionals = await this.getProfessionalsCount();
+    const verifiedProfessionals = await this.getVerifiedProfessionalsCount();
+    const activeSubscriptions = await this.getActiveSubscriptionsCount();
+    const monthlyRevenue = await this.getMonthlyRevenue(today.getMonth() + 1, today.getFullYear());
+    
     return {
       activeUsers: {
         today: await this.getActiveUsersCount(today, today),
         week: await this.getActiveUsersCount(weekAgo, today),
-        month: await this.getActiveUsersCount(monthAgo, today),
+        month: totalUsers, // Usiamo totale reale invece di calcolo inesistente
         previousPeriod: 0,
         changePercent: 0
       },
@@ -1703,20 +1716,20 @@ export class DatabaseStorage implements IStorage {
         pending: await this.getPendingReviewsCount(),
         rejected: await this.getRejectedReviewsCount(),
         newToday: await this.getNewReviewsCount(today, today),
-        averageVerificationTime: await this.getAverageVerificationTime()
+        averageVerificationTime: await this.getReviewsCount() > 0 ? await this.getAverageVerificationTime() : 0
       },
       professionals: {
-        total: await this.getProfessionalsCount(),
-        verified: await this.getVerifiedProfessionalsCount(),
+        total: totalProfessionals,
+        verified: verifiedProfessionals,
         pending: await this.getPendingProfessionalsCount(),
         newThisWeek: await this.getNewProfessionalsCount(weekAgo, today),
-        conversionRate: 85
+        conversionRate: totalProfessionals > 0 ? Math.round((verifiedProfessionals / totalProfessionals) * 100) : 0
       },
       revenue: {
-        monthToDate: await this.getMonthlyRevenue(today.getMonth() + 1, today.getFullYear()),
-        projectedMonthly: 15000,
-        subscriptionConversion: 12.5,
-        averageRevenue: 67
+        monthToDate: monthlyRevenue,
+        projectedMonthly: monthlyRevenue, // Solo revenue reale, no proiezioni fake
+        subscriptionConversion: activeSubscriptions > 0 && totalUsers > 0 ? Math.round((activeSubscriptions / totalUsers) * 100) : 0,
+        averageRevenue: activeSubscriptions > 0 ? Math.round(monthlyRevenue / activeSubscriptions) : 0
       }
     };
   }
@@ -2019,7 +2032,7 @@ export class DatabaseStorage implements IStorage {
         })
         .from(reviews)
         .leftJoin(professionals, eq(reviews.professionalId, professionals.id))
-        .where(eq(reviews.isModerated, false))
+        .where(eq(reviews.status, 'pending'))
         .orderBy(desc(reviews.createdAt))
         .limit(5);
 
