@@ -2103,6 +2103,81 @@ export class DatabaseStorage implements IStorage {
   async getRecentSuspiciousActivities(): Promise<any[]> {
     return [];
   }
+
+  // Claim Request Methods
+  async createClaimRequest(claimRequest: InsertClaimRequest): Promise<ClaimRequest> {
+    const [result] = await db.insert(claimRequests).values(claimRequest).returning();
+    return result;
+  }
+
+  async getClaimRequests(): Promise<ClaimRequest[]> {
+    return await db.select().from(claimRequests).orderBy(desc(claimRequests.createdAt));
+  }
+
+  async getClaimRequest(id: number): Promise<ClaimRequest | undefined> {
+    const [result] = await db.select().from(claimRequests).where(eq(claimRequests.id, id));
+    return result;
+  }
+
+  async updateClaimRequestStatus(id: number, status: string, adminNotes?: string): Promise<void> {
+    await db.update(claimRequests)
+      .set({ status, adminNotes, updatedAt: new Date() })
+      .where(eq(claimRequests.id, id));
+  }
+
+  async approveClaimRequest(id: number, adminNotes?: string): Promise<void> {
+    await db.update(claimRequests)
+      .set({ status: 'approved', adminNotes, completedAt: new Date(), updatedAt: new Date() })
+      .where(eq(claimRequests.id, id));
+  }
+
+  async deleteClaimRequest(id: number): Promise<void> {
+    await db.delete(claimRequests).where(eq(claimRequests.id, id));
+  }
+
+  async updateProfessionalClaimStatus(professionalId: number, isClaimed: boolean, claimedBy?: number): Promise<void> {
+    const updates: any = { isClaimed, updatedAt: new Date() };
+    if (isClaimed && claimedBy) {
+      updates.claimedBy = claimedBy;
+      updates.claimedAt = new Date();
+    }
+    await db.update(professionals).set(updates).where(eq(professionals.id, professionalId));
+  }
+
+  // Professional Plan Management
+  async getProfessionalPlan(professionalId: number): Promise<any> {
+    const [result] = await db.select()
+      .from(subscriptions)
+      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
+      .where(eq(subscriptions.professionalId, professionalId));
+    return result;
+  }
+
+  async assignPlan(professionalId: number, planId: number): Promise<void> {
+    await db.insert(subscriptions).values({
+      professionalId,
+      planId,
+      status: 'active',
+      currentPeriodStart: new Date(),
+      currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+    });
+  }
+
+  async cancelProfessionalPlan(professionalId: number): Promise<void> {
+    await db.update(subscriptions)
+      .set({ status: 'canceled', cancelAtPeriodEnd: true, updatedAt: new Date() })
+      .where(eq(subscriptions.professionalId, professionalId));
+  }
+
+  // Consumer Management
+  async updateConsumer(id: number, updates: any): Promise<void> {
+    await db.update(consumers).set({ ...updates, updatedAt: new Date() }).where(eq(consumers.id, id));
+  }
+
+  // Analytics
+  async getEventAnalytics(filters?: any): Promise<any[]> {
+    return await db.select().from(events).orderBy(desc(events.createdAt));
+  }
 }
 
 export const storage = new DatabaseStorage();

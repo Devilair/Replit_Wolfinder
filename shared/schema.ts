@@ -205,6 +205,8 @@ export const professionals = pgTable("professionals", {
   verificationRequestedAt: timestamp("verification_requested_at"), // For verification workflow
   stripeCustomerId: text("stripe_customer_id"), // For Stripe integration
   contactEmail: text("contact_email"), // For contact information
+  subscriptionStartDate: timestamp("subscription_start_date"), // For subscription tracking
+  subscriptionEndDate: timestamp("subscription_end_date"), // For subscription expiry tracking
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -264,6 +266,7 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   hasApiAccess: boolean("has_api_access").default(false),
   maxAccounts: integer("max_accounts").default(1),
   isActive: boolean("is_active").default(true),
+  stripePriceId: text("stripe_price_id"), // Stripe price ID for integration
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

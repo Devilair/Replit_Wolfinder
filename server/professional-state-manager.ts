@@ -92,7 +92,7 @@ export class ProfessionalStateManager {
         isVerified: true,
         isPremium: isPlus,
         verificationDate: new Date(),
-        verifiedBy: verifiedBy
+        verifiedBy: parseInt(verifiedBy.toString())
       };
       
       // Add auto-claim fields if needed
