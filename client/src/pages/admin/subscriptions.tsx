@@ -327,64 +327,7 @@ export default function AdminSubscriptions() {
             </CardContent>
           </Card>
 
-          {/* Analytics Piani */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Analytics Conversioni</CardTitle>
-              <CardDescription>
-                Analisi delle performance dei piani e del comportamento degli utenti
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <h4 className="font-medium">Conversioni per Piano</h4>
-                  <div className="space-y-2">
-                    {subscriptionPlans.filter(p => p.priceMonthly > 0).map((plan) => (
-                      <div key={plan.id} className="flex justify-between text-sm">
-                        <span>{plan.name}:</span>
-                        <span className="font-medium">{Math.round(Math.random() * 20 + 10)}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <h4 className="font-medium">Retention Rate</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>1 mese:</span>
-                      <span className="font-medium text-green-600">94%</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>6 mesi:</span>
-                      <span className="font-medium text-green-600">87%</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>12 mesi:</span>
-                      <span className="font-medium text-green-600">82%</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <h4 className="font-medium">Valore Medio</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>LTV medio:</span>
-                      <span className="font-medium">€486</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Durata media:</span>
-                      <span className="font-medium">18 mesi</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Churn rate:</span>
-                      <span className="font-medium text-orange-600">3.2%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Note: Analytics sezione rimossa - implementare solo con dati reali quando necessario */}
         </TabsContent>
 
         {/* Tab Abbonamenti Attivi */}
