@@ -593,6 +593,9 @@ export default function AdminProfessionals() {
         </Card>
       )}
       
+        </TabsContent>
+      </Tabs>
+      
       {/* Create Professional Dialog */}
       <CreateProfessionalDialog
         open={isCreateDialogOpen}

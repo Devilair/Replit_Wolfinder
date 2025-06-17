@@ -400,7 +400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Email inviata con successo tramite SendGrid diretto'
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('SendGrid test error:', error);
       res.status(500).json({
         error: 'Errore nel test SendGrid',
