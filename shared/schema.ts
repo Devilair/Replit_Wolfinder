@@ -198,6 +198,13 @@ export const professionals = pgTable("professionals", {
   claimTokenExpiresAt: timestamp("claim_token_expires_at"),
   autoNotificationEnabled: boolean("auto_notification_enabled").default(true).notNull(),
   lastNotificationSent: timestamp("last_notification_sent"),
+  // Additional fields for database consistency
+  phone: text("phone"), // For compatibility with phone field references
+  photoUrl: text("photo_url"), // For profile photo uploads
+  subscriptionType: text("subscription_type"), // For subscription management
+  verificationRequestedAt: timestamp("verification_requested_at"), // For verification workflow
+  stripeCustomerId: text("stripe_customer_id"), // For Stripe integration
+  contactEmail: text("contact_email"), // For contact information
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -223,15 +230,19 @@ export const professionalNotifications = pgTable("professional_notifications", {
 export const claimRequests = pgTable("claim_requests", {
   id: serial("id").primaryKey(),
   professionalId: integer("professional_id").notNull().references(() => professionals.id, { onDelete: "cascade" }),
+  userId: integer("user_id").references(() => users.id),
+  token: text("token").notNull(),
   requesterName: text("requester_name").notNull(),
   requesterEmail: text("requester_email").notNull(),
   requesterPhone: text("requester_phone"),
   verificationDocuments: text("verification_documents"), // JSON array of document info
   personalMessage: text("personal_message"),
-  status: text("status").default("pending").notNull(), // 'pending', 'approved', 'rejected', 'needs_verification'
+  status: text("status").default("pending").notNull(), // 'pending', 'approved', 'rejected', 'needs_verification', 'completed'
   adminNotes: text("admin_notes"),
   reviewedBy: integer("reviewed_by").references(() => users.id),
   reviewedAt: timestamp("reviewed_at"),
+  expiresAt: timestamp("expires_at"),
+  completedAt: timestamp("completed_at"),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -436,6 +447,8 @@ export const reviews = pgTable("reviews", {
   proofType: text("proof_type"), // invoice, contract, receipt, other
   proofDetails: text("proof_details"), // JSON con numero documento, data, importo
   verificationNotes: text("verification_notes"), // Note interne admin
+  adminNotes: text("admin_notes"), // Additional admin notes for updates
+  isModerated: boolean("is_moderated").default(false).notNull(), // For moderation status
   
   // Interazioni e analytics
   viewCount: integer("view_count").default(0).notNull(),
