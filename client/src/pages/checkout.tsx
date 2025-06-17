@@ -11,10 +11,14 @@ import { CheckCircle, ArrowLeft, CreditCard } from "lucide-react";
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
+let stripePromise: Promise<any> | null = null;
+
+function getStripePromise() {
+  if (!stripePromise && import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+    stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+  }
+  return stripePromise;
 }
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 const CheckoutForm = ({ planData, onSuccess }: { planData: any, onSuccess: () => void }) => {
   const stripe = useStripe();
@@ -203,7 +207,7 @@ export default function Checkout() {
             </CardHeader>
             <CardContent>
               <Elements 
-                stripe={stripePromise} 
+                stripe={getStripePromise()} 
                 options={{ 
                   clientSecret,
                   appearance: {

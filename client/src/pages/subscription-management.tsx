@@ -26,7 +26,14 @@ import {
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '');
+let stripePromise: Promise<any> | null = null;
+
+function getStripePromise() {
+  if (!stripePromise && import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+    stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+  }
+  return stripePromise;
+}
 
 function SubscriptionCheckout({ planId, onSuccess }: { planId: number; onSuccess: () => void }) {
   const stripe = useStripe();
@@ -412,7 +419,7 @@ export default function SubscriptionManagement() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Elements stripe={stripePromise}>
+            <Elements stripe={getStripePromise()}>
               <SubscriptionCheckout 
                 planId={selectedPlan}
                 onSuccess={() => setSelectedPlan(null)}
