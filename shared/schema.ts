@@ -267,6 +267,12 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   maxAccounts: integer("max_accounts").default(1),
   isActive: boolean("is_active").default(true),
   stripePriceId: text("stripe_price_id"), // Stripe price ID for integration
+  // Additional fields needed for plan features
+  reviewsPerMonth: integer("reviews_per_month").default(-1),
+  photosAllowed: boolean("photos_allowed").default(true),
+  analyticsAccess: boolean("analytics_access").default(false),
+  prioritySupport: boolean("priority_support").default(false),
+  badgeSystem: boolean("badge_system").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -282,6 +288,7 @@ export const subscriptions = pgTable("subscriptions", {
   stripeSubscriptionId: text("stripe_subscription_id"),
   stripeCustomerId: text("stripe_customer_id"),
   isInGracePeriod: boolean("is_in_grace_period").default(false),
+  gracePeriodEnd: timestamp("grace_period_end"),
   failedPaymentCount: integer("failed_payment_count").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

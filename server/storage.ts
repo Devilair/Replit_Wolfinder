@@ -199,6 +199,11 @@ export interface IStorage {
   claimProfile(tokenId: number, userId: number): Promise<void>;
   generateClaimToken(professionalId: number, userId: number): Promise<ClaimRequest>;
   
+  // Additional missing methods for type safety
+  getFreePlan(): Promise<SubscriptionPlan | undefined>;
+  getExpiredGracePeriods(date: Date): Promise<SubscriptionWithDetails[]>;
+  getProfessionalUsageThisMonth(professionalId: number): Promise<any>;
+  
   // Claim Request Management
   createClaimRequest(claimRequest: InsertClaimRequest): Promise<ClaimRequest>;
   getClaimRequests(): Promise<ClaimRequest[]>;

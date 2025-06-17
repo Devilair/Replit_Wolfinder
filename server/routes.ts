@@ -2121,42 +2121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Stripe webhook handler
-  app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    let event;
 
-    try {
-      event = stripe.webhooks.constructEvent(req.body, sig!, process.env.STRIPE_WEBHOOK_SECRET!);
-    } catch (err: any) {
-      console.log(`Webhook signature verification failed.`, err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    try {
-      switch (event.type) {
-        case 'invoice.payment_succeeded':
-          await handlePaymentSucceeded(event.data.object);
-          break;
-        case 'invoice.payment_failed':
-          await handlePaymentFailed(event.data.object);
-          break;
-        case 'customer.subscription.updated':
-          await handleSubscriptionUpdate(event.data.object);
-          break;
-        case 'customer.subscription.deleted':
-          await handleSubscriptionCancellation(event.data.object);
-          break;
-        default:
-          console.log(`Unhandled event type ${event.type}`);
-      }
-    } catch (error) {
-      console.error('Error processing webhook:', error);
-      return res.status(500).json({ message: 'Webhook processing failed' });
-    }
-
-    res.json({received: true});
-  });
 
 
   
