@@ -108,42 +108,11 @@ export default function AdminSubscriptions() {
       hasApiAccess: true,
       maxAccounts: -1,
       isActive: true,
-      subscribersCount: 45
+      subscribersCount: 0
     }
   ];
 
-  const transactions = [
-    {
-      id: "tx_001",
-      professionalName: "Studio Legale Rossi",
-      planName: "Pro",
-      amount: 29.99,
-      currency: "EUR",
-      status: "succeeded",
-      paymentMethodType: "card",
-      createdAt: "2024-03-15T10:30:00Z"
-    },
-    {
-      id: "tx_002", 
-      professionalName: "Arch. Marco Bianchi",
-      planName: "Business",
-      amount: 59.99,
-      currency: "EUR",
-      status: "succeeded",
-      paymentMethodType: "bank_transfer",
-      createdAt: "2024-03-15T09:15:00Z"
-    },
-    {
-      id: "tx_003",
-      professionalName: "Commercialista Verde",
-      planName: "Pro",
-      amount: 29.99,
-      currency: "EUR",
-      status: "failed",
-      paymentMethodType: "card",
-      createdAt: "2024-03-14T16:45:00Z"
-    }
-  ];
+  const transactions = [];
 
   // Calcoli per le metriche
   const totalMRR = subscriptionPlans.reduce((sum, plan) => 
@@ -607,18 +576,18 @@ export default function AdminSubscriptions() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <h4 className="font-medium">Ricavi Ultimo Mese</h4>
-                  <div className="text-2xl font-bold text-green-600">€15,847</div>
-                  <div className="text-sm text-green-600">+12.5% vs mese precedente</div>
+                  <div className="text-2xl font-bold text-green-600">€0</div>
+                  <div className="text-sm text-gray-600">0% variazione</div>
                 </div>
                 <div className="space-y-2">
                   <h4 className="font-medium">Nuovi Abbonamenti</h4>
-                  <div className="text-2xl font-bold text-blue-600">47</div>
-                  <div className="text-sm text-blue-600">+8 vs mese precedente</div>
+                  <div className="text-2xl font-bold text-blue-600">0</div>
+                  <div className="text-sm text-gray-600">0 vs mese precedente</div>
                 </div>
                 <div className="space-y-2">
                   <h4 className="font-medium">Churn Rate</h4>
-                  <div className="text-2xl font-bold text-orange-600">3.2%</div>
-                  <div className="text-sm text-green-600">-0.8% vs mese precedente</div>
+                  <div className="text-2xl font-bold text-orange-600">0%</div>
+                  <div className="text-sm text-gray-600">Nessun dato</div>
                 </div>
               </div>
             </CardContent>

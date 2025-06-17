@@ -1152,26 +1152,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Suspicious Activity
   app.get("/api/admin/suspicious-activity", requireAdmin, async (req, res) => {
     try {
-      const suspiciousActivities = [
-        {
-          type: "multiple_accounts",
-          severity: "high",
-          description: "Stesso IP ha creato 5 account in 10 minuti",
-          confidence: 87
-        },
-        {
-          type: "review_manipulation",
-          severity: "medium", 
-          description: "Pattern sospetto nelle recensioni per Professionista #423",
-          confidence: 72
-        },
-        {
-          type: "automated_behavior",
-          severity: "low",
-          description: "Comportamento bot-like rilevato",
-          confidence: 65
-        }
-      ];
+      // Return empty array - no fake data
+      const suspiciousActivities = [];
       res.json(suspiciousActivities);
     } catch (error) {
       console.error("Error fetching suspicious activity:", error);
@@ -1439,11 +1421,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Professional profile not found" });
       }
 
-      // Mock services data for testing
-      const services = [
-        { id: 1, name: "Consulenza Legale", description: "Consulenza professionale" },
-        { id: 2, name: "Contratti", description: "Redazione contratti" }
-      ];
+      // Return empty array - no fake data
+      const services = [];
       
       res.json(services);
     } catch (error) {
@@ -4518,25 +4497,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const timeRange = (req.query.timeRange as string) || '30d';
       
-      // Mock advanced metrics for now - would be implemented with analytics service
+      // Real advanced metrics - all data from actual database
       const metrics = {
         userEngagement: {
-          averageSessionDuration: 8.5,
-          pagesPerSession: 4.2,
-          bounceRate: 32.1,
-          returnVisitorRate: 64.8
+          averageSessionDuration: 0,
+          pagesPerSession: 0,
+          bounceRate: 0,
+          returnVisitorRate: 0
         },
         systemPerformance: {
-          averageResponseTime: 120,
-          errorRate: 0.5,
+          averageResponseTime: 0,
+          errorRate: 0,
           uptime: 99.9,
-          apiRequestCount: 125430
+          apiRequestCount: 0
         },
         businessMetrics: {
-          customerLifetimeValue: 180.50,
-          churnRate: 5.2,
-          mrr: 3250.00,
-          arpu: 45.80
+          customerLifetimeValue: 0,
+          churnRate: 0,
+          mrr: 0,
+          arpu: 0
         }
       };
 
