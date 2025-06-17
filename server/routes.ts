@@ -2158,67 +2158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({received: true});
   });
 
-  // Webhook helper functions
-  async function handleSubscriptionUpdate(stripeSubscription: any) {
-    const subscription = await storage.getSubscriptionByStripeId(stripeSubscription.id);
-    if (subscription) {
-      await storage.updateSubscription(subscription.id, {
-        status: stripeSubscription.status,
-        currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
-        cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end
-      });
-    }
-  }
 
-  async function handleSubscriptionCancellation(stripeSubscription: any) {
-    const subscription = await storage.getSubscriptionByStripeId(stripeSubscription.id);
-    if (subscription) {
-      await storage.updateSubscription(subscription.id, {
-        status: 'canceled'
-      });
-    }
-  }
-
-  async function handlePaymentSucceeded(invoice: any) {
-    const subscription = await storage.getSubscriptionByStripeId(invoice.subscription);
-    if (subscription) {
-      // Update subscription status to active
-      await storage.updateSubscription(subscription.id, {
-        status: 'active'
-      });
-
-      // Send success notification if email service is available
-      try {
-        const professional = await storage.getProfessional(subscription.professionalId);
-        if (professional?.contactEmail) {
-          console.log(`Payment succeeded for professional ${professional.id}`);
-        }
-      } catch (error) {
-        console.error('Error sending payment success notification:', error);
-      }
-    }
-  }
-
-  async function handlePaymentFailed(invoice: any) {
-    const subscription = await storage.getSubscriptionByStripeId(invoice.subscription);
-    if (subscription) {
-      // Update subscription status
-      await storage.updateSubscription(subscription.id, {
-        status: 'past_due'
-      });
-
-      // Send failed payment notification
-      try {
-        const professional = await storage.getProfessional(subscription.professionalId);
-        if (professional?.contactEmail) {
-          console.log(`Payment failed for professional ${professional.id}`);
-        }
-      } catch (error) {
-        console.error('Error sending payment failed notification:', error);
-      }
-    }
-  }
   
   // Subscription Plans
   app.get("/api/admin/subscription-plans", async (req, res) => {
