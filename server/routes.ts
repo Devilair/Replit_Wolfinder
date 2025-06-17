@@ -8,6 +8,7 @@ import { authService, AuthUser } from "./auth";
 import { authManager, type TokenPayload } from './auth-manager';
 import { transactionManager } from './transaction-manager';
 import { transactionManagerTest } from './test-transaction-manager';
+import { fileUploadManager } from './file-upload-manager';
 import { categories } from '@shared/schema';
 import Stripe from "stripe";
 import path from "path";
@@ -5369,6 +5370,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false,
         error: error.message,
         message: 'Transaction Manager test failed'
+      });
+    }
+  });
+
+  // TEST ENDPOINT - File Upload Manager Integration Test
+  app.post("/api/test/file-upload-manager", async (req, res) => {
+    try {
+      console.log('🔬 Testing File Upload Manager...');
+      
+      const testResults = await fileUploadManager.runTests();
+      const uploadStats = await fileUploadManager.getUploadStats();
+      
+      res.json({
+        success: testResults.overallSuccess,
+        tests: {
+          fileValidation: testResults.validation.success,
+          fileStorage: testResults.storage.success,
+          fileCleanup: testResults.cleanup.success,
+          fileUploadManager: testResults.overallSuccess
+        },
+        results: {
+          validation: testResults.validation,
+          storage: testResults.storage,
+          cleanup: testResults.cleanup,
+          uploadStats
+        },
+        message: testResults.overallSuccess ? 
+          'File Upload Manager test completed successfully' : 
+          'File Upload Manager test had failures'
+      });
+      
+    } catch (error) {
+      console.error('File Upload Manager test failed:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        message: 'File Upload Manager test failed'
       });
     }
   });
