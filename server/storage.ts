@@ -2272,12 +2272,134 @@ export class DatabaseStorage implements IStorage {
     return [];
   }
 
-  async getExpiredGracePeriods(): Promise<any[]> {
-    return [];
+  async getExpiredGracePeriods(date: Date): Promise<SubscriptionWithDetails[]> {
+    const expired = await db
+      .select()
+      .from(subscriptions)
+      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
+      .leftJoin(professionals, eq(subscriptions.professionalId, professionals.id))
+      .where(
+        and(
+          eq(subscriptions.isInGracePeriod, true),
+          lte(subscriptions.gracePeriodEnd, date)
+        )
+      );
+    
+    return expired.map(row => ({
+      ...row.subscriptions,
+      plan: row.subscription_plans!,
+      professional: row.professionals!,
+      transactions: []
+    }));
   }
 
-  async getFreePlan(): Promise<any> {
-    return { id: 1, name: "Free Plan" };
+  async getFreePlan(): Promise<SubscriptionPlan | undefined> {
+    const [plan] = await db
+      .select()
+      .from(subscriptionPlans)
+      .where(eq(subscriptionPlans.name, 'Free'))
+      .limit(1);
+    return plan;
+  }
+
+  async getProfessionalUsageThisMonth(professionalId: number): Promise<any> {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+    
+    const [usage] = await db
+      .select()
+      .from(professionalUsage)
+      .where(
+        and(
+          eq(professionalUsage.professionalId, professionalId),
+          eq(professionalUsage.month, month),
+          eq(professionalUsage.year, year)
+        )
+      );
+    
+    return usage || {
+      contactsReceived: 0,
+      photosUploaded: 0,
+      servicesListed: 0
+    };
+  }
+
+  async updateUser(id: number, data: Partial<User>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async validateClaimToken(token: string): Promise<ClaimRequest | null> {
+    const [claimRequest] = await db
+      .select()
+      .from(claimRequests)
+      .where(
+        and(
+          eq(claimRequests.token, token),
+          eq(claimRequests.status, 'pending'),
+          gte(claimRequests.expiresAt, new Date())
+        )
+      );
+    return claimRequest || null;
+  }
+
+  async claimProfile(claimRequestId: number, userId: number): Promise<void> {
+    await db.transaction(async (tx) => {
+      // Update claim request
+      await tx
+        .update(claimRequests)
+        .set({ 
+          status: 'approved', 
+          completedAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(claimRequests.id, claimRequestId));
+
+      // Get claim request to get professional ID
+      const [claimRequest] = await tx
+        .select()
+        .from(claimRequests)
+        .where(eq(claimRequests.id, claimRequestId));
+
+      if (claimRequest) {
+        // Update professional
+        await tx
+          .update(professionals)
+          .set({ 
+            userId: userId,
+            isClaimed: true,
+            claimedBy: userId,
+            claimedAt: new Date(),
+            updatedAt: new Date()
+          })
+          .where(eq(professionals.id, claimRequest.professionalId));
+      }
+    });
+  }
+
+  async generateClaimToken(professionalId: number, userId: number): Promise<ClaimRequest> {
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
+
+    const [claimRequest] = await db
+      .insert(claimRequests)
+      .values({
+        token,
+        professionalId,
+        requesterName: '',
+        requesterEmail: '',
+        expiresAt,
+        status: 'pending'
+      })
+      .returning();
+
+    return claimRequest;
   }
 }
 

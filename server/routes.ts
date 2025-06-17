@@ -9,7 +9,9 @@ import { authManager, type TokenPayload } from './auth-manager';
 import { transactionManager } from './transaction-manager';
 import { transactionManagerTest } from './test-transaction-manager';
 import { fileUploadManager } from './file-upload-manager';
-import { categories } from '@shared/schema';
+import { categories, professionals, users, reviews, subscriptions, subscriptionPlans, claimRequests, badges, professionalBadges } from '@shared/schema';
+import { eq, and, or, like, desc, asc, isNull, sql, count, gte, lte, inArray } from "drizzle-orm";
+import { db } from "./db";
 import Stripe from "stripe";
 import path from "path";
 import fs from "fs";
@@ -46,11 +48,9 @@ import {
   insertProfessionalPlanSchema,
   insertEventSchema,
   type InsertClaimRequest,
-  auditLogs,
-  users
+  auditLogs
 } from "@shared/schema";
-import { eq, desc, or, ilike } from "drizzle-orm";
-import { db, pool } from "./db";
+import { ilike } from "drizzle-orm";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -4408,11 +4408,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         gracePeriodEnd: subscription?.gracePeriodEnd,
         currentPlan: plan,
         planLimits: plan ? {
-          reviewsPerMonth: plan.reviewsPerMonth,
-          photosAllowed: plan.photosAllowed,
-          analyticsAccess: plan.analyticsAccess,
-          prioritySupport: plan.prioritySupport,
-          badgeSystem: plan.badgeSystem
+          reviewsPerMonth: plan.reviewsPerMonth || -1,
+          photosAllowed: plan.photosAllowed || true,
+          analyticsAccess: plan.analyticsAccess || false,
+          prioritySupport: plan.hasPrioritySupport || false,
+          badgeSystem: plan.badgeSystem || false
         } : null,
         usageThisMonth: subscription ? await storage.getProfessionalUsageThisMonth(professional.id) : null
       };
@@ -4732,7 +4732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'verify':
           await db.update(professionals)
             .set({ isVerified: true, updatedAt: new Date() })
-            .where(sql`${professionals.id} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`);
+            .where(inArray(professionals.id, ids.map(id => parseInt(id))));
           break;
         case 'reject':
           await db.update(professionals)
