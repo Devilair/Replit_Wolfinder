@@ -355,6 +355,7 @@ export class BadgeSystem {
         ? (recentReviews.filter(r => r.rating === 5).length / recentReviews.length) * 100 
         : 0,
       isVerified: professional.verificationStatus === 'approved' || professional.verificationStatus === 'verified',
+      isClaimed: professional.isClaimed || false,
       subscriptionActive: true, // Will be calculated from subscription table
       calculatedAt: new Date()
     };

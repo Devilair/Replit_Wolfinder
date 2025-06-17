@@ -43,9 +43,20 @@ export const BADGE_MASTER_DICTIONARY: BadgeMasterDefinition[] = [
     icon: "🏆",
     color: "#10B981",
     description: "Ricevuta la prima recensione verificata",
-    requirements: ["Almeno 1 recensione verificata"],
+    requirements: ["first_review_received"],
     calculationMethod: "automatic",
     priority: 2
+  },
+  {
+    name: "Primo Cliente",
+    slug: "primo-cliente",
+    family: "esperienza",
+    icon: "🎯",
+    color: "#059669",
+    description: "Professionista verificato e attivo sulla piattaforma",
+    requirements: ["profile_verified_and_claimed"],
+    calculationMethod: "automatic",
+    priority: 3
   },
   {
     name: "Primo Contatto",
