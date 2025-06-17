@@ -2232,7 +2232,18 @@ export class DatabaseStorage implements IStorage {
 
   async getAdminReviews(params?: any): Promise<any[]> {
     return await db
-      .select()
+      .select({
+        review: reviews,
+        user: {
+          id: users.id,
+          email: users.email
+        },
+        professional: {
+          id: professionals.id,
+          businessName: professionals.businessName,
+          email: professionals.email
+        }
+      })
       .from(reviews)
       .leftJoin(users, eq(reviews.userId, users.id))
       .leftJoin(professionals, eq(reviews.professionalId, professionals.id))

@@ -446,7 +446,6 @@ export const reviews = pgTable("reviews", {
   proofDetails: text("proof_details"), // JSON con numero documento, data, importo
   verificationNotes: text("verification_notes"), // Note interne admin
   adminNotes: text("admin_notes"), // Additional admin notes for updates
-  isModerated: boolean("is_moderated").default(false).notNull(), // For moderation status
   
   // Interazioni e analytics
   viewCount: integer("view_count").default(0).notNull(),
