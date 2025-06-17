@@ -5269,49 +5269,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // TEST ENDPOINT - JWT Debug
+  // TEST ENDPOINT - Auth Manager Integration Test
   app.post("/api/test/auth-manager", async (req, res) => {
     try {
-      console.log('🔬 Testing JWT directly...');
+      console.log('🔬 Testing Auth Manager with fixed JWT...');
       
-      // Import jwt the same way as working auth.ts
-      const jwt = await import('jsonwebtoken');
-      console.log('JWT import type:', typeof jwt);
-      console.log('JWT default type:', typeof jwt.default);
-      console.log('JWT sign type:', typeof jwt.sign);
-      console.log('JWT default.sign type:', typeof jwt.default?.sign);
+      // Mock test user
+      const testUser = {
+        id: 999,
+        email: 'test@wolfinder.it',
+        role: 'professional' as const
+      };
       
-      // Test basic JWT with working pattern from auth.ts
-      const testPayload = { id: 999, email: 'test@wolfinder.it', role: 'professional' };
-      const secret = process.env.JWT_SECRET || 'wolfinder-development-secret-2024';
+      // Test token generation
+      const tokens = await authManager.generateTokens(testUser);
       
-      let token;
-      if (typeof jwt.sign === 'function') {
-        token = jwt.sign(testPayload, secret, { expiresIn: '15m' });
-      } else if (typeof jwt.default?.sign === 'function') {
-        token = jwt.default.sign(testPayload, secret, { expiresIn: '15m' });
-      } else {
-        throw new Error('JWT sign function not found');
+      // Test token verification
+      const payload = authManager.verifyAccessToken(tokens.accessToken);
+      
+      if (!payload) {
+        throw new Error('Token verification failed');
       }
+      
+      // Test refresh
+      const newTokens = await authManager.refreshTokens(tokens.refreshToken);
+      
+      if (!newTokens) {
+        throw new Error('Token refresh failed');
+      }
+      
+      // Get stats
+      const stats = authManager.getTokenStats();
       
       res.json({
         success: true,
-        token: token ? 'Generated' : 'Failed',
-        jwtDebug: {
-          jwtType: typeof jwt,
-          defaultType: typeof jwt.default,
-          signType: typeof jwt.sign,
-          defaultSignType: typeof jwt.default?.sign
+        tests: {
+          tokenGeneration: !!tokens.accessToken,
+          tokenVerification: payload.userId === testUser.id,
+          tokenRefresh: !!newTokens.accessToken,
+          differentTokens: tokens.accessToken !== newTokens.accessToken
         },
-        message: 'JWT debug completed successfully'
+        stats,
+        message: 'Auth Manager test completed successfully'
       });
       
     } catch (error) {
-      console.error('JWT debug failed:', error);
+      console.error('Auth Manager test failed:', error);
       res.status(500).json({
         success: false,
         error: error.message,
-        message: 'JWT debug failed'
+        message: 'Auth Manager test failed'
       });
     }
   });

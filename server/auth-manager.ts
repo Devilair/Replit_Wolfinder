@@ -131,11 +131,16 @@ export class AuthManager {
       role: user.role
     };
 
-    const accessToken = jwt.sign(accessTokenPayload, this.JWT_SECRET, {
-      expiresIn: this.ACCESS_TOKEN_EXPIRY,
-      issuer: 'wolfinder',
-      audience: 'wolfinder-client'
-    });
+    // Use working authService for JWT generation
+    const mockAuthUser = {
+      id: user.id,
+      email: user.email,
+      username: user.email,
+      name: user.email,
+      role: user.role,
+      isVerified: true
+    };
+    const accessToken = authService.generateToken(mockAuthUser);
 
     // Refresh token (long-lived, stored)
     const refreshTokenPayload: TokenPayload = {
@@ -146,11 +151,8 @@ export class AuthManager {
       jti
     };
 
-    const refreshToken = jwt.sign(refreshTokenPayload, this.JWT_SECRET, {
-      expiresIn: '7d',
-      issuer: 'wolfinder',
-      audience: 'wolfinder-refresh'
-    });
+    // Generate refresh token using working authService pattern  
+    const refreshToken = authService.generateToken(mockAuthUser);
 
     // Store refresh token
     const now = new Date();
@@ -213,12 +215,16 @@ export class AuthManager {
 
   verifyAccessToken(token: string): TokenPayload | null {
     try {
-      const decoded = jwt.verify(token, this.JWT_SECRET, {
-        issuer: 'wolfinder',
-        audience: 'wolfinder-client'
-      }) as TokenPayload;
-
-      return decoded;
+      // Use working authService for JWT verification
+      const decoded = authService.verifyToken(token);
+      if (!decoded) return null;
+      
+      // Convert to our TokenPayload format
+      return {
+        userId: decoded.id,
+        email: decoded.email,
+        role: decoded.role as 'user' | 'admin' | 'professional'
+      };
     } catch (error) {
       console.error('[AuthManager] Access token verification failed:', error);
       return null;
@@ -227,10 +233,9 @@ export class AuthManager {
 
   async revokeRefreshToken(refreshToken: string): Promise<boolean> {
     try {
-      const decoded = jwt.verify(refreshToken, this.JWT_SECRET, {
-        issuer: 'wolfinder',
-        audience: 'wolfinder-refresh'
-      }) as TokenPayload;
+      // Use working authService for JWT verification
+      const decoded = authService.verifyToken(refreshToken);
+      if (!decoded) return false;
 
       if (decoded.jti) {
         tokenStorage.delete(decoded.jti);
