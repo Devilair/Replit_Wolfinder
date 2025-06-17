@@ -8,9 +8,9 @@ export interface ProfessionalStateUpdate {
   isPremium?: boolean;
   isClaimed?: boolean;
   verificationDate?: Date;
-  verifiedBy?: string;
+  verifiedBy?: number;
   claimedAt?: Date;
-  claimedBy?: string;
+  claimedBy?: number;
 }
 
 export class ProfessionalStateManager {
@@ -115,7 +115,7 @@ export class ProfessionalStateManager {
    */
   async handleDocumentRejection(
     professionalId: number,
-    rejectedBy: string,
+    rejectedBy: number,
     reason?: string
   ): Promise<void> {
     await this.updateProfessionalState(

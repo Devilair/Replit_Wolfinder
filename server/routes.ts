@@ -5248,6 +5248,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Health check endpoint
+  app.get('/health', async (req, res) => {
+    try {
+      const { performHealthCheck } = require('./health-check');
+      const healthResult = await performHealthCheck();
+      
+      const statusCode = healthResult.status === 'healthy' ? 200 : 
+                        healthResult.status === 'degraded' ? 200 : 503;
+      
+      res.status(statusCode).json(healthResult);
+    } catch (error) {
+      res.status(503).json({
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        error: 'Health check failed',
+        services: { database: 'error', geocodingCache: 'error', stateManager: 'error' }
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
