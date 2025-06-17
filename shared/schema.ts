@@ -17,7 +17,6 @@ export const users = pgTable("users", {
   emailVerificationToken: text("email_verification_token"),
   emailVerificationExpires: timestamp("email_verification_expires"),
   isPhoneVerified: boolean("is_phone_verified").default(false),
-  phone: text("phone"),
   mfaEnabled: boolean("mfa_enabled").default(false),
   mfaSecret: text("mfa_secret"),
   failedLoginAttempts: integer("failed_login_attempts").default(0),
@@ -199,7 +198,6 @@ export const professionals = pgTable("professionals", {
   autoNotificationEnabled: boolean("auto_notification_enabled").default(true).notNull(),
   lastNotificationSent: timestamp("last_notification_sent"),
   // Additional fields for database consistency
-  phone: text("phone"), // For compatibility with phone field references
   photoUrl: text("photo_url"), // For profile photo uploads
   subscriptionType: text("subscription_type"), // For subscription management
   verificationRequestedAt: timestamp("verification_requested_at"), // For verification workflow
