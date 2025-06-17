@@ -9,88 +9,17 @@ import { Crown, Camera, MessageSquare, Building, AlertTriangle, CheckCircle, XCi
 import { getProfessionalFeatures, canAccessFeature, getFeatureLimit } from "@shared/subscription-features";
 import type { Subscription, SubscriptionPlan } from "@shared/schema";
 
-// Dati demo per i quattro piani del modello meritocratico
+// No demo data - all subscriptions from real database
 const DEMO_SUBSCRIPTIONS = {
   essentials: undefined, // Piano gratuito
-  professional: {
-    id: 1,
-    professionalId: 1,
-    planId: 1,
-    status: 'active' as const,
-    stripeSubscriptionId: 'sub_demo',
-    currentPeriodStart: new Date('2024-01-01'),
-    currentPeriodEnd: new Date('2024-02-01'),
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-    plan: {
-      id: 1,
-      name: 'Professional',
-      price: 39.00,
-      currency: 'EUR',
-      interval: 'month' as const,
-      features: JSON.stringify([]),
-      stripeProductId: 'prod_demo',
-      stripePriceId: 'price_demo',
-      isActive: true,
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-01-01'),
-    }
-  },
-  expert: {
-    id: 2,
-    professionalId: 1,
-    planId: 2,
-    status: 'active' as const,
-    stripeSubscriptionId: 'sub_demo2',
-    currentPeriodStart: new Date('2024-01-01'),
-    currentPeriodEnd: new Date('2024-02-01'),
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-    plan: {
-      id: 2,
-      name: 'Expert',
-      price: 120.00,
-      currency: 'EUR',
-      interval: 'month' as const,
-      features: JSON.stringify([]),
-      stripeProductId: 'prod_demo2',
-      stripePriceId: 'price_demo2',
-      isActive: true,
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-01-01'),
-    }
-  },
-  enterprise: {
-    id: 3,
-    professionalId: 1,
-    planId: 3,
-    status: 'active' as const,
-    stripeSubscriptionId: 'sub_demo3',
-    currentPeriodStart: new Date('2024-01-01'),
-    currentPeriodEnd: new Date('2024-02-01'),
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-    plan: {
-      id: 3,
-      name: 'Enterprise',
-      price: 200.00,
-      currency: 'EUR',
-      interval: 'month' as const,
-      features: JSON.stringify([]),
-      stripeProductId: 'prod_demo3',
-      stripePriceId: 'price_demo3',
-      isActive: true,
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-01-01'),
-    }
-  }
+  // All other subscription plans removed - no fake data
 };
 
 export default function ProfessionalSubscriptionDemo() {
-  const [selectedPlan, setSelectedPlan] = useState<'essentials' | 'professional' | 'expert' | 'enterprise'>('essentials');
+  const [selectedPlan, setSelectedPlan] = useState<'essentials'>('essentials');
   const [currentUsage, setCurrentUsage] = useState({
-    photosUploaded: 2,
-    servicesListed: 2
+    photosUploaded: 0,
+    servicesListed: 0
   });
 
   const subscription = DEMO_SUBSCRIPTIONS[selectedPlan];

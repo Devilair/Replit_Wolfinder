@@ -1265,14 +1265,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Professional profile not found" });
       }
 
-      // Mock analytics data for testing - replace with real implementation
+      // Real analytics data only
       const analytics = {
         views: professional.profileViews || 0,
         reviewCount: professional.reviewCount || 0,
         rating: professional.rating || "0.0",
-        monthlyViews: [12, 19, 15, 25, 22, 30, 35],
-        topKeywords: ["servizi legali", "consulenza", "diritto civile"],
-        conversionRate: "15%"
+        monthlyViews: [],
+        topKeywords: [],
+        conversionRate: "0%"
       };
       
       res.json(analytics);
@@ -3738,17 +3738,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         views: professional?.profileViews || 0,
         reviewCount: professional?.reviewCount || 0,
         rating: professional?.rating || "0.0",
-        monthlyViews: [12, 19, 15, 25, 22, 30, 35],
-        topKeywords: ["servizi legali", "consulenza", "diritto civile"],
-        conversionRate: "15%",
+        monthlyViews: [],
+        topKeywords: [],
+        conversionRate: "0%",
         // Advanced metrics
-        clickThroughRate: "8.5%",
-        bounceRate: "25%",
-        avgSessionDuration: "3m 45s",
-        topReferrers: ["Google", "LinkedIn", "Direct"],
+        clickThroughRate: "0%",
+        bounceRate: "0%",
+        avgSessionDuration: "0m 0s",
+        topReferrers: [],
         demographicBreakdown: {
-          age: { "25-34": 35, "35-44": 45, "45-54": 20 },
-          location: { "Ferrara": 60, "Livorno": 40 }
+          age: {},
+          location: {}
         }
       };
       
