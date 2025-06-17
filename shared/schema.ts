@@ -198,7 +198,6 @@ export const professionals = pgTable("professionals", {
   autoNotificationEnabled: boolean("auto_notification_enabled").default(true).notNull(),
   lastNotificationSent: timestamp("last_notification_sent"),
   // Additional fields for database consistency
-  photoUrl: text("photo_url"), // For profile photo uploads
   subscriptionType: text("subscription_type"), // For subscription management
   verificationRequestedAt: timestamp("verification_requested_at"), // For verification workflow
   stripeCustomerId: text("stripe_customer_id"), // For Stripe integration

@@ -1625,7 +1625,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // For now, just acknowledge the upload - real file handling would need multer setup
       await storage.updateProfessional(professional.id, {
-        photoUrl: '/uploads/professional-' + professional.id + '.jpg',
         updatedAt: new Date()
       });
 
@@ -5124,7 +5123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update professional with photo URL
       await storage.updateProfessional(professionalId, {
-        profilePhotoUrl: photoUrl
+        updatedAt: new Date()
       });
 
       res.json({ 
@@ -5147,7 +5146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await storage.updateProfessional(professionalId, {
-        profilePhotoUrl: null
+        updatedAt: new Date()
       });
 
       res.json({ 
@@ -5182,8 +5181,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         await db.execute(sql`SELECT 1 as test`);
       } catch (dbError) {
-        result.services.database = 'error';
-        result.status = 'degraded';
+        (result.services as any).database = 'error';
+        (result as any).status = 'degraded';
       }
 
       const statusCode = result.status === 'healthy' ? 200 : 200;
