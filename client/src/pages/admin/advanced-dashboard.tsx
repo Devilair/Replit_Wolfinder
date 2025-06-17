@@ -363,7 +363,7 @@ export default function AdvancedDashboard() {
                       <div className="flex justify-between items-center">
                         <span className="text-sm">Tasso di verifica</span>
                         <Badge variant="outline">
-                          {advancedMetrics.businessMetrics.verificationRate}%
+                          {advancedMetrics.businessMetrics?.verificationRate || 0}%
                         </Badge>
                       </div>
                       <div className="flex justify-between items-center">

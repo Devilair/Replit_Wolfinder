@@ -63,7 +63,7 @@ export default function AdminSubscriptions() {
       hasApiAccess: false,
       maxAccounts: 1,
       isActive: true,
-      subscribersCount: 1250
+      subscribersCount: 0
     },
     {
       id: 2,
@@ -78,7 +78,7 @@ export default function AdminSubscriptions() {
       hasApiAccess: false,
       maxAccounts: 1,
       isActive: true,
-      subscribersCount: 432
+      subscribersCount: 0
     },
     {
       id: 3,
@@ -93,7 +93,7 @@ export default function AdminSubscriptions() {
       hasApiAccess: true,
       maxAccounts: 1,
       isActive: true,
-      subscribersCount: 128
+      subscribersCount: 0
     },
     {
       id: 4,
