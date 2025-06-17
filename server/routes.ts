@@ -2604,7 +2604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard KPI and Statistics
   app.get("/api/admin/dashboard/stats", async (req, res) => {
     try {
-      const stats = await adminAdvancedStorage.getDashboardStats();
+      const stats = await storage.getAdminDashboardStats();
       res.json(stats);
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
@@ -2614,7 +2614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/dashboard/advanced-metrics", async (req, res) => {
     try {
-      const metrics = await adminAdvancedStorage.getAdvancedMetrics();
+      const metrics = await storage.getAdvancedMetrics();
       res.json(metrics);
     } catch (error) {
       console.error("Error fetching advanced metrics:", error);
@@ -2740,7 +2740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid parameters" });
       }
 
-      const result = await adminAdvancedStorage.completeModerationTask(queueId, notes, decision);
+      const result = await storage.completeModerationTask(queueId, notes, decision);
       res.json(result);
     } catch (error) {
       console.error("Error completing moderation task:", error);

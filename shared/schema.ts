@@ -281,6 +281,8 @@ export const subscriptions = pgTable("subscriptions", {
   cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
   stripeSubscriptionId: text("stripe_subscription_id"),
   stripeCustomerId: text("stripe_customer_id"),
+  isInGracePeriod: boolean("is_in_grace_period").default(false),
+  failedPaymentCount: integer("failed_payment_count").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -1135,8 +1137,7 @@ export const insertBadgeSchema = createInsertSchema(badges).omit({
 
 export const insertProfessionalBadgeSchema = createInsertSchema(professionalBadges).omit({ 
   id: true, 
-  awardedAt: true,
-  createdAt: true
+  awardedAt: true
 });
 
 // Relations per badge (definite dopo le tabelle)

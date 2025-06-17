@@ -198,6 +198,26 @@ export interface IStorage {
   validateClaimToken(token: string): Promise<ClaimRequest | null>;
   claimProfile(tokenId: number, userId: number): Promise<void>;
   generateClaimToken(professionalId: number, userId: number): Promise<ClaimRequest>;
+  
+  // Claim Request Management
+  createClaimRequest(claimRequest: InsertClaimRequest): Promise<ClaimRequest>;
+  getClaimRequests(): Promise<ClaimRequest[]>;
+  getClaimRequest(id: number): Promise<ClaimRequest | undefined>;
+  updateClaimRequestStatus(id: number, status: string, adminNotes?: string): Promise<void>;
+  approveClaimRequest(id: number, adminNotes?: string): Promise<void>;
+  deleteClaimRequest(id: number): Promise<void>;
+  updateProfessionalClaimStatus(professionalId: number, isClaimed: boolean, claimedBy?: number): Promise<void>;
+  
+  // Professional Plan Management
+  getProfessionalPlan(professionalId: number): Promise<any>;
+  assignPlan(professionalId: number, planId: number): Promise<void>;
+  cancelProfessionalPlan(professionalId: number): Promise<void>;
+  
+  // Consumer Management
+  updateConsumer(id: number, updates: any): Promise<void>;
+  
+  // Analytics
+  getEventAnalytics(filters?: any): Promise<any[]>;
   createReviewResponse(reviewId: number, response: string, professionalId: number): Promise<any>;
   getProfessionalOrderMemberships(professionalId: number): Promise<any[]>;
   getProfessionalSpecializations(professionalId: number): Promise<any[]>;
