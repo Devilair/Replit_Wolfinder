@@ -140,72 +140,61 @@ export const categories = pgTable("categories", {
 });
 
 export const professionals = pgTable("professionals", {
+  // EXACT database schema alignment - all 53 columns from real database
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
   categoryId: integer("category_id").references(() => categories.id).notNull(),
   businessName: text("business_name").notNull(),
   description: text("description").notNull(),
-  phoneFixed: text("phone_fixed"),
-  phoneMobile: text("phone_mobile"),
   email: text("email").notNull(),
   website: text("website"),
-  // Informazioni aziendali aggiuntive
-  pec: text("pec"), // Email PEC
-  vatNumber: text("vat_number"), // Partita IVA
-  fiscalCode: text("fiscal_code"), // Codice fiscale
-  // Social media
-  facebookUrl: text("facebook_url"),
-  instagramUrl: text("instagram_url"),
-  linkedinUrl: text("linkedin_url"),
-  twitterUrl: text("twitter_url"),
-  whatsappNumber: text("whatsapp_number"),
-  // Località di servizio
   address: text("address").notNull(),
-  city: text("city").notNull(), // Città principale
-  additionalCities: text("additional_cities").array(), // Città aggiuntive (non influenzano ricerca)
+  city: text("city").notNull(),
   province: text("province").notNull(),
   postalCode: text("postal_code").notNull(),
-  // Coordinate geografiche per ricerca su mappa
-  latitude: decimal("latitude", { precision: 10, scale: 8 }),
-  longitude: decimal("longitude", { precision: 11, scale: 8 }),
-  geocodedAt: timestamp("geocoded_at"), // Quando è stato geocodificato l'indirizzo
   priceRangeMin: decimal("price_range_min", { precision: 10, scale: 2 }),
   priceRangeMax: decimal("price_range_max", { precision: 10, scale: 2 }),
-  priceUnit: text("price_unit"), // "ora", "visita", "progetto"
+  priceUnit: text("price_unit"),
   isVerified: boolean("is_verified").default(false).notNull(),
-  verificationStatus: text("verification_status").default("not_verified").notNull(), // 'not_verified', 'pending', 'verified', 'rejected'
-  verificationNotes: text("verification_notes"),
-  verificationDate: timestamp("verification_date"),
-  verifiedBy: integer("verified_by").references(() => users.id),
   isPremium: boolean("is_premium").default(false).notNull(),
   rating: decimal("rating", { precision: 3, scale: 2 }).default("0").notNull(),
   reviewCount: integer("review_count").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  verificationStatus: text("verification_status").default("not_verified").notNull(),
+  verificationNotes: text("verification_notes"),
+  verificationDate: timestamp("verification_date"),
+  verifiedBy: integer("verified_by").references(() => users.id),
   profileCompleteness: decimal("profile_completeness", { precision: 5, scale: 2 }).default("0"),
   lastActivityAt: timestamp("last_activity_at"),
   profileViews: integer("profile_views").default(0).notNull(),
   clickThroughRate: decimal("click_through_rate", { precision: 5, scale: 2 }).default("0"),
   responseRate: decimal("response_rate", { precision: 5, scale: 2 }).default("0"),
-  averageResponseTime: integer("average_response_time"), // in minutes
+  averageResponseTime: integer("average_response_time"),
   isProblematic: boolean("is_problematic").default(false).notNull(),
   problematicReason: text("problematic_reason"),
   adminNotes: text("admin_notes"),
-  // Campi per gestione profili non reclamati
   isClaimed: boolean("is_claimed").default(false).notNull(),
   claimedAt: timestamp("claimed_at"),
   claimedBy: integer("claimed_by").references(() => users.id),
-  profileClaimToken: text("profile_claim_token"), // Token per reclamo profilo
+  profileClaimToken: text("profile_claim_token"),
   claimTokenExpiresAt: timestamp("claim_token_expires_at"),
   autoNotificationEnabled: boolean("auto_notification_enabled").default(true).notNull(),
   lastNotificationSent: timestamp("last_notification_sent"),
-  // Additional fields for database consistency
-  subscriptionType: text("subscription_type"), // For subscription management
-  verificationRequestedAt: timestamp("verification_requested_at"), // For verification workflow
-  stripeCustomerId: text("stripe_customer_id"), // For Stripe integration
-  contactEmail: text("contact_email"), // For contact information
-  subscriptionStartDate: timestamp("subscription_start_date"), // For subscription tracking
-  subscriptionEndDate: timestamp("subscription_end_date"), // For subscription expiry tracking
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  phoneFixed: text("phone_fixed"),
+  phoneMobile: text("phone_mobile"),
+  pec: text("pec"),
+  vatNumber: text("vat_number"),
+  fiscalCode: text("fiscal_code"),
+  facebookUrl: text("facebook_url"),
+  instagramUrl: text("instagram_url"),
+  linkedinUrl: text("linkedin_url"),
+  twitterUrl: text("twitter_url"),
+  whatsappNumber: text("whatsapp_number"),
+  additionalCities: text("additional_cities").array(),
+  latitude: decimal("latitude", { precision: 10, scale: 8 }),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }),
+  geocodedAt: timestamp("geocoded_at"),
 });
 
 // Tabella per tracciare le notifiche inviate ai professionisti

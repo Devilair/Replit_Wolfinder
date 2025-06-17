@@ -1584,10 +1584,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update professional to premium
       await storage.updateProfessional(professional.id, {
-        subscriptionType: 'premium',
-        subscriptionStartDate: new Date(),
-        subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        isPremium: true
+        isPremium: true,
+        updatedAt: new Date()
       });
 
       // Add real-time notification to admin dashboard
