@@ -1,4 +1,4 @@
-import { geocodingCache } from './geocoding-cache';
+import { geocodingService } from './geocoding-service';
 import { db } from './db';
 import { professionalStateManager } from './professional-state-manager';
 

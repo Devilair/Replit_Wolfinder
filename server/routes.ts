@@ -5,6 +5,7 @@ import { stripeService } from "./stripe-service";
 import { geocodingService } from "./geocoding-service";
 import { emailService } from "./email-service";
 import { authService, AuthUser } from "./auth";
+import { authManager, type TokenPayload } from './auth-manager';
 import Stripe from "stripe";
 import path from "path";
 import fs from "fs";

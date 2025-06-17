@@ -60,23 +60,27 @@ class TokenStorage {
   revokeFamily(tokenFamily: string): void {
     const familySet = this.familyTokens.get(tokenFamily);
     if (familySet) {
-      for (const tokenId of familySet) {
+      familySet.forEach(tokenId => {
         const token = this.tokens.get(tokenId);
         if (token) {
           token.isRevoked = true;
         }
-      }
+      });
     }
   }
 
   // Cleanup expired tokens
   cleanup(): void {
     const now = Date.now();
-    for (const [tokenId, token] of this.tokens.entries()) {
+    const tokensToDelete: string[] = [];
+    
+    this.tokens.forEach((token, tokenId) => {
       if (now > token.expiresAt.getTime()) {
-        this.delete(tokenId);
+        tokensToDelete.push(tokenId);
       }
-    }
+    });
+    
+    tokensToDelete.forEach(tokenId => this.delete(tokenId));
   }
 }
 
@@ -240,28 +244,28 @@ export class AuthManager {
 
   async revokeAllUserTokens(userId: number): Promise<void> {
     // Find all tokens for this user and revoke their families
-    const userFamilies = new Set<string>();
+    const userFamilies: string[] = [];
     
-    for (const [tokenId, token] of tokenStorage['tokens'].entries()) {
-      if (token.userId === userId) {
-        userFamilies.add(token.tokenFamily);
+    tokenStorage['tokens'].forEach((token, tokenId) => {
+      if (token.userId === userId && userFamilies.indexOf(token.tokenFamily) === -1) {
+        userFamilies.push(token.tokenFamily);
       }
-    }
+    });
 
-    for (const family of userFamilies) {
+    userFamilies.forEach(family => {
       tokenStorage.revokeFamily(family);
-    }
+    });
   }
 
   getTokenStats(): { totalTokens: number; activeTokens: number } {
     let activeCount = 0;
     const now = Date.now();
     
-    for (const token of tokenStorage['tokens'].values()) {
+    tokenStorage['tokens'].forEach(token => {
       if (!token.isRevoked && now <= token.expiresAt.getTime()) {
         activeCount++;
       }
-    }
+    });
 
     return {
       totalTokens: tokenStorage['tokens'].size,
