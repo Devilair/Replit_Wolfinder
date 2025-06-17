@@ -783,104 +783,278 @@ export class DatabaseStorage implements IStorage {
         let currentValue = 0;
         let targetValue = 1;
 
-        // Calculate progress based on badge type
+        // Calculate progress based on badge type - UNIFIED SYSTEM
         switch (badge.slug) {
-          case 'complete-profile':
-            const hasDescription = professional.description && professional.description.length >= 50;
-            const hasContactInfo = professional.phoneFixed || professional.phoneMobile;
-            const hasAddress = professional.address && professional.city;
-            const hasBusinessInfo = professional.businessName;
-            currentValue = [hasDescription, hasContactInfo, hasAddress, hasBusinessInfo].filter(Boolean).length;
-            targetValue = 4;
+          // ESPERIENZA BADGES
+          case 'primo-cliente':
+            const isVerifiedPrimo = professional.verificationStatus === 'approved';
+            const isClaimedPrimo = professional.isClaimed;
+            progress = (isVerifiedPrimo && isClaimedPrimo) ? 100 : 0;
+            currentValue = (isVerifiedPrimo ? 1 : 0) + (isClaimedPrimo ? 1 : 0);
+            targetValue = 2;
+            break;
+
+          case 'cliente-fedele':
+            // Clienti ricorrenti - per ora basato su recensioni multiple
+            currentValue = Math.max(0, (professional.reviewCount || 0) - 1);
+            targetValue = 1;
+            progress = currentValue >= 1 ? 100 : 0;
+            break;
+
+          case 'veterano':
+            const daysSinceCreation = Math.floor((Date.now() - new Date(professional.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+            currentValue = daysSinceCreation;
+            targetValue = 730; // 2 anni
+            progress = Math.min((currentValue / targetValue) * 100, 100);
+            break;
+
+          case 'maestro':
+            const yearsActive = Math.floor((Date.now() - new Date(professional.createdAt).getTime()) / (1000 * 60 * 60 * 24 * 365));
+            const hasEnoughReviews = (professional.reviewCount || 0) >= 100;
+            const hasGoodRating = parseFloat(professional.rating || '0') >= 4.5;
+            currentValue = [yearsActive >= 5, hasEnoughReviews, hasGoodRating].filter(Boolean).length;
+            targetValue = 3;
             progress = (currentValue / targetValue) * 100;
             break;
 
-          case 'first-review':
-            currentValue = professional.reviewCount || 0;
+          // QUALITA BADGES
+          case 'eccellenza':
+            const ratingEcc = parseFloat(professional.rating || '0');
+            const reviewsEcc = professional.reviewCount || 0;
+            currentValue = ratingEcc >= 4.8 && reviewsEcc >= 20 ? 100 : 0;
+            targetValue = 100;
+            progress = currentValue;
+            break;
+
+          case 'perfezione':
+            const ratingPerf = parseFloat(professional.rating || '0');
+            const reviewsPerf = professional.reviewCount || 0;
+            currentValue = ratingPerf >= 4.9 && reviewsPerf >= 50 ? 100 : 0;
+            targetValue = 100;
+            progress = currentValue;
+            break;
+
+          case 'veloce-risposta':
+            // Placeholder - necessita implementazione sistema tempi risposta
+            progress = 0;
+            currentValue = 0;
             targetValue = 1;
-            progress = Math.min((currentValue / targetValue) * 100, 100);
             break;
 
-          case 'five-reviews':
-            currentValue = professional.reviewCount || 0;
-            targetValue = 5;
-            progress = Math.min((currentValue / targetValue) * 100, 100);
+          case 'sempre-disponibile':
+            // Placeholder - necessita implementazione sistema disponibilità
+            progress = 0;
+            currentValue = 0;
+            targetValue = 1;
             break;
 
-          case 'ten-reviews':
-            currentValue = professional.reviewCount || 0;
-            targetValue = 10;
-            progress = Math.min((currentValue / targetValue) * 100, 100);
-            break;
-
-          case 'excellence-rating':
-            const rating = parseFloat(professional.rating || '0');
-            currentValue = rating;
-            targetValue = 4.5;
-            progress = rating >= 4.5 ? 100 : (rating / targetValue) * 100;
-            break;
-
-          case 'profile-views-100':
+          // ENGAGEMENT BADGES
+          case 'popolare':
             currentValue = professional.profileViews || 0;
             targetValue = 100;
             progress = Math.min((currentValue / targetValue) * 100, 100);
             break;
 
+          case 'influencer':
+            currentValue = professional.profileViews || 0;
+            targetValue = 500;
+            progress = Math.min((currentValue / targetValue) * 100, 100);
+            break;
+
+          case 'comunicatore':
+            const hasCompleteProfile = professional.description && professional.description.length >= 100;
+            const hasSocialMedia = professional.facebookUrl || professional.instagramUrl || professional.linkedinUrl;
+            currentValue = [hasCompleteProfile, hasSocialMedia].filter(Boolean).length;
+            targetValue = 2;
+            progress = (currentValue / targetValue) * 100;
+            break;
+
+          case 'referenze-oro':
+            currentValue = professional.reviewCount || 0;
+            targetValue = 15;
+            progress = Math.min((currentValue / targetValue) * 100, 100);
+            break;
+
+          // ECCELLENZA BADGES
+          case 'leader-categoria':
+            // Placeholder - necessita implementazione ranking
+            progress = 0;
+            currentValue = 0;
+            targetValue = 1;
+            break;
+
+          case 'hall-of-fame':
+            const ratingHOF = parseFloat(professional.rating || '0');
+            const reviewsHOF = professional.reviewCount || 0;
+            const yearsHOF = Math.floor((Date.now() - new Date(professional.createdAt).getTime()) / (1000 * 60 * 60 * 24 * 365));
+            currentValue = [ratingHOF >= 4.95, reviewsHOF >= 500, yearsHOF >= 3].filter(Boolean).length;
+            targetValue = 3;
+            progress = (currentValue / targetValue) * 100;
+            break;
+
+          case 'profilo-premium':
+            // Placeholder - necessita integrazione abbonamenti
+            progress = 0;
+            currentValue = 0;
+            targetValue = 1;
+            break;
+
+          case 'innovatore':
+            // Badge manuale
+            progress = isEarned ? 100 : 0;
+            currentValue = isEarned ? 1 : 0;
+            targetValue = 1;
+            break;
+
           default:
             progress = isEarned ? 100 : 0;
+            currentValue = isEarned ? 1 : 0;
+            targetValue = 1;
             break;
         }
 
-        // Create requirements based on badge slug
+        // Create requirements based on badge slug - UNIFIED SYSTEM
         let requirements = [];
         switch (badge.slug) {
-          case 'complete-profile':
-            const hasDescription = professional.description && professional.description.length >= 50;
-            const hasContactInfo = professional.phoneFixed || professional.phoneMobile;
-            const hasAddress = professional.address && professional.city;
-            const hasBusinessInfo = professional.businessName;
+          // ESPERIENZA BADGES
+          case 'primo-cliente':
+            const isVerifiedReq = professional.verificationStatus === 'approved';
+            const isClaimedReq = professional.isClaimed;
             requirements = [
-              { text: "Descrizione completa (min 50 caratteri)", completed: hasDescription },
-              { text: "Informazioni di contatto", completed: hasContactInfo },
-              { text: "Indirizzo completo", completed: hasAddress },
-              { text: "Nome attività", completed: hasBusinessInfo }
+              { text: "Profilo verificato", completed: isVerifiedReq },
+              { text: "Profilo reclamato", completed: isClaimedReq }
             ];
             break;
-          case 'first-review':
+
+          case 'cliente-fedele':
             requirements = [
-              { text: "Ricevere la prima recensione", completed: (professional.reviewCount || 0) >= 1 }
+              { text: "Ricevere recensioni da clienti ricorrenti", completed: (professional.reviewCount || 0) > 1 }
             ];
             break;
-          case 'five-reviews':
+
+          case 'veterano':
+            const daysSince = Math.floor((Date.now() - new Date(professional.createdAt).getTime()) / (1000 * 60 * 60 * 24));
             requirements = [
-              { text: "Ricevere 5 recensioni", completed: (professional.reviewCount || 0) >= 5 }
+              { text: "Profilo attivo da oltre 2 anni", completed: daysSince >= 730 },
+              { text: "Almeno 50 recensioni", completed: (professional.reviewCount || 0) >= 50 }
             ];
             break;
-          case 'ten-reviews':
+
+          case 'maestro':
+            const yearsActiveReq = Math.floor((Date.now() - new Date(professional.createdAt).getTime()) / (1000 * 60 * 60 * 24 * 365));
+            const reviewCountReq = professional.reviewCount || 0;
+            const ratingReq = parseFloat(professional.rating || '0');
             requirements = [
-              { text: "Ricevere 10 recensioni", completed: (professional.reviewCount || 0) >= 10 }
+              { text: "Profilo attivo da oltre 5 anni", completed: yearsActiveReq >= 5 },
+              { text: "Almeno 200 recensioni", completed: reviewCountReq >= 200 }
             ];
             break;
-          case 'excellence-rating':
-            const rating = parseFloat(professional.rating || '0');
+
+          // QUALITA BADGES  
+          case 'eccellenza':
+            const ratingEccReq = parseFloat(professional.rating || '0');
+            const reviewsEccReq = professional.reviewCount || 0;
             requirements = [
-              { text: "Mantenere rating medio ≥ 4.5 stelle", completed: rating >= 4.5 }
+              { text: "Rating medio >= 4.8", completed: ratingEccReq >= 4.8 },
+              { text: "Almeno 20 recensioni", completed: reviewsEccReq >= 20 }
             ];
             break;
-          case 'profile-views-100':
+
+          case 'perfezione':
+            const ratingPerfReq = parseFloat(professional.rating || '0');
+            const reviewsPerfReq = professional.reviewCount || 0;
             requirements = [
-              { text: "Raggiungere 100 visualizzazioni profilo", completed: (professional.profileViews || 0) >= 100 }
+              { text: "Rating medio >= 4.9", completed: ratingPerfReq >= 4.9 },
+              { text: "Almeno 50 recensioni", completed: reviewsPerfReq >= 50 }
             ];
             break;
+
+          case 'veloce-risposta':
+            requirements = [
+              { text: "Tempo di risposta medio <= 2 ore", completed: false }
+            ];
+            break;
+
+          case 'sempre-disponibile':
+            requirements = [
+              { text: "Tasso di risposta >= 95%", completed: false },
+              { text: "Tempo di risposta <= 1 ora", completed: false }
+            ];
+            break;
+
+          // ENGAGEMENT BADGES
+          case 'popolare':
+            const viewsReq = professional.profileViews || 0;
+            requirements = [
+              { text: "Almeno 100 visualizzazioni profilo al mese", completed: viewsReq >= 100 }
+            ];
+            break;
+
+          case 'influencer':
+            const viewsInflReq = professional.profileViews || 0;
+            const hasSocialReq = professional.facebookUrl || professional.instagramUrl || professional.linkedinUrl;
+            requirements = [
+              { text: "Almeno 500 visualizzazioni profilo al mese", completed: viewsInflReq >= 500 },
+              { text: "Condivisioni social attive", completed: !!hasSocialReq }
+            ];
+            break;
+
+          case 'comunicatore':
+            const hasDescReq = professional.description && professional.description.length >= 100;
+            const hasContactsReq = professional.phoneFixed || professional.phoneMobile;
+            const hasSocialComReq = professional.facebookUrl || professional.instagramUrl || professional.linkedinUrl;
+            requirements = [
+              { text: "Contatti completi", completed: !!hasContactsReq },
+              { text: "Descrizione dettagliata (>=100 char)", completed: !!hasDescReq },
+              { text: "Presenza social", completed: !!hasSocialComReq }
+            ];
+            break;
+
+          case 'referenze-oro':
+            const reviewsRefReq = professional.reviewCount || 0;
+            const ratingRefReq = parseFloat(professional.rating || '0');
+            requirements = [
+              { text: "Almeno 15 recensioni dettagliate", completed: reviewsRefReq >= 15 },
+              { text: "Rating medio >= 4.7", completed: ratingRefReq >= 4.7 }
+            ];
+            break;
+
+          // ECCELLENZA BADGES
+          case 'leader-categoria':
+            requirements = [
+              { text: ">=50 recensioni", completed: (professional.reviewCount || 0) >= 50 },
+              { text: ">=200 visualizzazioni", completed: (professional.profileViews || 0) >= 200 },
+              { text: "Rating >=4.7", completed: parseFloat(professional.rating || '0') >= 4.7 }
+            ];
+            break;
+
+          case 'hall-of-fame':
+            const ratingHOFReq = parseFloat(professional.rating || '0');
+            const reviewsHOFReq = professional.reviewCount || 0;
+            const yearsHOFReq = Math.floor((Date.now() - new Date(professional.createdAt).getTime()) / (1000 * 60 * 60 * 24 * 365));
+            requirements = [
+              { text: "Rating >=4.95", completed: ratingHOFReq >= 4.95 },
+              { text: ">=500 recensioni", completed: reviewsHOFReq >= 500 },
+              { text: ">=3 anni di attività", completed: yearsHOFReq >= 3 }
+            ];
+            break;
+
+          case 'profilo-premium':
+            requirements = [
+              { text: "Abbonamento Premium richiesto", completed: false },
+              { text: "Profilo completato al 100%", completed: false }
+            ];
+            break;
+
+          case 'innovatore':
+            requirements = [
+              { text: "Portfolio con progetti innovativi", completed: isEarned },
+              { text: "Feedback su innovazione", completed: isEarned }
+            ];
+            break;
+
           default:
-            if (badge.requirements && Array.isArray(badge.requirements)) {
-              requirements = badge.requirements.map(req => ({
-                text: req,
-                completed: isEarned
-              }));
-            } else {
-              requirements = [{ text: badge.description, completed: isEarned }];
-            }
+            requirements = [{ text: badge.description || "Requisiti non specificati", completed: isEarned }];
             break;
         }
 
