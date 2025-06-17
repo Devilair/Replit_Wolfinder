@@ -1829,7 +1829,7 @@ export class DatabaseStorage implements IStorage {
         today: todayUsers?.count || 0,
         week: weeklyUsers?.count || 0,
         month: monthlyUsers?.count || 0,
-        changePercent: 8.3
+        changePercent: 0
       },
       reviews: {
         total: totalReviews?.count || 0,
@@ -1845,9 +1845,9 @@ export class DatabaseStorage implements IStorage {
         newThisWeek: weekProfessionals?.count || 0
       },
       revenue: {
-        monthToDate: monthlyRevenue,
-        projectedMonthly: monthlyRevenue * 2.1,
-        subscriptionConversion: ((activeSubscriptions?.count || 0) / (totalProfessionals?.count || 1)) * 100
+        monthToDate: 0,
+        projectedMonthly: 0,
+        subscriptionConversion: 0
       }
     };
   }
