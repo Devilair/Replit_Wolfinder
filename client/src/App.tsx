@@ -84,6 +84,7 @@ function Router() {
       <Route path="/register-consumer" component={RegisterConsumer} />
       <Route path="/login" component={LoginPage} />
       <Route path="/verify-email" component={VerifyEmail} />
+      <Route path="/verify-email/:token" component={VerifyEmail} />
       <Route path="/register-professional" component={RegisterProfessional} />
       
       {/* User Dashboard */}
