@@ -830,34 +830,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create review
-  app.post("/api/professionals/:id/reviews", async (req, res) => {
+  // Create review with hybrid role system
+  app.post("/api/professionals/:id/reviews", authService.authenticateToken, async (req: any, res) => {
     try {
       const professionalId = parseInt(req.params.id);
       if (isNaN(professionalId)) {
         return res.status(400).json({ message: "Invalid professional ID" });
       }
 
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      // Get professional details
+      const professional = await storage.getProfessional(professionalId);
+      if (!professional) {
+        return res.status(404).json({ message: "Professional not found" });
+      }
+
+      // Get reviewer's professional profile (if they are a professional)
+      let reviewerProfessional = null;
+      let reviewerRole = "user";
+      let reviewerCategoryId = null;
+
+      if (user.role === "professional" && user.permissions?.includes("can_review")) {
+        reviewerProfessional = await storage.getProfessionalByUserId(user.id);
+        if (reviewerProfessional) {
+          reviewerRole = "professional";
+          reviewerCategoryId = reviewerProfessional.categoryId;
+          
+          // Prevent same-category reviews
+          if (reviewerProfessional.categoryId === professional.categoryId) {
+            return res.status(403).json({ 
+              message: "I professionisti non possono recensire colleghi della stessa categoria"
+            });
+          }
+        }
+      }
+
       const result = insertReviewSchema.safeParse({
         ...req.body,
-        professionalId
+        professionalId,
+        userId: user.id
       });
 
       if (!result.success) {
         return res.status(400).json({ message: "Invalid review data", errors: result.error.errors });
       }
 
-      // Get professional details to check if profile is claimed
-      const professional = await storage.getProfessional(professionalId);
-      if (!professional) {
-        return res.status(404).json({ message: "Professional not found" });
-      }
+      // Create the review with role transparency data
+      const reviewData = {
+        ...result.data,
+        reviewerRole,
+        reviewerCategoryId
+      };
 
-      // Create the review
-      const review = await storage.createReview(result.data);
+      const review = await storage.createReview(reviewData);
 
       // Get reviewer details for email notification
-      const reviewer = await storage.getUser(result.data.userId);
+      const reviewer = await storage.getUser(user.id);
       
       // Send automatic email notification if profile is unclaimed and has email
       if (!professional.isClaimed && professional.email && professional.autoNotificationEnabled && reviewer) {

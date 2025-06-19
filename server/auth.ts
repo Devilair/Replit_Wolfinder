@@ -113,6 +113,7 @@ export class AuthService {
     userType: 'user' | 'professional';
     businessName?: string;
     categoryId?: number;
+    permissions?: string[];
   }): Promise<LoginResult> {
     try {
       // Controlla se l'email esiste già
@@ -129,6 +130,7 @@ export class AuthService {
         password: passwordHash,
         name: data.name,
         role: data.userType,
+        permissions: data.permissions || [],
         isVerified: false,
         privacyConsent: data.privacyConsent || false,
         marketingConsent: data.marketingConsent || false
