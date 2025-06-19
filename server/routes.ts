@@ -207,13 +207,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Devi accettare i termini di servizio e la privacy policy" });
       }
 
-      // Create user first
+      // Create user first with professional permissions
       const userResult = await authService.registerUser({
         name: validatedData.businessName,
         username: validatedData.email, // Use email as username for professionals
         email: validatedData.email,
         password: validatedData.password,
-        userType: "professional"
+        userType: "professional",
+        permissions: ["can_review"] // Assign review permission to professionals
       });
       
       if (!userResult.success) {
