@@ -35,6 +35,7 @@ import LoginPage from "@/pages/login";
 import RegisterProfessional from "@/pages/register-professional";
 import BadgeDashboard from "@/pages/badge-dashboard";
 import ProfessionalDashboard from "@/pages/dashboard/professional";
+import UserDashboard from "@/pages/dashboard/user";
 import ChiSiamo from "@/pages/about/chi-siamo";
 import LaNostraStoria from "@/pages/about/la-nostra-storia";
 import Privacy from "@/pages/about/privacy";
@@ -82,6 +83,9 @@ function Router() {
       <Route path="/login" component={LoginPage} />
       <Route path="/verify-email" component={VerifyEmail} />
       <Route path="/register-professional" component={RegisterProfessional} />
+      
+      {/* User Dashboard */}
+      <Route path="/dashboard/user" component={UserDashboard} />
       
       {/* Professional Dashboard */}
       <Route path="/dashboard" component={ProfessionalDashboard} />
