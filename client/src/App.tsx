@@ -36,7 +36,7 @@ import RegisterProfessional from "@/pages/register-professional";
 import RegisterConsumer from "@/pages/auth/register-consumer";
 import BadgeDashboard from "@/pages/badge-dashboard";
 import ProfessionalDashboard from "@/pages/dashboard/professional";
-import UserDashboard from "@/pages/dashboard/user";
+import UserDashboard from "@/pages/user-dashboard";
 import ChiSiamo from "@/pages/about/chi-siamo";
 import LaNostraStoria from "@/pages/about/la-nostra-storia";
 import Privacy from "@/pages/about/privacy";

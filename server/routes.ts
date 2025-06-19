@@ -5426,20 +5426,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: result.error });
       }
 
-      // Create consumer profile
-      try {
-        await storage.createConsumer({
-          userId: result.user!.id,
-          preferences: JSON.stringify({
-            language: "it",
-            notifications: true,
-            showRealName: false
-          })
-        });
-      } catch (consumerError) {
-        console.error("Error creating consumer profile:", consumerError);
-      }
-
       res.json({ 
         message: "Registrazione completata con successo. Controlla la tua email per verificare l'account.",
         user: {
@@ -5456,7 +5442,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===== USER DASHBOARD ENDPOINTS =====
 
-  // Get user's reviews
+  // GET /api/users/dashboard - Complete user dashboard data
+  app.get("/api/users/dashboard", authService.authenticateToken, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Get user details
+      const userDetails = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          isEmailVerified: users.isEmailVerified,
+          createdAt: users.createdAt
+        })
+        .from(users)
+        .where(eq(users.id, user.id))
+        .limit(1);
+
+      if (!userDetails.length) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Get user statistics
+      const [reviewsCount] = await db
+        .select({ count: count() })
+        .from(reviews)
+        .where(eq(reviews.userId, user.id));
+
+      const [favoritesCount] = await db
+        .select({ count: count() })
+        .from(favorites)
+        .where(eq(favorites.userId, user.id));
+
+      // Get recent reviews
+      const recentReviews = await db
+        .select({
+          id: reviews.id,
+          title: reviews.title,
+          rating: reviews.rating,
+          status: reviews.status,
+          createdAt: reviews.createdAt,
+          professionalName: professionals.businessName
+        })
+        .from(reviews)
+        .innerJoin(professionals, eq(reviews.professionalId, professionals.id))
+        .where(eq(reviews.userId, user.id))
+        .orderBy(desc(reviews.createdAt))
+        .limit(5);
+
+      // Get user favorites
+      const favorites = await db
+        .select({
+          id: userFavorites.id,
+          professionalId: userFavorites.professionalId,
+          businessName: professionals.businessName,
+          city: professionals.city,
+          rating: sql<string>`COALESCE(ROUND(AVG(${reviews.rating}::numeric), 1)::text, '0')`,
+          category: categories.name,
+          notes: userFavorites.notes,
+          createdAt: userFavorites.createdAt
+        })
+        .from(userFavorites)
+        .innerJoin(professionals, eq(userFavorites.professionalId, professionals.id))
+        .innerJoin(categories, eq(professionals.categoryId, categories.id))
+        .leftJoin(reviews, eq(reviews.professionalId, professionals.id))
+        .where(eq(userFavorites.userId, user.id))
+        .groupBy(
+          userFavorites.id,
+          userFavorites.professionalId,
+          professionals.businessName,
+          professionals.city,
+          categories.name,
+          userFavorites.notes,
+          userFavorites.createdAt
+        )
+        .orderBy(desc(userFavorites.createdAt))
+        .limit(10);
+
+      // Get user badges
+      const userBadges = await db
+        .select()
+        .from(userBadges)
+        .where(and(
+          eq(userBadges.userId, user.id),
+          eq(userBadges.isVisible, true)
+        ))
+        .orderBy(desc(userBadges.earnedAt));
+
+      const dashboardData = {
+        user: userDetails[0],
+        consumer: consumerProfile[0] || null,
+        stats: {
+          totalReviews: reviewsCount.count,
+          totalFavorites: favoritesCount.count,
+          helpfulVotes: helpfulVotesCount.count
+        },
+        recentReviews,
+        favorites,
+        badges: userBadges
+      };
+
+      res.json(dashboardData);
+    } catch (error) {
+      console.error("Error fetching user dashboard:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard data" });
+    }
+  });
+
+  // GET /api/users/my-reviews - Get user's reviews
   app.get("/api/users/my-reviews", authService.authenticateToken, async (req: any, res) => {
     try {
       const user = req.user;
@@ -5467,12 +5564,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userReviews = await db
         .select({
           id: reviews.id,
+          title: reviews.title,
+          content: reviews.content,
           rating: reviews.rating,
-          comment: reviews.comment,
+          competenceRating: reviews.competenceRating,
+          qualityPriceRating: reviews.qualityPriceRating,
+          communicationRating: reviews.communicationRating,
+          punctualityRating: reviews.punctualityRating,
           status: reviews.status,
           createdAt: reviews.createdAt,
           updatedAt: reviews.updatedAt,
-          moderationNote: reviews.moderationNote,
+          helpfulCount: reviews.helpfulCount,
           professional: {
             id: professionals.id,
             businessName: professionals.businessName,
@@ -5491,8 +5593,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user's saved professionals
-  app.get("/api/users/saved-professionals", authService.authenticateToken, async (req: any, res) => {
+  // GET /api/users/favorites - Get user's favorite professionals
+  app.get("/api/users/favorites", authService.authenticateToken, async (req: any, res) => {
     try {
       const user = req.user;
       if (!user) {

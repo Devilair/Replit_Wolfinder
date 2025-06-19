@@ -13,8 +13,19 @@ import {
   User, Star, Heart, MessageSquare, Settings, 
   Trophy, Download, Shield, Bell, MapPin 
 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+
+// Simple auth hook using localStorage
+function useAuth() {
+  const logout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/";
+  };
+  
+  const user = { id: 1, name: "Utente" }; // Simplified for now
+  
+  return { user, logout };
+}
 
 interface UserDashboardData {
   user: {
