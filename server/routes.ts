@@ -183,6 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create user account
       const result = await authService.registerUser({
         name,
+        username: email, // Use email as username for now
         email,
         password,
         userType: "user"
@@ -192,23 +193,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: result.error });
       }
 
-      // Create consumer profile
+      // Generate email verification token and send email
       if (result.user) {
+        const verificationToken = await authService.generateEmailVerificationToken(result.user.id);
+        
+        // Create consumer profile
         await storage.createConsumer({
           userId: result.user.id,
           emailNotifications: true,
           marketingEmails: !!req.body.marketingConsent
         });
 
+        // Send verification email
+        await emailService.sendVerificationEmail({
+          to: email,
+          name: name,
+          verificationToken: verificationToken
+        });
+
         // Log user activity
-        await storage.logUserActivity({
-          userId: result.user.id,
-          activityType: "account_created",
-          entityType: "user",
-          entityId: result.user.id,
-          metadata: { registrationType: "consumer" },
-          ipAddress: req.ip,
-          userAgent: req.get('User-Agent')
+        await storage.logActivity(result.user.id, "account_created", {
+          registrationType: "consumer",
+          emailSent: true
         });
       }
 

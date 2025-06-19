@@ -722,6 +722,85 @@ Wolfinder - La piattaforma di fiducia per professionisti in Italia
       text: textContent
     };
   }
+
+  async sendVerificationEmail(data: { to: string; name: string; verificationToken: string }): Promise<boolean> {
+    if (!this.mailService) {
+      console.warn("SendGrid non configurato - email di verifica non inviata");
+      return false;
+    }
+
+    try {
+      const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5000'}/verify-email/${data.verificationToken}`;
+      
+      const msg = {
+        to: data.to,
+        from: { 
+          email: 'noreply@wolfinder.it',
+          name: 'Wolfinder'
+        },
+        subject: 'Verifica il tuo account Wolfinder',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #2563eb; margin-bottom: 10px;">Wolfinder</h1>
+              <p style="color: #64748b; margin: 0;">La piattaforma di fiducia per professionisti</p>
+            </div>
+            
+            <h2 style="color: #1e293b;">Verifica il tuo account</h2>
+            <p>Ciao ${data.name},</p>
+            <p>Grazie per esserti registrato su Wolfinder! Per completare la registrazione e attivare il tuo account, clicca sul pulsante qui sotto:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${verificationUrl}" 
+                 style="background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px;">
+                Verifica Email
+              </a>
+            </div>
+            
+            <p>Se il pulsante non funziona, copia e incolla questo link nel tuo browser:</p>
+            <p style="background-color: #f1f5f9; padding: 12px; border-radius: 6px; word-break: break-all; font-family: monospace; font-size: 14px;">
+              ${verificationUrl}
+            </p>
+            
+            <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 25px 0;">
+              <p style="margin: 0;"><strong>Importante:</strong> Questo link scadrà tra 24 ore per motivi di sicurezza.</p>
+            </div>
+            
+            <p>Se non hai richiesto questa registrazione, puoi ignorare questa email.</p>
+            
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+            <p style="color: #64748b; font-size: 14px; text-align: center;">
+              Il team Wolfinder<br>
+              <a href="mailto:supporto@wolfinder.it" style="color: #2563eb;">supporto@wolfinder.it</a>
+            </p>
+          </div>
+        `,
+        text: `
+Wolfinder - Verifica il tuo account
+
+Ciao ${data.name},
+
+Grazie per esserti registrato su Wolfinder! Per completare la registrazione, verifica il tuo indirizzo email visitando questo link:
+
+${verificationUrl}
+
+Questo link è valido per 24 ore. Se non verifichi il tuo account entro questo periodo, dovrai registrarti nuovamente.
+
+Se non ti sei registrato su Wolfinder, ignora questa email.
+
+Il team Wolfinder
+supporto@wolfinder.it
+        `
+      };
+
+      await this.mailService.send(msg);
+      console.log(`Email di verifica inviata a ${data.to}`);
+      return true;
+    } catch (error) {
+      console.error('Errore invio email verifica:', error);
+      return false;
+    }
+  }
 }
 
 export const emailService = new EmailService();
