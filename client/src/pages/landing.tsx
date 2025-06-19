@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Link, useRouter } from "wouter";
+import { Link, useLocation } from "wouter";
 
 interface Category {
   id: number;
@@ -33,7 +33,7 @@ export default function Landing() {
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [registrationModalOpen, setRegistrationModalOpen] = useState(false);
-  const router = useRouter();
+  const [, setLocation] = useLocation();
 
   const { data: categories = [] } = useQuery({
     queryKey: ['/api/categories'],
@@ -92,7 +92,7 @@ export default function Landing() {
                       className="cursor-pointer hover:bg-gray-50 transition-colors"
                       onClick={() => {
                         setRegistrationModalOpen(false);
-                        router.push("/register-consumer");
+                        setLocation("/register-consumer");
                       }}
                     >
                       <CardHeader className="pb-3">
@@ -115,7 +115,7 @@ export default function Landing() {
                       className="cursor-pointer hover:bg-gray-50 transition-colors"
                       onClick={() => {
                         setRegistrationModalOpen(false);
-                        router.push("/register-professional");
+                        setLocation("/register-professional");
                       }}
                     >
                       <CardHeader className="pb-3">
