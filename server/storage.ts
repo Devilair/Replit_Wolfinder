@@ -88,6 +88,9 @@ export interface IStorage {
   // Reviews
   getReviewsByProfessional(professionalId: number): Promise<(Review & { user: User })[]>;
   createReview(review: InsertReview): Promise<Review>;
+  getReview(id: number): Promise<Review | undefined>;
+  updateReview(id: number, updates: Partial<Review>): Promise<Review>;
+  getUserReviews(userId: number): Promise<(Review & { professional: Professional })[]>;
 
   // Badge System
   getBadges(): Promise<Badge[]>;
@@ -628,6 +631,37 @@ export class DatabaseStorage implements IStorage {
     await this.updateProfessionalRating(insertReview.professionalId);
 
     return review;
+  }
+
+  async getReview(id: number): Promise<Review | undefined> {
+    const [review] = await db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.id, id));
+    return review;
+  }
+
+  async updateReview(id: number, updates: Partial<Review>): Promise<Review> {
+    const [updated] = await db
+      .update(reviews)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(reviews.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getUserReviews(userId: number): Promise<(Review & { professional: Professional })[]> {
+    const results = await db
+      .select()
+      .from(reviews)
+      .leftJoin(professionals, eq(reviews.professionalId, professionals.id))
+      .where(eq(reviews.userId, userId))
+      .orderBy(desc(reviews.createdAt));
+
+    return results.map(result => ({
+      ...result.reviews,
+      professional: result.professionals!,
+    }));
   }
 
   async getBadges(): Promise<Badge[]> {
