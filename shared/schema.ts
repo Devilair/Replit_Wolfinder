@@ -882,6 +882,20 @@ export const plans = pgTable("plans", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Tabella per i favoriti degli utenti
+export const userFavorites = pgTable("user_favorites", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  professionalId: integer("professional_id").references(() => professionals.id, { onDelete: "cascade" }).notNull(),
+  notes: text("notes"),
+  tags: jsonb("tags").default('[]'),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  // Unique constraint per evitare duplicati
+  uniqueUserProfessional: unique().on(table.userId, table.professionalId)
+}));
+
 // Aggiorna campo professional per collegamento al piano
 export const professionalPlans = pgTable("professional_plans", {
   id: serial("id").primaryKey(),
@@ -1199,18 +1213,10 @@ export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type VerificationDocument = typeof verificationDocuments.$inferSelect;
 export type InsertVerificationDocument = typeof verificationDocuments.$inferInsert;
 
-// User favorites system - professionisti salvati
-export const userFavorites = pgTable("user_favorites", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  professionalId: integer("professional_id").references(() => professionals.id, { onDelete: "cascade" }).notNull(),
-  notes: text("notes"), // Note personali dell'utente
-  tags: jsonb("tags").default('[]'), // Tag personalizzati
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-}, (table) => ({
-  uniqueUserFavorite: unique().on(table.userId, table.professionalId),
-}));
+// User favorites system - types and schemas
+export const insertUserFavoriteSchema = createInsertSchema(userFavorites);
+export type UserFavorite = typeof userFavorites.$inferSelect;
+export type InsertUserFavorite = z.infer<typeof insertUserFavoriteSchema>;
 
 // Review drafts for anonymous review flow
 export const reviewDrafts = pgTable("review_drafts", {

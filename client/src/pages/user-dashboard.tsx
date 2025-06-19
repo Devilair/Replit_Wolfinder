@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   User, Star, Heart, MessageSquare, Settings, 
-  Trophy, Download, Shield, Bell, MapPin 
+  Trophy, Download, Shield, Bell, MapPin, Edit2, Trash2, BookOpen, FileText 
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -59,8 +59,11 @@ interface UserDashboardData {
     id: number;
     professionalId: number;
     professionalName: string;
+    businessName: string;
     category: string;
-    notes: string;
+    city: string;
+    rating: string;
+    notes?: string;
     tags: string[];
     createdAt: string;
   }>;

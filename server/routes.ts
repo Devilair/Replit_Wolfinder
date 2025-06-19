@@ -13,7 +13,7 @@ import { performHealthCheck } from './health-check';
 import { pool, db } from "./db";
 import { 
   users, professionals, categories, reviews, subscriptions, subscriptionPlans, 
-  claimRequests, badges, professionalBadges, auditLogs
+  claimRequests, badges, professionalBadges, auditLogs, userFavorites
 } from "@shared/schema";
 import { eq, and, or, like, desc, asc, isNull, sql, count, gte, lte, inArray } from "drizzle-orm";
 import Stripe from "stripe";
@@ -5679,7 +5679,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // GET /api/users/favorites - Get user's favorite professionals (placeholder for future implementation)
+  // GET /api/users/favorites - Get user's favorite professionals
   app.get("/api/users/favorites", authService.authenticateToken, async (req: any, res) => {
     try {
       const user = req.user;
@@ -5687,11 +5687,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "User not found" });
       }
 
-      // Return empty array until favorites table is implemented
-      res.json([]);
+      const favorites = await db
+        .select({
+          id: userFavorites.id,
+          professionalId: userFavorites.professionalId,
+          notes: userFavorites.notes,
+          tags: userFavorites.tags,
+          createdAt: userFavorites.createdAt,
+          professionalName: professionals.businessName,
+          businessName: professionals.businessName,
+          category: categories.name,
+          city: professionals.city,
+          rating: professionals.rating
+        })
+        .from(userFavorites)
+        .innerJoin(professionals, eq(userFavorites.professionalId, professionals.id))
+        .leftJoin(categories, eq(professionals.categoryId, categories.id))
+        .where(eq(userFavorites.userId, user.id))
+        .orderBy(desc(userFavorites.createdAt));
+
+      res.json(userFavorites);
     } catch (error) {
       console.error("Error fetching user favorites:", error);
       res.status(500).json({ message: "Failed to fetch favorites" });
+    }
+  });
+
+  // POST /api/users/favorites - Add professional to favorites
+  app.post("/api/users/favorites", authService.authenticateToken, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const { professionalId, notes, tags } = req.body;
+
+      if (!professionalId) {
+        return res.status(400).json({ message: "Professional ID is required" });
+      }
+
+      // Check if professional exists
+      const professional = await db
+        .select()
+        .from(professionals)
+        .where(eq(professionals.id, professionalId))
+        .limit(1);
+
+      if (professional.length === 0) {
+        return res.status(404).json({ message: "Professional not found" });
+      }
+
+      // Check if already in favorites
+      const existingFavorite = await db
+        .select()
+        .from(userFavorites)
+        .where(
+          and(
+            eq(userFavorites.userId, user.id),
+            eq(userFavorites.professionalId, professionalId)
+          )
+        )
+        .limit(1);
+
+      if (existingFavorite.length > 0) {
+        return res.status(409).json({ message: "Professional already in favorites" });
+      }
+
+      // Add to favorites
+      const [newFavorite] = await db
+        .insert(userFavorites)
+        .values({
+          userId: user.id,
+          professionalId,
+          notes: notes || null,
+          tags: tags || []
+        })
+        .returning();
+
+      res.status(201).json(newFavorite);
+    } catch (error) {
+      console.error("Error adding favorite:", error);
+      res.status(500).json({ message: "Failed to add favorite" });
+    }
+  });
+
+  // DELETE /api/users/favorites/:id - Remove favorite
+  app.delete("/api/users/favorites/:id", authService.authenticateToken, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const favoriteId = parseInt(req.params.id);
+      if (isNaN(favoriteId)) {
+        return res.status(400).json({ message: "Invalid favorite ID" });
+      }
+
+      // Check if favorite exists and belongs to user
+      const favorite = await db
+        .select()
+        .from(userFavorites)
+        .where(
+          and(
+            eq(userFavorites.id, favoriteId),
+            eq(userFavorites.userId, user.id)
+          )
+        )
+        .limit(1);
+
+      if (favorite.length === 0) {
+        return res.status(404).json({ message: "Favorite not found" });
+      }
+
+      // Remove favorite
+      await db
+        .delete(userFavorites)
+        .where(eq(userFavorites.id, favoriteId));
+
+      res.json({ message: "Favorite removed successfully" });
+    } catch (error) {
+      console.error("Error removing favorite:", error);
+      res.status(500).json({ message: "Failed to remove favorite" });
     }
   });
 
