@@ -48,20 +48,29 @@ interface UserDashboardData {
   recentReviews: Array<{
     id: number;
     title: string;
+    content: string;
     rating: number;
-    professionalName: string;
-    createdAt: string;
     status: string;
+    createdAt: string;
+    professionalName: string;
+    professionalId: number;
   }>;
   favorites: Array<{
     id: number;
     professionalId: number;
-    businessName: string;
+    professionalName: string;
     category: string;
-    city: string;
-    rating: string;
-    notes?: string;
+    notes: string;
+    tags: string[];
     createdAt: string;
+  }>;
+  drafts: Array<{
+    id: number;
+    professionalId: number;
+    professionalName: string;
+    title: string;
+    rating: number;
+    updatedAt: string;
   }>;
   badges: Array<{
     id: number;
