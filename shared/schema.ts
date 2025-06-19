@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   name: text("name").notNull(),
   role: text("role").default("user").notNull(), // 'user', 'professional', 'admin', 'moderator'
+  permissions: jsonb("permissions").default('[]'), // array of permissions like ['can_review', 'can_moderate']
   isVerified: boolean("is_verified").default(false).notNull(),
   verificationMethod: text("verification_method"), // 'email', 'phone', 'document'
   // Enhanced authentication fields
@@ -439,6 +440,10 @@ export const reviews = pgTable("reviews", {
   // Contenuto
   title: text("title"),
   content: text("content").notNull(),
+  
+  // Sistema ruoli ibridi - tracciamento trasparenza
+  reviewerRole: text("reviewer_role").notNull(), // 'user', 'professional', 'admin'
+  reviewerCategoryId: integer("reviewer_category_id").references(() => categories.id), // Solo per professionisti
   
   // Sistema di verifica avanzato
   status: text("status").default("unverified").notNull(), // unverified, pending_verification, verified, rejected
