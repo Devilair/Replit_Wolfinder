@@ -350,7 +350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { email, password, rememberMe } = req.body;
       
       if (!email || !password) {
         return res.status(400).json({ error: "Email e password richieste" });
@@ -362,10 +362,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: result.error });
       }
 
+      // Create session for remember me functionality
+      let sessionToken = null;
+      if (rememberMe && result.user) {
+        sessionToken = await authService.createSession(result.user.id, true, req);
+      }
+
+      // Generate token with appropriate expiration
+      const token = authService.generateToken(result.user!, !!rememberMe);
+
+      // Set cookies for remember me
+      if (rememberMe && sessionToken) {
+        res.cookie('sessionToken', sessionToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+          sameSite: 'strict'
+        });
+      }
+
       res.json({
         message: "Login effettuato con successo",
         user: result.user,
-        token: result.token
+        token: token,
+        rememberMe: !!rememberMe
       });
     } catch (error) {
       console.error('Login error:', error);
@@ -374,11 +394,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Logout endpoint
-  app.post('/api/auth/logout', (req, res) => {
+  app.post('/api/auth/logout', async (req, res) => {
     try {
-      // Clear any server-side session if needed
+      const sessionToken = req.cookies?.sessionToken;
+      
+      // Invalidate session if exists
+      if (sessionToken) {
+        await authService.invalidateSession(sessionToken);
+      }
+      
+      // Clear cookies
+      res.clearCookie('sessionToken');
       res.clearCookie('userToken');
-      res.clearCookie('sessionId');
       res.json({ message: 'Logout effettuato con successo' });
     } catch (error) {
       console.error('Logout error:', error);

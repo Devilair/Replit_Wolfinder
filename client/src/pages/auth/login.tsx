@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, LogIn } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -15,6 +16,7 @@ import { Link, useLocation } from "wouter";
 const loginSchema = z.object({
   email: z.string().email("Email non valida"),
   password: z.string().min(1, "Password richiesta"),
+  rememberMe: z.boolean().optional(),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -28,6 +30,7 @@ export default function Login() {
     defaultValues: {
       email: "",
       password: "",
+      rememberMe: false,
     },
   });
 
@@ -118,6 +121,18 @@ export default function Login() {
                   {form.formState.errors.password.message}
                 </p>
               )}
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="rememberMe"
+                checked={form.watch("rememberMe")}
+                onCheckedChange={(checked) => form.setValue("rememberMe", !!checked)}
+                disabled={loginMutation.isPending}
+              />
+              <Label htmlFor="rememberMe" className="text-sm font-normal">
+                Ricordami per 30 giorni
+              </Label>
             </div>
 
             <div className="flex items-center justify-between">
