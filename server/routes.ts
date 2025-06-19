@@ -5313,6 +5313,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Consumer registration endpoint
+  app.post("/api/auth/register-consumer", async (req, res) => {
+    try {
+      const { name, email, password, acceptTerms, acceptPrivacy } = req.body;
+      
+      if (!acceptTerms || !acceptPrivacy) {
+        return res.status(400).json({ error: "Devi accettare i termini di servizio e la privacy policy" });
+      }
+
+      // Create user account
+      const result = await authService.registerUser({
+        name,
+        username: email,
+        email,
+        password,
+        userType: "user"
+      });
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      // Create consumer profile
+      try {
+        await storage.createConsumer({
+          userId: result.user!.id,
+          preferences: JSON.stringify({
+            language: "it",
+            notifications: true,
+            showRealName: false
+          })
+        });
+      } catch (consumerError) {
+        console.error("Error creating consumer profile:", consumerError);
+      }
+
+      res.json({ 
+        message: "Registrazione completata con successo. Controlla la tua email per verificare l'account.",
+        user: {
+          id: result.user!.id,
+          email: result.user!.email,
+          name: result.user!.name
+        }
+      });
+    } catch (error) {
+      console.error("Consumer registration error:", error);
+      res.status(500).json({ error: "Errore durante la registrazione" });
+    }
+  });
+
   // ===== USER DASHBOARD ENDPOINTS =====
 
   // Get user's reviews

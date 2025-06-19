@@ -33,6 +33,7 @@ import Register from "@/pages/auth/register";
 import Login from "@/pages/auth/login";
 import LoginPage from "@/pages/login";
 import RegisterProfessional from "@/pages/register-professional";
+import RegisterConsumer from "@/pages/auth/register-consumer";
 import BadgeDashboard from "@/pages/badge-dashboard";
 import ProfessionalDashboard from "@/pages/dashboard/professional";
 import UserDashboard from "@/pages/dashboard/user";
@@ -80,6 +81,7 @@ function Router() {
       {/* Authentication Routes */}
       <Route path="/auth/register" component={Register} />
       <Route path="/auth/login" component={Login} />
+      <Route path="/register-consumer" component={RegisterConsumer} />
       <Route path="/login" component={LoginPage} />
       <Route path="/verify-email" component={VerifyEmail} />
       <Route path="/register-professional" component={RegisterProfessional} />

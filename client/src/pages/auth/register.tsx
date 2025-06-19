@@ -259,7 +259,7 @@ export default function Register() {
                           <SelectValue placeholder="Seleziona categoria" />
                         </SelectTrigger>
                         <SelectContent>
-                          {categories.map((category) => (
+                          {categories && Array.isArray(categories) && categories.map((category: any) => (
                             <SelectItem key={category.id} value={category.id.toString()}>
                               {category.name}
                             </SelectItem>
