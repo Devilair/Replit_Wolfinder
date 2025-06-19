@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useRouter } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,6 +8,7 @@ import { Menu, User, Briefcase, ArrowRight } from "lucide-react";
 
 export default function Header() {
   const [location] = useLocation();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [registrationModalOpen, setRegistrationModalOpen] = useState(false);
 
@@ -76,42 +77,50 @@ export default function Header() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                  <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
-                    <Link href="/register-consumer" onClick={() => setRegistrationModalOpen(false)}>
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-blue-100 rounded-lg">
-                            <User className="h-5 w-5 text-blue-600" />
-                          </div>
-                          <div>
-                            <CardTitle className="text-lg">Sono un utente</CardTitle>
-                            <CardDescription>
-                              Cerco professionisti qualificati per i miei progetti
-                            </CardDescription>
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-gray-400 ml-auto" />
+                  <Card 
+                    className="cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => {
+                      setRegistrationModalOpen(false);
+                      router.push("/register-consumer");
+                    }}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <User className="h-5 w-5 text-blue-600" />
                         </div>
-                      </CardHeader>
-                    </Link>
+                        <div>
+                          <CardTitle className="text-lg">Sono un utente</CardTitle>
+                          <CardDescription>
+                            Cerco professionisti qualificati per i miei progetti
+                          </CardDescription>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-gray-400 ml-auto" />
+                      </div>
+                    </CardHeader>
                   </Card>
                   
-                  <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
-                    <Link href="/register-professional" onClick={() => setRegistrationModalOpen(false)}>
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-green-100 rounded-lg">
-                            <Briefcase className="h-5 w-5 text-green-600" />
-                          </div>
-                          <div>
-                            <CardTitle className="text-lg">Sono un professionista</CardTitle>
-                            <CardDescription>
-                              Offro servizi professionali e voglio essere trovato dai clienti
-                            </CardDescription>
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-gray-400 ml-auto" />
+                  <Card 
+                    className="cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => {
+                      setRegistrationModalOpen(false);
+                      router.push("/register-professional");
+                    }}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-green-100 rounded-lg">
+                          <Briefcase className="h-5 w-5 text-green-600" />
                         </div>
-                      </CardHeader>
-                    </Link>
+                        <div>
+                          <CardTitle className="text-lg">Sono un professionista</CardTitle>
+                          <CardDescription>
+                            Offro servizi professionali e voglio essere trovato dai clienti
+                          </CardDescription>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-gray-400 ml-auto" />
+                      </div>
+                    </CardHeader>
                   </Card>
                 </div>
               </DialogContent>
@@ -144,15 +153,73 @@ export default function Header() {
                     <Button variant="ghost" className="w-full justify-start">
                       Accedi
                     </Button>
-                    <Button 
-                      className="w-full"
-                      onClick={() => {
-                        setIsOpen(false);
-                        setRegistrationModalOpen(true);
-                      }}
-                    >
-                      Registrati
-                    </Button>
+                    <Dialog open={registrationModalOpen} onOpenChange={setRegistrationModalOpen}>
+                      <DialogTrigger asChild>
+                        <Button 
+                          className="w-full"
+                          onClick={() => {
+                            setIsOpen(false);
+                          }}
+                        >
+                          Registrati
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Scegli il tipo di registrazione</DialogTitle>
+                          <DialogDescription>
+                            Seleziona l'opzione che meglio ti descrive per creare il tuo account
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <Card 
+                            className="cursor-pointer hover:bg-gray-50 transition-colors"
+                            onClick={() => {
+                              setRegistrationModalOpen(false);
+                              router.push("/register-consumer");
+                            }}
+                          >
+                            <CardHeader className="pb-3">
+                              <div className="flex items-center space-x-3">
+                                <div className="p-2 bg-blue-100 rounded-lg">
+                                  <User className="h-5 w-5 text-blue-600" />
+                                </div>
+                                <div>
+                                  <CardTitle className="text-lg">Sono un utente</CardTitle>
+                                  <CardDescription>
+                                    Cerco professionisti qualificati per i miei progetti
+                                  </CardDescription>
+                                </div>
+                                <ArrowRight className="h-4 w-4 text-gray-400 ml-auto" />
+                              </div>
+                            </CardHeader>
+                          </Card>
+                          
+                          <Card 
+                            className="cursor-pointer hover:bg-gray-50 transition-colors"
+                            onClick={() => {
+                              setRegistrationModalOpen(false);
+                              router.push("/register-professional");
+                            }}
+                          >
+                            <CardHeader className="pb-3">
+                              <div className="flex items-center space-x-3">
+                                <div className="p-2 bg-green-100 rounded-lg">
+                                  <Briefcase className="h-5 w-5 text-green-600" />
+                                </div>
+                                <div>
+                                  <CardTitle className="text-lg">Sono un professionista</CardTitle>
+                                  <CardDescription>
+                                    Offro servizi professionali e voglio essere trovato dai clienti
+                                  </CardDescription>
+                                </div>
+                                <ArrowRight className="h-4 w-4 text-gray-400 ml-auto" />
+                              </div>
+                            </CardHeader>
+                          </Card>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </nav>
               </SheetContent>
