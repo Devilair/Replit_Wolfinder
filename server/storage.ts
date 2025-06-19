@@ -3,7 +3,7 @@ import {
   users, professionals, categories, reviews, badges, professionalBadges,
   consumers, plans, professionalPlans, events,
   subscriptionPlans, subscriptions, transactions, claimRequests, professionalNotifications,
-  verificationDocuments,
+  verificationDocuments, userFavorites, reviewDrafts, userBadges, userActivity, dataExports,
   type User, type InsertUser, type Professional, type InsertProfessional,
   type Category, type InsertCategory, type Review, type InsertReview,
   type Badge, type InsertBadge, type ProfessionalBadge, type InsertProfessionalBadge,
@@ -11,7 +11,10 @@ import {
   type ProfessionalPlan, type InsertProfessionalPlan, type Event, type InsertEvent,
   type SubscriptionPlan, type InsertSubscriptionPlan, type Subscription, type InsertSubscription,
   type Transaction, type InsertTransaction, type ClaimRequest, type InsertClaimRequest,
-  type VerificationDocument, type InsertVerificationDocument
+  type VerificationDocument, type InsertVerificationDocument,
+  type UserFavorite, type InsertUserFavorite, type ReviewDraft, type InsertReviewDraft,
+  type UserBadge, type InsertUserBadge, type UserActivity, type InsertUserActivity,
+  type DataExport, type InsertDataExport
 } from "@shared/schema";
 import { eq, and, or, like, desc, asc, isNull, sql, count, gte, lte } from "drizzle-orm";
 import crypto from "crypto";

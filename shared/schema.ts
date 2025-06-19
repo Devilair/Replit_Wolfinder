@@ -1198,3 +1198,190 @@ export type InsertEvent = z.infer<typeof insertEventSchema>;
 // Verification documents types
 export type VerificationDocument = typeof verificationDocuments.$inferSelect;
 export type InsertVerificationDocument = typeof verificationDocuments.$inferInsert;
+
+// User favorites system - professionisti salvati
+export const userFavorites = pgTable("user_favorites", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  professionalId: integer("professional_id").references(() => professionals.id, { onDelete: "cascade" }).notNull(),
+  notes: text("notes"), // Note personali dell'utente
+  tags: jsonb("tags").default('[]'), // Tag personalizzati
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserFavorite: unique().on(table.userId, table.professionalId),
+}));
+
+// Review drafts for anonymous review flow
+export const reviewDrafts = pgTable("review_drafts", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull(), // Browser session ID
+  professionalId: integer("professional_id").references(() => professionals.id, { onDelete: "cascade" }).notNull(),
+  // Review content
+  rating: integer("rating"),
+  competenceRating: integer("competence_rating"),
+  qualityPriceRating: integer("quality_price_rating"),
+  communicationRating: integer("communication_rating"),
+  punctualityRating: integer("punctuality_rating"),
+  title: text("title"),
+  content: text("content"),
+  // Service details
+  serviceUsed: text("service_used"),
+  projectValue: text("project_value"),
+  completionDate: timestamp("completion_date"),
+  // Metadata
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  expiresAt: timestamp("expires_at").notNull(), // Auto-cleanup dopo 7 giorni
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// User badges system - gamification per utenti
+export const userBadges = pgTable("user_badges", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  badgeType: text("badge_type").notNull(), // "first_review", "trusted_reviewer", "active_user", etc.
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  icon: text("icon"),
+  color: text("color").default("#3B82F6"),
+  earnedAt: timestamp("earned_at").defaultNow().notNull(),
+  isVisible: boolean("is_visible").default(true),
+  metadata: jsonb("metadata"), // Extra data per badge specifico
+}, (table) => ({
+  uniqueUserBadge: unique().on(table.userId, table.badgeType),
+}));
+
+// User activity tracking per analytics e badge system
+export const userActivity = pgTable("user_activity", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  activityType: text("activity_type").notNull(), // "review_written", "professional_saved", "search_performed", etc.
+  entityType: text("entity_type"), // "professional", "review", "search"
+  entityId: integer("entity_id"), // ID dell'entità correlata
+  metadata: jsonb("metadata"), // Dati aggiuntivi specifici dell'attività
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// GDPR data exports tracking
+export const dataExports = pgTable("data_exports", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  exportType: text("export_type").notNull(), // "full_export", "reviews_only", "favorites_only"
+  status: text("status").default("requested").notNull(), // "requested", "processing", "completed", "expired"
+  fileName: text("file_name"), // Generated export file name
+  filePath: text("file_path"), // Path to export file
+  fileSize: integer("file_size"),
+  expiresAt: timestamp("expires_at"), // Link expires after 7 days
+  requestedAt: timestamp("requested_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+// Insert schemas for new tables
+export const insertUserFavoriteSchema = createInsertSchema(userFavorites).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertReviewDraftSchema = createInsertSchema(reviewDrafts).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertUserBadgeSchema = createInsertSchema(userBadges).omit({ 
+  id: true, 
+  earnedAt: true 
+});
+
+export const insertUserActivitySchema = createInsertSchema(userActivity).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertDataExportSchema = createInsertSchema(dataExports).omit({ 
+  id: true, 
+  requestedAt: true 
+});
+
+// Relations for new tables
+export const userFavoritesRelations = relations(userFavorites, ({ one }) => ({
+  user: one(users, {
+    fields: [userFavorites.userId],
+    references: [users.id],
+  }),
+  professional: one(professionals, {
+    fields: [userFavorites.professionalId],
+    references: [professionals.id],
+  }),
+}));
+
+export const reviewDraftsRelations = relations(reviewDrafts, ({ one }) => ({
+  professional: one(professionals, {
+    fields: [reviewDrafts.professionalId],
+    references: [professionals.id],
+  }),
+}));
+
+export const userBadgesRelations = relations(userBadges, ({ one }) => ({
+  user: one(users, {
+    fields: [userBadges.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userActivityRelations = relations(userActivity, ({ one }) => ({
+  user: one(users, {
+    fields: [userActivity.userId],
+    references: [users.id],
+  }),
+}));
+
+export const dataExportsRelations = relations(dataExports, ({ one }) => ({
+  user: one(users, {
+    fields: [dataExports.userId],
+    references: [users.id],
+  }),
+}));
+
+// Types for new tables
+export type UserFavorite = typeof userFavorites.$inferSelect;
+export type InsertUserFavorite = z.infer<typeof insertUserFavoriteSchema>;
+export type ReviewDraft = typeof reviewDrafts.$inferSelect;
+export type InsertReviewDraft = z.infer<typeof insertReviewDraftSchema>;
+export type UserBadge = typeof userBadges.$inferSelect;
+export type InsertUserBadge = z.infer<typeof insertUserBadgeSchema>;
+export type UserActivity = typeof userActivity.$inferSelect;
+export type InsertUserActivity = z.infer<typeof insertUserActivitySchema>;
+export type DataExport = typeof dataExports.$inferSelect;
+export type InsertDataExport = z.infer<typeof insertDataExportSchema>;
+
+// Consumer registration schema
+export const consumerRegistrationSchema = z.object({
+  // User account data
+  name: z.string().min(2, "Il nome deve avere almeno 2 caratteri"),
+  email: z.string().email("Email non valida"),
+  password: z.string()
+    .min(8, "La password deve avere almeno 8 caratteri")
+    .regex(/[A-Z]/, "La password deve contenere almeno una lettera maiuscola")
+    .regex(/[a-z]/, "La password deve contenere almeno una lettera minuscola")
+    .regex(/\d/, "La password deve contenere almeno un numero")
+    .regex(/[@$!%*?&]/, "La password deve contenere almeno un carattere speciale"),
+  
+  // Consumer profile data (optional)
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  city: z.string().optional(),
+  province: z.string().optional(),
+  postalCode: z.string().optional(),
+  
+  // Consent and preferences
+  acceptTerms: z.boolean().refine(val => val === true, "Devi accettare i termini di servizio"),
+  acceptPrivacy: z.boolean().refine(val => val === true, "Devi accettare l'informativa sulla privacy"),
+  marketingConsent: z.boolean().default(false),
+  emailNotifications: z.boolean().default(true),
+});
+
+export type ConsumerRegistrationData = z.infer<typeof consumerRegistrationSchema>;

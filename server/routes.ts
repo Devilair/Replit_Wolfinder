@@ -165,6 +165,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/auth/register-consumer - Registrazione consumer/utente
+  app.post("/api/auth/register-consumer", async (req, res) => {
+    try {
+      const { name, email, password, acceptTerms, acceptPrivacy } = req.body;
+      
+      if (!name || !email || !password || !acceptTerms || !acceptPrivacy) {
+        return res.status(400).json({ error: "Tutti i campi obbligatori devono essere compilati" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Un account con questa email esiste già" });
+      }
+
+      // Create user account
+      const result = await authService.registerUser({
+        name,
+        email,
+        password,
+        userType: "user"
+      });
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      // Create consumer profile
+      if (result.user) {
+        await storage.createConsumer({
+          userId: result.user.id,
+          emailNotifications: true,
+          marketingEmails: !!req.body.marketingConsent
+        });
+
+        // Log user activity
+        await storage.logUserActivity({
+          userId: result.user.id,
+          activityType: "account_created",
+          entityType: "user",
+          entityId: result.user.id,
+          metadata: { registrationType: "consumer" },
+          ipAddress: req.ip,
+          userAgent: req.get('User-Agent')
+        });
+      }
+
+      res.status(201).json({
+        message: "Account creato con successo! Controlla la tua email per verificare l'account.",
+        user: result.user,
+        requiresEmailVerification: true
+      });
+    } catch (error) {
+      console.error('Consumer registration error:', error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
   app.post("/api/auth/register", async (req, res) => {
     try {
       const { name, username, email, password, userType, acceptTerms, businessName, categoryId } = req.body;
