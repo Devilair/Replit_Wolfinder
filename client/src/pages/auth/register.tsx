@@ -18,12 +18,13 @@ import { Link, useLocation } from "wouter";
 
 const registrationSchema = z.object({
   name: z.string().min(2, "Nome deve essere di almeno 2 caratteri"),
-  username: z.string().min(3, "Username deve essere di almeno 3 caratteri"),
+  surname: z.string().min(2, "Cognome deve essere di almeno 2 caratteri"),
   email: z.string().email("Email non valida"),
-  password: z.string().min(8, "Password deve essere di almeno 8 caratteri"),
+  password: z.string().min(8, "Password deve essere di almeno 8 caratteri")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Password deve contenere almeno una lettera minuscola, una maiuscola e un numero"),
   confirmPassword: z.string(),
   userType: z.enum(["user", "professional"]),
-  acceptTerms: z.boolean().refine(val => val === true, "Devi accettare i termini"),
+  acceptTerms: z.boolean().refine(val => val === true, "Devi accettare Termini, Condizioni e Privacy Policy"),
   marketingConsent: z.boolean().optional(),
   // Professional fields
   businessName: z.string().optional(),
@@ -146,11 +147,14 @@ export default function Register() {
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="name">Nome Completo</Label>
+                  <Label htmlFor="name">
+                    Nome 
+                    <span className="text-xs text-gray-500 ml-1">(può essere reale o fittizio)</span>
+                  </Label>
                   <Input
                     id="name"
                     {...form.register("name")}
-                    placeholder="Mario Rossi"
+                    placeholder="Mario"
                   />
                   {form.formState.errors.name && (
                     <p className="text-sm text-red-500 mt-1">
@@ -160,22 +164,26 @@ export default function Register() {
                 </div>
 
                 <div>
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="surname">Cognome</Label>
                   <Input
-                    id="username"
-                    {...form.register("username")}
-                    placeholder="mario.rossi"
+                    id="surname"
+                    {...form.register("surname")}
+                    placeholder="Rossi"
                   />
-                  {form.formState.errors.username && (
+                  {form.formState.errors.surname && (
                     <p className="text-sm text-red-500 mt-1">
-                      {form.formState.errors.username.message}
+                      {form.formState.errors.surname.message}
                     </p>
                   )}
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">
+                  Email 
+                  <span className="text-red-500">*</span>
+                  <span className="text-xs text-gray-500 ml-1">(usata per conferma e comunicazioni)</span>
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -191,7 +199,10 @@ export default function Register() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">
+                    Password 
+                    <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="password"
                     type="password"
@@ -307,14 +318,15 @@ export default function Register() {
                     onCheckedChange={(checked) => form.setValue("acceptTerms", !!checked)}
                   />
                   <Label htmlFor="acceptTerms" className="text-sm leading-relaxed">
-                    Accetto i{" "}
+                    <span className="text-red-500">*</span> Accetto i{" "}
                     <Link href="/terms" className="text-blue-600 hover:underline">
-                      Termini di Servizio
+                      Termini e Condizioni
                     </Link>{" "}
                     e l'{" "}
                     <Link href="/privacy" className="text-blue-600 hover:underline">
-                      Informativa sulla Privacy
-                    </Link>
+                      Privacy Policy
+                    </Link>{" "}
+                    (GDPR)
                   </Label>
                 </div>
                 {form.formState.errors.acceptTerms && (

@@ -1,0 +1,106 @@
+ 1. Registrazione Utente (versione MVP)
+Campi richiesti:
+Nome (può essere reale o fittizio, lo specifichiamo nel tooltip)
+
+Cognome
+
+Email (obbligatoria, usata per conferma e comunicazioni)
+
+Password (con requisiti minimi di sicurezza)
+
+✅ Checkbox accettazione Termini, Condizioni e Privacy Policy (GDPR)
+
+🔒 (opzionale) accetta di ricevere comunicazioni (newsletter, upgrade, ecc.)
+
+Funzionalità:
+Conferma via email prima di accedere al sito
+
+Sistema anti-bot (es. ReCAPTCHA o simile)
+
+✅ 2. Login & Recupero
+Accesso via email e password
+
+Recupero password via email con link temporaneo
+
+(In futuro) possibile login con Google
+
+✅ 3. Dashboard Utente Iscritto
+Una volta loggato, l’utente accede a un pannello semplice e chiaro.
+
+Sezioni principali:
+🟦 "Il mio profilo"
+Modifica:
+
+Nome/Nickname visibile
+
+Avatar (upload immagine)
+
+Email (non modificabile se non da flusso sicurezza)
+
+Password
+
+Preferenze:
+
+Lingua
+
+Notifiche (es. ricevi risposta a recensione)
+
+Privacy: mostra/nascondi il nome reale nelle recensioni
+
+🟧 "Le mie recensioni"
+Elenco cronologico (più recente in alto)
+
+Stato: pubblicata, in attesa, rifiutata
+
+Se modificabile, bottone "Modifica"
+
+Se segnalata da admin: notifica visibile con motivazione
+
+Link rapido alla scheda del professionista recensito
+
+Possibilità di cancellare (anonimizzazione, non rimozione reale)
+
+🟩 "Professionisti salvati"
+Bookmark/favoriti: elenco dei professionisti salvati per consultarli in futuro
+
+Pulsante "Rimuovi" o "Contatta" se email o sito sono pubblici
+
+🟨 "Attività e badge"
+(inseribile subito oppure predisposto per gamification futura)
+
+Mostra i badge utente ottenuti (es. “Primo feedback”, “10 recensioni”)
+
+Statistiche personali:
+
+Numero recensioni scritte
+
+Categorie recensite
+
+Ultima attività
+
+✅ 4. Impostazioni e Sicurezza
+Cambia password
+
+Esci da tutti i dispositivi
+
+Disattiva account (soft-delete con anonimizzazione dati pubblici)
+
+Scarica i propri dati (CSV/JSON) – per conformità GDPR (in futuro)
+
+✅ 5. Etica & Trasparenza
+Ogni sezione è accompagnata da tooltips chiari su:
+
+Come verranno usati i dati
+
+Cosa vedono gli altri utenti
+
+Come tuteliamo la privacy
+
+✅ 6. Flusso alternativo: recensione senza login iniziale
+Come da tua indicazione passata:
+
+Utente cerca professionista senza registrazione
+
+Una volta ottenuto servizio torna per recensire
+
+Solo a quel punto si registra → viene portato direttamente al modulo di recensione già compilato nei dati del professionista
