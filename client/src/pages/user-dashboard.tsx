@@ -81,9 +81,12 @@ export default function UserDashboard() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
 
-  const { data: dashboardData, isLoading } = useQuery({
+  const { data: dashboardData, isLoading, error } = useQuery<UserDashboardData>({
     queryKey: ["/api/users/dashboard"],
     enabled: !!user,
+    retry: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true
   });
 
   const exportDataMutation = useMutation({
