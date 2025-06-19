@@ -53,9 +53,34 @@ export default function VerifyEmail() {
     navigate('/login');
   };
 
+  const resendMutation = useMutation({
+    mutationFn: async (email: string) => {
+      return apiRequest("POST", "/api/resend-verification", { email }) as Promise<{ success: boolean; message?: string; error?: string }>;
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        setMessage(response.message || 'Nuova email di verifica inviata!');
+        setVerificationStatus('loading');
+      }
+    },
+    onError: (error: any) => {
+      setMessage(error?.message || 'Errore nell\'invio della nuova email');
+    }
+  });
+
   const handleResendEmail = () => {
-    // TODO: Implement resend email functionality
-    console.log('Resend email clicked');
+    const urlParams = new URLSearchParams(window.location.search);
+    const email = urlParams.get('email');
+    
+    if (email) {
+      resendMutation.mutate(email);
+    } else {
+      // Prompt user for email if not available
+      const userEmail = prompt('Inserisci la tua email per ricevere un nuovo link di verifica:');
+      if (userEmail) {
+        resendMutation.mutate(userEmail);
+      }
+    }
   };
 
   return (

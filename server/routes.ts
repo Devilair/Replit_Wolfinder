@@ -324,7 +324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Genera e invia email di verifica
-      const verificationToken = await authService.createEmailVerificationToken(userResult.user!.id);
+      const verificationToken = await authService.generateEmailVerificationToken(userResult.user!.id);
       
       const emailSent = await emailService.sendEmailVerification(
         userResult.user!.id,
@@ -410,6 +410,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Logout error:', error);
       res.status(500).json({ error: 'Errore durante il logout' });
+    }
+  });
+
+  // Email verification endpoint
+  app.get('/api/verify-email/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      if (!token) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Token di verifica richiesto' 
+        });
+      }
+
+      const result = await authService.verifyEmailToken(token);
+      
+      if (result.success && result.userId) {
+        // Update user email verification status
+        await storage.updateUser(result.userId, { 
+          isEmailVerified: true,
+          emailVerifiedAt: new Date()
+        });
+        
+        res.json({ 
+          success: true, 
+          message: 'Email verificata con successo! Il tuo account è ora attivo.',
+          userId: result.userId
+        });
+      } else {
+        res.status(400).json({ 
+          success: false, 
+          error: result.error || 'Token di verifica non valido o scaduto' 
+        });
+      }
+    } catch (error) {
+      console.error('Email verification error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Errore durante la verifica email' 
+      });
+    }
+  });
+
+  // Resend email verification endpoint
+  app.post('/api/resend-verification', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Email richiesta' 
+        });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Utente non trovato' 
+        });
+      }
+
+      if (user.isEmailVerified) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Email già verificata' 
+        });
+      }
+
+      // Generate new verification token
+      const verificationToken = await authService.generateEmailVerificationToken(user.id);
+      
+      // Send verification email
+      const emailSent = await emailService.sendVerificationEmail({
+        to: email,
+        name: user.name,
+        verificationToken: verificationToken
+      });
+      
+      if (emailSent) {
+        res.json({ 
+          success: true, 
+          message: 'Email di verifica inviata con successo' 
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          error: 'Errore nell\'invio dell\'email' 
+        });
+      }
+    } catch (error) {
+      console.error('Resend verification error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Errore durante l\'invio dell\'email' 
+      });
     }
   });
 
