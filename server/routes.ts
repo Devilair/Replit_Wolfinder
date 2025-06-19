@@ -5813,5 +5813,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User Favorites Management Endpoints
+  app.get("/api/users/:userId/favorites", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (!userId) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      const favorites = await db
+        .select({
+          id: userFavorites.id,
+          professionalId: userFavorites.professionalId,
+          professionalName: professionals.businessName,
+          businessName: professionals.businessName,
+          category: categories.name,
+          city: professionals.city,
+          rating: professionals.rating,
+          notes: userFavorites.notes,
+          tags: userFavorites.tags,
+          createdAt: userFavorites.createdAt,
+        })
+        .from(userFavorites)
+        .innerJoin(professionals, eq(userFavorites.professionalId, professionals.id))
+        .innerJoin(categories, eq(professionals.categoryId, categories.id))
+        .where(eq(userFavorites.userId, userId))
+        .orderBy(desc(userFavorites.createdAt));
+
+      res.json(favorites);
+    } catch (error) {
+      console.error("Error fetching user favorites:", error);
+      res.status(500).json({ message: "Failed to fetch favorites" });
+    }
+  });
+
+  app.post("/api/users/:userId/favorites", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const { professionalId, notes, tags } = req.body;
+
+      if (!userId || !professionalId) {
+        return res.status(400).json({ message: "User ID and Professional ID are required" });
+      }
+
+      // Check if favorite already exists
+      const existingFavorite = await db
+        .select()
+        .from(userFavorites)
+        .where(
+          and(
+            eq(userFavorites.userId, userId),
+            eq(userFavorites.professionalId, professionalId)
+          )
+        );
+
+      if (existingFavorite.length > 0) {
+        return res.status(409).json({ message: "Professional already in favorites" });
+      }
+
+      const [newFavorite] = await db
+        .insert(userFavorites)
+        .values({
+          userId,
+          professionalId,
+          notes: notes || null,
+          tags: tags || [],
+        })
+        .returning();
+
+      res.status(201).json(newFavorite);
+    } catch (error) {
+      console.error("Error adding favorite:", error);
+      res.status(500).json({ message: "Failed to add favorite" });
+    }
+  });
+
+  app.put("/api/users/:userId/favorites/:favoriteId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const favoriteId = parseInt(req.params.favoriteId);
+      const { notes, tags } = req.body;
+
+      if (!userId || !favoriteId) {
+        return res.status(400).json({ message: "User ID and Favorite ID are required" });
+      }
+
+      // Verify favorite belongs to user
+      const favorite = await db
+        .select()
+        .from(userFavorites)
+        .where(
+          and(
+            eq(userFavorites.id, favoriteId),
+            eq(userFavorites.userId, userId)
+          )
+        );
+
+      if (favorite.length === 0) {
+        return res.status(404).json({ message: "Favorite not found" });
+      }
+
+      const [updatedFavorite] = await db
+        .update(userFavorites)
+        .set({
+          notes: notes || null,
+          tags: tags || [],
+          updatedAt: new Date(),
+        })
+        .where(eq(userFavorites.id, favoriteId))
+        .returning();
+
+      res.json(updatedFavorite);
+    } catch (error) {
+      console.error("Error updating favorite:", error);
+      res.status(500).json({ message: "Failed to update favorite" });
+    }
+  });
+
+  app.delete("/api/users/:userId/favorites/:favoriteId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const favoriteId = parseInt(req.params.favoriteId);
+
+      if (!userId || !favoriteId) {
+        return res.status(400).json({ message: "User ID and Favorite ID are required" });
+      }
+
+      // Verify favorite belongs to user
+      const favorite = await db
+        .select()
+        .from(userFavorites)
+        .where(
+          and(
+            eq(userFavorites.id, favoriteId),
+            eq(userFavorites.userId, userId)
+          )
+        );
+
+      if (favorite.length === 0) {
+        return res.status(404).json({ message: "Favorite not found" });
+      }
+
+      await db
+        .delete(userFavorites)
+        .where(eq(userFavorites.id, favoriteId));
+
+      res.json({ message: "Favorite removed successfully" });
+    } catch (error) {
+      console.error("Error removing favorite:", error);
+      res.status(500).json({ message: "Failed to remove favorite" });
+    }
+  });
+
   return app;
 }

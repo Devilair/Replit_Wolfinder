@@ -1213,10 +1213,7 @@ export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type VerificationDocument = typeof verificationDocuments.$inferSelect;
 export type InsertVerificationDocument = typeof verificationDocuments.$inferInsert;
 
-// User favorites system - types and schemas
-export const insertUserFavoriteSchema = createInsertSchema(userFavorites);
-export type UserFavorite = typeof userFavorites.$inferSelect;
-export type InsertUserFavorite = z.infer<typeof insertUserFavoriteSchema>;
+
 
 // Review drafts for anonymous review flow
 export const reviewDrafts = pgTable("review_drafts", {
@@ -1353,8 +1350,6 @@ export const dataExportsRelations = relations(dataExports, ({ one }) => ({
 }));
 
 // Types for new tables
-export type UserFavorite = typeof userFavorites.$inferSelect;
-export type InsertUserFavorite = z.infer<typeof insertUserFavoriteSchema>;
 export type ReviewDraft = typeof reviewDrafts.$inferSelect;
 export type InsertReviewDraft = z.infer<typeof insertReviewDraftSchema>;
 export type UserBadge = typeof userBadges.$inferSelect;
@@ -1363,6 +1358,8 @@ export type UserActivity = typeof userActivity.$inferSelect;
 export type InsertUserActivity = z.infer<typeof insertUserActivitySchema>;
 export type DataExport = typeof dataExports.$inferSelect;
 export type InsertDataExport = z.infer<typeof insertDataExportSchema>;
+export type UserFavorite = typeof userFavorites.$inferSelect;
+export type InsertUserFavorite = z.infer<typeof insertUserFavoriteSchema>;
 
 // Consumer registration schema
 export const consumerRegistrationSchema = z.object({

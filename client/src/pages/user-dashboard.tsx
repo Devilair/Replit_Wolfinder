@@ -122,13 +122,23 @@ export default function UserDashboard() {
 
   const removeFavoriteMutation = useMutation({
     mutationFn: async (favoriteId: number) => {
-      return apiRequest("DELETE", `/api/users/favorites/${favoriteId}`);
+      if (!dashboardData?.user?.id) {
+        throw new Error("User ID not available");
+      }
+      return apiRequest("DELETE", `/api/users/${dashboardData.user.id}/favorites/${favoriteId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users/dashboard"] });
       toast({
         title: "Rimosso dai preferiti",
         description: "Il professionista è stato rimosso dai tuoi preferiti.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Impossibile rimuovere dai preferiti",
+        variant: "destructive",
       });
     },
   });
