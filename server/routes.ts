@@ -6842,10 +6842,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/reviews/stats", requireAdmin, async (req, res) => {
     try {
       const stats = await storage.getReviewStats();
-      res.json({ stats });
+      res.json(stats);
     } catch (error) {
       console.error("Error fetching review stats:", error);
       res.status(500).json({ error: "Errore nel recupero statistiche" });
+    }
+  });
+
+  // Ottenere recensioni per stato (per il pannello admin)
+  app.get("/api/admin/reviews/:status", requireAdmin, async (req, res) => {
+    try {
+      const status = req.params.status;
+      const validStatuses = ['pending', 'approved', 'rejected', 'flagged'];
+      
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: "Stato non valido" });
+      }
+
+      const reviews = await storage.getReviewsByStatus(status);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching reviews by status:", error);
+      res.status(500).json({ error: "Errore nel recupero recensioni" });
     }
   });
 

@@ -271,6 +271,14 @@ export interface IStorage {
   updateCategory(id: number, data: Partial<Category>): Promise<Category>;
   deleteCategory(id: number): Promise<void>;
   getPendingReviews(): Promise<any[]>;
+  getReviewStats(): Promise<any>;
+  getReviewsByStatus(status: string): Promise<any[]>;
+  approveReview(reviewId: number, adminId: number): Promise<boolean>;
+  rejectReview(reviewId: number, adminId: number, reason: string): Promise<boolean>;
+  reportReview(reviewId: number, reporterId: number, reason: string, description?: string): Promise<boolean>;
+  getUserReviews(userId: number): Promise<any[]>;
+  getPendingReports(): Promise<any[]>;
+  resolveReport(reportId: number, adminId: number, action: string, adminNotes?: string): Promise<boolean>;
   getUnverifiedProfessionals(): Promise<Professional[]>;
   getTransactions(): Promise<any[]>;
   createTransaction(data: any): Promise<any>;
@@ -3800,7 +3808,130 @@ export class DatabaseStorage implements IStorage {
     return pendingReports;
   }
 
+  // Statistiche recensioni per admin dashboard
+  async getReviewStats(): Promise<any> {
+    const [stats] = await db.execute(sql`
+      SELECT 
+        COUNT(*) as total,
+        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
+        COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved,
+        COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected,
+        COUNT(CASE WHEN status = 'flagged' THEN 1 END) as flagged
+      FROM reviews
+    `);
+    
+    return {
+      total: parseInt(stats.total) || 0,
+      pending: parseInt(stats.pending) || 0,
+      approved: parseInt(stats.approved) || 0,
+      rejected: parseInt(stats.rejected) || 0,
+      flagged: parseInt(stats.flagged) || 0
+    };
+  }
+
+  // Ottenere recensioni per stato specifico
+  async getReviewsByStatus(status: string): Promise<any[]> {
+    const reviewList = await db
+      .select({
+        id: reviews.id,
+        title: reviews.title,
+        content: reviews.content,
+        rating: reviews.rating,
+        status: reviews.status,
+        reviewerRole: reviews.reviewerRole,
+        isAnonymous: reviews.isAnonymous,
+        createdAt: reviews.createdAt,
+        updatedAt: reviews.updatedAt,
+        proofFileName: reviews.proofFileName,
+        proofFilePath: reviews.proofFilePath,
+        adminNotes: reviews.adminNotes,
+        moderatedAt: reviews.reviewedAt,
+        professional: {
+          id: professionals.id,
+          businessName: professionals.businessName,
+          category: sql<string>`(SELECT name FROM categories WHERE id = ${professionals.categoryId})`
+        },
+        reviewer: {
+          id: users.id,
+          name: users.name,
+          categoryName: sql<string>`CASE 
+            WHEN ${reviews.reviewerRole} = 'professional' 
+            THEN (SELECT name FROM categories WHERE id = ${reviews.reviewerCategoryId})
+            ELSE NULL 
+          END`
+        },
+        moderatedBy: sql<any>`CASE 
+          WHEN ${reviews.reviewedBy} IS NOT NULL 
+          THEN (SELECT json_build_object('id', id, 'name', name) FROM users WHERE id = ${reviews.reviewedBy})
+          ELSE NULL 
+        END`
+      })
+      .from(reviews)
+      .leftJoin(users, eq(reviews.userId, users.id))
+      .leftJoin(professionals, eq(reviews.professionalId, professionals.id))
+      .where(eq(reviews.status, status))
+      .orderBy(desc(reviews.createdAt));
+
+    return reviewList;
+  }
+
   // Risolvere segnalazione
+  async resolveReport(reportId: number, adminId: number, action: string, adminNotes?: string): Promise<boolean> {
+    return await db.transaction(async (tx) => {
+      // Aggiorna lo status del report
+      const [report] = await tx
+        .update(reviewReports)
+        .set({
+          status: 'resolved',
+          resolvedBy: adminId,
+          resolvedAt: new Date(),
+          action,
+          adminNotes,
+          updatedAt: new Date()
+        })
+        .where(eq(reviewReports.id, reportId))
+        .returning();
+
+      if (!report) return false;
+
+      // Se l'azione è rimuovere la recensione, aggiorna anche il suo status
+      if (action === 'remove_review') {
+        await tx
+          .update(reviews)
+          .set({
+            status: 'removed',
+            reviewedBy: adminId,
+            reviewedAt: new Date(),
+            adminNotes: adminNotes || 'Rimossa a seguito di segnalazione',
+            updatedAt: new Date()
+          })
+          .where(eq(reviews.id, report.reviewId));
+      }
+
+      return true;
+    });
+  }
+
+  // Metodi di utilità per compatibilità
+  async getUserById(userId: number): Promise<any> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    
+    return user || null;
+  }
+
+  async getProfessionalById(professionalId: number): Promise<any> {
+    const [professional] = await db
+      .select()
+      .from(professionals)
+      .where(eq(professionals.id, professionalId))
+      .limit(1);
+    
+    return professional || null;
+  }
   async resolveReport(reportId: number, adminId: number, action: 'dismiss' | 'remove_review', adminNotes?: string): Promise<boolean> {
     return await db.transaction(async (tx) => {
       // Aggiorna la segnalazione
