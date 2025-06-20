@@ -2148,7 +2148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get single user details for admin
-  app.get("/api/admin/users/:id", authService.requireRole(['admin']), async (req, res) => {
+  app.get("/api/admin/users/:id", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       if (isNaN(userId)) {
@@ -2168,7 +2168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user data (admin only)
-  app.put("/api/admin/users/:id", authService.requireRole(['admin']), async (req, res) => {
+  app.put("/api/admin/users/:id", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const { name, email, role } = req.body;
@@ -2210,7 +2210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Suspend user account
-  app.post("/api/admin/users/:id/suspend", authService.requireRole(['admin']), async (req, res) => {
+  app.post("/api/admin/users/:id/suspend", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const { reason } = req.body;
@@ -2239,7 +2239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reactivate user account
-  app.post("/api/admin/users/:id/reactivate", authService.requireRole(['admin']), async (req, res) => {
+  app.post("/api/admin/users/:id/reactivate", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const adminId = (req as any).user.id;
