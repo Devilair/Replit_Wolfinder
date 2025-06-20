@@ -2102,13 +2102,167 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Users Management
-  app.get("/api/admin/users", async (req, res) => {
+  // Enhanced admin users endpoint with filtering and pagination
+  app.get("/api/admin/users", authService.requireRole(['admin']), async (req, res) => {
     try {
-      const users = await storage.getAllUsers();
-      res.json(users);
+      const { 
+        search, 
+        status, 
+        role,
+        limit = 50, 
+        offset = 0,
+        sortBy = 'createdAt',
+        sortOrder = 'desc'
+      } = req.query;
+
+      const users = await storage.getAdminUsers({
+        search: search as string,
+        status: status as string,
+        role: role as string,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+        sortBy: sortBy as string,
+        sortOrder: sortOrder as 'asc' | 'desc'
+      });
+
+      // Get total count for pagination
+      const totalCount = await storage.getAdminUsersCount({
+        search: search as string,
+        status: status as string,
+        role: role as string
+      });
+
+      res.json({
+        users,
+        pagination: {
+          total: totalCount,
+          limit: parseInt(limit as string),
+          offset: parseInt(offset as string),
+          hasMore: (parseInt(offset as string) + parseInt(limit as string)) < totalCount
+        }
+      });
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error("Error fetching admin users:", error);
       res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Get single user details for admin
+  app.get("/api/admin/users/:id", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      const user = await storage.getAdminUserDetails(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+      res.status(500).json({ message: "Failed to fetch user details" });
+    }
+  });
+
+  // Update user data (admin only)
+  app.put("/api/admin/users/:id", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { name, email, role } = req.body;
+      const adminId = (req as any).user.id;
+
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      // Validate email format
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+
+      // Check if email already exists (if changed)
+      if (email) {
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser && existingUser.id !== userId) {
+          return res.status(409).json({ message: "Email already in use" });
+        }
+      }
+
+      const updatedUser = await storage.updateUserAdmin(userId, { name, email, role });
+      
+      // Log admin action
+      await storage.logAdminAction({
+        adminId,
+        actionType: 'user_updated',
+        targetUserId: userId,
+        description: `Updated user data: ${JSON.stringify({ name, email, role })}`,
+        ipAddress: req.ip
+      });
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Suspend user account
+  app.post("/api/admin/users/:id/suspend", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { reason } = req.body;
+      const adminId = (req as any).user.id;
+
+      if (isNaN(userId) || !reason) {
+        return res.status(400).json({ message: "User ID and reason are required" });
+      }
+
+      await storage.suspendUser(userId, reason);
+      
+      // Log admin action
+      await storage.logAdminAction({
+        adminId,
+        actionType: 'user_suspended',
+        targetUserId: userId,
+        description: `Suspended user. Reason: ${reason}`,
+        ipAddress: req.ip
+      });
+
+      res.json({ message: "User suspended successfully" });
+    } catch (error) {
+      console.error("Error suspending user:", error);
+      res.status(500).json({ message: "Failed to suspend user" });
+    }
+  });
+
+  // Reactivate user account
+  app.post("/api/admin/users/:id/reactivate", authService.requireRole(['admin']), async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const adminId = (req as any).user.id;
+
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      await storage.reactivateUser(userId);
+      
+      // Log admin action
+      await storage.logAdminAction({
+        adminId,
+        actionType: 'user_reactivated',
+        targetUserId: userId,
+        description: 'Reactivated user account',
+        ipAddress: req.ip
+      });
+
+      res.json({ message: "User reactivated successfully" });
+    } catch (error) {
+      console.error("Error reactivating user:", error);
+      res.status(500).json({ message: "Failed to reactivate user" });
     }
   });
 

@@ -1282,6 +1282,17 @@ export const dataExports = pgTable("data_exports", {
   completedAt: timestamp("completed_at"),
 });
 
+// User admin actions log for compliance and audit
+export const userAdminActions = pgTable("user_admin_actions", {
+  id: serial("id").primaryKey(),
+  adminId: integer("admin_id").references(() => users.id).notNull(),
+  actionType: text("action_type").notNull(), // 'user_updated', 'user_suspended', 'user_reactivated', etc.
+  targetId: integer("target_id").notNull(), // ID of the affected resource (user, professional, etc.)
+  description: text("description").notNull(),
+  ipAddress: text("ip_address"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Insert schemas for new tables
 export const insertUserFavoriteSchema = createInsertSchema(userFavorites).omit({ 
   id: true, 

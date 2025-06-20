@@ -154,6 +154,31 @@ export interface IStorage {
 
   // Admin methods
   getAllUsers(): Promise<User[]>;
+  getAdminUsers(params: {
+    search?: string;
+    status?: string;
+    role?: string;
+    limit: number;
+    offset: number;
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  }): Promise<any[]>;
+  getAdminUsersCount(params: {
+    search?: string;
+    status?: string;
+    role?: string;
+  }): Promise<number>;
+  getAdminUserDetails(userId: number): Promise<any>;
+  updateUserAdmin(userId: number, data: { name?: string; email?: string; role?: string }): Promise<User>;
+  suspendUser(userId: number, reason: string): Promise<void>;
+  reactivateUser(userId: number): Promise<void>;
+  logAdminAction(action: {
+    adminId: number;
+    actionType: string;
+    targetUserId: number;
+    description: string;
+    ipAddress?: string;
+  }): Promise<void>;
   getAdminProfessionals(params?: any): Promise<ProfessionalWithDetails[]>;
   updateProfessional(id: number, data: Partial<Professional>): Promise<Professional>;
   deleteProfessional(id: number): Promise<void>;
@@ -1609,6 +1634,225 @@ export class DatabaseStorage implements IStorage {
   // Admin methods implementation
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAdminUsers(params: {
+    search?: string;
+    status?: string;
+    role?: string;
+    limit: number;
+    offset: number;
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  }): Promise<any[]> {
+    let query = db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        isVerified: users.isVerified,
+        isEmailVerified: users.isEmailVerified,
+        createdAt: users.createdAt,
+        lastLoginAt: users.lastLoginAt,
+        accountStatus: sql<string>`CASE 
+          WHEN ${users.isVerified} = false THEN 'suspended'
+          ELSE 'active'
+        END`.as('accountStatus'),
+        reviewsCount: sql<number>`(
+          SELECT COUNT(*) 
+          FROM ${reviews} 
+          WHERE ${reviews.userId} = ${users.id}
+        )`.as('reviewsCount')
+      })
+      .from(users);
+
+    // Apply filters
+    const conditions = [];
+    
+    if (params.search) {
+      conditions.push(
+        or(
+          like(users.name, `%${params.search}%`),
+          like(users.email, `%${params.search}%`)
+        )
+      );
+    }
+    
+    if (params.role) {
+      conditions.push(eq(users.role, params.role));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    // Apply sorting
+    const sortColumn = params.sortBy === 'name' ? users.name : 
+                      params.sortBy === 'email' ? users.email :
+                      params.sortBy === 'role' ? users.role : users.createdAt;
+    
+    if (params.sortOrder === 'asc') {
+      query = query.orderBy(asc(sortColumn));
+    } else {
+      query = query.orderBy(desc(sortColumn));
+    }
+
+    return await query.limit(params.limit).offset(params.offset);
+  }
+
+  async getAdminUsersCount(params: {
+    search?: string;
+    status?: string;
+    role?: string;
+  }): Promise<number> {
+    let query = db.select({ count: count() }).from(users);
+
+    const conditions = [];
+    
+    if (params.search) {
+      conditions.push(
+        or(
+          like(users.name, `%${params.search}%`),
+          like(users.email, `%${params.search}%`)
+        )
+      );
+    }
+    
+    if (params.role) {
+      conditions.push(eq(users.role, params.role));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const result = await query;
+    return result[0].count;
+  }
+
+  async getAdminUserDetails(userId: number): Promise<any> {
+    const user = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        isVerified: users.isVerified,
+        isEmailVerified: users.isEmailVerified,
+        emailVerifiedAt: users.emailVerifiedAt,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+        lastLoginAt: users.lastLoginAt,
+        accountStatus: sql<string>`CASE 
+          WHEN ${users.isVerified} = false THEN 'suspended'
+          ELSE 'active'
+        END`.as('accountStatus')
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (user.length === 0) return null;
+
+    // Get user reviews
+    const userReviews = await db
+      .select({
+        id: reviews.id,
+        title: reviews.title,
+        content: reviews.content,
+        rating: reviews.rating,
+        status: reviews.status,
+        createdAt: reviews.createdAt,
+        professionalName: professionals.businessName,
+        professionalId: professionals.id
+      })
+      .from(reviews)
+      .leftJoin(professionals, eq(reviews.professionalId, professionals.id))
+      .where(eq(reviews.userId, userId))
+      .orderBy(desc(reviews.createdAt));
+
+    // Get user statistics
+    const stats = await db
+      .select({
+        totalReviews: count(reviews.id),
+        totalFavorites: sql<number>`(
+          SELECT COUNT(*) 
+          FROM ${userFavorites} 
+          WHERE ${userFavorites.userId} = ${userId}
+        )`.as('totalFavorites')
+      })
+      .from(reviews)
+      .where(eq(reviews.userId, userId));
+
+    return {
+      ...user[0],
+      reviews: userReviews,
+      stats: stats[0] || { totalReviews: 0, totalFavorites: 0 }
+    };
+  }
+
+  async updateUserAdmin(userId: number, data: { name?: string; email?: string; role?: string }): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        ...(data.name && { name: data.name }),
+        ...(data.email && { email: data.email }),
+        ...(data.role && { role: data.role }),
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return updatedUser;
+  }
+
+  async suspendUser(userId: number, reason: string): Promise<void> {
+    await db
+      .update(users)
+      .set({
+        isVerified: false,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+
+    // Log suspension reason in admin actions
+    await this.logAdminAction({
+      adminId: 1, // Will be overridden by actual admin ID
+      actionType: 'user_suspended',
+      targetUserId: userId,
+      description: `User suspended. Reason: ${reason}`,
+      ipAddress: null
+    });
+  }
+
+  async reactivateUser(userId: number): Promise<void> {
+    await db
+      .update(users)
+      .set({
+        isVerified: true,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async logAdminAction(action: {
+    adminId: number;
+    actionType: string;
+    targetUserId: number;
+    description: string;
+    ipAddress?: string;
+  }): Promise<void> {
+    await db
+      .insert(userAdminActions)
+      .values({
+        adminId: action.adminId,
+        actionType: action.actionType,
+        targetId: action.targetUserId,
+        description: action.description,
+        ipAddress: action.ipAddress || null,
+        createdAt: new Date()
+      });
   }
 
   async getAdminProfessionals(params?: any): Promise<any[]> {
