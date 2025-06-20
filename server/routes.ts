@@ -2103,7 +2103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin Users Management
   // Enhanced admin users endpoint with filtering and pagination
-  app.get("/api/admin/users", authService.requireRole(['admin']), async (req, res) => {
+  app.get("/api/admin/users", authService.authenticateToken, authService.requireRole(['admin']), async (req, res) => {
     try {
       const { 
         search, 
