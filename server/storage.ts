@@ -4111,6 +4111,21 @@ export class DatabaseStorage implements IStorage {
       return true;
     });
   }
+
+  // Approvare recensione
+  async approveReview(reviewId: number, adminId: number): Promise<boolean> {
+    return await this.moderateReview(reviewId, 'approve', adminId);
+  }
+
+  // Rifiutare recensione
+  async rejectReview(reviewId: number, adminId: number, reason: string): Promise<boolean> {
+    return await this.moderateReview(reviewId, 'reject', adminId, reason);
+  }
+
+  // Ottenere recensioni pending
+  async getPendingReviews(): Promise<any[]> {
+    return await this.getReviewsByStatus('pending');
+  }
 }
 
 export const storage = new DatabaseStorage();

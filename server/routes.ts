@@ -6803,69 +6803,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Ottenere segnalazioni pending
-  app.get("/api/admin/reviews/reports", requireAdmin, async (req, res) => {
+  // Moderare recensione (endpoint unificato)
+  app.patch("/api/admin/reviews/:id/moderate", requireAdmin, async (req, res) => {
     try {
-      const pendingReports = await storage.getPendingReports();
-      res.json({ reports: pendingReports });
-    } catch (error) {
-      console.error("Error fetching pending reports:", error);
-      res.status(500).json({ error: "Errore nel recupero segnalazioni" });
-    }
-  });
-
-  // Risolvere segnalazione
-  app.post("/api/admin/reviews/reports/:id/resolve", requireAdmin, async (req, res) => {
-    try {
-      const reportId = parseInt(req.params.id);
-      const adminId = req.user!.id;
+      const reviewId = parseInt(req.params.id);
       const { action, adminNotes } = req.body;
+      const adminId = req.user!.id;
 
-      if (!action || !['dismiss', 'remove_review'].includes(action)) {
+      if (!['approve', 'reject'].includes(action)) {
         return res.status(400).json({ error: "Azione non valida" });
       }
 
-      const success = await storage.resolveReport(reportId, adminId, action, adminNotes);
+      const success = await storage.moderateReview(reviewId, action, adminId, adminNotes);
       
       if (success) {
-        res.json({ success: true, message: "Segnalazione risolta" });
+        res.json({ 
+          success: true, 
+          message: `Recensione ${action === 'approve' ? 'approvata' : 'rifiutata'} con successo` 
+        });
       } else {
-        res.status(404).json({ error: "Segnalazione non trovata" });
+        res.status(500).json({ error: "Errore nella moderazione" });
       }
     } catch (error) {
-      console.error("Error resolving report:", error);
-      res.status(500).json({ error: "Errore nella risoluzione" });
+      console.error("Error moderating review:", error);
+      res.status(500).json({ error: "Errore nella moderazione recensione" });
     }
   });
 
-  // Statistiche recensioni per admin
-  app.get("/api/admin/reviews/stats", requireAdmin, async (req, res) => {
+  // Gestire segnalazioni recensioni
+  app.patch("/api/admin/reviews/:id/flag", requireAdmin, async (req, res) => {
     try {
-      const stats = await storage.getReviewStats();
-      res.json(stats);
-    } catch (error) {
-      console.error("Error fetching review stats:", error);
-      res.status(500).json({ error: "Errore nel recupero statistiche" });
-    }
-  });
+      const reviewId = parseInt(req.params.id);
+      const { action, adminNotes } = req.body; // 'dismiss' o 'remove'
+      const adminId = req.user!.id;
 
-  // Ottenere recensioni per stato (per il pannello admin)
-  app.get("/api/admin/reviews/:status", requireAdmin, async (req, res) => {
-    try {
-      const status = req.params.status;
-      const validStatuses = ['pending', 'approved', 'rejected', 'flagged'];
+      const success = await storage.handleReviewFlag(reviewId, action, adminId, adminNotes);
       
-      if (!validStatuses.includes(status)) {
-        return res.status(400).json({ error: "Stato non valido" });
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: action === 'dismiss' ? 'Segnalazione archiviata' : 'Recensione rimossa' 
+        });
+      } else {
+        res.status(500).json({ error: "Errore nella gestione segnalazione" });
       }
-
-      const reviews = await storage.getReviewsByStatus(status);
-      res.json(reviews);
     } catch (error) {
-      console.error("Error fetching reviews by status:", error);
-      res.status(500).json({ error: "Errore nel recupero recensioni" });
+      console.error("Error handling review flag:", error);
+      res.status(500).json({ error: "Errore nella gestione segnalazione" });
     }
   });
+
+  // ============ FINE API RECENSIONI ============
 
   return app;
 }
