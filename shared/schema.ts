@@ -433,39 +433,43 @@ export const reviews = pgTable("reviews", {
   professionalId: integer("professional_id").references(() => professionals.id).notNull(),
   userId: integer("user_id").references(() => users.id).notNull(),
   
-  // Valutazioni dettagliate
-  rating: integer("rating").notNull(), // Valutazione generale (1-5)
-  competenceRating: integer("competence_rating").notNull(), // Competenza professionale (1-5)
-  qualityPriceRating: integer("quality_price_rating").notNull(), // Rapporto qualità/prezzo (1-5)
-  communicationRating: integer("communication_rating").notNull(), // Comunicazione/disponibilità (1-5)
-  punctualityRating: integer("punctuality_rating").notNull(), // Puntualità/rispetto dei tempi (1-5)
+  // Core review fields as per workflow
+  rating: integer("rating").notNull(), // 1-5 stars only
+  title: text("title").notNull(), // Review title
+  content: text("content").notNull(), // Review text (minimum 30 chars enforced in frontend)
   
-  // Contenuto
-  title: text("title"),
-  content: text("content").notNull(),
+  // Proof file (optional)
+  proofFileName: text("proof_file_name"), // Original filename
+  proofFilePath: text("proof_file_path"), // Stored file path in /uploads/reviews/
+  proofFileSize: integer("proof_file_size"),
+  proofMimeType: text("proof_mime_type"),
   
-  // Sistema ruoli ibridi - tracciamento trasparenza
-  reviewerRole: text("reviewer_role").notNull(), // 'user', 'professional', 'admin'
-  reviewerCategoryId: integer("reviewer_category_id").references(() => categories.id), // Solo per professionisti
+  // Review status workflow
+  status: text("status").default("pending").notNull(), // pending, approved, rejected
+  isVerified: boolean("is_verified").default(false).notNull(), // true if has proof file and approved
+  rejectionReason: text("rejection_reason"), // Admin rejection reason, visible to user
   
-  // Sistema di verifica avanzato
-  status: text("status").default("unverified").notNull(), // unverified, pending_verification, verified, rejected
-  proofType: text("proof_type"), // invoice, contract, receipt, other
-  proofDetails: text("proof_details"), // JSON con numero documento, data, importo
-  verificationNotes: text("verification_notes"), // Note interne admin
-  adminNotes: text("admin_notes"), // Additional admin notes for updates
+  // Professional response (single, public)
+  professionalResponse: text("professional_response"),
+  professionalResponseDate: timestamp("professional_response_date"),
   
-  // Interazioni e analytics
-  viewCount: integer("view_count").default(0).notNull(),
+  // User interaction tracking
   helpfulCount: integer("helpful_count").default(0).notNull(),
+  viewCount: integer("view_count").default(0).notNull(),
   flagCount: integer("flag_count").default(0).notNull(),
   
-  // Risposta del professionista
-  professionalResponse: text("professional_response"),
-  responseDate: timestamp("response_date"),
+  // Sistema ruoli ibridi - transparency tracking
+  reviewerRole: text("reviewer_role").notNull(), // 'user', 'professional'
+  reviewerCategoryId: integer("reviewer_category_id").references(() => categories.id), // Only for professionals
   
-  // Anti-frode e sicurezza
-  ipAddress: text("ip_address"), // Per controlli anti-frode
+  // Admin tracking
+  reviewedBy: integer("reviewed_by").references(() => users.id), // Admin who approved/rejected
+  reviewedAt: timestamp("reviewed_at"),
+  adminNotes: text("admin_notes"), // Internal admin notes
+  
+  // GDPR and security
+  isAnonymous: boolean("is_anonymous").default(false), // User requested anonymization
+  ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -495,13 +499,16 @@ export const reviewHelpfulVotes = pgTable("review_helpful_votes", {
 });
 
 // Tabella per le segnalazioni di recensioni
-export const reviewFlags = pgTable("review_flags", {
+export const reviewReports = pgTable("review_reports", {
   id: serial("id").primaryKey(),
   reviewId: integer("review_id").references(() => reviews.id).notNull(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  reason: text("reason").notNull(), // spam, inappropriate, fake, other
-  description: text("description"),
-  status: text("status").default("pending").notNull(), // pending, reviewed, dismissed
+  reporterId: integer("reporter_id").references(() => users.id).notNull(),
+  reason: text("reason").notNull(), // spam, inappropriate, fake, etc.
+  description: text("description"), // Additional details from reporter
+  status: text("status").default("pending").notNull(), // pending, resolved, dismissed
+  adminNotes: text("admin_notes"), // Admin resolution notes
+  resolvedBy: integer("resolved_by").references(() => users.id),
+  resolvedAt: timestamp("resolved_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -610,30 +617,13 @@ export const insertProfessionalSchema = createInsertSchema(professionals).omit({
   createdAt: true, 
   updatedAt: true 
 });
-export const insertReviewSchema = createInsertSchema(reviews).omit({ 
+export const insertReviewFlagSchema = createInsertSchema(reviewReports).omit({ 
   id: true, 
   status: true,
-  viewCount: true,
-  helpfulCount: true,
-  flagCount: true,
-  professionalResponse: true,
-  responseDate: true,
-  ipAddress: true,
-  userAgent: true,
   createdAt: true,
-  updatedAt: true
-});
-
-// Schema per voti utili e segnalazioni
-export const insertReviewHelpfulVoteSchema = createInsertSchema(reviewHelpfulVotes).omit({ 
-  id: true, 
-  createdAt: true 
-});
-
-export const insertReviewFlagSchema = createInsertSchema(reviewFlags).omit({ 
-  id: true, 
-  status: true,
-  createdAt: true 
+  adminNotes: true,
+  resolvedBy: true,
+  resolvedAt: true
 });
 
 // Subscription schemas
@@ -1164,6 +1154,56 @@ export const professionalRegistrationSchema = z.object({
 });
 
 export type ProfessionalRegistrationData = z.infer<typeof professionalRegistrationSchema>;
+
+// Review System Zod Schemas
+export const insertReviewSchema = createInsertSchema(reviews, {
+  rating: z.number().min(1).max(5, "Il voto deve essere tra 1 e 5"),
+  title: z.string().min(1, "Il titolo è obbligatorio").max(100, "Il titolo non può superare i 100 caratteri"),
+  content: z.string().min(30, "La recensione deve avere almeno 30 caratteri").max(2000, "La recensione non può superare i 2000 caratteri"),
+  proofFileName: z.string().optional(),
+  proofFilePath: z.string().optional(),
+  proofFileSize: z.number().optional(),
+  proofMimeType: z.string().optional(),
+}).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true,
+  status: true,
+  isVerified: true,
+  helpfulCount: true,
+  viewCount: true,
+  flagCount: true,
+  reviewedBy: true,
+  reviewedAt: true,
+  adminNotes: true
+});
+
+export const insertReviewReportSchema = createInsertSchema(reviewReports, {
+  reason: z.enum(["spam", "inappropriate", "fake", "offensive", "other"], {
+    errorMap: () => ({ message: "Seleziona un motivo valido per la segnalazione" })
+  }),
+  description: z.string().min(10, "Fornisci una descrizione di almeno 10 caratteri").max(500, "La descrizione non può superare i 500 caratteri").optional(),
+}).omit({ 
+  id: true, 
+  createdAt: true,
+  status: true,
+  adminNotes: true,
+  resolvedBy: true,
+  resolvedAt: true
+});
+
+export const insertReviewHelpfulVoteSchema = createInsertSchema(reviewHelpfulVotes).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+// Review types
+export type InsertReview = z.infer<typeof insertReviewSchema>;
+export type Review = typeof reviews.$inferSelect;
+export type InsertReviewReport = z.infer<typeof insertReviewReportSchema>;
+export type ReviewReport = typeof reviewReports.$inferSelect;
+export type InsertReviewHelpfulVote = z.infer<typeof insertReviewHelpfulVoteSchema>;
+export type ReviewHelpfulVote = typeof reviewHelpfulVotes.$inferSelect;
 
 // Sistema Badge Meritocratico
 export const badges = pgTable("badges", {
