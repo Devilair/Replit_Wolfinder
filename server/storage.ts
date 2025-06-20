@@ -3932,44 +3932,6 @@ export class DatabaseStorage implements IStorage {
     
     return professional || null;
   }
-  async resolveReport(reportId: number, adminId: number, action: 'dismiss' | 'remove_review', adminNotes?: string): Promise<boolean> {
-    return await db.transaction(async (tx) => {
-      // Aggiorna la segnalazione
-      await tx
-        .update(reviewReports)
-        .set({
-          status: 'resolved',
-          resolvedBy: adminId,
-          resolvedAt: new Date(),
-          adminNotes
-        })
-        .where(eq(reviewReports.id, reportId));
-
-      // Se l'azione è rimuovere la recensione
-      if (action === 'remove_review') {
-        const report = await tx
-          .select({ reviewId: reviewReports.reviewId })
-          .from(reviewReports)
-          .where(eq(reviewReports.id, reportId))
-          .limit(1);
-
-        if (report.length > 0) {
-          await tx
-            .update(reviews)
-            .set({
-              status: 'rejected',
-              rejectionReason: 'Rimossa a seguito di segnalazione',
-              reviewedBy: adminId,
-              reviewedAt: new Date(),
-              updatedAt: new Date()
-            })
-            .where(eq(reviews.id, report[0].reviewId));
-        }
-      }
-
-      return true;
-    });
-  }
 
   // Ottenere recensioni dell'utente
   async getUserReviews(userId: number): Promise<any[]> {
@@ -4002,16 +3964,152 @@ export class DatabaseStorage implements IStorage {
   async getReviewStats(): Promise<any> {
     const stats = await db.execute(sql`
       SELECT 
-        COUNT(*) as total_reviews,
-        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_reviews,
-        COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_reviews,
-        COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected_reviews,
-        COUNT(CASE WHEN is_verified = true THEN 1 END) as verified_reviews,
+        COUNT(*) as total,
+        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
+        COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved,
+        COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected,
+        COUNT(CASE WHEN is_flagged = true THEN 1 END) as flagged,
         ROUND(AVG(rating), 2) as average_rating
       FROM reviews
     `);
 
     return stats.rows[0];
+  }
+
+  // Ottenere recensioni per stato (admin)
+  async getReviewsByStatus(status: string): Promise<any[]> {
+    let query = db
+      .select({
+        id: reviews.id,
+        title: reviews.title,
+        content: reviews.content,
+        rating: reviews.rating,
+        status: reviews.status,
+        reviewerRole: reviews.reviewerRole,
+        reviewerCategoryId: reviews.reviewerCategoryId,
+        isAnonymous: reviews.isAnonymous,
+        createdAt: reviews.createdAt,
+        updatedAt: reviews.updatedAt,
+        professional: {
+          id: professionals.id,
+          businessName: professionals.businessName,
+          category: categories.name
+        },
+        reviewer: {
+          id: users.id,
+          name: users.name,
+          categoryName: sql<string>`CASE 
+            WHEN ${reviews.reviewerRole} = 'professional' 
+            THEN (SELECT name FROM categories WHERE id = ${reviews.reviewerCategoryId})
+            ELSE NULL 
+          END`
+        },
+        proofFileName: reviews.proofFileName,
+        proofFilePath: reviews.proofFilePath,
+        adminNotes: reviews.adminNotes,
+        moderatedBy: sql<{ id: number; name: string } | null>`
+          CASE 
+            WHEN ${reviews.reviewedBy} IS NOT NULL 
+            THEN json_build_object('id', ${reviews.reviewedBy}, 'name', (SELECT name FROM users WHERE id = ${reviews.reviewedBy}))
+            ELSE NULL 
+          END
+        `,
+        moderatedAt: reviews.reviewedAt
+      })
+      .from(reviews)
+      .leftJoin(professionals, eq(reviews.professionalId, professionals.id))
+      .leftJoin(categories, eq(professionals.categoryId, categories.id))
+      .leftJoin(users, eq(reviews.userId, users.id));
+
+    if (status === 'flagged') {
+      query = query.where(eq(reviews.isFlagged, true));
+    } else {
+      query = query.where(eq(reviews.status, status));
+    }
+
+    const reviewList = await query
+      .orderBy(desc(reviews.createdAt))
+      .execute();
+
+    return reviewList;
+  }
+
+  // Conteggio recensioni in sospeso per notifiche admin
+  async getPendingReviewsCount(): Promise<number> {
+    const [result] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(reviews)
+      .where(eq(reviews.status, 'pending'))
+      .execute();
+
+    return result.count || 0;
+  }
+
+  // Moderare recensione (approva/rifiuta)
+  async moderateReview(reviewId: number, action: 'approve' | 'reject', adminId: number, adminNotes?: string): Promise<boolean> {
+    return await db.transaction(async (tx) => {
+      const newStatus = action === 'approve' ? 'approved' : 'rejected';
+      
+      const [updated] = await tx
+        .update(reviews)
+        .set({
+          status: newStatus,
+          reviewedBy: adminId,
+          reviewedAt: new Date(),
+          adminNotes: adminNotes,
+          updatedAt: new Date()
+        })
+        .where(eq(reviews.id, reviewId))
+        .returning();
+
+      if (!updated) return false;
+
+      // Log dell'azione admin
+      await tx.insert(auditLogs).values({
+        adminId,
+        action: `review_${action}`,
+        targetType: 'review',
+        targetId: reviewId,
+        reason: adminNotes,
+        ipAddress: null,
+        userAgent: null,
+        createdAt: new Date()
+      });
+
+      return true;
+    });
+  }
+
+  // Gestire segnalazioni recensioni
+  async handleReviewFlag(reviewId: number, action: 'dismiss' | 'remove', adminId: number, adminNotes?: string): Promise<boolean> {
+    return await db.transaction(async (tx) => {
+      // Aggiorna il flag della recensione
+      await tx
+        .update(reviews)
+        .set({
+          isFlagged: action === 'dismiss' ? false : true,
+          status: action === 'remove' ? 'rejected' : reviews.status,
+          reviewedBy: adminId,
+          reviewedAt: new Date(),
+          adminNotes: adminNotes,
+          updatedAt: new Date()
+        })
+        .where(eq(reviews.id, reviewId));
+
+      // Log dell'azione admin
+      await tx.insert(auditLogs).values({
+        adminId,
+        action: `review_flag_${action}`,
+        targetType: 'review',
+        targetId: reviewId,
+        reason: adminNotes,
+        ipAddress: null,
+        userAgent: null,
+        createdAt: new Date()
+      });
+
+      return true;
+    });
   }
 }
 
