@@ -36,6 +36,28 @@ export function ReviewModal({ professionalId, professionalName, trigger }: Revie
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Check if user is logged in
+  const isLoggedIn = () => {
+    const token = localStorage.getItem('authToken');
+    return !!token;
+  };
+
+  const handleModalOpen = () => {
+    if (!isLoggedIn()) {
+      toast({
+        title: "Accesso richiesto",
+        description: "Per scrivere una recensione devi accedere o registrarti.",
+        variant: "destructive"
+      });
+      // Store current professional ID for return after login
+      localStorage.setItem('pendingReview', JSON.stringify({ professionalId, professionalName }));
+      // Redirect to login
+      window.location.href = '/login';
+      return;
+    }
+    setOpen(true);
+  };
+
   const form = useForm<ReviewFormData>({
     resolver: zodResolver(reviewFormSchema),
     defaultValues: {
@@ -155,7 +177,7 @@ export function ReviewModal({ professionalId, professionalName, trigger }: Revie
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger asChild onClick={handleModalOpen}>
         {trigger || (
           <Button>
             Scrivi una recensione

@@ -19,7 +19,7 @@ import AdminProfessionals from "@/pages/admin/professionals";
 import AdminProfessionalView from "@/pages/admin/professional-view";
 import AddProfessional from "@/pages/admin/add-professional";
 import EditProfessional from "@/pages/admin/edit-professional";
-import AdminReviews from "@/pages/admin/reviews-advanced";
+import AdminReviews from "@/pages/admin/reviews";
 import AdminCategories from "@/pages/admin/categories";
 import AdminSubscriptions from "@/pages/admin/subscriptions";
 import AdminUsers from "@/pages/admin/users";
