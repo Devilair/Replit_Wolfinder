@@ -1,0 +1,126 @@
+Elenco utenti (dashboard utenti)
+Visualizzazione tabellare con possibilità di:
+
+Filtrare per:
+
+Nome / email
+
+Stato account (attivo, sospeso, cancellato)
+
+Numero recensioni
+
+Data registrazione
+
+Recensioni segnalate
+
+Azioni rapide su ogni riga:
+
+🔍 Visualizza profilo completo
+
+✏️ Modifica email/nome
+
+🚫 Sospendi / Riattiva
+
+🧹 Anonimizza dati (per richieste GDPR)
+
+✅ 2. Scheda dettagliata utente
+Entrando in un utente, vedi:
+
+Dati principali:
+
+Nome/Nickname
+
+Email
+
+IP di registrazione
+
+Data iscrizione
+
+Eventuali segnalazioni ricevute
+
+Storico attività:
+
+Recensioni scritte (con link diretto)
+
+Segnalazioni inviate o ricevute
+
+Login più recenti
+
+Azioni possibili:
+
+Forzare reset password
+
+Bloccare l’account (motivo richiesto)
+
+Anonimizzare recensioni
+
+Visualizzare badge utente
+
+Visualizzare notifiche inviate (es. avvisi da parte della piattaforma)
+
+✅ 3. Sistema di segnalazioni
+Gestione delle segnalazioni ricevute su:
+
+Recensioni
+
+Commenti (se previsti in futuro)
+
+Comportamento scorretto (spam, offese, recensioni false)
+
+Per ogni segnalazione:
+
+Link al contenuto
+
+Chi ha segnalato (utente)
+
+Data
+
+Motivo selezionato + commento libero
+
+Azioni:
+
+Ignora / Rifiuta
+
+Contatta utente
+
+Avvisa utente
+
+Elimina recensione
+
+Sospendi utente
+
+✅ 4. Log amministrativo
+Ogni azione dell’admin viene loggata:
+
+Data, orario, ID admin, azione (es. "Utente X sospeso per spam")
+
+Utile per audit interni e rispetto del GDPR
+
+✅ 5. Statistiche utente
+Da usare anche per analytics:
+
+% utenti con almeno 1 recensione
+
+% recensioni verificate vs non verificate
+
+Numero segnalazioni ricevute per utente
+
+Attività media mensile
+
+✅ 6. Funzionalità extra consigliate (anche solo predisposte)
+Invio email diretta all’utente da pannello admin
+
+Esportazione utenti in CSV (per analisi esterna o comunicazioni massive)
+
+Assegnazione badge manuale (solo lato admin)
+
+Tag/etichetta interna (es. "Utente problematico", "Beta tester", ecc.)
+
+⚠️ GDPR e Privacy
+Ogni funzionalità dell’admin deve:
+
+Non permettere all’admin di leggere direttamente la password
+
+Essere tracciabile e giustificabile (con log)
+
+Consentire anonimizzazione su richiesta
