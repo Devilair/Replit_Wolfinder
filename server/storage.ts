@@ -4,6 +4,7 @@ import {
   consumers, plans, professionalPlans, events,
   subscriptionPlans, subscriptions, transactions, claimRequests, professionalNotifications,
   verificationDocuments, userFavorites, reviewDrafts, userBadges, userActivity, dataExports,
+  userAdminActions,
   type User, type InsertUser, type Professional, type InsertProfessional,
   type Category, type InsertCategory, type Review, type InsertReview,
   type Badge, type InsertBadge, type ProfessionalBadge, type InsertProfessionalBadge,
