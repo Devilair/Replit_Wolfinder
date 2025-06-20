@@ -5,11 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Star, MapPin, Phone, Mail, Globe, Award, Users, TrendingUp, Eye, Calendar, Shield, ChevronRight, ExternalLink, Heart, User, Target, CheckCircle, Building, Smartphone, MessageCircle, Flag, Share2, ThumbsUp } from "lucide-react";
 import { motion } from "framer-motion";
-import ReviewModal from "@/components/ReviewModal";
+import { ReviewModal } from "@/components/reviews/ReviewModal";
+import { ReviewsList } from "@/components/reviews/ReviewsList";
 import InteractiveMap from "@/components/InteractiveMap";
-
 export default function ProfessionalProfile() {
   const { id } = useParams();
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -37,6 +38,21 @@ export default function ProfessionalProfile() {
   const { data: certifications } = useQuery({
     queryKey: [`/api/professionals/${id}/certifications`],
   });
+
+  // Get current user info from auth
+  const { data: currentUser } = useQuery({
+    queryKey: ['/api/auth/me'],
+    queryFn: () => {
+      const token = localStorage.getItem('authToken');
+      if (!token) return null;
+      return fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(res => res.ok ? res.json() : null);
+    }
+  });
+
+  // Determina se l'utente corrente è il proprietario del profilo
+  const isProfessionalOwner = currentUser && currentUser.role === 'professional' && professional?.userId === currentUser.id;
 
   if (loadingProfessional || loadingBadges || loadingReviews || loadingRanking) {
     return (
@@ -602,61 +618,111 @@ export default function ProfessionalProfile() {
               </Card>
             </motion.div>
 
-            {/* Reviews Section */}
+            {/* Sistema Recensioni Completo */}
             <motion.div variants={itemVariants}>
               <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-white to-yellow-50/30">
                 <CardHeader className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
-                  <CardTitle className="text-2xl flex items-center gap-3">
-                    <Star className="w-6 h-6" />
-                    Recensioni ({professional?.reviewCount || 0})
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-2xl flex items-center gap-3">
+                      <Star className="w-6 h-6" />
+                      Recensioni ({professional?.reviewCount || 0})
+                    </CardTitle>
+                    <ReviewModal 
+                      professionalId={parseInt(id || "0")}
+                      professionalName={`${professional?.firstName || ""} ${professional?.lastName || ""}`.trim() || professional?.businessName || "Professionista"}
+                      trigger={
+                        <Button className="bg-white text-yellow-600 hover:bg-yellow-50 border border-yellow-200">
+                          Scrivi recensione
+                        </Button>
+                      }
+                    />
+                  </div>
                 </CardHeader>
-                <CardContent className="p-8">
-                  {reviews && reviews.length > 0 ? (
-                    <div className="space-y-6">
-                      {reviews?.map((review: any, index: number) => (
-                        <motion.div 
-                          key={review?.id || index}
-                          className="bg-gradient-to-r from-white to-gray-50/50 p-6 rounded-2xl shadow-lg border border-gray-100"
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                        >
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-3">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                                  {review?.user?.name?.substring(0, 1).toUpperCase() || "U"}
-                                </div>
-                                <div>
-                                  <span className="font-bold text-gray-800">{review?.user?.name || "Utente"}</span>
-                                  <div className="flex items-center gap-1 mt-1">
-                                    {renderStars(review?.rating || 0)}
-                                  </div>
-                                </div>
-                              </div>
-                              <p className="text-gray-700 text-lg leading-relaxed">{review?.content || "Nessun commento"}</p>
+                <CardContent className="p-0">
+                  <Tabs defaultValue="recensioni" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 bg-yellow-50">
+                      <TabsTrigger value="recensioni" className="data-[state=active]:bg-white">
+                        Tutte le recensioni
+                      </TabsTrigger>
+                      <TabsTrigger value="statistiche" className="data-[state=active]:bg-white">
+                        Statistiche
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="recensioni" className="p-6">
+                      <ReviewsList 
+                        professionalId={parseInt(id || "0")}
+                        currentUserId={currentUser?.id}
+                        isProfessionalOwner={isProfessionalOwner}
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="statistiche" className="p-6">
+                      <div className="space-y-6">
+                        {/* Overview statistiche */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="text-center p-4 bg-white rounded-lg border">
+                            <div className="text-2xl font-bold text-yellow-600">
+                              {professional?.rating || "0.0"}
                             </div>
-                            <div className="text-right ml-4">
-                              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                                {review?.createdAt ? new Date(review.createdAt).toLocaleDateString('it-IT') : "Data non disponibile"}
-                              </span>
+                            <div className="text-sm text-gray-600">Valutazione media</div>
+                            <div className="flex items-center justify-center mt-1">
+                              {renderStars(parseFloat(professional?.rating || "0"))}
                             </div>
                           </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-16">
-                      <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Star className="w-10 h-10 text-gray-400" />
+                          
+                          <div className="text-center p-4 bg-white rounded-lg border">
+                            <div className="text-2xl font-bold text-blue-600">
+                              {professional?.reviewCount || 0}
+                            </div>
+                            <div className="text-sm text-gray-600">Recensioni totali</div>
+                          </div>
+                          
+                          <div className="text-center p-4 bg-white rounded-lg border">
+                            <div className="text-2xl font-bold text-green-600">
+                              {professional?.responseRate || "0"}%
+                            </div>
+                            <div className="text-sm text-gray-600">Tasso di risposta</div>
+                          </div>
+                          
+                          <div className="text-center p-4 bg-white rounded-lg border">
+                            <div className="text-2xl font-bold text-purple-600">
+                              {professional?.averageResponseTime || "N/A"}
+                            </div>
+                            <div className="text-sm text-gray-600">Tempo medio risposta</div>
+                          </div>
+                        </div>
+
+                        {/* Distribuzione voti */}
+                        <div className="bg-white p-6 rounded-lg border">
+                          <h4 className="font-semibold text-gray-800 mb-4">Distribuzione valutazioni</h4>
+                          <div className="space-y-2">
+                            {[5, 4, 3, 2, 1].map((star) => (
+                              <div key={star} className="flex items-center gap-3">
+                                <span className="w-8 text-sm">{star} ★</span>
+                                <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                  <div 
+                                    className="bg-yellow-400 h-2 rounded-full" 
+                                    style={{ width: '0%' }}
+                                  ></div>
+                                </div>
+                                <span className="w-8 text-sm text-gray-600">0</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Trend nel tempo */}
+                        <div className="bg-white p-6 rounded-lg border">
+                          <h4 className="font-semibold text-gray-800 mb-4">Andamento recensioni</h4>
+                          <div className="text-center text-gray-500 py-8">
+                            <TrendingUp className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                            <p>Grafici disponibili con più recensioni</p>
+                          </div>
+                        </div>
                       </div>
-                      <h3 className="text-xl font-bold text-gray-600 mb-2">Nessuna recensione ancora</h3>
-                      <p className="text-gray-500 max-w-md mx-auto">
-                        Sii il primo a condividere la tua esperienza con questo professionista
-                      </p>
-                    </div>
-                  )}
+                    </TabsContent>
+                  </Tabs>
                 </CardContent>
               </Card>
             </motion.div>

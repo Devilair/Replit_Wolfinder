@@ -6562,5 +6562,292 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ API RECENSIONI COMPLETE ============
+
+  // Creare recensione
+  app.post("/api/reviews", requireAuth, upload.single('proofFile'), async (req, res) => {
+    try {
+      const { professionalId, rating, title, content, isAnonymous } = req.body;
+      const userId = req.user!.id;
+
+      // Validazione dati
+      if (!professionalId || !rating || !title || !content) {
+        return res.status(400).json({ error: "Dati obbligatori mancanti" });
+      }
+
+      // Controlla se l'utente può recensire questo professionista
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: "Utente non trovato" });
+      }
+
+      // Se l'utente è professionista, controlla anti-conflict rule
+      if (user.role === 'professional') {
+        const professional = await storage.getProfessionalByUserId(userId);
+        const targetProfessional = await storage.getProfessionalById(parseInt(professionalId));
+        
+        if (professional && targetProfessional && professional.categoryId === targetProfessional.categoryId) {
+          return res.status(400).json({ 
+            error: "I professionisti non possono recensire altri professionisti della stessa categoria" 
+          });
+        }
+      }
+
+      // Gestione file di prova opzionale
+      let proofFileData = {};
+      if (req.file) {
+        const fileName = req.file.originalname;
+        const filePath = req.file.path;
+        const fileSize = req.file.size;
+        const mimeType = req.file.mimetype;
+
+        proofFileData = {
+          proofFileName: fileName,
+          proofFilePath: filePath,
+          proofFileSize: fileSize,
+          proofMimeType: mimeType
+        };
+      }
+
+      // Determina ruolo reviewer
+      const reviewerRole = user.role === 'professional' ? 'professional' : 'user';
+      let reviewerCategoryId = null;
+      if (reviewerRole === 'professional') {
+        const reviewerProfessional = await storage.getProfessionalByUserId(userId);
+        reviewerCategoryId = reviewerProfessional?.categoryId || null;
+      }
+
+      const reviewData = {
+        userId,
+        professionalId: parseInt(professionalId),
+        rating: parseInt(rating),
+        title,
+        content,
+        reviewerRole,
+        reviewerCategoryId,
+        isAnonymous: isAnonymous === 'true',
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        ...proofFileData
+      };
+
+      const review = await storage.createReview(reviewData);
+      
+      res.status(201).json({ 
+        success: true, 
+        message: "Recensione inviata con successo. È in attesa di moderazione.",
+        reviewId: review.id 
+      });
+    } catch (error) {
+      console.error("Error creating review:", error);
+      res.status(500).json({ error: "Errore nella creazione della recensione" });
+    }
+  });
+
+  // Ottenere recensioni per professionista
+  app.get("/api/professionals/:id/reviews", async (req, res) => {
+    try {
+      const professionalId = parseInt(req.params.id);
+      const limit = parseInt(req.query.limit as string) || 10;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      const reviews = await storage.getReviewsByProfessional(professionalId, limit, offset);
+      
+      res.json({ reviews });
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      res.status(500).json({ error: "Errore nel recupero delle recensioni" });
+    }
+  });
+
+  // Ottenere recensioni dell'utente
+  app.get("/api/user/reviews", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const reviews = await storage.getUserReviews(userId);
+      
+      res.json({ reviews });
+    } catch (error) {
+      console.error("Error fetching user reviews:", error);
+      res.status(500).json({ error: "Errore nel recupero delle recensioni utente" });
+    }
+  });
+
+  // Voto utile su recensione
+  app.post("/api/reviews/:id/helpful", requireAuth, async (req, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      const { isHelpful } = req.body;
+
+      const success = await storage.toggleHelpfulVote(reviewId, userId, isHelpful);
+      
+      if (success) {
+        res.json({ success: true, message: "Voto registrato" });
+      } else {
+        res.status(500).json({ error: "Errore nel registrare il voto" });
+      }
+    } catch (error) {
+      console.error("Error voting on review:", error);
+      res.status(500).json({ error: "Errore nel voto" });
+    }
+  });
+
+  // Segnalare recensione
+  app.post("/api/reviews/:id/report", requireAuth, async (req, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      const reporterId = req.user!.id;
+      const { reason, description } = req.body;
+
+      if (!reason) {
+        return res.status(400).json({ error: "Motivo della segnalazione obbligatorio" });
+      }
+
+      const success = await storage.reportReview(reviewId, reporterId, reason, description);
+      
+      if (success) {
+        res.json({ success: true, message: "Segnalazione inviata" });
+      } else {
+        res.status(500).json({ error: "Errore nell'invio della segnalazione" });
+      }
+    } catch (error) {
+      console.error("Error reporting review:", error);
+      res.status(500).json({ error: "Errore nella segnalazione" });
+    }
+  });
+
+  // Risposta del professionista
+  app.post("/api/reviews/:id/response", requireAuth, async (req, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      const { response } = req.body;
+
+      if (!response || response.trim().length === 0) {
+        return res.status(400).json({ error: "La risposta non può essere vuota" });
+      }
+
+      // Verifica che l'utente sia il professionista della recensione
+      const professional = await storage.getProfessionalByUserId(userId);
+      if (!professional) {
+        return res.status(403).json({ error: "Solo i professionisti possono rispondere alle recensioni" });
+      }
+
+      const success = await storage.addProfessionalResponse(reviewId, professional.id, response);
+      
+      if (success) {
+        res.json({ success: true, message: "Risposta pubblicata" });
+      } else {
+        res.status(404).json({ error: "Recensione non trovata o non autorizzato" });
+      }
+    } catch (error) {
+      console.error("Error adding professional response:", error);
+      res.status(500).json({ error: "Errore nell'aggiunta della risposta" });
+    }
+  });
+
+  // ============ API ADMIN RECENSIONI ============
+
+  // Ottenere recensioni pending per moderazione
+  app.get("/api/admin/reviews/pending", requireAdmin, async (req, res) => {
+    try {
+      const pendingReviews = await storage.getPendingReviews();
+      res.json({ reviews: pendingReviews });
+    } catch (error) {
+      console.error("Error fetching pending reviews:", error);
+      res.status(500).json({ error: "Errore nel recupero recensioni pending" });
+    }
+  });
+
+  // Approvare recensione
+  app.post("/api/admin/reviews/:id/approve", requireAdmin, async (req, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      const adminId = req.user!.id;
+
+      const success = await storage.approveReview(reviewId, adminId);
+      
+      if (success) {
+        res.json({ success: true, message: "Recensione approvata" });
+      } else {
+        res.status(404).json({ error: "Recensione non trovata" });
+      }
+    } catch (error) {
+      console.error("Error approving review:", error);
+      res.status(500).json({ error: "Errore nell'approvazione" });
+    }
+  });
+
+  // Rifiutare recensione
+  app.post("/api/admin/reviews/:id/reject", requireAdmin, async (req, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      const adminId = req.user!.id;
+      const { reason } = req.body;
+
+      if (!reason) {
+        return res.status(400).json({ error: "Motivo del rifiuto obbligatorio" });
+      }
+
+      const success = await storage.rejectReview(reviewId, adminId, reason);
+      
+      if (success) {
+        res.json({ success: true, message: "Recensione rifiutata" });
+      } else {
+        res.status(404).json({ error: "Recensione non trovata" });
+      }
+    } catch (error) {
+      console.error("Error rejecting review:", error);
+      res.status(500).json({ error: "Errore nel rifiuto" });
+    }
+  });
+
+  // Ottenere segnalazioni pending
+  app.get("/api/admin/reviews/reports", requireAdmin, async (req, res) => {
+    try {
+      const pendingReports = await storage.getPendingReports();
+      res.json({ reports: pendingReports });
+    } catch (error) {
+      console.error("Error fetching pending reports:", error);
+      res.status(500).json({ error: "Errore nel recupero segnalazioni" });
+    }
+  });
+
+  // Risolvere segnalazione
+  app.post("/api/admin/reviews/reports/:id/resolve", requireAdmin, async (req, res) => {
+    try {
+      const reportId = parseInt(req.params.id);
+      const adminId = req.user!.id;
+      const { action, adminNotes } = req.body;
+
+      if (!action || !['dismiss', 'remove_review'].includes(action)) {
+        return res.status(400).json({ error: "Azione non valida" });
+      }
+
+      const success = await storage.resolveReport(reportId, adminId, action, adminNotes);
+      
+      if (success) {
+        res.json({ success: true, message: "Segnalazione risolta" });
+      } else {
+        res.status(404).json({ error: "Segnalazione non trovata" });
+      }
+    } catch (error) {
+      console.error("Error resolving report:", error);
+      res.status(500).json({ error: "Errore nella risoluzione" });
+    }
+  });
+
+  // Statistiche recensioni per admin
+  app.get("/api/admin/reviews/stats", requireAdmin, async (req, res) => {
+    try {
+      const stats = await storage.getReviewStats();
+      res.json({ stats });
+    } catch (error) {
+      console.error("Error fetching review stats:", error);
+      res.status(500).json({ error: "Errore nel recupero statistiche" });
+    }
+  });
+
   return app;
 }
