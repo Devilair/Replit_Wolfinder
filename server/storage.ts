@@ -3527,6 +3527,361 @@ export class DatabaseStorage implements IStorage {
 
     return claimRequest;
   }
+
+  // ============ SISTEMA RECENSIONI COMPLETO ============
+
+  // Creazione recensione
+  async createReview(reviewData: any): Promise<any> {
+    const [review] = await db
+      .insert(reviews)
+      .values({
+        ...reviewData,
+        status: 'pending',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+
+    return review;
+  }
+
+  // Ottenere recensioni per professionista (solo approvate e pubbliche)
+  async getReviewsByProfessional(professionalId: number, limit: number = 10, offset: number = 0): Promise<any[]> {
+    const reviewList = await db
+      .select({
+        id: reviews.id,
+        rating: reviews.rating,
+        title: reviews.title,
+        content: reviews.content,
+        isVerified: reviews.isVerified,
+        reviewerRole: reviews.reviewerRole,
+        reviewerCategoryId: reviews.reviewerCategoryId,
+        professionalResponse: reviews.professionalResponse,
+        professionalResponseDate: reviews.professionalResponseDate,
+        helpfulCount: reviews.helpfulCount,
+        flagCount: reviews.flagCount,
+        isAnonymous: reviews.isAnonymous,
+        createdAt: reviews.createdAt,
+        user: {
+          id: users.id,
+          name: users.name
+        },
+        category: {
+          id: categories.id,
+          name: categories.name
+        }
+      })
+      .from(reviews)
+      .leftJoin(users, eq(reviews.userId, users.id))
+      .leftJoin(categories, eq(reviews.reviewerCategoryId, categories.id))
+      .where(and(
+        eq(reviews.professionalId, professionalId),
+        eq(reviews.status, 'approved')
+      ))
+      .orderBy(desc(reviews.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    return reviewList;
+  }
+
+  // Ottenere recensioni pending per admin
+  async getPendingReviews(): Promise<any[]> {
+    const pendingReviews = await db
+      .select({
+        id: reviews.id,
+        rating: reviews.rating,
+        title: reviews.title,
+        content: reviews.content,
+        proofFileName: reviews.proofFileName,
+        proofFilePath: reviews.proofFilePath,
+        reviewerRole: reviews.reviewerRole,
+        reviewerCategoryId: reviews.reviewerCategoryId,
+        createdAt: reviews.createdAt,
+        user: {
+          id: users.id,
+          name: users.name,
+          email: users.email
+        },
+        professional: {
+          id: professionals.id,
+          businessName: professionals.businessName
+        },
+        category: {
+          id: categories.id,
+          name: categories.name
+        }
+      })
+      .from(reviews)
+      .leftJoin(users, eq(reviews.userId, users.id))
+      .leftJoin(professionals, eq(reviews.professionalId, professionals.id))
+      .leftJoin(categories, eq(reviews.reviewerCategoryId, categories.id))
+      .where(eq(reviews.status, 'pending'))
+      .orderBy(desc(reviews.createdAt));
+
+    return pendingReviews;
+  }
+
+  // Approvare recensione
+  async approveReview(reviewId: number, adminId: number): Promise<boolean> {
+    return await db.transaction(async (tx) => {
+      // Aggiorna lo status della recensione
+      const [review] = await tx
+        .update(reviews)
+        .set({
+          status: 'approved',
+          reviewedBy: adminId,
+          reviewedAt: new Date(),
+          // Se ha file di prova, marcala come verificata
+          isVerified: sql`CASE WHEN proof_file_path IS NOT NULL THEN true ELSE false END`,
+          updatedAt: new Date()
+        })
+        .where(eq(reviews.id, reviewId))
+        .returning();
+
+      if (!review) return false;
+
+      // Aggiorna contatore recensioni del professionista
+      await tx
+        .update(professionals)
+        .set({
+          reviewCount: sql`review_count + 1`,
+          updatedAt: new Date()
+        })
+        .where(eq(professionals.id, review.professionalId));
+
+      return true;
+    });
+  }
+
+  // Rifiutare recensione
+  async rejectReview(reviewId: number, adminId: number, reason: string): Promise<boolean> {
+    const [review] = await db
+      .update(reviews)
+      .set({
+        status: 'rejected',
+        rejectionReason: reason,
+        reviewedBy: adminId,
+        reviewedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(reviews.id, reviewId))
+      .returning();
+
+    return !!review;
+  }
+
+  // Aggiungere risposta del professionista
+  async addProfessionalResponse(reviewId: number, professionalId: number, response: string): Promise<boolean> {
+    const [review] = await db
+      .update(reviews)
+      .set({
+        professionalResponse: response,
+        professionalResponseDate: new Date(),
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(reviews.id, reviewId),
+        eq(reviews.professionalId, professionalId),
+        eq(reviews.status, 'approved')
+      ))
+      .returning();
+
+    return !!review;
+  }
+
+  // Voto utile su recensione
+  async toggleHelpfulVote(reviewId: number, userId: number, isHelpful: boolean): Promise<boolean> {
+    return await db.transaction(async (tx) => {
+      // Controlla se l'utente ha già votato
+      const existingVote = await tx
+        .select()
+        .from(reviewHelpfulVotes)
+        .where(and(
+          eq(reviewHelpfulVotes.reviewId, reviewId),
+          eq(reviewHelpfulVotes.userId, userId)
+        ))
+        .limit(1);
+
+      if (existingVote.length > 0) {
+        // Aggiorna voto esistente
+        await tx
+          .update(reviewHelpfulVotes)
+          .set({ isHelpful })
+          .where(and(
+            eq(reviewHelpfulVotes.reviewId, reviewId),
+            eq(reviewHelpfulVotes.userId, userId)
+          ));
+      } else {
+        // Inserisci nuovo voto
+        await tx
+          .insert(reviewHelpfulVotes)
+          .values({
+            reviewId,
+            userId,
+            isHelpful,
+            createdAt: new Date()
+          });
+      }
+
+      // Aggiorna contatore helpful nella recensione
+      const helpfulCount = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(reviewHelpfulVotes)
+        .where(and(
+          eq(reviewHelpfulVotes.reviewId, reviewId),
+          eq(reviewHelpfulVotes.isHelpful, true)
+        ));
+
+      await tx
+        .update(reviews)
+        .set({ 
+          helpfulCount: helpfulCount[0]?.count || 0,
+          updatedAt: new Date()
+        })
+        .where(eq(reviews.id, reviewId));
+
+      return true;
+    });
+  }
+
+  // Segnalare recensione
+  async reportReview(reviewId: number, reporterId: number, reason: string, description?: string): Promise<boolean> {
+    const [report] = await db
+      .insert(reviewReports)
+      .values({
+        reviewId,
+        reporterId,
+        reason,
+        description,
+        status: 'pending',
+        createdAt: new Date()
+      })
+      .returning();
+
+    // Aggiorna contatore flag nella recensione
+    await db
+      .update(reviews)
+      .set({
+        flagCount: sql`flag_count + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(reviews.id, reviewId));
+
+    return !!report;
+  }
+
+  // Ottenere segnalazioni pending per admin
+  async getPendingReports(): Promise<any[]> {
+    const pendingReports = await db
+      .select({
+        id: reviewReports.id,
+        reason: reviewReports.reason,
+        description: reviewReports.description,
+        createdAt: reviewReports.createdAt,
+        review: {
+          id: reviews.id,
+          title: reviews.title,
+          content: reviews.content,
+          rating: reviews.rating
+        },
+        reporter: {
+          id: users.id,
+          name: users.name,
+          email: users.email
+        }
+      })
+      .from(reviewReports)
+      .leftJoin(reviews, eq(reviewReports.reviewId, reviews.id))
+      .leftJoin(users, eq(reviewReports.reporterId, users.id))
+      .where(eq(reviewReports.status, 'pending'))
+      .orderBy(desc(reviewReports.createdAt));
+
+    return pendingReports;
+  }
+
+  // Risolvere segnalazione
+  async resolveReport(reportId: number, adminId: number, action: 'dismiss' | 'remove_review', adminNotes?: string): Promise<boolean> {
+    return await db.transaction(async (tx) => {
+      // Aggiorna la segnalazione
+      await tx
+        .update(reviewReports)
+        .set({
+          status: 'resolved',
+          resolvedBy: adminId,
+          resolvedAt: new Date(),
+          adminNotes
+        })
+        .where(eq(reviewReports.id, reportId));
+
+      // Se l'azione è rimuovere la recensione
+      if (action === 'remove_review') {
+        const report = await tx
+          .select({ reviewId: reviewReports.reviewId })
+          .from(reviewReports)
+          .where(eq(reviewReports.id, reportId))
+          .limit(1);
+
+        if (report.length > 0) {
+          await tx
+            .update(reviews)
+            .set({
+              status: 'rejected',
+              rejectionReason: 'Rimossa a seguito di segnalazione',
+              reviewedBy: adminId,
+              reviewedAt: new Date(),
+              updatedAt: new Date()
+            })
+            .where(eq(reviews.id, report[0].reviewId));
+        }
+      }
+
+      return true;
+    });
+  }
+
+  // Ottenere recensioni dell'utente
+  async getUserReviews(userId: number): Promise<any[]> {
+    const userReviews = await db
+      .select({
+        id: reviews.id,
+        rating: reviews.rating,
+        title: reviews.title,
+        content: reviews.content,
+        status: reviews.status,
+        isVerified: reviews.isVerified,
+        rejectionReason: reviews.rejectionReason,
+        professionalResponse: reviews.professionalResponse,
+        createdAt: reviews.createdAt,
+        professional: {
+          id: professionals.id,
+          businessName: professionals.businessName,
+          city: professionals.city
+        }
+      })
+      .from(reviews)
+      .leftJoin(professionals, eq(reviews.professionalId, professionals.id))
+      .where(eq(reviews.userId, userId))
+      .orderBy(desc(reviews.createdAt));
+
+    return userReviews;
+  }
+
+  // Statistiche recensioni per admin
+  async getReviewStats(): Promise<any> {
+    const stats = await db.execute(sql`
+      SELECT 
+        COUNT(*) as total_reviews,
+        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_reviews,
+        COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_reviews,
+        COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected_reviews,
+        COUNT(CASE WHEN is_verified = true THEN 1 END) as verified_reviews,
+        ROUND(AVG(rating), 2) as average_rating
+      FROM reviews
+    `);
+
+    return stats.rows[0];
+  }
 }
 
 export const storage = new DatabaseStorage();

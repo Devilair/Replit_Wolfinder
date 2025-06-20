@@ -547,7 +547,7 @@ export const reviewsRelations = relations(reviews, ({ one, many }) => ({
     references: [users.id],
   }),
   helpfulVotes: many(reviewHelpfulVotes),
-  flags: many(reviewFlags),
+  reports: many(reviewReports),
 }));
 
 export const reviewHelpfulVotesRelations = relations(reviewHelpfulVotes, ({ one }) => ({
@@ -561,13 +561,13 @@ export const reviewHelpfulVotesRelations = relations(reviewHelpfulVotes, ({ one 
   }),
 }));
 
-export const reviewFlagsRelations = relations(reviewFlags, ({ one }) => ({
+export const reviewReportsRelations = relations(reviewReports, ({ one }) => ({
   review: one(reviews, {
-    fields: [reviewFlags.reviewId],
+    fields: [reviewReports.reviewId],
     references: [reviews.id],
   }),
-  user: one(users, {
-    fields: [reviewFlags.userId],
+  reporter: one(users, {
+    fields: [reviewReports.reporterId],
     references: [users.id],
   }),
 }));
@@ -1197,7 +1197,7 @@ export const insertReviewHelpfulVoteSchema = createInsertSchema(reviewHelpfulVot
   createdAt: true 
 });
 
-// Review types
+// Review types (comprehensive)
 export type InsertReview = z.infer<typeof insertReviewSchema>;
 export type Review = typeof reviews.$inferSelect;
 export type InsertReviewReport = z.infer<typeof insertReviewReportSchema>;
