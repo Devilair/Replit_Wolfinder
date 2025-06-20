@@ -6417,41 +6417,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Filtri avanzati utenti
+  app.get("/api/admin/users/advanced", requireAdmin, async (req, res) => {
+    try {
+      const { 
+        search, 
+        role, 
+        status, 
+        reviewsMin, 
+        reviewsMax, 
+        registeredAfter, 
+        registeredBefore, 
+        hasReports,
+        limit = '10', 
+        offset = '0' 
+      } = req.query;
+
+      const result = await storage.getUsersAdvanced({
+        search: search as string,
+        role: role as string,
+        status: status as string,
+        reviewsMin: reviewsMin ? parseInt(reviewsMin as string) : undefined,
+        reviewsMax: reviewsMax ? parseInt(reviewsMax as string) : undefined,
+        registeredAfter: registeredAfter as string,
+        registeredBefore: registeredBefore as string,
+        hasReports: hasReports === 'true',
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      });
+
+      res.json({
+        users: result.users,
+        pagination: {
+          total: result.total,
+          limit: parseInt(limit as string),
+          offset: parseInt(offset as string),
+          hasMore: result.total > parseInt(offset as string) + parseInt(limit as string)
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching advanced users:", error);
+      res.status(500).json({ error: "Errore interno del server" });
+    }
+  });
+
+  // Dettagli singolo utente per admin
+  app.get("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const userDetails = await storage.getAdminUserDetails(userId);
+      
+      if (!userDetails) {
+        return res.status(404).json({ error: "Utente non trovato" });
+      }
+
+      res.json(userDetails);
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+      res.status(500).json({ error: "Errore nel recupero dettagli utente" });
+    }
+  });
+
+  // Aggiorna utente
+  app.put("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { name, email, role, accountStatus } = req.body;
+
+      const updatedUser = await storage.updateUserAdmin(userId, {
+        name,
+        email,
+        role,
+        accountStatus
+      });
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ error: "Errore nell'aggiornamento utente" });
+    }
+  });
+
+  // Aggiorna stato utente (sospendi/attiva)
+  app.put("/api/admin/users/:id/status", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { status, reason } = req.body;
+
+      const success = await storage.updateUserStatus(userId, status, reason);
+      
+      if (success) {
+        res.json({ success: true, message: "Stato utente aggiornato" });
+      } else {
+        res.status(500).json({ error: "Errore nell'aggiornamento stato" });
+      }
+    } catch (error) {
+      console.error("Error updating user status:", error);
+      res.status(500).json({ error: "Errore nell'aggiornamento stato utente" });
+    }
+  });
+
+  // Anonimizza utente (GDPR)
+  app.post("/api/admin/users/:id/anonymize", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const success = await storage.anonymizeUser(userId);
+      
+      if (success) {
+        res.json({ success: true, message: "Utente anonimizzato con successo" });
+      } else {
+        res.status(500).json({ error: "Errore nell'anonimizzazione" });
+      }
+    } catch (error) {
+      console.error("Error anonymizing user:", error);
+      res.status(500).json({ error: "Errore nell'anonimizzazione utente" });
+    }
+  });
+
   // Export utenti CSV (per comunicazioni massive)
   app.get("/api/admin/users/export", requireAdmin, async (req, res) => {
     try {
       const { role, status, registeredAfter } = req.query;
       
-      let query = db
-        .select({
-          id: users.id,
-          name: users.name,
-          email: users.email,
-          role: users.role,
-          accountStatus: users.accountStatus,
-          isVerified: users.isVerified,
-          isEmailVerified: users.isEmailVerified,
-          createdAt: users.createdAt,
-          lastLoginAt: users.lastLoginAt
-        })
-        .from(users);
-
-      const conditions = [];
-      
-      if (role && role !== 'all') conditions.push(eq(users.role, role as string));
-      if (status && status !== 'all') conditions.push(eq(users.accountStatus, status as string));
-      if (registeredAfter) conditions.push(gte(users.createdAt, new Date(registeredAfter as string)));
-
-      if (conditions.length > 0) {
-        query = query.where(and(...conditions));
-      }
-
-      const usersData = await query.orderBy(desc(users.createdAt));
+      const usersData = await storage.exportUsers({
+        role: role as string,
+        status: status as string,
+        registeredAfter: registeredAfter as string
+      });
 
       // Genera CSV
       const csvHeader = "ID,Nome,Email,Ruolo,Stato,Verificato,Email Verificata,Data Registrazione,Ultimo Login\n";
       const csvRows = usersData.map(user => 
-        `${user.id},"${user.name}","${user.email}","${user.role}","${user.accountStatus}","${user.isVerified}","${user.isEmailVerified}","${user.createdAt}","${user.lastLoginAt || ''}"`
+        `${user.id},"${user.name}","${user.email}","${user.role}","${user.account_status}","${user.is_verified}","${user.is_email_verified}","${user.created_at}","${user.last_login_at || ''}"`
       ).join('\n');
 
       const csv = csvHeader + csvRows;
