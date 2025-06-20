@@ -444,7 +444,7 @@ export const reviews = pgTable("reviews", {
   proofFileSize: integer("proof_file_size"),
   proofMimeType: text("proof_mime_type"),
   
-  // Review status workflow
+  // Review status workflow  
   status: text("status").default("pending").notNull(), // pending, approved, rejected
   isVerified: boolean("is_verified").default(false).notNull(), // true if has proof file and approved
   rejectionReason: text("rejection_reason"), // Admin rejection reason, visible to user
