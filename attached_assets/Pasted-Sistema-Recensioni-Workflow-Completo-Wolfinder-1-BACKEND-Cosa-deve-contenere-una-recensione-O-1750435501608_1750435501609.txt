@@ -1,0 +1,184 @@
+Sistema Recensioni – Workflow Completo Wolfinder
+✅ 1. BACKEND – Cosa deve contenere una recensione
+Ogni recensione salvata nel database deve avere:
+
+ID utente autore
+
+ID professionista recensito
+
+Voto (1-5, solo interi)
+
+Titolo recensione
+
+Testo recensione (minimo 30 caratteri)
+
+File di prova (se caricato, es. PDF, JPG, PNG)
+
+Flag “verificata” (true/false)
+
+Stato recensione:
+
+pending = in attesa
+
+approved = pubblicata
+
+rejected = rifiutata
+
+Motivo rifiuto (visibile solo all’utente)
+
+Risposta del professionista (una sola, pubblica)
+
+Segnalazioni ricevute (da utenti: motivo + data)
+
+Data creazione e ultima modifica
+
+✅ 2. FRONTEND – Modulo inserimento recensione (utente loggato)
+L’utente deve vedere un modulo composto da:
+
+⭐ Voto da 1 a 5 stelle
+
+📝 Titolo recensione
+
+✏️ Testo (minimo 30 caratteri)
+
+📎 Caricamento facoltativo di prova del servizio
+
+Tooltip: “Serve per ottenere il badge Recensione Verificata”
+
+🔐 Se utente non loggato: blocca invio e mostra messaggio
+“Per scrivere una recensione devi accedere o registrarti.”
+
+✅ 3. WORKFLOW COMPLETO – Dal primo clic alla pubblicazione
+🔹 Step 1 – L’utente cerca un professionista
+Può navigare liberamente senza registrazione.
+
+🔹 Step 2 – Clic su “Scrivi una recensione”
+Se non loggato → reindirizzamento a login/registrazione.
+
+Dopo login → torna al modulo recensione già precompilato con il professionista selezionato.
+
+🔹 Step 3 – Compilazione e invio
+L’utente compila i campi obbligatori e (se vuole) allega un file.
+
+Il sistema salva la recensione in stato “pending” (in attesa).
+
+L’utente riceve conferma:
+“Recensione inviata. Sarà pubblicata dopo verifica dello staff.”
+
+✅ 4. MODERAZIONE ADMIN – Approva o Rifiuta
+L’admin ha accesso al pannello recensioni in attesa, dove per ciascuna recensione può:
+
+✅ APPROVARE
+La recensione diventa pubblica
+
+Se presente file → segnata come “verificata”
+
+Notifiche automatiche:
+
+📧 All’utente: “La tua recensione è stata pubblicata”
+
+📧 Al professionista: “Hai ricevuto una nuova recensione”
+
+❌ RIFIUTARE
+L’admin deve indicare un motivo di rifiuto (es. “Contenuto offensivo”)
+
+La recensione non viene pubblicata
+
+L’utente riceve una notifica:
+
+“La tua recensione non è stata pubblicata per il seguente motivo: [testo].
+Puoi modificarla e reinviarla.”
+
+La recensione resta nello stato “rejected” ma modificabile dall’utente
+
+✅ 5. PUBBLICAZIONE – Cosa viene mostrato
+Quando la recensione è approvata, viene pubblicata nella scheda del professionista e mostra:
+
+⭐ Voto
+
+📝 Titolo
+
+✏️ Testo
+
+📆 Data
+
+🔒 Badge “Verificata” (se presente prova)
+
+👤 Nome/Nickname dell’autore (o “Utente anonimo” se richiesto)
+
+🔁 Risposta del professionista (se presente)
+
+🚩 Pulsante “Segnala”
+
+✅ 6. COMPORTAMENTO UTENTE DOPO L’INVIO
+Recensione in attesa → visibile nella propria area personale
+
+Recensione approvata → non modificabile dopo 7 giorni
+
+Recensione rifiutata → modificabile e reinviabile
+
+Può anonimizzare il proprio nome (opzione nel profilo)
+
+Può segnalare recensioni di altri
+
+✅ 7. FLUSSO PROFESSIONISTA – Risposta alla recensione
+Quando una recensione viene pubblicata:
+
+🔔 Notifica al professionista
+📧 Email: “Hai ricevuto una nuova recensione”
+
+🔔 Notifica interna nella dashboard
+
+🧭 Dashboard > Sezione "Recensioni ricevute"
+Vede l’elenco con anteprima + stato (nuova / già letta / risposta inviata)
+
+🗨️ Clic su recensione → può rispondere
+Campo testo per una sola risposta pubblica
+
+Dopo l’invio: non modificabile
+
+L’utente non può replicare alla risposta
+
+La risposta appare sotto la recensione come “Risposta del professionista” con:
+
+Nome dello studio o professionista
+
+Testo
+
+Data
+
+✅ 8. Segnalazioni e Sicurezza
+Ogni recensione ha il pulsante “Segnala”, visibile pubblicamente.
+
+Gli utenti possono segnalare motivando la scelta.
+
+L’admin vede tutte le segnalazioni con:
+
+Nome dell’utente segnalante
+
+Motivo
+
+Data
+
+L’admin può decidere se:
+
+Archiviare la segnalazione
+
+Eliminare la recensione
+
+Sospendere l’utente
+
+✅ 9. Tracciamento e Privacy (GDPR)
+Ogni recensione è tracciata con:
+
+IP, timestamp, ID autore
+
+Gli utenti possono:
+
+Richiedere l’anonimizzazione del nome
+
+Richiedere la rimozione della recensione (tramite modulo GDPR)
+
+Nessun contenuto viene manipolato o modificato dall’admin: può solo approvare o rifiutare
+
+Le recensioni sono sempre ordinate dalla più recente alla più vecchia
