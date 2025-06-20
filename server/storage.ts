@@ -1793,7 +1793,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async updateUserAdmin(userId: number, data: { name?: string; email?: string; role?: string }): Promise<User> {
+  async updateUserAdmin(userId: number, data: { name?: string; email?: string; role?: string; accountStatus?: string }): Promise<User> {
     const [updatedUser] = await db
       .update(users)
       .set({
@@ -1837,23 +1837,330 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
   }
 
-  async logAdminAction(action: {
-    adminId: number;
-    actionType: string;
-    targetUserId: number;
-    description: string;
+  // Sistema segnalazioni e moderazione
+  async createReport(data: {
+    reportedBy: number;
+    contentType: string;
+    contentId: number;
+    targetUserId?: number;
+    reason: string;
+    description?: string;
     ipAddress?: string;
+    userAgent?: string;
+  }): Promise<any> {
+    const [report] = await db
+      .insert(reportedContent)
+      .values({
+        reportedBy: data.reportedBy,
+        contentType: data.contentType,
+        contentId: data.contentId,
+        targetUserId: data.targetUserId,
+        reason: data.reason,
+        description: data.description,
+        ipAddress: data.ipAddress,
+        userAgent: data.userAgent,
+        status: 'pending',
+        severity: 'medium',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    
+    return report;
+  }
+
+  async getReports(params: {
+    status?: string;
+    contentType?: string;
+    severity?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<any[]> {
+    let query = db
+      .select({
+        id: reportedContent.id,
+        contentType: reportedContent.contentType,
+        contentId: reportedContent.contentId,
+        reason: reportedContent.reason,
+        description: reportedContent.description,
+        status: reportedContent.status,
+        severity: reportedContent.severity,
+        createdAt: reportedContent.createdAt,
+        reporterName: users.name,
+        reporterEmail: users.email,
+        targetUserName: sql<string>`target_user.name`.as('targetUserName'),
+        targetUserEmail: sql<string>`target_user.email`.as('targetUserEmail'),
+        moderatedBy: reportedContent.moderatedBy,
+        moderatedAt: reportedContent.moderatedAt,
+        moderationAction: reportedContent.moderationAction
+      })
+      .from(reportedContent)
+      .leftJoin(users, eq(reportedContent.reportedBy, users.id))
+      .leftJoin(sql`users as target_user`, sql`${reportedContent.targetUserId} = target_user.id`);
+
+    const conditions = [];
+    
+    if (params.status) conditions.push(eq(reportedContent.status, params.status));
+    if (params.contentType) conditions.push(eq(reportedContent.contentType, params.contentType));
+    if (params.severity) conditions.push(eq(reportedContent.severity, params.severity));
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    return await query
+      .orderBy(desc(reportedContent.createdAt))
+      .limit(params.limit || 20)
+      .offset(params.offset || 0);
+  }
+
+  async moderateReport(reportId: number, data: {
+    moderatedBy: number;
+    action: string;
+    notes?: string;
+    status: string;
   }): Promise<void> {
     await db
-      .insert(userAdminActions)
+      .update(reportedContent)
+      .set({
+        status: data.status,
+        moderatedBy: data.moderatedBy,
+        moderatedAt: new Date(),
+        moderationAction: data.action,
+        moderationNotes: data.notes,
+        updatedAt: new Date()
+      })
+      .where(eq(reportedContent.id, reportId));
+  }
+
+  // Log amministrativo completo
+  async logAdminAction(data: {
+    adminId: number;
+    action: string;
+    targetType: string;
+    targetId: number;
+    targetEmail?: string;
+    reason?: string;
+    previousState?: any;
+    newState?: any;
+    metadata?: any;
+    ipAddress?: string;
+    userAgent?: string;
+  }): Promise<void> {
+    await db
+      .insert(adminActionLogs)
       .values({
-        adminId: action.adminId,
-        actionType: action.actionType,
-        targetId: action.targetUserId,
-        description: action.description,
-        ipAddress: action.ipAddress || null,
+        adminId: data.adminId,
+        action: data.action,
+        targetType: data.targetType,
+        targetId: data.targetId,
+        targetEmail: data.targetEmail,
+        reason: data.reason,
+        previousState: data.previousState,
+        newState: data.newState,
+        metadata: data.metadata,
+        ipAddress: data.ipAddress,
+        userAgent: data.userAgent,
         createdAt: new Date()
       });
+  }
+
+  async getAdminActionLogs(params: {
+    adminId?: number;
+    targetType?: string;
+    action?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<any[]> {
+    let query = db
+      .select({
+        id: adminActionLogs.id,
+        action: adminActionLogs.action,
+        targetType: adminActionLogs.targetType,
+        targetId: adminActionLogs.targetId,
+        targetEmail: adminActionLogs.targetEmail,
+        reason: adminActionLogs.reason,
+        metadata: adminActionLogs.metadata,
+        createdAt: adminActionLogs.createdAt,
+        adminName: users.name,
+        adminEmail: users.email
+      })
+      .from(adminActionLogs)
+      .leftJoin(users, eq(adminActionLogs.adminId, users.id));
+
+    const conditions = [];
+    
+    if (params.adminId) conditions.push(eq(adminActionLogs.adminId, params.adminId));
+    if (params.targetType) conditions.push(eq(adminActionLogs.targetType, params.targetType));
+    if (params.action) conditions.push(eq(adminActionLogs.action, params.action));
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    return await query
+      .orderBy(desc(adminActionLogs.createdAt))
+      .limit(params.limit || 50)
+      .offset(params.offset || 0);
+  }
+
+  // Anonimizzazione GDPR
+  async anonymizeUser(userId: number, adminId: number): Promise<void> {
+    const user = await this.getUserById(userId);
+    if (!user) throw new Error('User not found');
+
+    // Log stato precedente
+    await this.logAdminAction({
+      adminId,
+      action: 'user_anonymized',
+      targetType: 'user',
+      targetId: userId,
+      targetEmail: user.email,
+      reason: 'GDPR compliance request',
+      previousState: { 
+        name: user.name, 
+        email: user.email 
+      },
+      newState: { 
+        name: `Anonymized_${userId}`, 
+        email: `anonymized_${userId}@deleted.local` 
+      }
+    });
+
+    // Anonimizza dati utente
+    await db
+      .update(users)
+      .set({
+        name: `Anonymized_${userId}`,
+        email: `anonymized_${userId}@deleted.local`,
+        password: 'anonymized',
+        anonymizedAt: new Date(),
+        accountStatus: 'deleted',
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+
+    // Anonimizza recensioni associate
+    await db
+      .update(reviews)
+      .set({
+        authorName: `Utente Anonimo`,
+        updatedAt: new Date()
+      })
+      .where(eq(reviews.userId, userId));
+  }
+
+  // Filtri avanzati per gestione utenti
+  async getAdminUsersAdvanced(params: {
+    search?: string;
+    status?: string;
+    role?: string;
+    reviewsMin?: number;
+    reviewsMax?: number;
+    registeredAfter?: Date;
+    registeredBefore?: Date;
+    hasReports?: boolean;
+    limit?: number;
+    offset?: number;
+  }): Promise<any[]> {
+    let query = db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        isVerified: users.isVerified,
+        isEmailVerified: users.isEmailVerified,
+        accountStatus: users.accountStatus,
+        createdAt: users.createdAt,
+        lastLoginAt: users.lastLoginAt,
+        reviewsCount: sql<number>`(
+          SELECT COUNT(*) 
+          FROM ${reviews} 
+          WHERE ${reviews.userId} = ${users.id}
+        )`.as('reviewsCount'),
+        reportsCount: sql<number>`(
+          SELECT COUNT(*) 
+          FROM ${reportedContent} 
+          WHERE ${reportedContent.targetUserId} = ${users.id}
+          AND ${reportedContent.status} = 'pending'
+        )`.as('reportsCount')
+      })
+      .from(users);
+
+    const conditions = [];
+    
+    if (params.search) {
+      conditions.push(
+        or(
+          like(users.name, `%${params.search}%`),
+          like(users.email, `%${params.search}%`)
+        )
+      );
+    }
+    
+    if (params.status && params.status !== 'all') {
+      conditions.push(eq(users.accountStatus, params.status));
+    }
+    
+    if (params.role && params.role !== 'all') {
+      conditions.push(eq(users.role, params.role));
+    }
+
+    if (params.registeredAfter) {
+      conditions.push(gte(users.createdAt, params.registeredAfter));
+    }
+
+    if (params.registeredBefore) {
+      conditions.push(lte(users.createdAt, params.registeredBefore));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const results = await query
+      .orderBy(desc(users.createdAt))
+      .limit(params.limit || 10)
+      .offset(params.offset || 0);
+
+    // Filtra per numero recensioni se specificato
+    if (params.reviewsMin !== undefined || params.reviewsMax !== undefined || params.hasReports) {
+      return results.filter(user => {
+        if (params.reviewsMin !== undefined && user.reviewsCount < params.reviewsMin) return false;
+        if (params.reviewsMax !== undefined && user.reviewsCount > params.reviewsMax) return false;
+        if (params.hasReports && user.reportsCount === 0) return false;
+        return true;
+      });
+    }
+
+    return results;
+  }
+
+  async updateUserAccountStatus(userId: number, status: string, adminId: number, reason?: string): Promise<void> {
+    const user = await this.getUserById(userId);
+    if (!user) throw new Error('User not found');
+
+    await this.logAdminAction({
+      adminId,
+      action: 'account_status_changed',
+      targetType: 'user',
+      targetId: userId,
+      targetEmail: user.email,
+      reason,
+      previousState: { accountStatus: user.accountStatus },
+      newState: { accountStatus: status }
+    });
+
+    await db
+      .update(users)
+      .set({
+        accountStatus: status,
+        ...(status === 'suspended' && { isSuspended: true, suspensionReason: reason }),
+        ...(status === 'active' && { isSuspended: false, suspensionReason: null }),
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
   }
 
   async getAdminProfessionals(params?: any): Promise<any[]> {

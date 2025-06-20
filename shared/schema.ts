@@ -36,6 +36,9 @@ export const users = pgTable("users", {
   suspensionReason: text("suspension_reason"),
   suspensionUntil: timestamp("suspension_until"),
   adminNotes: text("admin_notes"),
+  accountStatus: text("account_status").default("active").notNull(), // active, suspended, pending, deleted
+  anonymizedAt: timestamp("anonymized_at"), // For GDPR compliance
+  dataRetentionExpiresAt: timestamp("data_retention_expires_at"), // GDPR retention period
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -894,6 +897,74 @@ export const userFavorites = pgTable("user_favorites", {
 }, (table) => ({
   // Unique constraint per evitare duplicati
   uniqueUserProfessional: unique().on(table.userId, table.professionalId)
+}));
+
+// Sistema segnalazioni per recensioni e contenuti
+export const reportedContent = pgTable("reported_content", {
+  id: serial("id").primaryKey(),
+  reportedBy: integer("reported_by").references(() => users.id).notNull(),
+  contentType: text("content_type").notNull(), // 'review', 'comment', 'profile', 'message'
+  contentId: integer("content_id").notNull(), // ID del contenuto segnalato
+  targetUserId: integer("target_user_id").references(() => users.id), // Utente proprietario del contenuto
+  reason: text("reason").notNull(), // 'spam', 'offensive', 'fake', 'inappropriate', 'harassment', 'other'
+  description: text("description"), // Descrizione dettagliata opzionale
+  status: text("status").default("pending").notNull(), // 'pending', 'reviewing', 'resolved', 'dismissed'
+  severity: text("severity").default("medium").notNull(), // 'low', 'medium', 'high', 'critical'
+  moderatedBy: integer("moderated_by").references(() => users.id),
+  moderatedAt: timestamp("moderated_at"),
+  moderationAction: text("moderation_action"), // 'approved', 'deleted', 'edited', 'warned', 'suspended'
+  moderationNotes: text("moderation_notes"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  // Index per performance su query di moderazione
+  contentTypeIdIndex: index("reported_content_type_id_idx").on(table.contentType, table.contentId),
+  statusIndex: index("reported_content_status_idx").on(table.status),
+}));
+
+// Log amministrativo per tracciare tutte le azioni admin
+export const adminActionLogs = pgTable("admin_action_logs", {
+  id: serial("id").primaryKey(),
+  adminId: integer("admin_id").references(() => users.id).notNull(),
+  action: text("action").notNull(), // 'user_suspended', 'user_activated', 'review_deleted', 'profile_verified', etc.
+  targetType: text("target_type").notNull(), // 'user', 'professional', 'review', 'report', 'subscription'
+  targetId: integer("target_id").notNull(), // ID dell'entità target
+  targetEmail: text("target_email"), // Email dell'utente target per audit
+  previousState: jsonb("previous_state"), // Stato precedente per rollback
+  newState: jsonb("new_state"), // Nuovo stato
+  reason: text("reason"), // Motivo dell'azione
+  metadata: jsonb("metadata"), // Dati aggiuntivi specifici dell'azione
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  // Index per ricerche audit
+  adminActionIndex: index("admin_action_admin_idx").on(table.adminId, table.createdAt),
+  targetIndex: index("admin_action_target_idx").on(table.targetType, table.targetId),
+  actionIndex: index("admin_action_action_idx").on(table.action),
+}));
+
+// Log accessi utente per sicurezza e debugging
+export const userActivityLogs = pgTable("user_activity_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  sessionId: text("session_id"),
+  action: text("action").notNull(), // 'login', 'logout', 'password_change', 'profile_update', 'review_submitted'
+  resource: text("resource"), // Risorsa specifica acceduta
+  outcome: text("outcome").default("success").notNull(), // 'success', 'failed', 'blocked'
+  metadata: jsonb("metadata"), // Dati aggiuntivi dell'azione
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  country: text("country"), // Per geolocalizzazione
+  city: text("city"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  // Index per performance
+  userDateIndex: index("user_activity_user_date_idx").on(table.userId, table.createdAt),
+  actionIndex: index("user_activity_action_idx").on(table.action),
+  ipIndex: index("user_activity_ip_idx").on(table.ipAddress),
 }));
 
 // Aggiorna campo professional per collegamento al piano

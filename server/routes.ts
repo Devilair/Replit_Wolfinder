@@ -56,6 +56,9 @@ import {
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Authentication middleware
+  const requireAuth = authService.authenticateToken;
+  
   // Simple admin middleware for testing
   const requireAdmin = (req: any, res: any, next: any) => {
     // Allow access in development mode for testing
@@ -6117,6 +6120,348 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error removing favorite:", error);
       res.status(500).json({ message: "Failed to remove favorite" });
+    }
+  });
+
+  // ========================================
+  // ADMIN DASHBOARD UTENTI - ENDPOINT COMPLETI
+  // ========================================
+
+  // Scheda dettagliata utente
+  app.get("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const userDetails = await storage.getAdminUserDetails(userId);
+      
+      if (!userDetails) {
+        return res.status(404).json({ error: "Utente non trovato" });
+      }
+
+      res.json(userDetails);
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+      res.status(500).json({ error: "Errore nel recupero dettagli utente" });
+    }
+  });
+
+  // Modifica utente
+  app.put("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { name, email, role, accountStatus } = req.body;
+      const adminId = req.user?.id;
+
+      const updatedUser = await storage.updateUserAdmin(userId, {
+        name,
+        email, 
+        role,
+        accountStatus
+      });
+
+      // Log azione admin
+      await storage.logAdminAction({
+        adminId: adminId!,
+        action: 'user_updated',
+        targetType: 'user',
+        targetId: userId,
+        targetEmail: email,
+        reason: 'Admin panel update',
+        metadata: { updatedFields: { name, email, role, accountStatus } },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ error: "Errore nell'aggiornamento utente" });
+    }
+  });
+
+  // Anonimizza utente (GDPR)
+  app.post("/api/admin/users/:id/anonymize", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const adminId = req.user?.id;
+
+      await storage.anonymizeUser(userId, adminId!);
+
+      res.json({ message: "Utente anonimizzato con successo" });
+    } catch (error) {
+      console.error("Error anonymizing user:", error);
+      res.status(500).json({ error: "Errore nell'anonimizzazione utente" });
+    }
+  });
+
+  // Filtri avanzati utenti
+  app.get("/api/admin/users/advanced", requireAdmin, async (req, res) => {
+    try {
+      const {
+        search,
+        status,
+        role,
+        reviewsMin,
+        reviewsMax,
+        registeredAfter,
+        registeredBefore,
+        hasReports,
+        limit = "10",
+        offset = "0"
+      } = req.query;
+
+      const users = await storage.getAdminUsersAdvanced({
+        search: search as string,
+        status: status as string,
+        role: role as string,
+        reviewsMin: reviewsMin ? parseInt(reviewsMin as string) : undefined,
+        reviewsMax: reviewsMax ? parseInt(reviewsMax as string) : undefined,
+        registeredAfter: registeredAfter ? new Date(registeredAfter as string) : undefined,
+        registeredBefore: registeredBefore ? new Date(registeredBefore as string) : undefined,
+        hasReports: hasReports === 'true',
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      });
+
+      res.json({ users });
+    } catch (error) {
+      console.error("Error fetching advanced users:", error);
+      res.status(500).json({ error: "Errore nel recupero utenti avanzato" });
+    }
+  });
+
+  // ========================================
+  // SISTEMA SEGNALAZIONI
+  // ========================================
+
+  // Crea segnalazione
+  app.post("/api/reports", authService.authenticateToken, async (req, res) => {
+    try {
+      const {
+        contentType,
+        contentId,
+        targetUserId,
+        reason,
+        description
+      } = req.body;
+
+      const report = await storage.createReport({
+        reportedBy: req.user!.id,
+        contentType,
+        contentId,
+        targetUserId,
+        reason,
+        description,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.status(201).json(report);
+    } catch (error) {
+      console.error("Error creating report:", error);
+      res.status(500).json({ error: "Errore nella creazione segnalazione" });
+    }
+  });
+
+  // Lista segnalazioni per admin
+  app.get("/api/admin/reports", requireAdmin, async (req, res) => {
+    try {
+      const {
+        status,
+        contentType,
+        severity,
+        limit = "20",
+        offset = "0"
+      } = req.query;
+
+      const reports = await storage.getReports({
+        status: status as string,
+        contentType: contentType as string,
+        severity: severity as string,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      });
+
+      res.json({ reports });
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      res.status(500).json({ error: "Errore nel recupero segnalazioni" });
+    }
+  });
+
+  // Modera segnalazione
+  app.put("/api/admin/reports/:id/moderate", requireAdmin, async (req, res) => {
+    try {
+      const reportId = parseInt(req.params.id);
+      const { action, notes, status } = req.body;
+      const adminId = req.user?.id;
+
+      await storage.moderateReport(reportId, {
+        moderatedBy: adminId!,
+        action,
+        notes,
+        status
+      });
+
+      // Log azione moderazione
+      await storage.logAdminAction({
+        adminId: adminId!,
+        action: 'report_moderated',
+        targetType: 'report',
+        targetId: reportId,
+        reason: `Moderation action: ${action}`,
+        metadata: { moderationAction: action, notes },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json({ message: "Segnalazione moderata con successo" });
+    } catch (error) {
+      console.error("Error moderating report:", error);
+      res.status(500).json({ error: "Errore nella moderazione segnalazione" });
+    }
+  });
+
+  // ========================================
+  // LOG AMMINISTRATIVO
+  // ========================================
+
+  // Lista log azioni admin
+  app.get("/api/admin/action-logs", requireAdmin, async (req, res) => {
+    try {
+      const {
+        adminId,
+        targetType,
+        action,
+        limit = "50",
+        offset = "0"
+      } = req.query;
+
+      const logs = await storage.getAdminActionLogs({
+        adminId: adminId ? parseInt(adminId as string) : undefined,
+        targetType: targetType as string,
+        action: action as string,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      });
+
+      res.json({ logs });
+    } catch (error) {
+      console.error("Error fetching admin logs:", error);
+      res.status(500).json({ error: "Errore nel recupero log amministrativo" });
+    }
+  });
+
+  // Aggiorna stato account utente
+  app.put("/api/admin/users/:id/status", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { status, reason } = req.body;
+      const adminId = req.user?.id;
+
+      await storage.updateUserAccountStatus(userId, status, adminId!, reason);
+
+      res.json({ message: "Stato account aggiornato con successo" });
+    } catch (error) {
+      console.error("Error updating user status:", error);
+      res.status(500).json({ error: "Errore nell'aggiornamento stato account" });
+    }
+  });
+
+  // ========================================
+  // STATISTICHE E ANALYTICS ADMIN
+  // ========================================
+
+  // Statistiche dashboard utenti
+  app.get("/api/admin/user-stats", requireAdmin, async (req, res) => {
+    try {
+      const stats = await db.execute(sql`
+        SELECT 
+          COUNT(*) as total_users,
+          COUNT(CASE WHEN account_status = 'active' THEN 1 END) as active_users,
+          COUNT(CASE WHEN account_status = 'suspended' THEN 1 END) as suspended_users,
+          COUNT(CASE WHEN account_status = 'pending' THEN 1 END) as pending_users,
+          COUNT(CASE WHEN role = 'professional' THEN 1 END) as professionals,
+          COUNT(CASE WHEN role = 'user' THEN 1 END) as regular_users,
+          COUNT(CASE WHEN is_email_verified = true THEN 1 END) as verified_emails,
+          COUNT(CASE WHEN created_at >= NOW() - INTERVAL '30 days' THEN 1 END) as new_users_30d,
+          COUNT(CASE WHEN created_at >= NOW() - INTERVAL '7 days' THEN 1 END) as new_users_7d
+        FROM users
+      `);
+
+      const reviewStats = await db.execute(sql`
+        SELECT 
+          COUNT(*) as total_reviews,
+          COUNT(CASE WHEN status = 'published' THEN 1 END) as published_reviews,
+          COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_reviews,
+          AVG(rating)::numeric(3,2) as average_rating
+        FROM reviews
+      `);
+
+      const reportStats = await db.execute(sql`
+        SELECT 
+          COUNT(*) as total_reports,
+          COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_reports,
+          COUNT(CASE WHEN status = 'resolved' THEN 1 END) as resolved_reports,
+          COUNT(CASE WHEN severity = 'high' OR severity = 'critical' THEN 1 END) as critical_reports
+        FROM reported_content
+      `);
+
+      res.json({
+        users: stats.rows[0],
+        reviews: reviewStats.rows[0],
+        reports: reportStats.rows[0]
+      });
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      res.status(500).json({ error: "Errore nel recupero statistiche" });
+    }
+  });
+
+  // Export utenti CSV (per comunicazioni massive)
+  app.get("/api/admin/users/export", requireAdmin, async (req, res) => {
+    try {
+      const { role, status, registeredAfter } = req.query;
+      
+      let query = db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          role: users.role,
+          accountStatus: users.accountStatus,
+          isVerified: users.isVerified,
+          isEmailVerified: users.isEmailVerified,
+          createdAt: users.createdAt,
+          lastLoginAt: users.lastLoginAt
+        })
+        .from(users);
+
+      const conditions = [];
+      
+      if (role && role !== 'all') conditions.push(eq(users.role, role as string));
+      if (status && status !== 'all') conditions.push(eq(users.accountStatus, status as string));
+      if (registeredAfter) conditions.push(gte(users.createdAt, new Date(registeredAfter as string)));
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+
+      const usersData = await query.orderBy(desc(users.createdAt));
+
+      // Genera CSV
+      const csvHeader = "ID,Nome,Email,Ruolo,Stato,Verificato,Email Verificata,Data Registrazione,Ultimo Login\n";
+      const csvRows = usersData.map(user => 
+        `${user.id},"${user.name}","${user.email}","${user.role}","${user.accountStatus}","${user.isVerified}","${user.isEmailVerified}","${user.createdAt}","${user.lastLoginAt || ''}"`
+      ).join('\n');
+
+      const csv = csvHeader + csvRows;
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="utenti_wolfinder.csv"');
+      res.send(csv);
+    } catch (error) {
+      console.error("Error exporting users:", error);
+      res.status(500).json({ error: "Errore nell'export utenti" });
     }
   });
 
