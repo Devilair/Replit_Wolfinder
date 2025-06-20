@@ -1800,12 +1800,323 @@ export class DatabaseStorage implements IStorage {
         ...(data.name && { name: data.name }),
         ...(data.email && { email: data.email }),
         ...(data.role && { role: data.role }),
+        ...(data.accountStatus && { accountStatus: data.accountStatus }),
         updatedAt: new Date()
       })
       .where(eq(users.id, userId))
       .returning();
 
     return updatedUser;
+  }
+
+  async getAdminUserDetails(userId: number): Promise<any | null> {
+    try {
+      const userResult = await db.execute(sql`
+        SELECT 
+          u.id,
+          u.name,
+          u.email,
+          u.role,
+          u.is_verified,
+          u.is_email_verified,
+          u.account_status,
+          u.created_at,
+          u.last_login_at,
+          u.updated_at,
+          (SELECT COUNT(*) FROM reviews WHERE user_id = u.id) as reviews_count,
+          (SELECT COUNT(*) FROM user_favorites WHERE user_id = u.id) as favorites_count,
+          (SELECT COUNT(*) FROM reported_content WHERE target_user_id = u.id AND status = 'pending') as reports_count
+        FROM users u
+        WHERE u.id = ${userId}
+      `);
+
+      if (userResult.rows.length === 0) {
+        return null;
+      }
+
+      const user = userResult.rows[0];
+
+      // Recupera attività recente
+      const activityResult = await db.execute(sql`
+        SELECT 
+          'review' as type,
+          'Ha lasciato una recensione' as description,
+          created_at as timestamp
+        FROM reviews 
+        WHERE user_id = ${userId}
+        
+        UNION ALL
+        
+        SELECT 
+          'favorite' as type,
+          'Ha aggiunto un professionista ai preferiti' as description,
+          created_at as timestamp
+        FROM user_favorites 
+        WHERE user_id = ${userId}
+        
+        ORDER BY timestamp DESC
+        LIMIT 10
+      `);
+
+      return {
+        ...user,
+        stats: {
+          totalReviews: user.reviews_count || 0,
+          totalFavorites: user.favorites_count || 0
+        },
+        recentActivity: activityResult.rows || []
+      };
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      return null;
+    }
+  }
+
+  async getUsersAdvanced(filters: {
+    search?: string;
+    role?: string;
+    status?: string;
+    reviewsMin?: number;
+    reviewsMax?: number;
+    registeredAfter?: string;
+    registeredBefore?: string;
+    hasReports?: boolean;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ users: any[]; total: number }> {
+    try {
+      let whereConditions: string[] = [];
+      let parameters: any[] = [];
+      let paramIndex = 1;
+
+      if (filters.search) {
+        whereConditions.push(`(u.name ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex})`);
+        parameters.push(`%${filters.search}%`);
+        paramIndex++;
+      }
+
+      if (filters.role && filters.role !== 'all') {
+        whereConditions.push(`u.role = $${paramIndex}`);
+        parameters.push(filters.role);
+        paramIndex++;
+      }
+
+      if (filters.status && filters.status !== 'all') {
+        whereConditions.push(`u.account_status = $${paramIndex}`);
+        parameters.push(filters.status);
+        paramIndex++;
+      }
+
+      if (filters.reviewsMin !== undefined) {
+        whereConditions.push(`(SELECT COUNT(*) FROM reviews WHERE user_id = u.id) >= $${paramIndex}`);
+        parameters.push(filters.reviewsMin);
+        paramIndex++;
+      }
+
+      if (filters.reviewsMax !== undefined) {
+        whereConditions.push(`(SELECT COUNT(*) FROM reviews WHERE user_id = u.id) <= $${paramIndex}`);
+        parameters.push(filters.reviewsMax);
+        paramIndex++;
+      }
+
+      if (filters.registeredAfter) {
+        whereConditions.push(`u.created_at >= $${paramIndex}`);
+        parameters.push(filters.registeredAfter);
+        paramIndex++;
+      }
+
+      if (filters.registeredBefore) {
+        whereConditions.push(`u.created_at <= $${paramIndex}`);
+        parameters.push(filters.registeredBefore);
+        paramIndex++;
+      }
+
+      if (filters.hasReports) {
+        whereConditions.push(`(SELECT COUNT(*) FROM reported_content WHERE target_user_id = u.id AND status = 'pending') > 0`);
+      }
+
+      const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+      // Query per conteggio totale
+      const countResult = await db.execute(sql.raw(`
+        SELECT COUNT(*) as total
+        FROM users u
+        ${whereClause}
+      `, parameters));
+
+      const total = parseInt(countResult.rows[0]?.total || '0');
+
+      // Query per utenti con paginazione
+      const limit = filters.limit || 10;
+      const offset = filters.offset || 0;
+
+      parameters.push(limit, offset);
+      
+      const usersResult = await db.execute(sql.raw(`
+        SELECT 
+          u.id,
+          u.name,
+          u.email,
+          u.role,
+          u.is_verified,
+          u.is_email_verified,
+          u.account_status,
+          u.created_at,
+          u.last_login_at,
+          u.updated_at,
+          (SELECT COUNT(*) FROM reviews WHERE user_id = u.id) as reviews_count,
+          (SELECT COUNT(*) FROM reported_content WHERE target_user_id = u.id AND status = 'pending') as reports_count
+        FROM users u
+        ${whereClause}
+        ORDER BY u.created_at DESC
+        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+      `, parameters));
+
+      return {
+        users: usersResult.rows.map(row => ({
+          ...row,
+          reviewsCount: parseInt(row.reviews_count || '0'),
+          reportsCount: parseInt(row.reports_count || '0')
+        })),
+        total
+      };
+    } catch (error) {
+      console.error('Error fetching advanced users:', error);
+      return { users: [], total: 0 };
+    }
+  }
+
+  async getUserStats(): Promise<any> {
+    try {
+      const statsResult = await db.execute(sql`
+        SELECT 
+          COUNT(*) as total_users,
+          COUNT(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '7 days' THEN 1 END) as new_users_7d,
+          COUNT(CASE WHEN account_status = 'active' THEN 1 END) as active_users,
+          COUNT(CASE WHEN is_email_verified = true THEN 1 END) as verified_emails,
+          COUNT(CASE WHEN role = 'professional' THEN 1 END) as professionals
+        FROM users
+      `);
+
+      const reportsResult = await db.execute(sql`
+        SELECT 
+          COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_reports,
+          COUNT(CASE WHEN status = 'pending' AND severity = 'critical' THEN 1 END) as critical_reports
+        FROM reported_content
+      `);
+
+      const stats = statsResult.rows[0];
+      const reports = reportsResult.rows[0];
+
+      return {
+        users: {
+          total_users: parseInt(stats.total_users || '0'),
+          new_users_7d: parseInt(stats.new_users_7d || '0'),
+          active_users: parseInt(stats.active_users || '0'),
+          verified_emails: parseInt(stats.verified_emails || '0'),
+          professionals: parseInt(stats.professionals || '0')
+        },
+        reports: {
+          pending_reports: parseInt(reports.pending_reports || '0'),
+          critical_reports: parseInt(reports.critical_reports || '0')
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+      return {
+        users: { total_users: 0, new_users_7d: 0, active_users: 0, verified_emails: 0, professionals: 0 },
+        reports: { pending_reports: 0, critical_reports: 0 }
+      };
+    }
+  }
+
+  async updateUserStatus(userId: number, status: string, reason?: string): Promise<boolean> {
+    try {
+      await db.update(users)
+        .set({
+          accountStatus: status,
+          ...(reason && { suspensionReason: reason }),
+          ...(status === 'suspended' && { suspensionUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }), // 30 giorni
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
+
+      return true;
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      return false;
+    }
+  }
+
+  async anonymizeUser(userId: number): Promise<boolean> {
+    try {
+      const timestamp = Date.now();
+      
+      await db.update(users)
+        .set({
+          name: `Anonymized_${userId}`,
+          email: `anonymized_${userId}@deleted.local`,
+          anonymizedAt: new Date(),
+          accountStatus: 'deleted',
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
+
+      return true;
+    } catch (error) {
+      console.error('Error anonymizing user:', error);
+      return false;
+    }
+  }
+
+  async exportUsers(filters: { role?: string; status?: string; registeredAfter?: string }): Promise<any[]> {
+    try {
+      let whereConditions: string[] = [];
+      let parameters: any[] = [];
+      let paramIndex = 1;
+
+      if (filters.role && filters.role !== 'all') {
+        whereConditions.push(`u.role = $${paramIndex}`);
+        parameters.push(filters.role);
+        paramIndex++;
+      }
+
+      if (filters.status && filters.status !== 'all') {
+        whereConditions.push(`u.account_status = $${paramIndex}`);
+        parameters.push(filters.status);
+        paramIndex++;
+      }
+
+      if (filters.registeredAfter) {
+        whereConditions.push(`u.created_at >= $${paramIndex}`);
+        parameters.push(filters.registeredAfter);
+        paramIndex++;
+      }
+
+      const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+      const result = await db.execute(sql.raw(`
+        SELECT 
+          u.id,
+          u.name,
+          u.email,
+          u.role,
+          u.is_verified,
+          u.is_email_verified,
+          u.account_status,
+          u.created_at,
+          u.last_login_at,
+          (SELECT COUNT(*) FROM reviews WHERE user_id = u.id) as reviews_count
+        FROM users u
+        ${whereClause}
+        ORDER BY u.created_at DESC
+      `, parameters));
+
+      return result.rows;
+    } catch (error) {
+      console.error('Error exporting users:', error);
+      return [];
+    }
   }
 
   async suspendUser(userId: number, reason: string): Promise<void> {
