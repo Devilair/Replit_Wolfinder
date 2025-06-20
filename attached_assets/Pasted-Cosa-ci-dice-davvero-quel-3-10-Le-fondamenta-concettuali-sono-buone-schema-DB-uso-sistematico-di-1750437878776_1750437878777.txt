@@ -1,0 +1,29 @@
+Cosa ci dice davvero quel “3/10”
+Le fondamenta concettuali sono buone (schema DB, uso sistematico di TypeScript, moduli “service” separati).
+
+Ma il motore non parte – finché non compili, non testi e non hai un dev-server che si avvia, ogni feature “enterprise” resta teorica.
+
+Il monolite server/routes.ts è un campanello d’allarme: anche con il build risolto, la manutenibilità crollerà quando il codice crescerà.
+
+Punti che meritano attenzione immediata
+Categoria	Perché è un blocco o un moltiplicatore di problemi
+Build system (tsx/vite/tsc assenti)	Senza un’installazione pulita che compila su CI, non puoi fare né bug-fix né deploy.
+Package-manager conflitto	Mescolare npm/pnpm rompe dipendenze in modo intermittente → “funziona sul mio PC” eterno.
+Zero test / zero lint	Ogni refactor rischia di introdurre regressioni invisibili; l’enorme file routes è sintomo di mancanza di guard-rail.
+Monolite 6 800+ righe	Diventa un collo di bottiglia per performance (cold-start), per code-review e per on-boarding di altri dev.
+
+Quanto è allarmante?
+Il voto 3/10 non boccia l’idea né l’architettura concettuale, ma dice che l’“ingegneria di produzione” non esiste ancora. Finché non alzi almeno a 6-7/10 (build riproducibile, test minimo, file scorporati), qualsiasi nuova feature aggiungerà debito tecnico incontrollato.
+
+Prossime mosse ad alto impatto (senza entrare nel codice)
+Blocca lo sviluppo funzionale per un paio di giorni: il tempo di avere un pnpm install && pnpm run dev && pnpm run build che gira su una macchina pulita.
+
+Scegli un solo package-manager (pnpm) e sistema il lockfile: è la base per CI e team work.
+
+Inserisci un test “hello-world” con Vitest e uno script lint: più che copertura, ti serve un “circuit breaker” che diventi rosso se il monolite cresce o se ricompaiono any.
+
+Spezza server/routes.ts in almeno 3 moduli (auth, professionals, public) – anche solo con export/require, senza refactor della logica. Riduce subito l’effetto “spaghetti”.
+
+Configura una pipeline CI picnic (install → type-check → lint → test). Solo quando è verde si passa di nuovo a Stripe/e-mail/UX.
+
+Portato a termine questo “mini hardening”, il tuo livello di fiducia balzerà almeno a 6/10; a quel punto potrai tornare a parlare di feature e monetizzazione senza camminare sul ghiaccio sottile.
