@@ -5,7 +5,9 @@ import { authService } from "../auth";
 
 const adminStorage = new AdminAdvancedStorage();
 const requireAuth = authService.authenticateToken;
-const requireAdminAuth = authService.requireRole(['admin', 'moderator']);
+const requireAdminAuth = (req: any, res: any, next: any) => {
+  authService.requireRole(['admin', 'moderator'])(req, res, next);
+};
 
 export function setupAdminRoutes(app: Express) {
   // Admin Dashboard Stats
