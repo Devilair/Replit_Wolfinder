@@ -5,7 +5,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16',
+  apiVersion: '2025-05-28.basil',
 });
 
 export interface CreateCustomerParams {
@@ -101,7 +101,7 @@ export class StripeService {
   }
 
   async updateSubscription(params: UpdateSubscriptionParams): Promise<Stripe.Subscription> {
-    const updateData: any = {
+    const updateData: Stripe.SubscriptionUpdateParams = {
       metadata: params.metadata,
     };
 
@@ -168,7 +168,7 @@ export class StripeService {
 
   // Utility methods
   async listPrices(productId?: string): Promise<Stripe.Price[]> {
-    const params: any = { active: true, limit: 100 };
+    const params: Stripe.PriceListParams = { active: true, limit: 100 };
     if (productId) {
       params.product = productId;
     }

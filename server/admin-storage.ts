@@ -89,7 +89,7 @@ export interface SuspiciousActivityPattern {
   description: string;
   affectedEntities: number[];
   confidence: number;
-  metadata: any;
+  metadata: Record<string, unknown>;
 }
 
 export class AdminAdvancedStorage {
