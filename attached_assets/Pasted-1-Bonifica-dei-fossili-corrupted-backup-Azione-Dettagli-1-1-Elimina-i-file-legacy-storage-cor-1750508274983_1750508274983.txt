@@ -1,0 +1,59 @@
+1. Bonifica dei “fossili” (corrupted & backup)
+Azione	Dettagli
+1.1 Elimina i file legacy	storage-corrupted.ts, routes-monolite-backup.ts, storage-monolite-backup.ts
+1.2 Cerca import residui	grep -R "storage-corrupted" src/ → deve restituire zero righe
+1.3 Aggiorna barrel storage/index.ts	Esporta solo i nuovi 11 moduli
+
+Esito atteso: repo priva di duplicati, tree più leggero ➜ +0.5 point confidenza
+
+2. Type-safety a prova di CI
+Azione	Dettagli
+2.1 Imposta TypeScript in modalità strict totale	tsconfig.json: "strict": true, "noImplicitAny": true, "skipLibCheck": true
+2.2 Fai fallire la pipeline su errori TS	GitHub Action: pnpm run check con tsc --noEmit --pretty false
+2.3 Sblocca il timeout	Fissa gli errori nelle aree segnalate (database-storage.ts, admin-storage.ts, stripe-service.ts), sostituendo any con tipi espliciti o generici Drizzle
+2.4 Ripeti finché tsc completa < 30 s e restituisce exit-code 0	
+
+Esito atteso: compilazione pulita ➜ +1 point confidenza
+
+3. Cloud-storage pronto (anche se minimale)
+Azione	Dettagli
+3.1 Implementa i TODO di cloud-storage.ts	Usa SDK S3 compatibile (es. MinIO) in modalità “local” se non hai ancora un bucket reale
+3.2 Feature-flag via env	USE_S3=false in .env locale ➜ fallback al filesystem
+3.3 Test d’integrazione	Carica un file dummy, leggi la URL, verifica 200 OK
+
+Esito atteso: upload funzionante in locale + test verde ➜ +0.5 point
+
+4. Copertura test > 40 %
+Azione	Dettagli
+4.1 Aggiungi test integration “happy-path”	login → create professional → upload file → create review
+4.2 Badge calculation unit-tests	almeno 4 casi limite (nuovo prof., soglia badge Gold, revoca badge)
+4.3 Configura Vitest coverage	fallisce sotto 40 %
+
+Esito atteso: CI mostra coverage 40 %+ ➜ +0.5 point
+
+5. Performance guard-rail
+Azione	Dettagli
+5.1 Micro-benchmark badge-calculator	Vitest it.concurrent con 1 000 iterazioni → deve chiudere < 150 ms
+5.2 Query plan admin-storage	EXPLAIN (ANALYZE) su query più pesanti; aggiungi indice se > 100 ms
+5.3 k6 smoke 30 rps / 1 min nell’action “perf”	p95 < 300 ms, error-rate < 0.5 %
+
+Esito atteso: test performance verde ➜ +0.5 point
+
+6. Pulizia finale & badge README
+Azione	Dettagli
+6.1 ESLint rule no-unused-vars e max-lines-per-file: 800	blocca nuovi mostri in futuro
+6.2 Aggiorna README con badge CI + coverage	mostra qualità agli altri dev / investitori
+
+Esito atteso: repo “pulita” visivamente ➜ +0.25 point
+
+Somma dei guadagni attesi
+Area	Crediti confidenza
+Bonifica duplicati	+0.5
+Type-safety enforced	+1.0
+Cloud-storage funzionante	+0.5
+Test coverage 40 %+	+0.5
+Performance guard-rail	+0.5
+Lint & badge	+0.25
+Totale stimato	≈ +3.25
+
+Confidenza passerebbe da 6 / 10 → ~9 / 10 (teniamoci 7-8 per margine bug inattesi).

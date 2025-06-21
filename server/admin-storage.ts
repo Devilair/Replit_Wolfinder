@@ -331,8 +331,8 @@ export class AdminAdvancedStorage {
     if (ratingRange) {
       conditions.push(
         and(
-          gte(professionals.rating, ratingRange[0]),
-          lte(professionals.rating, ratingRange[1])
+          gte(professionals.rating, ratingRange[0].toString()),
+          lte(professionals.rating, ratingRange[1].toString())
         )
       );
     }
@@ -523,7 +523,7 @@ export class AdminAdvancedStorage {
         type: 'rapid_registration',
         severity: result.count > 10 ? 'high' : 'medium',
         description: `${result.count} reviews from IP ${result.ipAddress} in 24 hours`,
-        affectedEntities: result.reviews,
+        affectedEntities: Array.isArray(result.reviews) ? result.reviews : [],
         confidence: Math.min(result.count * 10, 100),
         metadata: { ipAddress: result.ipAddress, timeframe: '24h' }
       });
@@ -552,7 +552,7 @@ export class AdminAdvancedStorage {
         type: 'suspicious_ratings',
         severity: Number(result.avgRating) > 4.9 ? 'high' : 'medium',
         description: `Professional ${result.professionalId} has unusually high rating pattern`,
-        affectedEntities: result.reviews,
+        affectedEntities: Array.isArray(result.reviews) ? result.reviews : [],
         confidence: (Number(result.avgRating) - 4.5) * 100,
         metadata: { avgRating: result.avgRating, professionalId: result.professionalId }
       });

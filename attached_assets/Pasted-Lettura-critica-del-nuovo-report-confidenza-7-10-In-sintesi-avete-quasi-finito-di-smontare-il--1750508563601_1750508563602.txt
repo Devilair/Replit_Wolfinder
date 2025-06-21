@@ -1,0 +1,68 @@
+Lettura critica del nuovo report (“confidenza 7/10”)
+In sintesi: avete-quasi finito di smontare il “tech-debt storico” – la base è finalmente tipizzata, modulare, testata. Restano però quattro zone rosse che vi impediscono di salire al livello “production-grade senza sorprese”.
+
+1 · Errori TypeScript su admin-storage.ts
+Perché conta → è l’unico modulo che tocca contemporaneamente recensioni, badge, statistiche: se resta con type-mismatch oggi, domani romperà l’admin dashboard quando cambierà anche solo un campo.
+
+Azioni rapide
+
+Blocca CI al primo TS-error (niente “skip” su cartella admin).
+
+Spezza il file in AdminReviewRepo (moderazione) e AdminAnalyticsRepo (metriche).
+
+Aggiungi test d’integrazione: list pending reviews → approve → badge refresh.
+
+2 · badge-calculator.test.ts rotto
+Perché conta → il badge system “vende” la trasparenza meritocratica. Se i test sono ko, ogni refactor punterà alla cieca.
+
+Azioni rapide
+
+Esporta esplicitamente calculateAllBadges dal servizio (o cambia il test per chiamare la facade corretta).
+
+Misura con dati fixture (prof con 0, 5, 50 recensioni) e soglia tempo < 100 ms su 1 000 prof.
+
+Coverage badge-logic deve rientrare nel 90° percentile del project coverage.
+
+3 · ESLint “fantasma”
+Perché conta → senza lint attivo, i 2 any di oggi possono tornare 200 in due sprint.
+
+Azioni rapide
+
+Downgrade ESLint 9 → 8.57 (o aggiorna config RC) per rimettere in moto lo script.
+
+Aggiungi regola max-lines-per-file: 600 → segnala subito i nuovi “mostri”.
+
+Integra lint-staged nel pre-commit.
+
+4 · Query/Performance & cache da 3 s
+Perché conta → con 50–100 professionisti la latenza di 3 s farà sembrare il sito “rotto”.
+
+Azioni rapide
+
+EXPLAIN ANALYZE sulla query categories → se fa full-table scan, aggiungi indice GIN/tsvector.
+
+Metti cache Redis 30 min per categorie statiche (invalidi solo se ne aggiungi).
+
+Rifletti la query in test-perf k6: p95 < 300 ms.
+
+5 · Debito minore ma visibile
+Item	Fix minimo
+Token revocation TODO	Terminare familia-blacklist su logout; 50 righe max.
+Cloud-storage migrazione doc	Aggiungi README sezione “Upload flow: local → S3” + script copy-backfill.
+Error propagation backend	Usa middleware unico handleAsync → log JSON + next(err); meno console-noise.
+
+Sequenza consigliata (≈ 1 settimana)
+(½ g) ESLint fix + pre-commit.
+
+(1 g) Split admin-storage.ts, risolvere TS errors, aggiungere test.
+
+(1 g) Sistemare badge-calculator.test.ts, copertura + micro-benchmark.
+
+(1 g) Ottimizzare query categorie, introdurre cache Redis.
+
+(½ g) Token revocation + cleanup console-errors.
+
+(½ g) Aggiornare doc cloud-storage + health-check p95 latenza DB.
+
+Outcome atteso: TypeScript zero error, ESLint verde, test badge/admin verdi, p95 categorie < 300 ms, console pulita.
+Confidenza stimata dopo il ciclo: 8 – 8.5 / 10 – livello sufficiente per iniziare i test di staging su VPS senza timore di figuracce.
