@@ -428,6 +428,186 @@ export class AdminAdvancedStorage {
       admin: row.admin
     }));
   }
+
+  // ===== METODI ADMIN DASHBOARD =====
+
+  async getAdminStats() {
+    const totalUsers = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const totalProfessionals = await db.select({ count: sql<number>`count(*)` }).from(professionals);
+    const totalReviews = await db.select({ count: sql<number>`count(*)` }).from(reviews);
+
+    return {
+      totalUsers: totalUsers[0]?.count || 0,
+      totalProfessionals: totalProfessionals[0]?.count || 0,
+      totalReviews: totalReviews[0]?.count || 0,
+      revenue: 0
+    };
+  }
+
+  async getUsers(filters: any) {
+    const { page = 1, limit = 20, search = "", status = "all", role = "all" } = filters;
+    
+    const conditions = [];
+    if (search) {
+      conditions.push(
+        or(
+          like(users.name, `%${search}%`),
+          like(users.email, `%${search}%`)
+        )
+      );
+    }
+    
+    if (status !== "all") {
+      conditions.push(eq(users.isVerified, status === "verified"));
+    }
+    
+    if (role !== "all") {
+      conditions.push(eq(users.role, role));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    return await db
+      .select()
+      .from(users)
+      .where(whereClause)
+      .orderBy(desc(users.createdAt))
+      .limit(limit)
+      .offset((page - 1) * limit);
+  }
+
+  async getUserStats() {
+    const totalUsers = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const verifiedUsers = await db.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.isVerified, true));
+    const professionals = await db.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.role, 'professional'));
+
+    return {
+      totalUsers: totalUsers[0]?.count || 0,
+      verifiedUsers: verifiedUsers[0]?.count || 0,
+      professionals: professionals[0]?.count || 0,
+      criticalUsers: 0
+    };
+  }
+
+  async getReviews(filters: any) {
+    const { page = 1, limit = 20, status = "all" } = filters;
+    
+    const conditions = [];
+    if (status !== "all") {
+      conditions.push(eq(reviews.status, status));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    return await db
+      .select({
+        review: reviews,
+        professional: professionals,
+        user: users
+      })
+      .from(reviews)
+      .leftJoin(professionals, eq(reviews.professionalId, professionals.id))
+      .leftJoin(users, eq(reviews.userId, users.id))
+      .where(whereClause)
+      .orderBy(desc(reviews.createdAt))
+      .limit(limit)
+      .offset((page - 1) * limit);
+  }
+
+  async getReviewStats() {
+    const totalReviews = await db.select({ count: sql<number>`count(*)` }).from(reviews);
+    const pendingReviews = await db.select({ count: sql<number>`count(*)` }).from(reviews).where(eq(reviews.status, 'pending'));
+    const approvedReviews = await db.select({ count: sql<number>`count(*)` }).from(reviews).where(eq(reviews.status, 'approved'));
+
+    return {
+      totalReviews: totalReviews[0]?.count || 0,
+      pendingReviews: pendingReviews[0]?.count || 0,
+      approvedReviews: approvedReviews[0]?.count || 0,
+      averageRating: 0
+    };
+  }
+
+  async getNotificationCounts() {
+    const pendingReviews = await db.select({ count: sql<number>`count(*)` }).from(reviews).where(eq(reviews.status, 'pending'));
+    const pendingProfessionals = await db.select({ count: sql<number>`count(*)` }).from(professionals).where(eq(professionals.verificationStatus, 'pending'));
+
+    return {
+      pendingReviews: pendingReviews[0]?.count || 0,
+      pendingVerifications: pendingProfessionals[0]?.count || 0,
+      suspiciousActivity: 0,
+      systemAlerts: 0
+    };
+  }
+
+  async getPendingActions() {
+    const pendingReviews = await db.select({ count: sql<number>`count(*)` }).from(reviews).where(eq(reviews.status, 'pending'));
+    const pendingVerifications = await db.select({ count: sql<number>`count(*)` }).from(professionals).where(eq(professionals.verificationStatus, 'pending'));
+
+    return [
+      {
+        type: 'review_moderation',
+        count: pendingReviews[0]?.count || 0,
+        priority: 'medium'
+      },
+      {
+        type: 'verification_pending',
+        count: pendingVerifications[0]?.count || 0,
+        priority: 'high'
+      }
+    ];
+  }
+
+  async getPendingVerificationDocuments() {
+    return await db
+      .select({
+        professional: professionals,
+        user: users
+      })
+      .from(professionals)
+      .leftJoin(users, eq(professionals.userId, users.id))
+      .where(eq(professionals.verificationStatus, 'pending'))
+      .orderBy(desc(professionals.createdAt));
+  }
+
+  async getReviewAnalytics() {
+    const totalReviews = await db.select({ count: sql<number>`count(*)` }).from(reviews);
+    return {
+      totalReviews: totalReviews[0]?.count || 0,
+      averageRating: 0,
+      reviewTrends: []
+    };
+  }
+
+  async getGeographicDistribution() {
+    return [];
+  }
+
+  async getProfessionalsByCategory() {
+    return await db
+      .select({
+        category: categories.name,
+        count: sql<number>`count(*)`
+      })
+      .from(professionals)
+      .leftJoin(categories, eq(professionals.categoryId, categories.id))
+      .groupBy(categories.name)
+      .orderBy(desc(sql`count(*)`));
+  }
+
+  async getSuspiciousActivity() {
+    return [];
+  }
+
+  async getAuditLogs(filters: any) {
+    const { page = 1, limit = 50 } = filters;
+    
+    return await db
+      .select()
+      .from(adminActivity)
+      .orderBy(desc(adminActivity.createdAt))
+      .limit(limit)
+      .offset((page - 1) * limit);
+  }
 }
 
 export const adminAdvancedStorage = new AdminAdvancedStorage();
