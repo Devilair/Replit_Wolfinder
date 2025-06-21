@@ -1,0 +1,114 @@
+1 – Analisi delle lacune rispetto agli obiettivi MVP
+Area	Osservazione chiave	Rischio per MVP	Azione chiave
+TypeScript	Errori di schema in admin-storage.ts (riga 382, 444)	🔥 Bloccante	Allineare tipi Drizzle ↔️ DTO
+Sicurezza API	Mancano rate-limiting e CORS	🔥 Bloccante	express-rate-limit, cors
+DevOps	Assenza Docker + CI/CD + backup	⚠️ Medio	Pipeline GitHub Actions, dump Neon
+Monitoring	No log aggregation / alerting	⚠️ Medio	pino + Axiom/Logtail + health check probe
+Testing	Assenti test component React + E2E	⚠️ Medio	React Testing Library + Cypress
+SEO/UX	Routing client-side con Wouter → no SSR	😐 Basso	Valutare SSR leggero (es. @tanstack/react-router)
+
+2 – Roadmap suggerita (3 sprint)
+Sprint 1 – “Stabilità & Sicurezza” (Weeks 1-2)
+Titolo ticket	Acceptance Criteria
+Fix admin-storage schema mismatch	• pnpm typecheck zero errors
+• Test unitari su CRUD admin passano
+Implement CORS policy	• Origini consentite via .env
+• Pre-flight handled automatically
+Add rate limiting middleware	• 100 req / 15 min per IP su rotte public
+• 1000 req / 15 min su rotte autenticate
+Dockerize full stack	• docker compose up avvia client, server, db stub
+• Readme aggiornato
+
+Sprint 2 – “Quality Gate” (Weeks 3-4)
+Titolo ticket	Acceptance Criteria
+CI/CD GitHub Actions	• Lint + typecheck + test su push
+• Deploy automatico branch main su Replit/Fly.io
+React component tests	• 80 % coverage cartella client/src/components
+E2E happy-path flows	• Cypress testa login, ricerca, review, checkout Stripe
+Automated backups Neon	• Snapshot daily conservato 7 giorni
+• Restore testato in staging
+
+Sprint 3 – “Observability & Polishing” (Weeks 5-6)
+Titolo ticket	Acceptance Criteria
+Centralised logging	• pino-http contrasporta su Axiom
+• TraceID nei log client ↔️ server
+Error tracking	• Sentry JS + source-maps collegati
+Bundle analysis & perf budget	• Vite bundle < 200 kB gzipped
+• Lighthouse mobile LCP < 2.5 s
+Mobile responsive pass	• Audit sui 3 breakpoint principali
+• Nessun elemento fuori viewport
+
+3 – Implementazioni consigliate
+Sicurezza
+ts
+Copia
+Modifica
+import rateLimit from 'express-rate-limit';
+import cors from 'cors';
+
+app.use(cors({
+  origin: process.env.CORS_ORIGINS?.split(','),
+  credentials: true,
+}));
+
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: (req) => req.user ? 1000 : 100,
+}));
+Docker (root)
+yaml
+Copia
+Modifica
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    env_file: .env
+    volumes:
+      - db-data:/var/lib/postgresql/data
+  api:
+    build: ./server
+    env_file: .env
+    depends_on: [db]
+  web:
+    build: ./client
+    env_file: .env
+    ports: ["3000:4173"]
+    depends_on: [api]
+volumes:
+  db-data:
+GitHub Actions (estratto)
+yaml
+Copia
+Modifica
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: 9 }
+      - run: pnpm install
+      - run: pnpm lint && pnpm typecheck && pnpm test
+Testing stack
+Unit: Vitest + React Testing Library
+
+E2E: Cypress component + e2e
+
+Coverage badge: codecov/codecov-action
+
+Monitoring & Alerting
+Logs: pino → Axiom (simple HTTPS endpoint)
+
+Errors: Sentry DSN via env var, release auto-tag (Git SHA)
+
+Metrics: Expose /metrics Prometheus (optional)
+
+Passi immediati
+Blocca Sprint 1 nel tuo board (GitHub Projects o Linear).
+
+Aggiungi env vars CORS_ORIGINS e RATE_LIMIT_MAX per configurabilità.
+
+Allinea la documentazione (README, diagrammi) al nuovo stack React-Express-PostgreSQL.
+
+Pianifica user-testing con early adopters subito dopo Sprint 2: le API saranno robuste e tracciate.

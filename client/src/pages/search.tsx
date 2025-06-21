@@ -94,7 +94,7 @@ export default function SearchPage() {
     }
   }, [searchTerm, selectedCity, selectedCategory]);
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
   });
 

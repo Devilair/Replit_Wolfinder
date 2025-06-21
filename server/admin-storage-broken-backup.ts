@@ -7,14 +7,78 @@ import {
   subscriptions, 
   subscriptionPlans,
   moderationQueue,
-  adminActivity,
-  type AdminDashboardStats,
-  type ProfessionalWithDetails,
-  type ModerationQueueWithDetails
+  adminActivity
 } from '../shared/schema';
 import { eq, and, or, gte, lte, desc, asc, sql, like, ilike } from 'drizzle-orm';
 
+export interface AdminDashboardStats {
+  // KPI Critici
+  activeUsers: {
+    today: number;
+    week: number;
+    month: number;
+    previousPeriod: number;
+    changePercent: number;
+  };
+  reviews: {
+    total: number;
+    verified: number;
+    pending: number;
+    rejected: number;
+    newToday: number;
+    averageVerificationTime: number;
+  };
+  professionals: {
+    total: number;
+    verified: number;
+    pending: number;
+    newThisWeek: number;
+    conversionRate: number;
+  };
+  revenue: {
+    monthToDate: number;
+    projectedMonthly: number;
+    subscriptionConversion: number;
+    averageRevenue: number;
+  };
+}
+
+export interface AdvancedMetrics {
+  // Metriche di engagement
+  userEngagement: {
+    averageSessionDuration: number;
+    pagesPerSession: number;
+    bounceRate: number;
+    returnVisitorRate: number;
+  };
+  // Performance metriche
+  systemPerformance: {
+    averageResponseTime: number;
+    errorRate: number;
+    uptime: number;
+    apiRequestCount: number;
+  };
+  // Business metrics
+  businessMetrics: {
+    customerLifetimeValue: number;
+    churnRate: number;
+    mrr: number; // Monthly Recurring Revenue
+    arpu: number; // Average Revenue Per User
+  };
+}
+
+export interface SuspiciousActivityPattern {
+  type: 'duplicate_reviews' | 'rapid_registration' | 'ip_clustering' | 'suspicious_ratings';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  affectedEntities: number[];
+  confidence: number;
+  metadata: Record<string, unknown>;
+}
+
 export class AdminAdvancedStorage {
+  
+  // ===== DASHBOARD STATS =====
   
   async getDashboardStats(): Promise<AdminDashboardStats> {
     const now = new Date();
@@ -22,6 +86,7 @@ export class AdminAdvancedStorage {
     const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     
+    // Active users calculations
     const todayUsers = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
@@ -37,6 +102,7 @@ export class AdminAdvancedStorage {
       .from(users)
       .where(gte(users.createdAt, monthStart));
 
+    // Professionals statistics
     const totalProfessionals = await db
       .select({ count: sql<number>`count(*)` })
       .from(professionals);
@@ -46,6 +112,7 @@ export class AdminAdvancedStorage {
       .from(professionals)
       .where(eq(professionals.verificationStatus, 'approved'));
 
+    // Reviews statistics
     const totalReviews = await db
       .select({ count: sql<number>`count(*)` })
       .from(reviews);
@@ -87,7 +154,7 @@ export class AdminAdvancedStorage {
     };
   }
 
-  async getAdvancedMetrics() {
+  async getAdvancedMetrics(): Promise<AdvancedMetrics> {
     return {
       userEngagement: {
         averageSessionDuration: 0,
@@ -110,6 +177,8 @@ export class AdminAdvancedStorage {
     };
   }
 
+  // ===== GESTIONE PROFESSIONISTI AVANZATA =====
+
   async getProfessionalsWithAdvancedFilters(params: {
     page?: number;
     limit?: number;
@@ -125,7 +194,7 @@ export class AdminAdvancedStorage {
     isProblematic?: boolean;
     sortBy?: 'rating' | 'reviewCount' | 'lastActivity' | 'profileViews' | 'conversionRate' | 'createdAt';
     sortOrder?: 'asc' | 'desc';
-  }): Promise<ProfessionalWithDetails[]> {
+  }) {
     const {
       page = 1,
       limit = 20,
@@ -143,6 +212,7 @@ export class AdminAdvancedStorage {
       sortOrder = 'desc'
     } = params;
 
+    // Build conditions array for filtering
     const conditions = [];
 
     if (search) {
@@ -197,6 +267,7 @@ export class AdminAdvancedStorage {
       conditions.push(eq(professionals.isProblematic, isProblematic));
     }
 
+    // Apply sorting
     const sortColumn = {
       'rating': professionals.rating,
       'reviewCount': professionals.reviewCount,
@@ -206,9 +277,10 @@ export class AdminAdvancedStorage {
       'createdAt': professionals.createdAt
     }[sortBy] || professionals.createdAt;
 
+    // Build final query with proper Drizzle pattern
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
     
-    const results = await db
+    return await db
       .select({
         professional: professionals,
         user: users,
@@ -225,14 +297,6 @@ export class AdminAdvancedStorage {
       .orderBy(sortOrder === 'desc' ? desc(sortColumn) : asc(sortColumn))
       .limit(limit)
       .offset((page - 1) * limit);
-
-    return results.map(row => ({
-      ...row.professional,
-      user: row.user,
-      category: row.category,
-      subscription: row.subscription,
-      plan: row.plan
-    }));
   }
 
   async getProfessionalDetailedAnalytics(professionalId: number) {
@@ -257,6 +321,8 @@ export class AdminAdvancedStorage {
     };
   }
 
+  // ===== GESTIONE MODERAZIONE =====
+
   async getModerationQueue(filters: {
     type?: string;
     priority?: string;
@@ -264,7 +330,7 @@ export class AdminAdvancedStorage {
     assignedTo?: number;
     page?: number;
     limit?: number;
-  }): Promise<ModerationQueueWithDetails[]> {
+  }) {
     const { type, priority, status, assignedTo, page = 1, limit = 20 } = filters;
 
     const conditions = [];
@@ -276,7 +342,7 @@ export class AdminAdvancedStorage {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const results = await db
+    return await db
       .select({
         queue: moderationQueue,
         assignedUser: users
@@ -295,11 +361,6 @@ export class AdminAdvancedStorage {
       )
       .limit(limit)
       .offset((page - 1) * limit);
-
-    return results.map(row => ({
-      ...row.queue,
-      assignedUser: row.assignedUser
-    }));
   }
 
   async assignModerationTask(queueId: number, moderatorId: number) {
@@ -325,7 +386,9 @@ export class AdminAdvancedStorage {
       .where(eq(moderationQueue.id, queueId));
   }
 
-  async detectSuspiciousActivity() {
+  // ===== SICUREZZA E RILEVAMENTO ANOMALIE =====
+
+  async detectSuspiciousActivity(): Promise<SuspiciousActivityPattern[]> {
     return [];
   }
 
@@ -335,8 +398,10 @@ export class AdminAdvancedStorage {
     description: string;
     metadata?: Record<string, unknown>;
   }) {
-    // Implementation placeholder
+    // Implementation would go here
   }
+
+  // ===== BUSINESS INTELLIGENCE =====
 
   async getBusinessIntelligenceData(dateRange: [Date, Date]) {
     return {
@@ -347,13 +412,15 @@ export class AdminAdvancedStorage {
     };
   }
 
+  // ===== SISTEMA ALERT =====
+
   async createSystemAlert(alert: {
     type: string;
     severity: string;
     message: string;
     metadata?: Record<string, unknown>;
   }) {
-    // Implementation placeholder
+    // Implementation would go here
   }
 
   async getActiveAlerts() {
@@ -361,8 +428,10 @@ export class AdminAdvancedStorage {
   }
 
   async resolveAlert(alertId: number, resolvedBy: number) {
-    // Implementation placeholder
+    // Implementation would go here
   }
+
+  // ===== AUDIT LOG =====
 
   async logAdminActivity(activity: {
     adminId: number;
@@ -411,7 +480,7 @@ export class AdminAdvancedStorage {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const results = await db
+    return await db
       .select({
         activity: adminActivity,
         admin: users
@@ -422,11 +491,6 @@ export class AdminAdvancedStorage {
       .orderBy(desc(adminActivity.createdAt))
       .limit(limit)
       .offset((page - 1) * limit);
-
-    return results.map(row => ({
-      activity: row.activity,
-      admin: row.admin
-    }));
   }
 }
 
