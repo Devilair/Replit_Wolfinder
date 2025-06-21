@@ -8,16 +8,16 @@ export interface SubscriptionFeatures {
   portfolioSection: boolean;
   certificationsSection: boolean;
   customDescription: boolean;
-  
+
   // Recensioni e feedback
   reviewResponseEnabled: boolean;
   reviewHighlights: boolean;
-  
+
   // Analytics e insights
   analyticsAccess: boolean;
   detailedStats: boolean;
   competitorAnalysis: boolean;
-  
+
   // Funzionalità avanzate Enterprise
   apiAccess: boolean;
   whitelabelBranding: boolean;
@@ -26,11 +26,11 @@ export interface SubscriptionFeatures {
   customIntegrations: boolean;
   prioritySupport: boolean;
   dedicatedAccountManager: boolean;
-  
+
   // Badge e distintivi
   verifiedBadge: boolean;
   premiumBadge: boolean;
-  
+
   // Supporto
   supportLevel: 'basic' | 'priority' | 'dedicated';
 }
@@ -62,6 +62,7 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
   'Professional': {
     maxPhotos: 10, // Galleria fino a 10 immagini
     maxServices: 8, // Fino a 8 specializzazioni
+    maxContactsPerMonth: 500,
     portfolioSection: true, // Video + strumenti avanzati
     certificationsSection: true,
     customDescription: true,
@@ -84,6 +85,7 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
   'Expert': {
     maxPhotos: -1, // Illimitati
     maxServices: -1, // Specializzazioni illimitate
+    maxContactsPerMonth: 1000,
     portfolioSection: true,
     certificationsSection: true,
     customDescription: true,
@@ -106,6 +108,7 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
   'Enterprise': {
     maxPhotos: -1, // Illimitati
     maxServices: -1, // Illimitati
+    maxContactsPerMonth: -1,
     portfolioSection: true,
     certificationsSection: true,
     customDescription: true,
@@ -132,7 +135,7 @@ export function getProfessionalFeatures(subscription?: Subscription & { plan: Su
   if (!subscription || subscription.status !== 'active') {
     return PLAN_FEATURES['Essentials']!;
   }
-  
+
   return PLAN_FEATURES[subscription.plan.name] || PLAN_FEATURES['Essentials']!;
 }
 
@@ -171,7 +174,7 @@ export function getUsageStatus(
 } {
   const limit = getFeatureLimit(subscription, feature);
   const isUnlimited = limit === -1;
-  
+
   if (isUnlimited) {
     return {
       canUse: true,
@@ -180,11 +183,11 @@ export function getUsageStatus(
       percentage: 0,
     };
   }
-  
+
   const remaining = Math.max(0, limit - currentUsage);
   const canUse = remaining > 0;
   const percentage = limit > 0 ? (currentUsage / limit) * 100 : 100;
-  
+
   return {
     canUse,
     remaining,

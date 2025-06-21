@@ -607,10 +607,9 @@ export type ProfessionalUsage = typeof professionalUsage.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertProfessional = z.infer<typeof insertProfessionalSchema>;
 export type InsertReview = z.infer<typeof insertReviewSchema>;
-export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
-export type InsertVerificationDocument = z.infer<typeof insertVerificationDocumentSchema>;
-export type InsertClaimRequest = z.infer<typeof insertClaimRequestSchema>;
-export type InsertReviewReport = z.infer<typeof insertReviewReportSchema>;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type InsertBadge = z.infer<typeof insertBadgeSchema>;
+export type InsertProfessionalBadge = z.infer<typeof insertProfessionalBadgeSchema>;
 
 // LEGACY EXPORTS - maintain backward compatibility
 export type ReviewHelpfulVote = { id: number; reviewId: number; userId: number };
