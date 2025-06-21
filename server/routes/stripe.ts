@@ -28,13 +28,16 @@ export function setupStripeRoutes(app: Express) {
         return res.status(404).json({ error: "Subscription plan not found" });
       }
 
-      // Calculate price based on billing cycle - handle null values
+      // Calculate price based on billing cycle - handle null values safely
       const monthlyPrice = plan.priceMonthly ? parseFloat(plan.priceMonthly.toString()) : 39.00;
       const yearlyPrice = plan.priceYearly ? parseFloat(plan.priceYearly.toString()) : 390.00;
       const priceValue = billingCycle === 'yearly' ? yearlyPrice : monthlyPrice;
       
-      // Create Stripe customer
-      const customer = await stripeService.createCustomer(user.email, user.name);
+      // Create Stripe customer with proper parameters
+      const customer = await stripeService.createCustomer({
+        email: user.email,
+        name: user.name || user.email
+      });
       
       // Create payment intent
       const paymentIntent = await stripeService.createPaymentIntent({
