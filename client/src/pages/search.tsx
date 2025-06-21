@@ -262,7 +262,7 @@ export default function SearchPage() {
     searchTerm,
     selectedCity,
     selectedCategory,
-    params: hasSearchParams ? "has params" : ""
+    params: hasAnySearchParams ? "has params" : ""
   });
   return (
     <div className="min-h-screen bg-gray-50">
