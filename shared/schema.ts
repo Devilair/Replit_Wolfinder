@@ -320,6 +320,20 @@ export const claimRequests = pgTable("claim_requests", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  action: text("action").notNull(),
+  entityType: text("entity_type").notNull(),
+  entityId: integer("entity_id").notNull(),
+  oldValues: jsonb("old_values"),
+  newValues: jsonb("new_values"),
+  details: jsonb("details"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const professionalNotifications = pgTable("professional_notifications", {
   id: serial("id").primaryKey(),
   professionalId: integer("professional_id").notNull().references(() => professionals.id, { onDelete: "cascade" }),

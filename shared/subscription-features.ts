@@ -4,6 +4,7 @@ export interface SubscriptionFeatures {
   // Profilo e contenuti
   maxPhotos: number;
   maxServices: number;
+  maxContactsPerMonth: number;
   portfolioSection: boolean;
   certificationsSection: boolean;
   customDescription: boolean;
@@ -38,6 +39,7 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
   'Essentials': {
     maxPhotos: 3, // 1 profilo + 2 studio/attività
     maxServices: 3,
+    maxContactsPerMonth: 10,
     portfolioSection: false,
     certificationsSection: false,
     customDescription: true,
@@ -128,10 +130,10 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
 export function getProfessionalFeatures(subscription?: Subscription & { plan: SubscriptionPlan }): SubscriptionFeatures {
   // Se non ha abbonamento attivo, usa il piano gratuito
   if (!subscription || subscription.status !== 'active') {
-    return PLAN_FEATURES['Essentials'];
+    return PLAN_FEATURES['Essentials']!;
   }
   
-  return PLAN_FEATURES[subscription.plan.name] || PLAN_FEATURES['Essentials'];
+  return PLAN_FEATURES[subscription.plan.name] || PLAN_FEATURES['Essentials']!;
 }
 
 export function canAccessFeature(
