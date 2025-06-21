@@ -14,8 +14,6 @@ import {
   auditLogs,
   reviewHelpfulVotes,
   reviewReports,
-  userSessions,
-  verificationTokens,
   type User,
   type Professional,
   type Category,
@@ -26,11 +24,8 @@ import {
   type SubscriptionPlan,
   type VerificationDocument,
   type ClaimRequest,
-  type AuditLog,
   type ReviewHelpfulVote,
   type ReviewReport,
-  type UserSession,
-  type VerificationToken,
   type InsertUser,
   type InsertProfessional,
   type InsertCategory,
@@ -41,11 +36,8 @@ import {
   type InsertSubscriptionPlan,
   type InsertVerificationDocument,
   type InsertClaimRequest,
-  type InsertAuditLog,
   type InsertReviewHelpfulVote,
   type InsertReviewReport,
-  type InsertUserSession,
-  type InsertVerificationToken,
 } from "../shared/schema";
 import { eq, and, or, like, desc, asc, isNull, sql, count, gte, lte } from "drizzle-orm";
 import crypto from "crypto";
@@ -262,7 +254,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(subscriptionPlans)
-      .orderBy(asc(subscriptionPlans.order));
+      .orderBy(asc(subscriptionPlans.id));
   }
 
   async createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
@@ -315,11 +307,12 @@ export class DatabaseStorage implements IStorage {
     const [claimRequest] = await db
       .insert(claimRequests)
       .values({
-        professionalId,
-        userId,
-        token,
+        professionalId: professionalId,
+        userId: userId,
+        token: token,
+        requesterName: 'User',
+        requesterEmail: 'user@example.com',
         status: 'pending',
-        createdAt: new Date(),
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
       })
       .returning();
@@ -336,6 +329,234 @@ export class DatabaseStorage implements IStorage {
         gte(claimRequests.expiresAt, new Date())
       ));
     return claimRequest || null;
+  }
+
+  // Featured professionals for homepage
+  async getFeaturedProfessionals(limit: number = 6): Promise<ProfessionalSummary[]> {
+    return await db
+      .select({
+        id: professionals.id,
+        businessName: professionals.businessName,
+        description: professionals.description,
+        rating: professionals.rating,
+        reviewCount: professionals.reviewCount,
+        profileViews: professionals.profileViews,
+        city: professionals.city,
+        province: professionals.province,
+        category: {
+          id: categories.id,
+          name: categories.name,
+          slug: categories.slug,
+          icon: categories.icon,
+        },
+      })
+      .from(professionals)
+      .leftJoin(categories, eq(professionals.categoryId, categories.id))
+      .where(eq(professionals.isVerified, true))
+      .orderBy(desc(professionals.rating), desc(professionals.reviewCount))
+      .limit(limit);
+  }
+
+  // Search professionals by location
+  async searchProfessionals(
+    query: string,
+    categoryId?: number,
+    city?: string,
+    province?: string,
+    limit: number = 10,
+    offset: number = 0
+  ): Promise<ProfessionalSummary[]> {
+    let conditions = [eq(professionals.isVerified, true)];
+    
+    if (query) {
+      conditions.push(
+        or(
+          like(professionals.businessName, `%${query}%`),
+          like(professionals.description, `%${query}%`)
+        )!
+      );
+    }
+    
+    if (categoryId) {
+      conditions.push(eq(professionals.categoryId, categoryId));
+    }
+    
+    if (city) {
+      conditions.push(like(professionals.city, `%${city}%`));
+    }
+    
+    if (province) {
+      conditions.push(like(professionals.province, `%${province}%`));
+    }
+
+    return await db
+      .select({
+        id: professionals.id,
+        businessName: professionals.businessName,
+        description: professionals.description,
+        rating: professionals.rating,
+        reviewCount: professionals.reviewCount,
+        profileViews: professionals.profileViews,
+        city: professionals.city,
+        province: professionals.province,
+        category: {
+          id: categories.id,
+          name: categories.name,
+          slug: categories.slug,
+          icon: categories.icon,
+        },
+      })
+      .from(professionals)
+      .leftJoin(categories, eq(professionals.categoryId, categories.id))
+      .where(and(...conditions))
+      .orderBy(desc(professionals.rating), desc(professionals.reviewCount))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  // Get professional with full details
+  async getProfessionalWithDetails(id: number): Promise<ProfessionalWithCategory | undefined> {
+    const results = await db
+      .select()
+      .from(professionals)
+      .leftJoin(categories, eq(professionals.categoryId, categories.id))
+      .leftJoin(users, eq(professionals.userId, users.id))
+      .where(eq(professionals.id, id));
+
+    if (results.length === 0) return undefined;
+
+    const result = results[0];
+    return {
+      ...result.professionals,
+      category: result.categories!,
+      user: result.users || undefined,
+    };
+  }
+
+  // Increment profile views
+  async incrementProfileViews(professionalId: number): Promise<void> {
+    await db
+      .update(professionals)
+      .set({
+        profileViews: sql`${professionals.profileViews} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(professionals.id, professionalId));
+  }
+
+  // Get reviews for professional
+  async getReviewsByProfessional(professionalId: number): Promise<(Review & { user: User })[]> {
+    const results = await db
+      .select()
+      .from(reviews)
+      .leftJoin(users, eq(reviews.userId, users.id))
+      .where(and(
+        eq(reviews.professionalId, professionalId),
+        eq(reviews.status, 'approved')
+      ))
+      .orderBy(desc(reviews.createdAt));
+
+    return results.map(result => ({
+      ...result.reviews,
+      user: result.users!,
+    }));
+  }
+
+  // Get user reviews
+  async getUserReviews(userId: number): Promise<(Review & { professional: Professional })[]> {
+    const results = await db
+      .select()
+      .from(reviews)
+      .leftJoin(professionals, eq(reviews.professionalId, professionals.id))
+      .where(eq(reviews.userId, userId))
+      .orderBy(desc(reviews.createdAt));
+
+    return results.map(result => ({
+      ...result.reviews,
+      professional: result.professionals!,
+    }));
+  }
+
+  // Professional badge methods
+  async getProfessionalBadges(professionalId: number): Promise<(ProfessionalBadge & { badge: Badge })[]> {
+    const results = await db
+      .select()
+      .from(professionalBadges)
+      .leftJoin(badges, eq(professionalBadges.badgeId, badges.id))
+      .where(eq(professionalBadges.professionalId, professionalId))
+      .orderBy(asc(badges.id));
+
+    return results.map(result => ({
+      ...result.professional_badges,
+      badge: result.badges!,
+    }));
+  }
+
+  // Award badge to professional
+  async awardBadge(professionalId: number, badgeId: number, awardedBy: string = 'system', reason?: string): Promise<ProfessionalBadge> {
+    const [professionalBadge] = await db
+      .insert(professionalBadges)
+      .values({
+        professionalId: professionalId,
+        badgeId: badgeId,
+        awardedBy: awardedBy,
+        revokeReason: reason,
+      })
+      .returning();
+    return professionalBadge;
+  }
+
+  // Update professional rating based on reviews
+  async updateProfessionalRating(id: number): Promise<void> {
+    const result = await db
+      .select({
+        avgRating: sql<number>`AVG(${reviews.rating})`,
+        reviewCount: count(reviews.id),
+      })
+      .from(reviews)
+      .where(and(
+        eq(reviews.professionalId, id),
+        eq(reviews.status, 'approved')
+      ));
+
+    if (result.length > 0) {
+      const { avgRating, reviewCount } = result[0];
+      await db
+        .update(professionals)
+        .set({
+          rating: avgRating ? avgRating.toFixed(1) : '0.0',
+          reviewCount: reviewCount || 0,
+          updatedAt: new Date(),
+        })
+        .where(eq(professionals.id, id));
+    }
+  }
+
+  // Get verified professionals count
+  async getVerifiedProfessionalsCount(): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(professionals)
+      .where(eq(professionals.verificationStatus, 'verified'));
+    return result.count;
+  }
+
+  // Get pending reviews count
+  async getPendingReviewsCount(): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(reviews)
+      .where(eq(reviews.status, 'pending'));
+    return result.count;
+  }
+
+  // Get reviews count
+  async getReviewsCount(): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(reviews)
+      .where(eq(reviews.status, 'approved'));
+    return result.count;
   }
 }
 
