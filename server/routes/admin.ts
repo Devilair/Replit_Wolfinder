@@ -1,17 +1,21 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { storage } from "../storage";
 import { AdminAdvancedStorage } from "../admin-storage";
 import { authService } from "../auth";
 
 const adminStorage = new AdminAdvancedStorage();
-const requireAuth = authService.authenticateToken;
-const requireAdminAuth = (req: any, res: any, next: any) => {
-  authService.requireRole(['admin', 'moderator'])(req, res, next);
+
+// Middleware singolo per autenticazione admin
+const requireAdminAuth = (req: Request, res: Response, next: any) => {
+  authService.authenticateToken(req, res, (err?: any) => {
+    if (err) return;
+    authService.requireRole(['admin', 'moderator'])(req, res, next);
+  });
 };
 
 export function setupAdminRoutes(app: Express) {
   // Admin Dashboard Stats
-  app.get("/api/admin/dashboard-stats", requireAuth, requireAdminAuth, async (req, res) => {
+  app.get("/api/admin/dashboard-stats", requireAdminAuth, async (req: Request, res: Response) => {
     try {
       const stats = await adminStorage.getDashboardStats();
       res.json(stats);
