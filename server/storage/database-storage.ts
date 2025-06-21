@@ -101,8 +101,9 @@ export class DatabaseStorage implements IStorage {
     return this.professionalStorage.getFeaturedProfessionals(limit);
   }
 
-  async searchProfessionals(query: string, categoryId?: number, city?: string, province?: string, limit?: number, offset?: number) {
-    return this.professionalStorage.searchProfessionals(query, categoryId, city, province, limit, offset);
+  async searchProfessionals(filters: any) {
+    const { search, categoryId, city, province, limit = 10, offset = 0 } = filters;
+    return this.professionalStorage.searchProfessionals(search || '', categoryId, city, province, limit, offset);
   }
 
   async getProfessionalWithDetails(id: number) {
