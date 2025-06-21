@@ -35,7 +35,7 @@ export interface ProfessionalSummary {
     name: string;
     slug: string;
     icon: string;
-  };
+  } | null;
 }
 
 export interface ProfessionalWithDetails extends Professional {
@@ -46,6 +46,9 @@ export interface ProfessionalWithDetails extends Professional {
 export interface SubscriptionWithDetails extends Subscription {
   professional: Professional;
   plan: SubscriptionPlan;
+  isInGracePeriod: boolean;
+  gracePeriodEnd: Date | null;
+  failedPaymentCount: number;
 }
 
 // Storage interface
@@ -1514,12 +1517,7 @@ export class DatabaseStorage implements IStorage {
     return result[0]?.count || 0;
   }
 
-  async getPendingReviewsCount(): Promise<number> {
-    const result = await db.select({ count: sql<number>`count(*)` })
-      .from(reviews)
-      .where(eq(reviews.status, 'pending'));
-    return result[0]?.count || 0;
-  }
+
 
   async getRejectedReviewsCount(): Promise<number> {
     const result = await db.select({ count: sql<number>`count(*)` })
@@ -3010,17 +3008,7 @@ export class DatabaseStorage implements IStorage {
       })));
   }
 
-  async getProfessionalsByCategory(categoryId: number): Promise<Professional[]> {
-    return await db
-      .select()
-      .from(professionals)
-      .leftJoin(categories, eq(professionals.categoryId, categories.id))
-      .where(eq(professionals.categoryId, categoryId))
-      .then(rows => rows.map(row => ({
-        ...row.professionals,
-        category: row.categories
-      })));
-  }
+
 
   // Missing method implementations
   async updateUser(id: number, data: Partial<User>): Promise<User> {
@@ -4112,20 +4100,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  // Approvare recensione
-  async approveReview(reviewId: number, adminId: number): Promise<boolean> {
-    return await this.moderateReview(reviewId, 'approve', adminId);
-  }
 
-  // Rifiutare recensione
-  async rejectReview(reviewId: number, adminId: number, reason: string): Promise<boolean> {
-    return await this.moderateReview(reviewId, 'reject', adminId, reason);
-  }
-
-  // Ottenere recensioni pending
-  async getPendingReviews(): Promise<any[]> {
-    return await this.getReviewsByStatus('pending');
-  }
 }
 
 export const storage = new DatabaseStorage();
