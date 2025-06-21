@@ -24,26 +24,70 @@ export class BadgeCalculator {
    * Calcola tutti i badge per un professionista specifico
    */
   async calculateBadgesForProfessional(professionalId: number): Promise<BadgeCalculationResult[]> {
-    console.log(`Calculating badges for professional ${professionalId}`);
-    
-    const allBadges = await db.select().from(badges).where(eq(badges.isActive, true));
+    // Single optimized query to get all required data
+    const [professional, allBadges, reviewStats] = await Promise.all([
+      db.select().from(professionals).where(eq(professionals.id, professionalId)).limit(1),
+      db.select().from(badges).where(eq(badges.isActive, true)),
+      db.select({
+        count: sql<number>`count(*)`,
+        avgRating: sql<number>`avg(cast(rating as decimal))`
+      }).from(reviews)
+        .where(and(eq(reviews.professionalId, professionalId), eq(reviews.status, 'approved')))
+    ]);
+
+    const prof = professional[0];
+    if (!prof) {
+      return [];
+    }
+
+    const reviewCount = reviewStats[0]?.count || 0;
+    const avgRating = reviewStats[0]?.avgRating || 0;
+
     const results: BadgeCalculationResult[] = [];
     
+    // Process all badges without individual database queries
     for (const badge of allBadges) {
-      const result = await this.calculateSingleBadge(professionalId, badge);
+      const result = this.calculateSingleBadgeSync(prof, badge, reviewCount, avgRating);
       results.push(result);
-      
-      // Se il badge è stato ottenuto, assegnalo
-      if (result.earned) {
-        await this.awardBadge(professionalId, badge.id);
-      } else {
-        await this.removeBadge(professionalId, badge.id);
-      }
     }
     
     return results;
   }
   
+  /**
+   * Calcola un singolo badge per un professionista - versione ottimizzata
+   */
+  private calculateSingleBadgeSync(prof: any, badge: any, reviewCount: number, avgRating: number): BadgeCalculationResult {
+    switch (badge.slug) {
+      case 'primo-cliente':
+        return this.calculatePrimoCliente(reviewCount, badge);
+      
+      case 'cliente-fedele':
+        return {
+          badgeId: badge.id,
+          earned: reviewCount >= 3 && avgRating >= 4.0,
+          progress: Math.min((reviewCount / 3) * 100, 100),
+          requirements: ['3+ recensioni positive', 'Rating medio 4.0+'],
+          missingRequirements: reviewCount < 3 ? ['Servono almeno 3 recensioni'] : avgRating < 4.0 ? ['Rating medio sotto 4.0'] : []
+        };
+      
+      case 'eccellenza':
+        return this.calculateEccellenza(avgRating, reviewCount, badge);
+      
+      case 'veterano':
+        return this.calculateVeterano(prof, reviewCount, badge);
+      
+      default:
+        return {
+          badgeId: badge.id,
+          earned: false,
+          progress: 0,
+          requirements: ['Badge non implementato'],
+          missingRequirements: ['Calcolo non disponibile']
+        };
+    }
+  }
+
   /**
    * Calcola un singolo badge per un professionista
    */
