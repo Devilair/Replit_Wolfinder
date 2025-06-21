@@ -258,8 +258,8 @@ export default function SearchPage() {
 
 
 
-    // Debug logging - fix hasSearchParams undefined
-  const hasSearchParams = Object.keys(searchParams).length > 0;
+    // Debug logging - fix URLSearchParams size check
+  const hasSearchParams = Array.from(searchParams.keys()).length > 0;
   console.log("SEARCH DEBUG:", {
     searchTerm,
     selectedCity,
