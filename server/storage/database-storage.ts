@@ -7,6 +7,22 @@ import { BadgeStorage } from "./badge-storage";
 import { SubscriptionStorage } from "./subscription-storage";
 import { AdminStorage } from "./admin-storage";
 import { ClaimStorage } from "./claim-storage";
+import { 
+  type User,
+  type Professional,
+  type Category,
+  type Review,
+  type Badge,
+  type Subscription,
+  type SubscriptionPlan,
+  type InsertUser,
+  type InsertProfessional,
+  type InsertCategory,
+  type InsertReview,
+  type InsertBadge,
+  type InsertSubscription,
+  type InsertSubscriptionPlan
+} from "../../shared/schema";
 
 // Compositional storage class that combines all specialized modules
 export class DatabaseStorage implements IStorage {
@@ -31,7 +47,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // User methods delegation
-  async createUser(user: any) {
+  async createUser(user: InsertUser) {
     return this.userStorage.createUser(user);
   }
 
@@ -43,7 +59,7 @@ export class DatabaseStorage implements IStorage {
     return this.userStorage.getUserById(id);
   }
 
-  async updateUser(id: number, data: any) {
+  async updateUser(id: number, data: Partial<User>) {
     return this.userStorage.updateUser(id, data);
   }
 
@@ -56,12 +72,12 @@ export class DatabaseStorage implements IStorage {
     return this.categoryStorage.getCategories();
   }
 
-  async createCategory(category: any) {
+  async createCategory(category: InsertCategory) {
     return this.categoryStorage.createCategory(category);
   }
 
   // Professional methods delegation
-  async createProfessional(professional: any) {
+  async createProfessional(professional: InsertProfessional) {
     return this.professionalStorage.createProfessional(professional);
   }
 
@@ -77,7 +93,7 @@ export class DatabaseStorage implements IStorage {
     return this.professionalStorage.getProfessionalsByCategory(categoryId);
   }
 
-  async updateProfessional(id: number, data: any) {
+  async updateProfessional(id: number, data: Partial<Professional>) {
     return this.professionalStorage.updateProfessional(id, data);
   }
 
@@ -102,7 +118,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Review methods delegation
-  async createReview(review: any) {
+  async createReview(review: InsertReview) {
     return this.reviewStorage.createReview(review);
   }
 
@@ -110,7 +126,7 @@ export class DatabaseStorage implements IStorage {
     return this.reviewStorage.getReview(id);
   }
 
-  async updateReview(id: number, updates: any) {
+  async updateReview(id: number, updates: Partial<Review>) {
     return this.reviewStorage.updateReview(id, updates);
   }
 
@@ -135,7 +151,7 @@ export class DatabaseStorage implements IStorage {
     return this.badgeStorage.getBadges();
   }
 
-  async createBadge(badge: any) {
+  async createBadge(badge: InsertBadge) {
     return this.badgeStorage.createBadge(badge);
   }
 
@@ -148,7 +164,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Subscription methods delegation
-  async createSubscription(subscription: any) {
+  async createSubscription(subscription: InsertSubscription) {
     return this.subscriptionStorage.createSubscription(subscription);
   }
 
@@ -160,7 +176,7 @@ export class DatabaseStorage implements IStorage {
     return this.subscriptionStorage.getSubscriptionPlans();
   }
 
-  async createSubscriptionPlan(plan: any) {
+  async createSubscriptionPlan(plan: InsertSubscriptionPlan) {
     return this.subscriptionStorage.createSubscriptionPlan(plan);
   }
 
