@@ -530,6 +530,24 @@ export const insertConsumerSchema = createInsertSchema(consumers).omit({
   updatedAt: true 
 });
 
+// ADD MISSING INSERT SCHEMAS - required by storage layer
+export const insertVerificationDocumentSchema = createInsertSchema(verificationDocuments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertClaimRequestSchema = createInsertSchema(claimRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertReviewReportSchema = createInsertSchema(reviewReports).omit({
+  id: true,
+  createdAt: true
+});
+
 // Professional registration schema for frontend forms
 export const professionalRegistrationSchema = z.object({
   // Dati personali
@@ -584,6 +602,20 @@ export type Transaction = typeof transactions.$inferSelect;
 export type ProfessionalSpecialization = typeof professionalSpecializations.$inferSelect;
 export type ProfessionalCertification = typeof professionalCertifications.$inferSelect;
 export type ProfessionalUsage = typeof professionalUsage.$inferSelect;
+
+// ADD MISSING INSERT TYPES - surgical fix for compilation
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertProfessional = z.infer<typeof insertProfessionalSchema>;
+export type InsertReview = z.infer<typeof insertReviewSchema>;
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type InsertVerificationDocument = z.infer<typeof insertVerificationDocumentSchema>;
+export type InsertClaimRequest = z.infer<typeof insertClaimRequestSchema>;
+export type InsertReviewReport = z.infer<typeof insertReviewReportSchema>;
+
+// LEGACY EXPORTS - maintain backward compatibility
+export type ReviewHelpfulVote = { id: number; reviewId: number; userId: number };
+export type InsertReviewHelpfulVote = { reviewId: number; userId: number };
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionSchema>;
 
 
 

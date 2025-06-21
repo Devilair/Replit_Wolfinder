@@ -258,11 +258,13 @@ export default function SearchPage() {
 
 
 
-    console.log("SEARCH DEBUG:", {
+    // Debug logging - fix hasSearchParams undefined
+  const hasSearchParams = Object.keys(searchParams).length > 0;
+  console.log("SEARCH DEBUG:", {
     searchTerm,
     selectedCity,
     selectedCategory,
-    params: searchParams.toString() || "no params"
+    params: hasSearchParams ? "has params" : "no params"
   });
   return (
     <div className="min-h-screen bg-gray-50">
