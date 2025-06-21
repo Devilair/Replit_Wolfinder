@@ -551,22 +551,7 @@ export const professionalRegistrationSchema = z.object({
   marketingConsent: z.boolean().default(false)
 });
 
-// Validation schemas
-export const professionalRegistrationSchema = z.object({
-  email: z.string().email("Email non valida"),
-  password: z.string().min(8, "Password deve essere di almeno 8 caratteri"),
-  firstName: z.string().min(1, "Nome richiesto"),
-  lastName: z.string().min(1, "Cognome richiesto"),
-  businessName: z.string().min(1, "Nome attività richiesto"),
-  category: z.string().min(1, "Categoria richiesta"),
-  phone: z.string().min(1, "Telefono richiesto"),
-  address: z.string().min(1, "Indirizzo richiesto"),
-  city: z.string().min(1, "Città richiesta"),
-  postalCode: z.string().min(1, "CAP richiesto"),
-  province: z.string().min(1, "Provincia richiesta"),
-  description: z.string().optional(),
-  website: z.string().url().optional().or(z.literal("")),
-});
+
 
 // Export types
 export type User = typeof users.$inferSelect;
@@ -589,28 +574,7 @@ export type ProfessionalSpecialization = typeof professionalSpecializations.$inf
 export type ProfessionalCertification = typeof professionalCertifications.$inferSelect;
 export type ProfessionalUsage = typeof professionalUsage.$inferSelect;
 
-// EXACT TYPE EXPORTS - Matching database structure
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type Professional = typeof professionals.$inferSelect;
-export type InsertProfessional = z.infer<typeof insertProfessionalSchema>;
-export type Review = typeof reviews.$inferSelect;
-export type InsertReview = z.infer<typeof insertReviewSchema>;
-export type Category = typeof categories.$inferSelect;
-export type InsertCategory = z.infer<typeof insertCategorySchema>;
-export type VerificationDocument = typeof verificationDocuments.$inferSelect;
-export type Badge = typeof badges.$inferSelect;
-export type ProfessionalBadge = typeof professionalBadges.$inferSelect;
-export type Subscription = typeof subscriptions.$inferSelect;
-export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
-export type ModerationQueue = typeof moderationQueue.$inferSelect;
-export type AdminActivity = typeof adminActivity.$inferSelect;
-export type ClaimRequest = typeof claimRequests.$inferSelect;
-export type ProfessionalNotification = typeof professionalNotifications.$inferSelect;
-export type Transaction = typeof transactions.$inferSelect;
-export type ProfessionalSpecialization = typeof professionalSpecializations.$inferSelect;
-export type ProfessionalCertification = typeof professionalCertifications.$inferSelect;
-export type ProfessionalUsage = typeof professionalUsage.$inferSelect;
+
 
 // ADMIN-SPECIFIC TYPES - Eliminating schema mismatches
 export interface AdminDashboardStats {

@@ -100,8 +100,8 @@ export default function SearchPage() {
     limit: 50
   };
 
-  // Check if we have any search parameters
-  const hasSearchParams = new URLSearchParams(searchParams).size > 0;
+  // Check if we have any search parameters - moved above usage
+  const hasAnySearchParams = Object.values(searchParams).some(value => value !== undefined && value !== '');
 
   // Esegui sempre la ricerca - se non ci sono parametri, mostra tutti i professionisti
   const { data: searchResults = [], isLoading: isLoadingSearch } = useQuery({
@@ -256,12 +256,7 @@ export default function SearchPage() {
     </Card>
   );
 
-  const searchParams = new URLSearchParams();
-    if (searchTerm.trim()) searchParams.append('search', searchTerm.trim());
-    if (selectedCity && selectedCity !== 'all') searchParams.append('city', selectedCity);
-    if (selectedCategory && selectedCategory !== 'all') searchParams.append('categoryId', selectedCategory);
-
-    const hasSearchParams = searchParams.size > 0;
+  
 
     console.log("SEARCH DEBUG:", {
     searchTerm,
@@ -527,7 +522,7 @@ export default function SearchPage() {
               ))}
             </div>
           )
-        ) : !hasSearchParams ? (
+        ) : !hasAnySearchParams ? (
           <div className="text-center py-12">
             <div className="bg-primary/10 rounded-full p-6 w-24 h-24 mx-auto mb-4 flex items-center justify-center">
               <Search className="h-12 w-12 text-primary" />
