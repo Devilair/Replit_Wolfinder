@@ -256,13 +256,13 @@ export default function SearchPage() {
     </Card>
   );
 
-  
+
 
     console.log("SEARCH DEBUG:", {
     searchTerm,
     selectedCity,
     selectedCategory,
-    params: hasAnySearchParams ? "has params" : ""
+    params: searchParams.toString() ? 'has params' : ''
   });
   return (
     <div className="min-h-screen bg-gray-50">
