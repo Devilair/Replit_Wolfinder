@@ -269,7 +269,7 @@ export class AdminAdvancedStorage {
       page = 1,
       limit = 20,
       search,
-      categories,
+      categories: filterCategories,
       verificationStatus,
       subscriptionStatus,
       cities,
@@ -309,8 +309,8 @@ export class AdminAdvancedStorage {
       );
     }
 
-    if (categories && categories.length > 0) {
-      const categoryIds = categories.map(c => parseInt(c)).filter(id => !isNaN(id));
+    if (filterCategories && filterCategories.length > 0) {
+      const categoryIds = filterCategories.map(c => parseInt(c)).filter(id => !isNaN(id));
       if (categoryIds.length > 0) {
         conditions.push(sql`${professionals.categoryId} = ANY(${categoryIds})`);
       }
@@ -359,7 +359,7 @@ export class AdminAdvancedStorage {
       conditions.push(eq(professionals.isProblematic, isProblematic));
     }
 
-    let finalQuery = baseQuery;
+    let finalQuery = query;
     
     if (conditions.length > 0) {
       finalQuery = finalQuery.where(and(...conditions));

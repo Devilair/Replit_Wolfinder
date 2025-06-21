@@ -1,0 +1,106 @@
+Come “compilare e testare” SUBITO senza uscire da Replit
+(e perché è meglio farlo prima di qualsiasi ambiente di produzione)
+
+1 · Assicurati di avere gli script giusti nel package.json
+jsonc
+Copia
+Modifica
+{
+  "scripts": {
+    "dev":   "vite",
+    "build": "vite build",
+    "start": "node dist/server.js",
+    "check": "tsc --noEmit --pretty false",
+    "lint":  "eslint . --ext .ts,.tsx --max-warnings 0",
+    "test":  "vitest run --coverage",
+    "smoke": "k6 run ./tests/perf/smoke.js"
+  }
+}
+Se qualche comando (es. lint, test, smoke) non esiste ancora, aggiungi uno stub che stampa un messaggio; poi completerai la logica.
+
+2 · Esegui la compilazione completa dentro Replit
+Apri la tab “Shell” (non la “Console” dell’app).
+
+Digita, in ordine:
+
+bash
+Copia
+Modifica
+pnpm install --frozen-lockfile         # riscarica dipendenze in modo riproducibile
+pnpm run check                         # TypeScript strict
+pnpm run lint                          # deve restituire 0 errori
+pnpm run build                         # bundle Vite
+Se uno dei quattro comandi fallisce, correggi prima di andare avanti.
+
+Errori TS → tipizza, elimina any.
+
+Lint → disattiva console.log o aggiungi regola.
+
+Build → mancano env vars o moduli? aggiungili.
+
+Suggerimento: metti questi quattro comandi in un unico script verify per non scordarteli.
+
+3 · Esegui i test automatici
+bash
+Copia
+Modifica
+pnpm run test        # Vitest (unit + integration)
+Se i test bocciano, leggi lo stack-trace: finché ne resta uno rosso, non sei a 7/8 decimi.
+
+Vuoi assicurarti che la logica “badge calculator” non rallenti?
+
+Crea un test che genera 1 000 professionisti di mock e misura calculateAllBadges.
+
+Usa expect(time).toBeLessThan(200) (ms).
+
+4 · Fai un mini-stress (facoltativo ma utilissimo)
+Installa k6 (pnpm add -D k6) se non l’hai.
+
+Metti in tests/perf/smoke.js:
+
+js
+Copia
+Modifica
+import http from 'k6/http';
+export let options = { vus: 10, duration: '30s' };
+
+export default () => {
+  http.get('http://localhost:3000/health');
+};
+In shell:
+
+bash
+Copia
+Modifica
+pnpm run smoke
+Se p95>300 ms o error-rate>0.5 %, ci sono colli di bottiglia da indagare prima del VPS.
+
+5 · Automatizza con GitHub Actions (CI)
+Crea .github/workflows/ci.yml:
+
+yaml
+Copia
+Modifica
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with: { version: 8 }
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Verify
+        run: pnpm run check && pnpm run lint && pnpm run build
+      - name: Test
+        run: pnpm run test
+Ogni push che rompe la compilazione o i test farà fallire la CI → niente regressioni “di nascosto”.
+
+6 · Quando il badge CI diventa verde … allora pensi alla produzione
+Se la build verifica + test + lint passa sia su Replit che su CI, significa che ovunque ci sia Node + pnpm andrà.
+
+A quel punto puoi copiare gli artefatti (dist/, migrazioni DB) sul VPS Aruba sapendo che non ti esploderanno in faccia.
