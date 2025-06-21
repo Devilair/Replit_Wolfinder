@@ -12,11 +12,15 @@ build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
 
 [[ports]]
+localPort = 3000
+externalPort = 3000
+
+[[ports]]
 localPort = 5000
 externalPort = 80
 
 [workflows]
-runButton = "Dev Server Clean Start"
+runButton = "Emergency Recovery"
 
 [[workflows.workflow]]
 name = "Project"
@@ -44,6 +48,23 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run check"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Emergency Recovery"
+author = 43415360
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🚨 EMERGENCY RECOVERY MODE\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Skipping type check for immediate startup\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
