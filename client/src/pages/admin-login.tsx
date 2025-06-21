@@ -18,17 +18,44 @@ export default function AdminLogin() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Demo credentials check - in produzione useresti autenticazione reale
-    if (credentials.username === "admin" && credentials.password === "wolfinder2024") {
-      toast({
-        title: "Accesso eseguito",
-        description: "Benvenuto nella dashboard amministrativa",
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: credentials.username,
+          password: credentials.password,
+        }),
       });
-      setLocation("/admin/dashboard");
-    } else {
+
+      const data = await response.json();
+
+      if (response.ok && data.accessToken) {
+        // Store token and user data
+        localStorage.setItem("authToken", data.accessToken);
+        localStorage.setItem("userToken", data.accessToken);
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+
+        toast({
+          title: "Accesso eseguito",
+          description: "Benvenuto nella dashboard amministrativa",
+        });
+        setLocation("/admin/dashboard");
+      } else {
+        toast({
+          title: "Errore di accesso", 
+          description: data.message || "Credenziali non valide",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Errore di accesso",
-        description: "Credenziali non valide",
+        title: "Errore di connessione",
+        description: "Impossibile connettersi al server",
         variant: "destructive",
       });
     }
@@ -96,10 +123,10 @@ export default function AdminLogin() {
               Credenziali Demo:
             </p>
             <p className="text-xs text-blue-600 dark:text-blue-300">
-              Username: <span className="font-mono bg-white dark:bg-gray-800 px-1 rounded">admin</span>
+              Email: <span className="font-mono bg-white dark:bg-gray-800 px-1 rounded">admin@wolfinder.com</span>
             </p>
             <p className="text-xs text-blue-600 dark:text-blue-300">
-              Password: <span className="font-mono bg-white dark:bg-gray-800 px-1 rounded">wolfinder2024</span>
+              Password: <span className="font-mono bg-white dark:bg-gray-800 px-1 rounded">admin123</span>
             </p>
           </div>
         </CardContent>
