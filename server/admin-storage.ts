@@ -262,7 +262,7 @@ export class AdminAdvancedStorage {
     registrationDateRange?: [Date, Date];
     lastActivityRange?: [Date, Date];
     isProblematic?: boolean;
-    sortBy?: 'rating' | 'reviewCount' | 'lastActivity' | 'profileViews' | 'conversionRate';
+    sortBy?: 'rating' | 'reviewCount' | 'lastActivity' | 'profileViews' | 'conversionRate' | 'createdAt';
     sortOrder?: 'asc' | 'desc';
   }) {
     const {
@@ -282,19 +282,8 @@ export class AdminAdvancedStorage {
       sortOrder = 'desc'
     } = params;
 
-    let query = db
-      .select({
-        professional: professionals,
-        user: users,
-        category: categories,
-        subscription: subscriptions,
-        plan: subscriptionPlans
-      })
-      .from(professionals)
-      .leftJoin(users, eq(professionals.userId, users.id))
-      .leftJoin(categories, eq(professionals.categoryId, categories.id))
-      .leftJoin(subscriptions, eq(professionals.id, subscriptions.professionalId))
-      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptions.id));
+    // Build conditions array for filtering
+    const conditions = [];
 
     // Apply filters
     const conditions = [];
@@ -359,10 +348,9 @@ export class AdminAdvancedStorage {
       conditions.push(eq(professionals.isProblematic, isProblematic));
     }
 
-    let finalQuery = query;
-    
+    // Build where conditions
     if (conditions.length > 0) {
-      finalQuery = finalQuery.where(and(...conditions));
+      query = query.where(and(...conditions));
     }
 
     // Apply sorting
@@ -374,12 +362,12 @@ export class AdminAdvancedStorage {
       'conversionRate': professionals.clickThroughRate
     }[sortBy] || professionals.createdAt;
 
-    finalQuery = finalQuery.orderBy(sortOrder === 'desc' ? desc(sortColumn) : asc(sortColumn));
+    query = query.orderBy(sortOrder === 'desc' ? desc(sortColumn) : asc(sortColumn));
 
     // Apply pagination
-    finalQuery = finalQuery.limit(limit).offset((page - 1) * limit);
+    query = query.limit(limit).offset((page - 1) * limit);
 
-    return await finalQuery;
+    return await query;
   }
 
   async getProfessionalDetailedAnalytics(professionalId: number) {
@@ -457,7 +445,7 @@ export class AdminAdvancedStorage {
       query = query.where(and(...conditions));
     }
 
-    query = query
+    return await query
       .orderBy(
         desc(sql`CASE 
           WHEN ${moderationQueue.priority} = 'urgent' THEN 4
