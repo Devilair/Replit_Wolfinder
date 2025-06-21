@@ -47,7 +47,7 @@ describe('Badge Calculator Performance Tests', () => {
         };
 
         try {
-          const results = await badgeCalculator.calculateAllBadges(testProfessional, mockBadges);
+          const results = await badgeCalculator.calculateAllBadges(testProfessional.id);
           
           // Validate results structure
           expect(Array.isArray(results)).toBe(true);
@@ -89,7 +89,7 @@ describe('Badge Calculator Performance Tests', () => {
 
       for (const testCase of edgeCases) {
         try {
-          const results = await badgeCalculator.calculateAllBadges(testCase, mockBadges);
+          const results = await badgeCalculator.calculateAllBadges(testCase.id);
           expect(Array.isArray(results)).toBe(true);
           
           // Validate edge case handling

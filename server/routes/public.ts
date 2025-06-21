@@ -26,10 +26,14 @@ export function setupPublicRoutes(app: Express) {
     }
   });
 
-  // Get all categories
+  // Get all categories with caching
   app.get("/api/categories", async (req, res) => {
     try {
-      const categories = await storage.getCategories();
+      const categories = await globalCache.getOrSet(
+        'categories',
+        () => storage.getCategories(),
+        30 * 60 * 1000 // 30 minutes TTL
+      );
       res.json(categories);
     } catch (error) {
       console.error("Error fetching categories:", error);

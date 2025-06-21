@@ -93,7 +93,8 @@ export class CacheManager {
     const now = Date.now();
     let cleaned = 0;
     
-    for (const [key, entry] of this.cache.entries()) {
+    const entries = Array.from(this.cache.entries());
+    for (const [key, entry] of entries) {
       if (now - entry.timestamp > entry.ttl) {
         this.cache.delete(key);
         cleaned++;

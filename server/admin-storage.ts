@@ -282,7 +282,7 @@ export class AdminAdvancedStorage {
       sortOrder = 'desc'
     } = params;
 
-    const baseQuery = db
+    let query = db
       .select({
         professional: professionals,
         user: users,
@@ -294,7 +294,7 @@ export class AdminAdvancedStorage {
       .leftJoin(users, eq(professionals.userId, users.id))
       .leftJoin(categories, eq(professionals.categoryId, categories.id))
       .leftJoin(subscriptions, eq(professionals.id, subscriptions.professionalId))
-      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id));
+      .leftJoin(subscriptionPlans, eq(subscriptions.planId, subscriptions.id));
 
     // Apply filters
     const conditions = [];
