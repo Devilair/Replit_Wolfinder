@@ -108,6 +108,9 @@ export default function SearchPage() {
     limit: 50
   };
 
+  // Check if we have any search parameters
+  const hasSearchParams = searchTerm.trim() || (selectedCity && selectedCity !== 'all') || (selectedCategory && selectedCategory !== 'all');
+
   // Esegui sempre la ricerca - se non ci sono parametri, mostra tutti i professionisti
   const { data: searchResults = [], isLoading: isLoadingSearch } = useQuery({
     queryKey: ['/api/professionals/search', searchParams],
