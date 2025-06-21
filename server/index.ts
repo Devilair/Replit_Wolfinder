@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import { setupRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { setupReplitHostFix } from "./replit-host-fix";
 
 const app = express();
 
@@ -65,6 +66,9 @@ app.use((req, res, next) => {
   });
 
   const server = createServer(app);
+
+  // Setup Replit host fix BEFORE Vite to prevent host blocking
+  setupReplitHostFix(app);
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
