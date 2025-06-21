@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { storage } from "../storage";
 import { performHealthCheck } from "../health-check";
 import { insertCategorySchema } from "@shared/schema";
+import { globalCache } from "../cache-manager";
 
 export function setupPublicRoutes(app: Express) {
   // Health check endpoint

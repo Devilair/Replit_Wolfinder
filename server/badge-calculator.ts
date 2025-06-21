@@ -14,6 +14,14 @@ export class BadgeCalculator {
   
   /**
    * Calcola tutti i badge per un professionista specifico
+   * @public - Exposed for testing
+   */
+  async calculateAllBadges(professionalId: number): Promise<BadgeCalculationResult[]> {
+    return this.calculateBadgesForProfessional(professionalId);
+  }
+  
+  /**
+   * Calcola tutti i badge per un professionista specifico
    */
   async calculateBadgesForProfessional(professionalId: number): Promise<BadgeCalculationResult[]> {
     console.log(`Calculating badges for professional ${professionalId}`);
@@ -76,10 +84,10 @@ export class BadgeCalculator {
         return this.calculateMaestro(prof, reviewCount, badge);
       
       case 'eccellenza':
-        return this.calculateEccellenza(avgRating, reviewCount, badge);
+        return this.calculateEccellenza(Number(avgRating), reviewCount, badge);
       
       case 'perfezione':
-        return this.calculatePerfezione(avgRating, reviewCount, badge);
+        return this.calculatePerfezione(Number(avgRating), reviewCount, badge);
       
       case 'popolare':
         return this.calculatePopolare(prof, badge);
@@ -103,13 +111,13 @@ export class BadgeCalculator {
         return this.calculateComunicatore(prof, badge);
       
       case 'referenze-oro':
-        return this.calculateReferenzeOro(avgRating, reviewCount, badge);
+        return this.calculateReferenzeOro(Number(avgRating), reviewCount, badge);
       
       case 'leader-categoria':
         return this.calculateLeaderCategoria(prof, reviewCount, badge);
       
       case 'hall-of-fame':
-        return this.calculateHallOfFame(prof, avgRating, reviewCount, badge);
+        return this.calculateHallOfFame(prof, Number(avgRating), reviewCount, badge);
       
       default:
         return {

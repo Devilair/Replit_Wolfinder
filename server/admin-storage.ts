@@ -282,7 +282,7 @@ export class AdminAdvancedStorage {
       sortOrder = 'desc'
     } = params;
 
-    let query = db
+    const baseQuery = db
       .select({
         professional: professionals,
         user: users,
@@ -359,8 +359,10 @@ export class AdminAdvancedStorage {
       conditions.push(eq(professionals.isProblematic, isProblematic));
     }
 
+    let finalQuery = baseQuery;
+    
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      finalQuery = finalQuery.where(and(...conditions));
     }
 
     // Apply sorting
@@ -372,12 +374,12 @@ export class AdminAdvancedStorage {
       'conversionRate': professionals.clickThroughRate
     }[sortBy] || professionals.createdAt;
 
-    query = query.orderBy(sortOrder === 'desc' ? desc(sortColumn) : asc(sortColumn));
+    finalQuery = finalQuery.orderBy(sortOrder === 'desc' ? desc(sortColumn) : asc(sortColumn));
 
     // Apply pagination
-    query = query.limit(limit).offset((page - 1) * limit);
+    finalQuery = finalQuery.limit(limit).offset((page - 1) * limit);
 
-    return await query;
+    return await finalQuery;
   }
 
   async getProfessionalDetailedAnalytics(professionalId: number) {
