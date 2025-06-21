@@ -484,6 +484,38 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
   updatedAt: true 
 });
 
+export const consumers = pgTable("consumers", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  dateOfBirth: timestamp("date_of_birth"),
+  gender: text("gender"),
+  city: text("city"),
+  province: text("province"),
+  postalCode: text("postal_code"),
+  country: text("country").default("IT"),
+  emailNotifications: boolean("email_notifications").default(true),
+  smsNotifications: boolean("sms_notifications").default(false),
+  marketingEmails: boolean("marketing_emails").default(false),
+  reviewsWritten: integer("reviews_written").default(0),
+  profilesViewed: integer("profiles_viewed").default(0),
+  searchesPerformed: integer("searches_performed").default(0),
+  isPhoneVerified: boolean("is_phone_verified").default(false),
+  phoneVerifiedAt: timestamp("phone_verified_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertConsumerSchema = createInsertSchema(consumers).omit({ 
+  id: true, 
+  reviewsWritten: true,
+  profilesViewed: true,
+  searchesPerformed: true,
+  createdAt: true, 
+  updatedAt: true 
+});
+
 // EXACT TYPE EXPORTS - Matching database structure
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;

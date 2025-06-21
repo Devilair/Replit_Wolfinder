@@ -10,13 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Link } from "wouter";
 import { MapView } from "@/components/MapView";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
-
-interface Category {
-  id: number;
-  name: string;
-  slug: string;
-  icon: string;
-}
+import { type Category } from "@shared/schema";
 
 interface Professional {
   id: number;
