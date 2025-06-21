@@ -548,6 +548,29 @@ export const insertReviewReportSchema = createInsertSchema(reviewReports).omit({
   createdAt: true
 });
 
+export const insertBadgeSchema = createInsertSchema(badges).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertProfessionalBadgeSchema = createInsertSchema(professionalBadges).omit({
+  id: true,
+  awardedAt: true
+});
+
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Professional registration schema for frontend forms
 export const professionalRegistrationSchema = z.object({
   // Dati personali
@@ -591,7 +614,6 @@ export type Badge = typeof badges.$inferSelect;
 export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type Category = typeof categories.$inferSelect;
-export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type VerificationDocument = typeof verificationDocuments.$inferSelect;
 export type ProfessionalBadge = typeof professionalBadges.$inferSelect;
 export type ModerationQueue = typeof moderationQueue.$inferSelect;
@@ -610,11 +632,16 @@ export type InsertReview = z.infer<typeof insertReviewSchema>;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type InsertBadge = z.infer<typeof insertBadgeSchema>;
 export type InsertProfessionalBadge = z.infer<typeof insertProfessionalBadgeSchema>;
+export type InsertVerificationDocument = z.infer<typeof insertVerificationDocumentSchema>;
+export type InsertClaimRequest = z.infer<typeof insertClaimRequestSchema>;
+export type InsertReviewReport = z.infer<typeof insertReviewReportSchema>;
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
 
 // LEGACY EXPORTS - maintain backward compatibility
 export type ReviewHelpfulVote = { id: number; reviewId: number; userId: number };
 export type InsertReviewHelpfulVote = { reviewId: number; userId: number };
-export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionSchema>;
+export type ReviewReport = typeof reviewReports.$inferSelect;
 
 
 

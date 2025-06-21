@@ -43,6 +43,7 @@ export class SubscriptionStorage implements ISubscriptionStorage {
       .insert(subscriptionPlans)
       .values(plan)
       .returning();
+
     return created;
   }
 }

@@ -110,7 +110,7 @@ export class StripeService {
       const subscription = await this.getSubscription(params.subscriptionId);
       if (subscription && subscription.items.data.length > 0) {
         updateData.items = [{
-          id: subscription.items.data[0].id,
+          id: subscription.items.data[0]?.id,
           price: params.priceId,
         }];
       }
