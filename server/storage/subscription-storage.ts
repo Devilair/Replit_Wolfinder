@@ -20,6 +20,7 @@ export class SubscriptionStorage implements ISubscriptionStorage {
       .insert(subscriptions)
       .values(subscription)
       .returning();
+    if (!created) throw new Error('Failed to create subscription');
     return created;
   }
 
@@ -43,7 +44,7 @@ export class SubscriptionStorage implements ISubscriptionStorage {
       .insert(subscriptionPlans)
       .values(plan)
       .returning();
-
+    if (!created) throw new Error('Failed to create subscription plan');
     return created;
   }
 }

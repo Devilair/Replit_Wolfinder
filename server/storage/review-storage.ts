@@ -16,12 +16,10 @@ const sql_connection = neon(process.env.DATABASE_URL!);
 const db = drizzle(sql_connection);
 
 export class ReviewStorage implements IReviewStorage {
-  async createReview(insertReview: InsertReview): Promise<Review> {
-    const [review] = await db
-      .insert(reviews)
-      .values(insertReview)
-      .returning();
-    return review;
+  async createReview(review: InsertReview): Promise<Review> {
+    const [created] = await db.insert(reviews).values(review).returning();
+    if (!created) throw new Error('Failed to create review');
+    return created;
   }
 
   async getReview(id: number): Promise<Review | undefined> {
@@ -32,12 +30,13 @@ export class ReviewStorage implements IReviewStorage {
     return review;
   }
 
-  async updateReview(id: number, updates: Partial<Review>): Promise<Review> {
+  async updateReview(id: number, data: Partial<Review>): Promise<Review> {
     const [updated] = await db
       .update(reviews)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...data, updatedAt: new Date() })
       .where(eq(reviews.id, id))
       .returning();
+    if (!updated) throw new Error('Failed to update review');
     return updated;
   }
 
@@ -77,7 +76,7 @@ export class ReviewStorage implements IReviewStorage {
       .select({ count: count() })
       .from(reviews)
       .where(eq(reviews.status, 'pending'));
-    return result.count;
+    return result?.count || 0;
   }
 
   async getReviewsCount(): Promise<number> {
@@ -85,6 +84,22 @@ export class ReviewStorage implements IReviewStorage {
       .select({ count: count() })
       .from(reviews)
       .where(eq(reviews.status, 'approved'));
-    return result.count;
+    return result?.count || 0;
+  }
+
+  async getReviewCountByProfessional(professionalId: number): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(reviews)
+      .where(and(eq(reviews.professionalId, professionalId), eq(reviews.status, 'approved')));
+    return result?.count || 0;
+  }
+
+  async getPendingReviewCount(): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(reviews)
+      .where(eq(reviews.status, 'pending'));
+    return result?.count || 0;
   }
 }

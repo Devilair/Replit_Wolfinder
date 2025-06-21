@@ -24,6 +24,7 @@ export class BadgeStorage implements IBadgeStorage {
       .insert(badges)
       .values(badge)
       .returning();
+    if (!created) throw new Error('Failed to create badge');
     return created;
   }
 
@@ -41,7 +42,7 @@ export class BadgeStorage implements IBadgeStorage {
     }));
   }
 
-  async awardBadge(professionalId: number, badgeId: number, awardedBy: string = 'system', reason?: string): Promise<ProfessionalBadge> {
+  async awardBadge(professionalId: number, badgeId: number, awardedBy: number | null = null, reason?: string): Promise<ProfessionalBadge> {
     const [professionalBadge] = await db
       .insert(professionalBadges)
       .values({
@@ -51,6 +52,7 @@ export class BadgeStorage implements IBadgeStorage {
         revokeReason: reason,
       })
       .returning();
+    if (!professionalBadge) throw new Error('Failed to award badge');
     return professionalBadge;
   }
 }

@@ -37,11 +37,11 @@ export class AdminStorage implements IAdminStorage {
       .where(eq(reviews.status, 'pending'));
 
     return {
-      userCount: userCount.count,
-      professionalCount: professionalCount.count,
-      verifiedProfessionalCount: verifiedProfessionalCount.count,
-      reviewCount: reviewCount.count,
-      pendingReviewCount: pendingReviewCount.count,
+      userCount: userCount?.count || 0,
+      professionalCount: professionalCount?.count || 0,
+      verifiedProfessionalCount: verifiedProfessionalCount?.count || 0,
+      reviewCount: reviewCount?.count || 0,
+      pendingReviewCount: pendingReviewCount?.count || 0,
       revenue: 0,
       changePercent: 0
     };
@@ -52,6 +52,6 @@ export class AdminStorage implements IAdminStorage {
       .select({ count: count() })
       .from(professionals)
       .where(eq(professionals.verificationStatus, 'verified'));
-    return result.count;
+    return result?.count || 0;
   }
 }

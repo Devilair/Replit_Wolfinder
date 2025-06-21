@@ -559,11 +559,7 @@ export const insertProfessionalBadgeSchema = createInsertSchema(professionalBadg
   awardedAt: true
 });
 
-export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
+// Removed duplicate insertSubscriptionSchema - already declared above
 
 export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
   id: true,

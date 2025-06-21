@@ -41,4 +41,13 @@ export class ClaimStorage implements IClaimStorage {
       ));
     return claimRequest || null;
   }
+
+  async createClaimRequest(claimRequest: InsertClaimRequest): Promise<ClaimRequest> {
+    const [created] = await db
+      .insert(claimRequests)
+      .values(claimRequest)
+      .returning();
+    if (!created) throw new Error('Failed to create claim request');
+    return created;
+  }
 }

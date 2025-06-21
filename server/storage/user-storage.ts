@@ -14,6 +14,7 @@ const db = drizzle(sql_connection);
 export class UserStorage implements IUserStorage {
   async createUser(user: InsertUser): Promise<User> {
     const [created] = await db.insert(users).values(user).returning();
+    if (!created) throw new Error('Failed to create user');
     return created;
   }
 
@@ -37,6 +38,7 @@ export class UserStorage implements IUserStorage {
       .set({ ...data, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
+    if (!user) throw new Error('Failed to update user');
     return user;
   }
 }

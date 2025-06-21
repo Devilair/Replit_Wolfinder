@@ -18,6 +18,7 @@ export class CategoryStorage implements ICategoryStorage {
 
   async createCategory(category: InsertCategory): Promise<Category> {
     const [created] = await db.insert(categories).values(category).returning();
+    if (!created) throw new Error('Failed to create category');
     return created;
   }
 }

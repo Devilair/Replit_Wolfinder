@@ -18,6 +18,7 @@ const db = drizzle(sql_connection);
 export class ProfessionalStorage implements IProfessionalStorage {
   async createProfessional(professional: InsertProfessional): Promise<Professional> {
     const [created] = await db.insert(professionals).values(professional).returning();
+    if (!created) throw new Error('Failed to create professional');
     return created;
   }
 
@@ -50,6 +51,7 @@ export class ProfessionalStorage implements IProfessionalStorage {
       .set({ ...data, updatedAt: new Date() })
       .where(eq(professionals.id, id))
       .returning();
+    if (!updated) throw new Error('Failed to update professional');
     return updated;
   }
 
@@ -145,9 +147,11 @@ export class ProfessionalStorage implements IProfessionalStorage {
     if (results.length === 0) return undefined;
 
     const result = results[0];
+    if (!result || !result.professionals) return undefined;
+    
     return {
       ...result.professionals,
-      category: result.categories!,
+      category: result.categories || null,
       user: result.users || undefined,
     };
   }
