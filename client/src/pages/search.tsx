@@ -31,7 +31,7 @@ export default function SearchPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("rating");
   const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
-  
+
   // Geographic search state
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [searchRadius, setSearchRadius] = useState("10");
@@ -45,9 +45,9 @@ export default function SearchPage() {
     const urlSearch = params.get('search') || '';
     const urlCity = params.get('city') || '';
     const urlCategory = params.get('category') || params.get('categoryId');
-    
+
     setSearchTerm(urlSearch);
-    
+
     // Normalizza il nome della città per il dropdown
     if (urlCity) {
       const normalizedCity = urlCity.toLowerCase();
@@ -61,7 +61,7 @@ export default function SearchPage() {
     } else {
       setSelectedCity('all');
     }
-    
+
     // Se è specificata una categoria nell'URL, impostala
     if (urlCategory) {
       setSelectedCategory(urlCategory);
@@ -76,12 +76,10 @@ export default function SearchPage() {
     if (searchTerm.trim()) params.append('search', searchTerm.trim());
     if (selectedCity && selectedCity !== 'all') params.append('city', selectedCity);
     if (selectedCategory && selectedCategory !== 'all') params.append('categoryId', selectedCategory);
-    
-    console.log('SEARCH DEBUG:', { searchTerm, selectedCity, selectedCategory, params: params.toString() });
-    
+
     const queryString = params.toString();
     const newUrl = `/search${queryString ? `?${queryString}` : ''}`;
-    
+
     // Aggiorna l'URL solo se è diverso da quello attuale
     if (window.location.pathname + window.location.search !== newUrl) {
       window.history.replaceState({}, '', newUrl);
@@ -103,7 +101,7 @@ export default function SearchPage() {
   };
 
   // Check if we have any search parameters
-  const hasSearchParams = searchTerm.trim() || (selectedCity && selectedCity !== 'all') || (selectedCategory && selectedCategory !== 'all');
+  const hasSearchParams = new URLSearchParams(searchParams).size > 0;
 
   // Esegui sempre la ricerca - se non ci sono parametri, mostra tutti i professionisti
   const { data: searchResults = [], isLoading: isLoadingSearch } = useQuery({
@@ -115,7 +113,7 @@ export default function SearchPage() {
           params.append(key, value.toString());
         }
       });
-      
+
       const response = await fetch(`/api/professionals/search?${params}`);
       if (!response.ok) throw new Error('Failed to search professionals');
       return response.json();
@@ -131,18 +129,18 @@ export default function SearchPage() {
     queryKey: ['/api/professionals/nearby', searchLocation, searchRadius, selectedCategory],
     queryFn: async () => {
       if (!searchLocation) return [];
-      
+
       const params = new URLSearchParams({
         lat: searchLocation[0].toString(),
         lng: searchLocation[1].toString(),
         radius: searchRadius,
         limit: '20'
       });
-      
+
       if (selectedCategory && selectedCategory !== 'all') {
         params.append('categoryId', selectedCategory);
       }
-      
+
       const response = await fetch(`/api/professionals/nearby?${params}`);
       if (!response.ok) throw new Error('Failed to search nearby professionals');
       return response.json();
@@ -157,7 +155,7 @@ export default function SearchPage() {
   // Location detection function
   const getUserLocation = () => {
     setGettingLocation(true);
-    
+
     if (!navigator.geolocation) {
       alert('La geolocalizzazione non è supportata dal tuo browser');
       setGettingLocation(false);
@@ -206,7 +204,7 @@ export default function SearchPage() {
     if (searchTerm.trim()) params.append('search', searchTerm.trim());
     if (selectedCity && selectedCity !== 'all') params.append('city', selectedCity);
     if (selectedCategory && selectedCategory !== 'all') params.append('categoryId', selectedCategory);
-    
+
     const queryString = params.toString();
     window.location.href = `/search${queryString ? `?${queryString}` : ''}`;
   };
@@ -258,6 +256,19 @@ export default function SearchPage() {
     </Card>
   );
 
+  const searchParams = new URLSearchParams();
+    if (searchTerm.trim()) searchParams.append('search', searchTerm.trim());
+    if (selectedCity && selectedCity !== 'all') searchParams.append('city', selectedCity);
+    if (selectedCategory && selectedCategory !== 'all') searchParams.append('categoryId', selectedCategory);
+
+    const hasSearchParams = searchParams.size > 0;
+
+    console.log("SEARCH DEBUG:", {
+    searchTerm,
+    selectedCity,
+    selectedCategory,
+    params: hasSearchParams ? "has params" : ""
+  });
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -321,7 +332,7 @@ export default function SearchPage() {
                   )}
                 </div>
               </div>
-              
+
               {searchLocation && (
                 <div className="mt-3 flex items-center gap-3">
                   <span className="text-sm text-blue-700">Raggio di ricerca:</span>

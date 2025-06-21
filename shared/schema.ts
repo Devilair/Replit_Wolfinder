@@ -528,7 +528,7 @@ export const professionalRegistrationSchema = z.object({
     .regex(/[a-z]/, "La password deve contenere almeno una lettera minuscola")
     .regex(/\d/, "La password deve contenere almeno un numero")
     .regex(/[@$!%*?&]/, "La password deve contenere almeno un carattere speciale"),
-  
+
   // Informazioni professionali
   businessName: z.string().optional(),
   categoryId: z.number().min(1, "Seleziona una categoria professionale"),
@@ -537,19 +537,57 @@ export const professionalRegistrationSchema = z.object({
   city: z.string().min(2, "La città deve avere almeno 2 caratteri"),
   address: z.string().min(2, "L'indirizzo deve avere almeno 2 caratteri"),
   description: z.string().min(10, "La descrizione deve avere almeno 10 caratteri"),
-  
+
   // Geocoding data (opzionali - aggiunti automaticamente dal form)
   latitude: z.number().optional(),
   longitude: z.number().optional(),
   postalCode: z.string().optional(),
   streetName: z.string().optional(),
   streetNumber: z.string().optional(),
-  
+
   // Consensi
   acceptTerms: z.boolean().refine(val => val === true, "Devi accettare i termini di servizio"),
   acceptPrivacy: z.boolean().refine(val => val === true, "Devi accettare l'informativa sulla privacy"),
   marketingConsent: z.boolean().default(false)
 });
+
+// Validation schemas
+export const professionalRegistrationSchema = z.object({
+  email: z.string().email("Email non valida"),
+  password: z.string().min(8, "Password deve essere di almeno 8 caratteri"),
+  firstName: z.string().min(1, "Nome richiesto"),
+  lastName: z.string().min(1, "Cognome richiesto"),
+  businessName: z.string().min(1, "Nome attività richiesto"),
+  category: z.string().min(1, "Categoria richiesta"),
+  phone: z.string().min(1, "Telefono richiesto"),
+  address: z.string().min(1, "Indirizzo richiesto"),
+  city: z.string().min(1, "Città richiesta"),
+  postalCode: z.string().min(1, "CAP richiesto"),
+  province: z.string().min(1, "Provincia richiesta"),
+  description: z.string().optional(),
+  website: z.string().url().optional().or(z.literal("")),
+});
+
+// Export types
+export type User = typeof users.$inferSelect;
+export type Professional = typeof professionals.$inferSelect;
+export type Review = typeof reviews.$inferSelect;
+export type Badge = typeof badges.$inferSelect;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type VerificationDocument = typeof verificationDocuments.$inferSelect;
+export type ProfessionalBadge = typeof professionalBadges.$inferSelect;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type ModerationQueue = typeof moderationQueue.$inferSelect;
+export type AdminActivity = typeof adminActivity.$inferSelect;
+export type ClaimRequest = typeof claimRequests.$inferSelect;
+export type ProfessionalNotification = typeof professionalNotifications.$inferSelect;
+export type Transaction = typeof transactions.$inferSelect;
+export type ProfessionalSpecialization = typeof professionalSpecializations.$inferSelect;
+export type ProfessionalCertification = typeof professionalCertifications.$inferSelect;
+export type ProfessionalUsage = typeof professionalUsage.$inferSelect;
 
 // EXACT TYPE EXPORTS - Matching database structure
 export type User = typeof users.$inferSelect;
