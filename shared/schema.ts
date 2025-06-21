@@ -551,7 +551,8 @@ export const professionalRegistrationSchema = z.object({
   marketingConsent: z.boolean().default(false)
 });
 
-
+// Re-export professionalRegistrationSchema
+export { professionalRegistrationSchema };
 
 // Export types
 export type User = typeof users.$inferSelect;

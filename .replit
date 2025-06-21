@@ -43,8 +43,8 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pnpm typecheck"
+args = "npm run typecheck"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pnpm start"
+args = "npm run dev"
