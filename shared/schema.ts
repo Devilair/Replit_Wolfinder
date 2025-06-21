@@ -516,6 +516,41 @@ export const insertConsumerSchema = createInsertSchema(consumers).omit({
   updatedAt: true 
 });
 
+// Professional registration schema for frontend forms
+export const professionalRegistrationSchema = z.object({
+  // Dati personali
+  firstName: z.string().min(2, "Il nome deve avere almeno 2 caratteri"),
+  lastName: z.string().min(2, "Il cognome deve avere almeno 2 caratteri"),
+  email: z.string().email("Email non valida"),
+  password: z.string()
+    .min(8, "La password deve avere almeno 8 caratteri")
+    .regex(/[A-Z]/, "La password deve contenere almeno una lettera maiuscola")
+    .regex(/[a-z]/, "La password deve contenere almeno una lettera minuscola")
+    .regex(/\d/, "La password deve contenere almeno un numero")
+    .regex(/[@$!%*?&]/, "La password deve contenere almeno un carattere speciale"),
+  
+  // Informazioni professionali
+  businessName: z.string().optional(),
+  categoryId: z.number().min(1, "Seleziona una categoria professionale"),
+  phoneFixed: z.string().optional(),
+  phoneMobile: z.string().optional(),
+  city: z.string().min(2, "La città deve avere almeno 2 caratteri"),
+  address: z.string().min(2, "L'indirizzo deve avere almeno 2 caratteri"),
+  description: z.string().min(10, "La descrizione deve avere almeno 10 caratteri"),
+  
+  // Geocoding data (opzionali - aggiunti automaticamente dal form)
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  postalCode: z.string().optional(),
+  streetName: z.string().optional(),
+  streetNumber: z.string().optional(),
+  
+  // Consensi
+  acceptTerms: z.boolean().refine(val => val === true, "Devi accettare i termini di servizio"),
+  acceptPrivacy: z.boolean().refine(val => val === true, "Devi accettare l'informativa sulla privacy"),
+  marketingConsent: z.boolean().default(false)
+});
+
 // EXACT TYPE EXPORTS - Matching database structure
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
