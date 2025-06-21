@@ -551,9 +551,6 @@ export const professionalRegistrationSchema = z.object({
   marketingConsent: z.boolean().default(false)
 });
 
-// Re-export professionalRegistrationSchema
-export { professionalRegistrationSchema };
-
 // Export types
 export type User = typeof users.$inferSelect;
 export type Professional = typeof professionals.$inferSelect;
@@ -565,7 +562,6 @@ export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type VerificationDocument = typeof verificationDocuments.$inferSelect;
 export type ProfessionalBadge = typeof professionalBadges.$inferSelect;
-export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 export type ModerationQueue = typeof moderationQueue.$inferSelect;
 export type AdminActivity = typeof adminActivity.$inferSelect;
 export type ClaimRequest = typeof claimRequests.$inferSelect;

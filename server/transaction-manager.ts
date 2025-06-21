@@ -7,6 +7,8 @@ import {
   reviews,
   auditLogs
 } from '@shared/schema';
+
+// TEMPORARY: Disable broken transaction methods until schema is fixed
 import { eq, and, inArray, count, avg } from 'drizzle-orm';
 
 /**
