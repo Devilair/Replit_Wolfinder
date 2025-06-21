@@ -3,6 +3,7 @@ import { setupAuthRoutes } from "./auth";
 import { setupProfessionalRoutes } from "./professionals";
 import { setupPublicRoutes } from "./public";
 import { setupAdminRoutes } from "./admin";
+import { setupStripeRoutes } from "./stripe";
 
 export function setupRoutes(app: Express) {
   // Setup all route modules
@@ -10,6 +11,7 @@ export function setupRoutes(app: Express) {
   setupAuthRoutes(app);
   setupProfessionalRoutes(app);
   setupAdminRoutes(app);
+  setupStripeRoutes(app);
 }
 
 export * from "./auth";

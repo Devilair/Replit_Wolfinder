@@ -26,7 +26,7 @@ export function setupAdminRoutes(app: Express) {
   });
 
   // Admin Stats
-  app.get("/api/admin/stats", requireAdminAuth, async (req, res) => {
+  app.get("/api/admin/stats", requireAdminAuth, async (req: Request, res: Response) => {
     try {
       const stats = await adminStorage.getAdminStats();
       res.json(stats);
