@@ -77,6 +77,24 @@ export class StripeService {
     });
   }
 
+  // Payment Intent management
+  async createPaymentIntent(params: {
+    amount: number;
+    currency: string;
+    customerId: string;
+    metadata?: Record<string, string>;
+  }): Promise<Stripe.PaymentIntent> {
+    return await stripe.paymentIntents.create({
+      amount: params.amount,
+      currency: params.currency,
+      customer: params.customerId,
+      metadata: params.metadata || {},
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+  }
+
   // Subscription management
   async createSubscription(params: CreateSubscriptionParams): Promise<Stripe.Subscription> {
     return await stripe.subscriptions.create({

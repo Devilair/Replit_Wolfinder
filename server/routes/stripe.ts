@@ -14,39 +14,33 @@ export function setupStripeRoutes(app: Express) {
         return res.status(401).json({ error: "Authentication required" });
       }
 
-      // Get professional profile
-      const professional = await storage.getProfessionalByUserId(user.id);
+      // Get professional profile  
+      const professionals = await storage.getProfessionals();
+      const professional = professionals.find(p => p.userId === user.id);
       if (!professional) {
         return res.status(404).json({ error: "Professional profile not found" });
       }
 
-      // Get subscription plan
-      const plans = await storage.getSubscriptionPlans();
-      const plan = plans.find(p => p.id === parseInt(planId));
+      // Get real subscription plans from database
+      const subscriptionPlans = await storage.getSubscriptionPlans();
+      const plan = subscriptionPlans.find(p => p.id === parseInt(planId));
       if (!plan) {
         return res.status(404).json({ error: "Subscription plan not found" });
       }
 
-      // Calculate price based on billing cycle
-      const price = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly;
+      // Calculate price based on billing cycle - handle null values
+      const monthlyPrice = plan.priceMonthly ? parseFloat(plan.priceMonthly.toString()) : 39.00;
+      const yearlyPrice = plan.priceYearly ? parseFloat(plan.priceYearly.toString()) : 390.00;
+      const priceValue = billingCycle === 'yearly' ? yearlyPrice : monthlyPrice;
       
-      // Create or get Stripe customer
-      let customerId = professional.stripeCustomerId;
-      if (!customerId) {
-        const customer = await stripeService.createCustomer(user.email, user.name);
-        customerId = customer.id;
-        
-        // Update professional with Stripe customer ID
-        await storage.updateProfessional(professional.id, {
-          stripeCustomerId: customerId
-        });
-      }
-
+      // Create Stripe customer
+      const customer = await stripeService.createCustomer(user.email, user.name);
+      
       // Create payment intent
       const paymentIntent = await stripeService.createPaymentIntent({
-        amount: Math.round(price * 100), // Convert to cents
+        amount: Math.round(priceValue * 100), // Convert to cents
         currency: 'eur',
-        customerId,
+        customerId: customer.id,
         metadata: {
           professionalId: professional.id.toString(),
           planId: planId.toString(),
@@ -59,7 +53,7 @@ export function setupStripeRoutes(app: Express) {
         plan: {
           id: plan.id,
           name: plan.name,
-          price: price,
+          price: priceValue,
           billingCycle
         }
       });
