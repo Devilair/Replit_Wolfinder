@@ -14,6 +14,12 @@ import { ArrowLeft, Plus, Building2 } from "lucide-react";
 import { Link } from "wouter";
 import { z } from "zod";
 
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+}
+
 // Schema per validazione form
 const addProfessionalSchema = z.object({
   categoryId: z.number().min(1, "Seleziona una categoria"),
@@ -55,8 +61,7 @@ export default function AddProfessional() {
     },
   });
 
-  // Carica categorie
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+  const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
 
@@ -157,7 +162,7 @@ export default function AddProfessional() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {categories.map((category: any) => (
+                        {categories?.map((category: any) => (
                           <SelectItem key={category.id} value={category.id.toString()}>
                             {category.name}
                           </SelectItem>

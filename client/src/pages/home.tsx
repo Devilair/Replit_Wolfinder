@@ -19,7 +19,14 @@ import {
   Users,
   TrendingUp
 } from "lucide-react";
-import type { Category, ProfessionalSummary } from "@shared/schema";
+import type { Category, ProfessionalWithDetails } from "@shared/schema";
+
+interface PlatformStats {
+  professionalsCount: number;
+  reviewsCount: number;
+  citiesCount: number;
+  averageRating: number;
+}
 
 const categoryIcons = {
   "avvocati": Gavel,
@@ -32,16 +39,19 @@ const categoryIcons = {
 };
 
 export default function Home() {
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<PlatformStats>({
     queryKey: ["/api/stats"],
+    queryFn: () => fetch("/api/stats").then(res => res.json()),
   });
 
   const { data: categories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
+    queryFn: () => fetch("/api/categories").then(res => res.json()),
   });
 
-  const { data: featuredProfessionals } = useQuery<ProfessionalSummary[]>({
+  const { data: featuredProfessionals } = useQuery<ProfessionalWithDetails[]>({
     queryKey: ["/api/professionals/featured"],
+    queryFn: () => fetch("/api/professionals/featured").then(res => res.json()),
   });
 
   const getCategoryIcon = (slug: string) => {

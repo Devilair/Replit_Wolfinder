@@ -21,16 +21,42 @@ import {
   BarChart3,
   Smartphone,
   Crown,
-  Star
+  Star,
+  Loader2
 } from "lucide-react";
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
+interface SubscriptionData {
+  plan: {
+    id: number;
+    name: string;
+    description: string;
+    maxPhotos: number;
+    maxServices: number;
+    maxContacts: number;
+    analyticsAccess: boolean;
+    apiAccess: boolean;
+    prioritySupport: boolean;
+    customBranding: boolean;
+  };
+  subscription: {
+    status: string;
+    currentPeriodEnd: string;
+    cancelAtPeriodEnd: boolean;
+  };
+  usage: {
+    currentPhotos: number;
+    currentServices: number;
+  };
+  availablePlans: any[];
+}
+
 let stripePromise: Promise<any> | null = null;
 
 function getStripePromise() {
-  if (!stripePromise && import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-    stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+  if (!stripePromise && (import.meta as any).env?.VITE_STRIPE_PUBLIC_KEY) {
+    stripePromise = loadStripe((import.meta as any).env.VITE_STRIPE_PUBLIC_KEY);
   }
   return stripePromise;
 }
@@ -92,7 +118,7 @@ export default function SubscriptionManagement() {
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
 
   // Get current subscription
-  const { data: subscriptionData, isLoading } = useQuery({
+  const { data: subscriptionData, isLoading } = useQuery<SubscriptionData>({
     queryKey: ["/api/subscription/current"],
     retry: false,
   });
@@ -116,7 +142,18 @@ export default function SubscriptionManagement() {
     );
   }
 
-  const currentPlan = subscriptionData?.plan;
+  const currentPlan = subscriptionData?.plan || {
+    id: 0,
+    name: 'Gratuito',
+    description: 'Piano gratuito con funzionalità base',
+    maxPhotos: 1,
+    maxServices: 1,
+    maxContacts: 10,
+    analyticsAccess: false,
+    apiAccess: false,
+    prioritySupport: false,
+    customBranding: false
+  };
   const subscription = subscriptionData?.subscription;
   const availablePlans = subscriptionData?.availablePlans || [];
 

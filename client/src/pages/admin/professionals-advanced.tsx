@@ -47,6 +47,11 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+interface Category {
+  id: number;
+  name: string;
+}
+
 export default function AdminProfessionalsAdvanced() {
   const { toast } = useToast();
   
@@ -71,7 +76,7 @@ export default function AdminProfessionalsAdvanced() {
     queryKey: ["/api/admin/professionals"],
   });
 
-  const { data: categories = [] as any[] } = useQuery({
+  const { data: categories = [] as Category[] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
 
@@ -385,7 +390,7 @@ export default function AdminProfessionalsAdvanced() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tutte le categorie</SelectItem>
-                {(categories as any[]).map((category: any) => (
+                {categories?.map((category: any) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}
                   </SelectItem>
@@ -1182,7 +1187,7 @@ export default function AdminProfessionalsAdvanced() {
                   <SelectValue placeholder="Seleziona categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category: any) => (
+                  {categories?.map((category: any) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
                     </SelectItem>

@@ -8,11 +8,25 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle, XCircle, AlertCircle, Zap, BarChart3, Camera, Settings, Palette, Smartphone } from "lucide-react";
 
+interface FeatureStatus {
+  currentPlan: string;
+  features: Record<string, boolean>;
+  usage: {
+    currentPhotos: number;
+    currentServices: number;
+  };
+  limits: {
+    maxPhotos: number;
+    maxServices: number;
+    maxContacts: number;
+  };
+}
+
 export default function FeatureGatingTest() {
   const [testResults, setTestResults] = useState<any[]>([]);
 
   // Get current feature gating status
-  const { data: featureStatus, isLoading } = useQuery({
+  const { data: featureStatus, isLoading } = useQuery<FeatureStatus>({
     queryKey: ["/api/test/feature-gating"],
     retry: false,
   });
@@ -161,12 +175,12 @@ export default function FeatureGatingTest() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {featureStatus && (
+          {featureStatus && typeof featureStatus === 'object' && (
             <>
               <div className="flex items-center justify-between">
                 <span className="font-medium">Piano Corrente:</span>
                 <Badge variant="outline" className="text-lg px-3 py-1">
-                  {featureStatus.currentPlan}
+                  {featureStatus.currentPlan || 'N/A'}
                 </Badge>
               </div>
 
@@ -178,7 +192,7 @@ export default function FeatureGatingTest() {
                     <Zap className="h-4 w-4" />
                     Funzionalità Disponibili
                   </h4>
-                  {Object.entries(featureStatus.features || {}).map(([key, value]: [string, any]) => (
+                  {featureStatus.features && Object.entries(featureStatus.features).map(([key, value]: [string, boolean]) => (
                     <div key={key} className="flex items-center justify-between">
                       <span className="text-sm capitalize">
                         {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
@@ -201,19 +215,19 @@ export default function FeatureGatingTest() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm">Foto:</span>
                       <span className="text-sm font-mono">
-                        {featureStatus.usage?.currentPhotos || 0} / {featureStatus.limits?.maxPhotos || 0}
+                        {featureStatus.usage?.currentPhotos ?? 0} / {featureStatus.limits?.maxPhotos ?? 0}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm">Servizi:</span>
                       <span className="text-sm font-mono">
-                        {featureStatus.usage?.currentServices || 0} / {featureStatus.limits?.maxServices || 0}
+                        {featureStatus.usage?.currentServices ?? 0} / {featureStatus.limits?.maxServices ?? 0}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm">Contatti:</span>
                       <span className="text-sm font-mono">
-                        0 / {featureStatus.limits?.maxContacts || 0}
+                        0 / {featureStatus.limits?.maxContacts ?? 0}
                       </span>
                     </div>
                   </div>

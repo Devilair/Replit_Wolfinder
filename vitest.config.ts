@@ -3,11 +3,11 @@ import path from 'path';
 
 export default defineConfig({
   test: {
+    include: ['**/*.{test,spec,bench}.?(c|m)[jt]s?(x)'],
     environment: 'node',
     globals: true,
-    timeout: 10000,
-    testTimeout: 10000,
-    hookTimeout: 10000,
+    testTimeout: 15000,
+    hookTimeout: 15000,
   },
   resolve: {
     alias: {

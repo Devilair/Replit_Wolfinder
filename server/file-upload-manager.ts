@@ -98,7 +98,7 @@ export class FileUploadManager {
         if (validation.valid) {
           cb(null, true);
         } else {
-          cb(new Error(validation.error), false);
+          cb(new Error(validation.error) as any, false);
         }
       }
     }).single(field);

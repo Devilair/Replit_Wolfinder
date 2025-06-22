@@ -6,36 +6,39 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Filter, Eye, User, Settings, FileText, Calendar } from "lucide-react";
+import { Search, Filter, Eye, User, Settings, FileText, Calendar, Download } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
+import { apiRequest } from "@/lib/queryClient";
+import AdminLayout from "@/components/admin-layout";
 
 interface AuditLog {
   id: number;
-  userId: number;
   action: string;
-  targetType: string;
-  targetId: number;
-  oldValues?: string;
-  newValues?: string;
-  reason?: string;
-  ipAddress?: string;
-  userAgent?: string;
-  createdAt: string;
-  user?: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
+  entityType: string;
+  entityId: number;
+  userId: number;
+  details: any;
+  ipAddress: string;
+  userAgent: string;
+  createdAt: Date;
 }
 
 export default function AuditLogs() {
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
   const [targetTypeFilter, setTargetTypeFilter] = useState("all");
+  const [filters, setFilters] = useState({
+    action: "",
+    entityType: "",
+    userId: "",
+    dateFrom: "",
+    dateTo: ""
+  });
 
-  const { data: auditLogs = [], isLoading } = useQuery({
-    queryKey: ['/api/admin/audit-logs', { search: searchTerm, action: actionFilter, targetType: targetTypeFilter }],
+  const { data: auditLogs = [], isLoading } = useQuery<AuditLog[]>({
+    queryKey: ["/api/admin/audit-logs", filters],
+    queryFn: () => apiRequest('GET', "/api/admin/audit-logs", filters)
   });
 
   const getActionIcon = (action: string) => {
@@ -105,11 +108,11 @@ export default function AuditLogs() {
   const filteredLogs = auditLogs.filter((log: AuditLog) => {
     const matchesSearch = !searchTerm || 
       log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.user?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.reason?.toLowerCase().includes(searchTerm.toLowerCase());
+      log.details.user?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.details.reason?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesAction = actionFilter === "all" || log.action.includes(actionFilter);
-    const matchesTargetType = targetTypeFilter === "all" || log.targetType === targetTypeFilter;
+    const matchesTargetType = targetTypeFilter === "all" || log.entityType === targetTypeFilter;
     
     return matchesSearch && matchesAction && matchesTargetType;
   });
@@ -229,9 +232,9 @@ export default function AuditLogs() {
                   <TableCell>
                     <div>
                       <div className="font-medium">
-                        {log.user ? `${log.user.firstName} ${log.user.lastName}` : 'Admin'}
+                        {log.details.user?.firstName} {log.details.user?.lastName}
                       </div>
-                      <div className="text-sm text-gray-500">{log.user?.email}</div>
+                      <div className="text-sm text-gray-500">{log.details.user?.email}</div>
                       {log.ipAddress && (
                         <div className="text-xs text-gray-400">IP: {log.ipAddress}</div>
                       )}
@@ -240,21 +243,21 @@ export default function AuditLogs() {
                   
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {getTargetTypeBadge(log.targetType)}
-                      <span className="text-sm">#{log.targetId}</span>
+                      {getTargetTypeBadge(log.entityType)}
+                      <span className="text-sm">#{log.entityId}</span>
                     </div>
                   </TableCell>
                   
                   <TableCell>
-                    {formatChanges(log.oldValues, log.newValues) || (
+                    {formatChanges(log.details.oldValues, log.details.newValues) || (
                       <span className="text-gray-400 text-sm">Nessuna modifica registrata</span>
                     )}
                   </TableCell>
                   
                   <TableCell>
-                    {log.reason ? (
-                      <div className="max-w-xs truncate" title={log.reason}>
-                        {log.reason}
+                    {log.details.reason ? (
+                      <div className="max-w-xs truncate" title={log.details.reason}>
+                        {log.details.reason}
                       </div>
                     ) : (
                       <span className="text-gray-400 text-sm">-</span>

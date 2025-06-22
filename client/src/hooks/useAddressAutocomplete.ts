@@ -47,7 +47,7 @@ export function useAddressAutocomplete() {
       // Estrae il numero civico se presente alla fine della query
       const numberMatch = searchQuery.match(/(.+?)\s+(\d+)\s*$/);
       const streetNumber = numberMatch ? numberMatch[2] : '';
-      const streetPart = numberMatch ? numberMatch[1].trim() : searchQuery;
+      const streetPart = numberMatch ? numberMatch[1]?.trim() || searchQuery : searchQuery;
 
       let allSuggestions: AddressSuggestion[] = [];
 

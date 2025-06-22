@@ -23,14 +23,17 @@ async function seedBadges() {
           description: badgeDefinition.description,
           requirements: badgeDefinition.requirements,
           calculationMethod: badgeDefinition.calculationMethod,
-          decayRules: badgeDefinition.decayRules,
           priority: badgeDefinition.priority,
           type: badgeDefinition.calculationMethod === 'automatic' ? 'automatic' : 'manual',
           isActive: true,
         })
         .returning();
 
-      console.log(`Created badge: ${badge.name} (${badge.slug})`);
+      if (badge) {
+        console.log(`Created badge: ${badge.name} (${badge.slug})`);
+      } else {
+        console.log('Badge creation failed for', badgeDefinition.slug);
+      }
     }
 
     console.log(`Successfully seeded ${BADGE_MASTER_DICTIONARY.length} badges`);

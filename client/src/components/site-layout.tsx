@@ -3,6 +3,12 @@ import { Search, Zap } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+}
+
 interface SiteLayoutProps {
   children: React.ReactNode;
 }
@@ -10,7 +16,7 @@ interface SiteLayoutProps {
 export default function SiteLayout({ children }: SiteLayoutProps) {
   const [location] = useLocation();
   
-  const { data: categories } = useQuery({
+  const { data: categories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
 

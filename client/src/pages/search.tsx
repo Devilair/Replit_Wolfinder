@@ -256,10 +256,8 @@ export default function SearchPage() {
     </Card>
   );
 
-
-
-    // Debug logging - fix URLSearchParams size check
-  const hasSearchParams = Array.from(searchParams.keys()).length > 0;
+  // Debug logging - fix URLSearchParams size check
+  const hasSearchParams = hasAnySearchParams;
   console.log("SEARCH DEBUG:", {
     searchTerm,
     selectedCity,

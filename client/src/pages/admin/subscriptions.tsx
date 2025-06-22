@@ -40,6 +40,19 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+interface Transaction {
+  id: number;
+  userId: number;
+  planId: number;
+  amount: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  professionalName?: string;
+  planName?: string;
+  paymentMethodType?: string;
+}
+
 export default function AdminSubscriptions() {
   const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState("plans");
@@ -112,7 +125,7 @@ export default function AdminSubscriptions() {
     }
   ];
 
-  const transactions = [];
+  const transactions: Transaction[] = [];
 
   // Calcoli per le metriche
   const totalMRR = subscriptionPlans.reduce((sum, plan) => 
@@ -461,15 +474,15 @@ export default function AdminSubscriptions() {
                   {transactions.map((transaction) => (
                     <TableRow key={transaction.id}>
                       <TableCell className="font-mono text-sm">{transaction.id}</TableCell>
-                      <TableCell>{transaction.professionalName}</TableCell>
+                      <TableCell>{(transaction as any).professionalName || 'N/A'}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{transaction.planName}</Badge>
+                        <Badge variant="outline">{(transaction as any).planName || 'N/A'}</Badge>
                       </TableCell>
                       <TableCell>€{transaction.amount}</TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <CreditCard className="h-4 w-4 text-gray-400" />
-                          <span className="capitalize">{transaction.paymentMethodType}</span>
+                          <span className="capitalize">{(transaction as any).paymentMethodType || 'N/A'}</span>
                         </div>
                       </TableCell>
                       <TableCell>

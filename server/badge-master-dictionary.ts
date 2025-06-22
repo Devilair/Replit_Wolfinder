@@ -50,7 +50,7 @@ export const BADGE_MASTER_DICTIONARY: BadgeMasterDefinition[] = [
   {
     name: "Primo Cliente",
     slug: "primo-cliente",
-    family: "esperienza",
+    family: "growth",
     icon: "🎯",
     color: "#059669",
     description: "Professionista verificato e attivo sulla piattaforma",

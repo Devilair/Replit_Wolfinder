@@ -59,6 +59,11 @@ interface Professional {
   };
 }
 
+interface Category {
+  id: number;
+  name: string;
+}
+
 export default function AdminProfessionals() {
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
@@ -95,7 +100,7 @@ export default function AdminProfessionals() {
     refetchInterval: 30000
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories } = useQuery<Category[]>({
     queryKey: ['/api/categories']
   });
 

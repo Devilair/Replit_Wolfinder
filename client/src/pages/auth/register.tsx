@@ -16,6 +16,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 
+interface Category {
+  id: number;
+  name: string;
+}
+
 const registrationSchema = z.object({
   name: z.string().min(2, "Nome deve essere di almeno 2 caratteri"),
   surname: z.string().min(2, "Cognome deve essere di almeno 2 caratteri"),
@@ -64,7 +69,7 @@ export default function Register() {
   });
 
   // Get categories for professionals
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
     enabled: userType === "professional",
   });

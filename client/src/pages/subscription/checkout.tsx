@@ -14,8 +14,8 @@ import { apiRequest } from "@/lib/queryClient";
 let stripePromise: Promise<any> | null = null;
 
 function getStripePromise() {
-  if (!stripePromise && import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-    stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+  if (!stripePromise && (import.meta as any).env?.VITE_STRIPE_PUBLIC_KEY) {
+    stripePromise = loadStripe((import.meta as any).env.VITE_STRIPE_PUBLIC_KEY);
   }
   return stripePromise;
 }
@@ -170,7 +170,7 @@ export default function SubscriptionCheckout() {
     queryKey: ['/api/subscription-plans'],
   });
 
-  const plan = plans.find((p: SubscriptionPlan) => p.id.toString() === planId);
+  const plan = (plans as SubscriptionPlan[])?.find((p: SubscriptionPlan) => p.id.toString() === planId);
 
   const createSubscriptionMutation = useMutation({
     mutationFn: async () => {

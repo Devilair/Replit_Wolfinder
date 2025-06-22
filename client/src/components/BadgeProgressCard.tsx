@@ -11,6 +11,7 @@ interface BadgeRequirement {
   target: number;
   completed: boolean;
   suggestion?: string;
+  text?: string;
 }
 
 interface BadgeProgressData {
@@ -19,6 +20,7 @@ interface BadgeProgressData {
   progress: number; // 0-100
   requirements: BadgeRequirement[];
   earnedBadge?: ProfessionalBadge;
+  earnedAt?: string;
 }
 
 interface BadgeProgressCardProps {

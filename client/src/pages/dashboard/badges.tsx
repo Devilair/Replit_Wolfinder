@@ -8,12 +8,31 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge, ProfessionalBadge } from "@shared/schema";
 import { Award, TrendingUp, Clock, RefreshCw } from "lucide-react";
 
+interface BadgeProgress {
+  badge: {
+    id: number;
+    name: string;
+    description: string;
+    icon: string;
+  };
+  isEarned: boolean;
+  progress: number;
+  earnedAt?: string;
+  requirements?: Array<{
+    description: string;
+    current: number;
+    target: number;
+    completed: boolean;
+    suggestion?: string;
+  }>;
+}
+
 export default function ProfessionalBadgesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch badge progress data
-  const { data: badgeProgress = [], isLoading } = useQuery({
+  const { data: badgeProgress = [], isLoading } = useQuery<BadgeProgress[]>({
     queryKey: ["/api/professional/badges/progress"],
   });
 
@@ -43,17 +62,17 @@ export default function ProfessionalBadgesPage() {
   });
 
   // Badge statistics
-  const earnedBadges = badgeProgress.filter(bp => bp.isEarned);
-  const almostEarnedBadges = badgeProgress.filter(bp => !bp.isEarned && bp.progress >= 80);
-  const inProgressBadges = badgeProgress.filter(bp => !bp.isEarned && bp.progress > 0 && bp.progress < 80);
+  const earnedBadges = Array.isArray(badgeProgress) ? badgeProgress.filter((bp: BadgeProgress) => bp.isEarned) : [];
+  const almostEarnedBadges = Array.isArray(badgeProgress) ? badgeProgress.filter((bp: BadgeProgress) => !bp.isEarned && bp.progress >= 80) : [];
+  const inProgressBadges = Array.isArray(badgeProgress) ? badgeProgress.filter((bp: BadgeProgress) => !bp.isEarned && bp.progress > 0 && bp.progress < 80) : [];
 
   // Group badges by type
   const badgesByType = {
-    all: badgeProgress,
+    all: Array.isArray(badgeProgress) ? badgeProgress : [],
     earned: earnedBadges,
     almost: almostEarnedBadges,
     inProgress: inProgressBadges,
-    notStarted: badgeProgress.filter(bp => !bp.isEarned && bp.progress === 0)
+    notStarted: Array.isArray(badgeProgress) ? badgeProgress.filter((bp: BadgeProgress) => !bp.isEarned && bp.progress === 0) : []
   };
 
   if (isLoading) {
@@ -112,7 +131,7 @@ export default function ProfessionalBadgesPage() {
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{earnedBadges.length}</div>
             <p className="text-xs text-muted-foreground">
-              su {badgeProgress.length} disponibili
+              su {Array.isArray(badgeProgress) ? badgeProgress.length : 0} disponibili
             </p>
           </CardContent>
         </Card>
@@ -150,7 +169,7 @@ export default function ProfessionalBadgesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {badgeProgress.length > 0 ? Math.round((earnedBadges.length / badgeProgress.length) * 100) : 0}%
+              {Array.isArray(badgeProgress) && badgeProgress.length > 0 ? Math.round((earnedBadges.length / badgeProgress.length) * 100) : 0}%
             </div>
             <p className="text-xs text-muted-foreground">
               Completamento
@@ -163,7 +182,7 @@ export default function ProfessionalBadgesPage() {
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="all">
-            Tutti ({badgesByType.all.length})
+            Tutti ({Array.isArray(badgesByType.all) ? badgesByType.all.length : 0})
           </TabsTrigger>
           <TabsTrigger value="earned">
             Ottenuti ({badgesByType.earned.length})
@@ -198,10 +217,15 @@ export default function ProfessionalBadgesPage() {
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {badges.map((badgeData, index) => (
+                {Array.isArray(badges) && badges.map((badgeData: BadgeProgress, index: number) => (
                   <BadgeProgressCard
                     key={badgeData.badge.id}
-                    badgeProgress={badgeData}
+                    badgeProgress={{
+                      badge: badgeData.badge as any,
+                      isEarned: badgeData.isEarned,
+                      progress: badgeData.progress,
+                      requirements: badgeData.requirements || []
+                    }}
                     onAction={() => checkBadgesMutation.mutate()}
                   />
                 ))}

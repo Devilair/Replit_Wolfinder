@@ -9,13 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Link, useLocation } from "wouter";
-
-interface Category {
-  id: number;
-  name: string;
-  slug: string;
-  icon: string;
-}
+import type { Category, ProfessionalWithDetails } from "@shared/schema";
 
 interface Professional {
   id: number;
@@ -35,12 +29,14 @@ export default function Landing() {
   const [registrationModalOpen, setRegistrationModalOpen] = useState(false);
   const [, setLocation] = useLocation();
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
+    queryFn: () => fetch("/api/categories").then(res => res.json()),
   });
 
-  const { data: featuredProfessionals = [] } = useQuery({
+  const { data: featuredProfessionals = [] } = useQuery<ProfessionalWithDetails[]>({
     queryKey: ['/api/professionals/featured'],
+    queryFn: () => fetch("/api/professionals/featured").then(res => res.json()),
   });
 
   const handleSearch = () => {
@@ -210,7 +206,7 @@ export default function Landing() {
                     <SelectValue placeholder="Categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(categories as Category[]).map((category: Category) => (
+                    {Array.isArray(categories) && categories.map((category: Category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         {category.icon} {category.name}
                       </SelectItem>
@@ -326,12 +322,12 @@ export default function Landing() {
           
           {featuredProfessionals.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredProfessionals.slice(0, 6).map((professional: Professional) => (
+              {featuredProfessionals.slice(0, 6).map((professional: ProfessionalWithDetails) => (
                 <Card key={professional.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <Badge variant="outline" className="text-xs">
-                        {professional.category.icon} {professional.category.name}
+                        {professional.category?.icon} {professional.category?.name}
                       </Badge>
                       <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
                         <Shield className="h-3 w-3 mr-1" />
@@ -384,7 +380,7 @@ export default function Landing() {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-16">
-            {categories.slice(0, 12).map((category: Category) => (
+            {Array.isArray(categories) && categories.slice(0, 12).map((category: Category) => (
               <Link 
                 key={category.id} 
                 href={`/search?categoryId=${category.id}`}

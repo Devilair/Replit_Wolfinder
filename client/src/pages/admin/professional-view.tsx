@@ -22,16 +22,49 @@ import {
   Crown
 } from "lucide-react";
 
+interface Professional {
+  id: number;
+  businessName: string;
+  email: string;
+  phoneFixed?: string;
+  phoneMobile?: string;
+  address: string;
+  city: string;
+  province: string;
+  category?: { name: string };
+  verificationStatus: string;
+  isPremium: boolean;
+  isClaimed: boolean;
+  rating: number;
+  reviewCount: number;
+  profileViews: number;
+  profileCompleteness: number;
+  description?: string;
+  createdAt: string;
+  verificationDate?: string;
+  lastActivityAt?: string;
+}
+
+interface VerificationDocument {
+  id: number;
+  documentType: string;
+  status: string;
+  fileName: string;
+  originalFileName?: string;
+  fileSize: number;
+  createdAt: string;
+}
+
 export default function AdminProfessionalView() {
   const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const { data: professional, isLoading } = useQuery({
+  const { data: professional, isLoading } = useQuery<Professional>({
     queryKey: [`/api/admin/professionals/${id}`],
   });
 
-  const { data: verificationDocuments } = useQuery({
+  const { data: verificationDocuments = [] } = useQuery<VerificationDocument[]>({
     queryKey: [`/api/admin/professionals/${id}/verification-documents`],
   });
 
@@ -50,7 +83,7 @@ export default function AdminProfessionalView() {
     );
   }
 
-  if (!professional) {
+  if (!professional || typeof professional !== 'object') {
     return (
       <div className="p-6 text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Professionista non trovato</h1>
@@ -262,14 +295,14 @@ export default function AdminProfessionalView() {
       )}
 
       {/* Verification Documents */}
-      {verificationDocuments && verificationDocuments.length > 0 && (
+      {Array.isArray(verificationDocuments) && verificationDocuments.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Documenti di Verifica</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {verificationDocuments.map((doc: any) => (
+              {verificationDocuments.map((doc: VerificationDocument) => (
                 <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">

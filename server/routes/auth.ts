@@ -1,139 +1,140 @@
-import type { Express } from "express";
-import { authService, AuthUser } from "../auth";
-import { authManager } from '../auth-manager';
-import { storage } from "../storage";
-import { emailService } from "../email-service";
-import { db } from "../db";
-import { users, userSessions, verificationTokens } from "@shared/schema";
-import { eq } from "drizzle-orm";
-import { insertConsumerSchema } from "@shared/schema";
+import express from 'express';
+import type { Request, Response, NextFunction, Express } from 'express';
+import bcrypt from 'bcryptjs';
+import { db } from '../db';
+import { users, userSessions } from '../../shared/schema';
+import { eq } from 'drizzle-orm';
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import { env } from "../env";
+import { z } from 'zod';
+import { AppStorage } from '../storage';
+import { consumerRegistrationSchema } from '../../shared/schema';
 
-export function setupAuthRoutes(app: Express) {
-  // Login endpoint
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      const { email, password, rememberMe } = req.body;
+const router = express.Router();
 
-      if (!email || !password) {
-        return res.status(400).json({ message: "Email e password sono richiesti" });
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        userId: number;
+        role: string;
       }
-
-      const user = await storage.getUserByEmail(email);
-      if (!user) {
-        return res.status(401).json({ message: "Credenziali non valide" });
-      }
-
-      const isValidPassword = await authService.verifyPassword(password, user.password);
-      if (!isValidPassword) {
-        return res.status(401).json({ message: "Credenziali non valide" });
-      }
-
-      if (user.isSuspended) {
-        return res.status(403).json({ message: "Account sospeso" });
-      }
-
-      const tokens = await authManager.generateTokens({
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        permissions: user.permissions as string[] || []
-      });
-
-      res.json({
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          permissions: user.permissions,
-          isVerified: user.isVerified
-        }
-      });
-    } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ message: "Errore interno del server" });
     }
-  });
+  }
+}
 
-  // Register endpoint
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      const result = insertConsumerSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ 
-          message: "Dati non validi", 
-          errors: result.error.errors 
-        });
-      }
+// Esportiamo il middleware per poterlo usare in altri file
+export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ message: 'Accesso negato. Token non fornito.' });
+  }
+  try {
+    const decoded = jwt.verify(token, env.JWT_SECRET) as { userId: number, role: string };
+    req.user = { userId: decoded.userId, role: decoded.role };
+    next();
+  } catch (error) {
+    return res.status(400).json({ message: 'Token non valido.' });
+  }
+};
 
-      const { email, password, name } = result.data;
+const loginSchema = z.object({
+  email: z.string().email('Email non valida'),
+  password: z.string().min(1, 'La password è richiesta'),
+});
 
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(409).json({ message: "Email già registrata" });
-      }
-
-      const hashedPassword = await authService.hashPassword(password);
-      const user = await storage.createUser({
-        email,
-        password: hashedPassword,
-        name,
-        role: "user",
-        permissions: [],
-        isVerified: false
-      });
-
-      const tokens = await authManager.generateTokens({
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        permissions: user.permissions as string[] || []
-      });
-
-      res.status(201).json({
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          permissions: user.permissions,
-          isVerified: user.isVerified
-        }
-      });
-    } catch (error) {
-      console.error("Registration error:", error);
-      res.status(500).json({ message: "Errore interno del server" });
+router.post('/register', async (req: Request, res: Response) => {
+  try {
+    const validation = consumerRegistrationSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ message: 'Dati di input non validi', errors: validation.error.format() });
     }
-  });
 
-  // Get current user
-  app.get("/api/auth/me", authService.authenticateToken, async (req: any, res) => {
-    try {
-      const user = req.user;
-      if (!user) {
-        return res.status(401).json({ message: "Non autenticato" });
-      }
+    const { name, email, password } = validation.data;
 
-      const fullUser = await storage.getUser(user.id);
-      if (!fullUser) {
-        return res.status(404).json({ message: "Utente non trovato" });
-      }
-
-      res.json({
-        id: fullUser.id,
-        email: fullUser.email,
-        name: fullUser.name,
-        role: fullUser.role,
-        permissions: fullUser.permissions,
-        isVerified: fullUser.isVerified
-      });
-    } catch (error) {
-      console.error("Get user error:", error);
-      res.status(500).json({ message: "Errore interno del server" });
+    const existingUser = await db.query.users.findFirst({ where: eq(users.email, email) });
+    if (existingUser) {
+      return res.status(409).json({ message: 'Un utente con questa email esiste già' });
     }
-  });
+
+    const passwordHash = bcrypt.hashSync(password, 10);
+
+    const newUser = await db.insert(users).values({
+      name,
+      email,
+      passwordHash,
+      role: 'consumer',
+    }).returning({ id: users.id, name: users.name, email: users.email, role: users.role });
+
+    res.status(201).json({
+      message: 'Utente registrato con successo',
+      user: newUser[0]
+    });
+
+  } catch (error) {
+    console.error('Errore nel processo di registrazione:', error);
+    res.status(500).json({ message: 'Errore interno del server' });
+  }
+});
+
+router.post('/login', async (req: Request, res: Response) => {
+  try {
+    const validation = loginSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ message: 'Dati di input non validi', errors: validation.error.errors });
+    }
+
+    const { email, password } = validation.data;
+    const user = await db.query.users.findFirst({ where: eq(users.email, email) });
+
+    if (!user || !user.passwordHash || !bcrypt.compareSync(password, user.passwordHash)) {
+      return res.status(401).json({ message: 'Credenziali non valide' });
+    }
+
+    const sessionToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await db.insert(userSessions).values({
+      userId: user.id,
+      token: sessionToken,
+      expiresAt: expiresAt.getTime(),
+    });
+
+    const accessToken = jwt.sign({ userId: user.id, role: user.role, name: user.name }, env.JWT_SECRET, { expiresIn: '15m' });
+    const refreshToken = crypto.randomBytes(32).toString('hex');
+
+    res.status(200).json({
+      message: 'Login effettuato con successo',
+      accessToken,
+      refreshToken,
+      user: { id: user.id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (error) {
+    console.error('Errore nel processo di login:', error);
+    res.status(500).json({ message: 'Errore interno del server' });
+  }
+});
+
+router.get('/me', authMiddleware, async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Non autorizzato' });
+  }
+  try {
+    const user = await db.query.users.findFirst({
+        where: eq(users.id, req.user.userId),
+        columns: { id: true, name: true, email: true, role: true }
+    });
+    if (!user) {
+      return res.status(404).json({ message: 'Utente non trovato' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Errore nel recuperare i dati utente:", error);
+    res.status(500).json({ message: "Errore del server" });
+  }
+});
+
+export function setupAuthRoutes(app: Express, storage: AppStorage) {
+  app.use('/api/auth', router);
 }

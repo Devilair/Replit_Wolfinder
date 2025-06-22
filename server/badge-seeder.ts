@@ -24,9 +24,9 @@ export async function seedBadges() {
           description: badgeDefinition.description,
           icon: badgeDefinition.icon,
           color: badgeDefinition.color,
-          category: badgeDefinition.family,
-          criteria: badgeDefinition.requirements,
-          isAutomatic: badgeDefinition.calculationMethod === 'automatic',
+          family: badgeDefinition.family,
+          requirements: badgeDefinition.requirements,
+          type: badgeDefinition.calculationMethod === 'automatic' ? 'automatic' : 'manual',
           isActive: true
         });
         console.log(`✅ Created badge: ${badgeDefinition.name}`);
@@ -39,9 +39,9 @@ export async function seedBadges() {
             description: badgeDefinition.description,
             icon: badgeDefinition.icon,
             color: badgeDefinition.color,
-            category: badgeDefinition.family,
-            criteria: badgeDefinition.requirements,
-            isAutomatic: badgeDefinition.calculationMethod === 'automatic',
+            family: badgeDefinition.family,
+            requirements: badgeDefinition.requirements,
+            type: badgeDefinition.calculationMethod === 'automatic' ? 'automatic' : 'manual',
             updatedAt: new Date()
           })
           .where(eq(badges.slug, badgeDefinition.slug));

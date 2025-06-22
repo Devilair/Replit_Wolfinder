@@ -77,7 +77,7 @@ export function BadgeCard({ badge, size = "md", showDescription = true, classNam
               isExpired || isRevoked ? "opacity-50 grayscale" : "",
               className
             )}
-            style={{ borderColor: badge.badge.color }}
+            style={{ borderColor: badge.badge.color || undefined }}
           >
             {/* Badge Status Indicator */}
             {(isExpired || isRevoked) && (
@@ -90,11 +90,11 @@ export function BadgeCard({ badge, size = "md", showDescription = true, classNam
             <div className="flex items-center space-x-2">
               <div 
                 className="p-2 rounded-full"
-                style={{ backgroundColor: badge.badge.color + '20' }}
+                style={{ backgroundColor: badge.badge.color ? badge.badge.color + '20' : undefined }}
               >
                 <IconComponent 
                   className={cn(iconSizes[size])} 
-                  style={{ color: badge.badge.color }}
+                  style={{ color: badge.badge.color || undefined }}
                 />
               </div>
               

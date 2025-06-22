@@ -1,0 +1,15 @@
+[DB] Connessione a SQLite: ./dev.db
+4:43:21 PM [express] serving on port 5000
+Login error in AuthService: TypeError: value.getTime is not a function
+    at SQLiteTimestamp.mapToDriverValue (C:\Users\Mirko2\Desktop\Cursor\Replit_Wolfinder\node_modules\src\sqlite-core\columns\integer.ts:151:22)
+    at <anonymous> (C:\Users\Mirko2\Desktop\Cursor\Replit_Wolfinder\node_modules\src\sql\sql.ts:238:69)
+    at Array.map (<anonymous>)
+    at SQL.buildQueryFromSourceParams (C:\Users\Mirko2\Desktop\Cursor\Replit_Wolfinder\node_modules\src\sql\sql.ts:163:30)
+    at <anonymous> (C:\Users\Mirko2\Desktop\Cursor\Replit_Wolfinder\node_modules\src\sql\sql.ts:185:17)
+    at Array.map (<anonymous>)
+    at SQL.buildQueryFromSourceParams (C:\Users\Mirko2\Desktop\Cursor\Replit_Wolfinder\node_modules\src\sql\sql.ts:163:30)
+    at <anonymous> (C:\Users\Mirko2\Desktop\Cursor\Replit_Wolfinder\node_modules\src\sql\sql.ts:189:17)
+    at Array.map (<anonymous>)
+    at SQL.buildQueryFromSourceParams (C:\Users\Mirko2\Desktop\Cursor\Replit_Wolfinder\node_modules\src\sql\sql.ts:163:30)
+4:44:14 PM [express] POST /api/auth/login 401 in 136ms :: {"message":"Errore interno del server."}
+^C^C

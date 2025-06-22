@@ -62,9 +62,11 @@ interface ProfessionalData {
   verificationStatus: string;
   profileCompleteness: number;
   subscription: any;
+  isPremium?: boolean;
 }
 
 interface SubscriptionPlan {
+  id?: string;
   name: string;
   price: string;
   features: string[];
@@ -261,11 +263,11 @@ export default function ProfessionalDashboard() {
       const nextStepData = tourSteps[nextStep];
       
       // Switch tab if necessary before advancing
-      if (nextStepData.id === 'invite-client') {
+      if (nextStepData?.id === 'invite-client') {
         setActiveTab('reviews');
-      } else if (nextStepData.id === 'badge-progress') {
+      } else if (nextStepData?.id === 'badge-progress') {
         setActiveTab('overview');
-      } else if (nextStepData.id === 'subscription-tab') {
+      } else if (nextStepData?.id === 'subscription-tab') {
         setActiveTab('subscription');
       }
       
@@ -284,13 +286,13 @@ export default function ProfessionalDashboard() {
       const prevStepData = tourSteps[prevStep];
       
       // Switch tab if necessary before going back
-      if (prevStepData.id === 'profile-completeness') {
+      if (prevStepData?.id === 'profile-completeness') {
         setActiveTab('overview');
-      } else if (prevStepData.id === 'invite-client') {
+      } else if (prevStepData?.id === 'invite-client') {
         setActiveTab('reviews');
-      } else if (prevStepData.id === 'badge-progress') {
+      } else if (prevStepData?.id === 'badge-progress') {
         setActiveTab('overview');
-      } else if (prevStepData.id === 'subscription-tab') {
+      } else if (prevStepData?.id === 'subscription-tab') {
         setActiveTab('subscription');
       }
       
@@ -1021,7 +1023,7 @@ export default function ProfessionalDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {reviews && reviews.length > 0 ? (
+                {reviews && Array.isArray(reviews) && reviews.length > 0 ? (
                   <div className="space-y-4">
                     {reviews.map((review: any, index: number) => (
                       <div key={index} className="border rounded-lg p-4">
@@ -1189,7 +1191,7 @@ export default function ProfessionalDashboard() {
                             <Button 
                               className="w-full mt-4" 
                               variant={plan.name === "Gratuito" ? "outline" : "default"}
-                              onClick={() => window.location.href = `/checkout?plan=${plan.id}&billing=monthly`}
+                              onClick={() => window.location.href = `/checkout?plan=${plan.id || 'essenziale'}&billing=monthly`}
                             >
                               {plan.name === "Gratuito" ? "Piano Gratuito" : "Attiva Piano"}
                             </Button>

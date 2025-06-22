@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation, useRouter } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -7,8 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Menu, User, Briefcase, ArrowRight } from "lucide-react";
 
 export default function Header() {
-  const [location] = useLocation();
-  const router = useRouter();
+  const [location, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [registrationModalOpen, setRegistrationModalOpen] = useState(false);
 
@@ -81,7 +80,7 @@ export default function Header() {
                     className="cursor-pointer hover:bg-gray-50 transition-colors"
                     onClick={() => {
                       setRegistrationModalOpen(false);
-                      router.push("/register-consumer");
+                      setLocation("/register-consumer");
                     }}
                   >
                     <CardHeader className="pb-3">
@@ -104,7 +103,7 @@ export default function Header() {
                     className="cursor-pointer hover:bg-gray-50 transition-colors"
                     onClick={() => {
                       setRegistrationModalOpen(false);
-                      router.push("/register-professional");
+                      setLocation("/register-professional");
                     }}
                   >
                     <CardHeader className="pb-3">
@@ -176,7 +175,7 @@ export default function Header() {
                             className="cursor-pointer hover:bg-gray-50 transition-colors"
                             onClick={() => {
                               setRegistrationModalOpen(false);
-                              router.push("/register-consumer");
+                              setLocation("/register-consumer");
                             }}
                           >
                             <CardHeader className="pb-3">
@@ -199,7 +198,7 @@ export default function Header() {
                             className="cursor-pointer hover:bg-gray-50 transition-colors"
                             onClick={() => {
                               setRegistrationModalOpen(false);
-                              router.push("/register-professional");
+                              setLocation("/register-professional");
                             }}
                           >
                             <CardHeader className="pb-3">

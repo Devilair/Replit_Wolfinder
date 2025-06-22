@@ -1,6 +1,40 @@
-node_modules
-dist
+# Dependencies
+/node_modules
+**/node_modules
+
+# Vite build output
+/dist
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Local environment variables
+# IMPORTANTE: Non committare mai questo file su Git!
+.env
+.env.local
+.env.*.local
+
+# File di database SQLite locali
+*.db
+local.db
+
+# Cache e file generati dal sistema operativo
 .DS_Store
-server/public
-vite.config.ts.*
-*.tar.gz
+Thumbs.db
+
+# File di backup manuali
+*.bak
+
+# File con nomi troppo lunghi (problemi su Windows)
+**/attached_assets/Pasted--*.txt
+
+# File temporanei di Vite
+**/.vite
+
+# File di cache di build
+**/dist
+**/build

@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Filter, MapPin } from "lucide-react";
-import type { Category, ProfessionalSummary } from "@shared/schema";
+import type { Category, ProfessionalWithDetails } from "@shared/schema";
 
 export default function Professionals() {
   const [search, setSearch] = useState('');
@@ -217,7 +217,7 @@ export default function Professionals() {
             {professionals.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {professionals.map((professional: ProfessionalSummary) => (
+                  {professionals.map((professional: ProfessionalWithDetails) => (
                     <ProfessionalCard key={professional.id} professional={professional} />
                   ))}
                 </div>

@@ -39,7 +39,7 @@ export default function SubscriptionPlans() {
     queryKey: ['/api/subscription-plans'],
   });
 
-  const activePlans = plans.filter((plan: SubscriptionPlan) => plan.isActive);
+  const activePlans = (plans as SubscriptionPlan[])?.filter((plan: SubscriptionPlan) => plan.isActive);
 
   if (isLoading) {
     return (

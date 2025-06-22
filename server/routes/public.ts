@@ -1,10 +1,9 @@
 import type { Express } from "express";
-import { storage } from "../storage";
+import type { AppStorage } from "../storage";
 import { performHealthCheck } from "../health-check";
-import { insertCategorySchema } from "@shared/schema";
 import { globalCache } from "../cache-manager";
 
-export function setupPublicRoutes(app: Express) {
+export function setupPublicRoutes(app: Express, storage: AppStorage) {
   // Health check endpoint
   app.get("/health", async (req, res) => {
     try {
@@ -26,55 +25,8 @@ export function setupPublicRoutes(app: Express) {
     }
   });
 
-  // Get all categories with caching
-  app.get("/api/categories", async (req, res) => {
-    try {
-      const categories = await globalCache.getOrSet(
-        'categories',
-        () => storage.getCategories(),
-        30 * 60 * 1000 // 30 minutes TTL
-      );
-      res.json(categories);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      res.status(500).json({ message: "Failed to fetch categories" });
-    }
-  });
-
-  // Create category
-  app.post("/api/categories", async (req, res) => {
-    try {
-      const result = insertCategorySchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ message: "Invalid category data", errors: result.error.errors });
-      }
-
-      const category = await storage.createCategory(result.data);
-      res.status(201).json(category);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to create category" });
-    }
-  });
-
-  // Get single category
-  app.get("/api/categories/:id", async (req, res) => {
-    try {
-      const categoryId = parseInt(req.params.id);
-      if (isNaN(categoryId)) {
-        return res.status(400).json({ message: "Invalid category ID" });
-      }
-
-      const category = await storage.getCategory(categoryId);
-      if (!category) {
-        return res.status(404).json({ message: "Category not found" });
-      }
-
-      res.json(category);
-    } catch (error) {
-      console.error("Error fetching category:", error);
-      res.status(500).json({ message: "Failed to fetch category" });
-    }
-  });
+  // NOTA: Le rotte per /api/categories sono state spostate in server/routes/categories.ts
+  // per una migliore modularizzazione e per risolvere conflitti.
 
   // Get cities (for location filters)
   app.get("/api/cities", async (req, res) => {

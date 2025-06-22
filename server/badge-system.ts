@@ -274,7 +274,7 @@ export class BadgeSystem {
       const shouldAward = await this.evaluateBadgeRequirements(badgeDef.requirements, metrics);
       
       if (shouldAward) {
-        const success = await this.awardBadge(professionalId, badgeDef.slug, 'system', {
+        const success = await this.awardBadge(professionalId, badgeDef.slug, null, {
           metricsSnapshot: metrics,
           evaluatedAt: new Date()
         });
@@ -345,9 +345,9 @@ export class BadgeSystem {
 
     return {
       professionalId,
-      reviewsCount: stats.count || 0,
-      avgRating: Number(stats.avgRating) || 0,
-      photosCount: professional.profilePhotoUrl ? 1 : 0, // Simplified for now
+      reviewsCount: stats?.count ? Number(stats.count) : 0,
+      avgRating: stats?.avgRating ? Number(stats.avgRating) : 0,
+      photosCount: 0, // Placeholder, implementare conteggio reale se disponibile
       profileCompleteness,
       tenureDays,
       noLowReviewsRecent: recentReviews.every(r => r.rating >= 4),
@@ -433,7 +433,7 @@ export class BadgeSystem {
   async awardBadge(
     professionalId: number,
     badgeSlug: string,
-    awardedBy: string = 'system',
+    awardedBy: number | null = null,
     metadata?: any
   ): Promise<boolean> {
     try {
@@ -528,7 +528,7 @@ export class BadgeSystem {
         icon: badges.icon,
         color: badges.color,
         description: badges.description,
-        earnedAt: professionalBadges.earnedAt,
+        awardedAt: professionalBadges.awardedAt,
         isVisible: professionalBadges.isVisible,
         priority: badges.priority
       })
@@ -546,24 +546,18 @@ export class BadgeSystem {
 
   // Salva metriche calcolate
   async saveProfessionalMetrics(professionalId: number, metrics: any) {
-    const metricsToSave = [
-      { type: 'reviews_count', value: metrics.reviewsCount },
-      { type: 'avg_rating', value: metrics.avgRating },
-      { type: 'photos_count', value: metrics.photosCount },
-      { type: 'profile_completeness', value: metrics.profileCompleteness },
-      { type: 'tenure_days', value: metrics.tenureDays },
-      { type: 'five_star_percentage', value: metrics.fiveStarPercentage }
-    ];
-
-    for (const metric of metricsToSave) {
-      await db.insert(badgeMetrics).values({
-        professionalId,
-        metricType: metric.type,
-        value: metric.value.toString(),
-        period: 'current',
-        metadata: { calculatedAt: metrics.calculatedAt }
-      });
-    }
+    await db.insert(badgeMetrics).values({
+      professionalId,
+      reviewsCount: metrics.reviewsCount || 0,
+      avgRating: (metrics.avgRating || 0).toString(),
+      photosCount: metrics.photosCount || 0,
+      responseRate: "0", // Placeholder
+      profileCompleteness: (metrics.profileCompleteness || 0).toString(),
+      daysSinceRegistration: metrics.tenureDays || 0,
+      totalEarnings: "0", // Placeholder
+      verifiedDocuments: 0, // Placeholder
+      calculatedAt: new Date()
+    });
   }
 }
 

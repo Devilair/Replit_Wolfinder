@@ -16,6 +16,7 @@ export async function seedSubscriptionPlans() {
         "Risposte illimitate",
         "Badge base"
       ]),
+      limits: null,
       maxProfiles: 1,
       maxPhotos: 3,
       maxResponses: null, // unlimited
@@ -42,6 +43,7 @@ export async function seedSubscriptionPlans() {
         "Analytics di base",
         "Supporto email prioritario"
       ]),
+      limits: null,
       maxProfiles: 1,
       maxPhotos: 10,
       maxResponses: null, // unlimited
@@ -69,6 +71,7 @@ export async function seedSubscriptionPlans() {
         "Supporto telefonico",
         "Personalizzazione profilo avanzata"
       ]),
+      limits: null,
       maxProfiles: 1,
       maxPhotos: 25,
       maxResponses: null,
@@ -99,6 +102,7 @@ export async function seedSubscriptionPlans() {
         "Badge di team",
         "White-label options"
       ]),
+      limits: null,
       maxProfiles: 5,
       maxPhotos: 50,
       maxResponses: null,

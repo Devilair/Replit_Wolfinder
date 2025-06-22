@@ -15,6 +15,7 @@ import {
   DollarSign,
   Activity
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface AdminStats {
   activeUsers: {
@@ -45,15 +46,24 @@ interface AdminStats {
   };
 }
 
+interface PendingAction {
+  id: number;
+  title: string;
+  description: string;
+  icon: string;
+  priority: string;
+  createdAt: string;
+}
+
 export default function AdminDashboard() {
+  const { toast } = useToast();
+
   const { data: stats, isLoading } = useQuery<AdminStats>({
-    queryKey: ['/api/admin/dashboard-stats'],
+    queryKey: ['/api/admin/stats'],
   });
 
-  // Query per azioni pending reali dal database
-  const { data: pendingActions, isLoading: actionsLoading } = useQuery({
+  const { data: pendingActions, isLoading: actionsLoading } = useQuery<PendingAction[]>({
     queryKey: ['/api/admin/pending-actions'],
-    refetchInterval: 30000, // Aggiorna ogni 30 secondi
   });
 
   if (isLoading) {
@@ -241,8 +251,8 @@ export default function AdminDashboard() {
                     
                     {pendingActions && Array.isArray(pendingActions) && pendingActions.length > 5 && (
                       <div className="pt-2 border-t">
-                        <Button variant="ghost" size="sm" className="w-full text-xs">
-                          Vedi tutte le {pendingActions.length} azioni →
+                        <Button variant="link" className="p-0 h-auto text-sm">
+                          Vedi tutti ({pendingActions.length})
                         </Button>
                       </div>
                     )}

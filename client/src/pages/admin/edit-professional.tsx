@@ -40,6 +40,11 @@ function LocationMarker({ position, setPosition }: {
   );
 }
 
+interface Category {
+  id: number;
+  name: string;
+}
+
 export default function EditProfessional() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
@@ -89,7 +94,7 @@ export default function EditProfessional() {
   });
 
   // Fetch categories for dropdown
-  const { data: categories } = useQuery({
+  const { data: categories } = useQuery<Category[]>({
     queryKey: ['/api/categories']
   });
 

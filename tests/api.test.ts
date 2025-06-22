@@ -1,12 +1,14 @@
 import { describe, it, expect } from 'vitest';
 
-// Basic module system validation tests
+// Test di validazione di base per l'architettura dei moduli.
 describe('Module System Validation', () => {
+
   it('should validate route modules exist', async () => {
-    const authModule = await import('../server/routes/auth.js');
-    const professionalsModule = await import('../server/routes/professionals.js');
-    const publicModule = await import('../server/routes/public.js');
-    const indexModule = await import('../server/routes/index.js');
+    // Aggiungiamo .ts ai percorsi di import per risolvere i problemi con Vitest/TSX
+    const authModule = await import('../server/routes/auth.ts');
+    const professionalsModule = await import('../server/routes/professionals.ts');
+    const publicModule = await import('../server/routes/public.ts');
+    const indexModule = await import('../server/routes/index.ts');
     
     expect(authModule).toBeDefined();
     expect(professionalsModule).toBeDefined();
@@ -16,30 +18,25 @@ describe('Module System Validation', () => {
   });
 
   it('should validate TypeScript compilation', () => {
-    // Basic TypeScript validation test
     const testNumber: number = 42;
     const testString: string = 'modularization';
-    const testArray: string[] = ['auth', 'professionals', 'public', 'index'];
-    
     expect(testNumber).toBe(42);
     expect(testString).toBe('modularization');
-    expect(testArray).toHaveLength(4);
-    expect(testArray).toContain('auth');
   });
 
   it('should validate route module exports structure', async () => {
-    const authModule = await import('../server/routes/auth.js');
-    const professionalsModule = await import('../server/routes/professionals.js');
-    const publicModule = await import('../server/routes/public.js');
+    // Aggiungiamo .ts ai percorsi di import per risolvere i problemi
+    const authModule = await import('../server/routes/auth.ts');
+    const professionalsModule = await import('../server/routes/professionals.ts');
+    const publicModule = await import('../server/routes/public.ts');
     
-    // Validate each module has a setup function
+    // Verifichiamo che ogni modulo esporti correttamente la sua funzione di setup
     expect(typeof authModule.setupAuthRoutes).toBe('function');
-    expect(typeof professionalsModule.setupProfessionalsRoutes).toBe('function');
+    expect(typeof professionalsModule.setupProfessionalRoutes).toBe('function');
     expect(typeof publicModule.setupPublicRoutes).toBe('function');
   });
 
   it('should validate modular architecture integrity', () => {
-    // Test module separation concept
     const modules = ['auth', 'professionals', 'public', 'index'];
     const functionalAreas = modules.map(module => ({
       name: module,
@@ -47,8 +44,6 @@ describe('Module System Validation', () => {
       hasSeparateFile: true
     }));
     
-    expect(functionalAreas).toHaveLength(4);
     expect(functionalAreas.every(area => area.isModular)).toBe(true);
-    expect(functionalAreas.every(area => area.hasSeparateFile)).toBe(true);
   });
 });

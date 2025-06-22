@@ -133,10 +133,7 @@ export default function AdminUsers() {
   // Suspend user mutation
   const suspendMutation = useMutation({
     mutationFn: ({ userId, reason }: { userId: number; reason: string }) =>
-      apiRequest(`/api/admin/users/${userId}/suspend`, {
-        method: 'POST',
-        body: { reason }
-      }),
+      apiRequest('POST', `/api/admin/users/${userId}/suspend`, { reason }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       toast({
@@ -156,9 +153,7 @@ export default function AdminUsers() {
   // Reactivate user mutation
   const reactivateMutation = useMutation({
     mutationFn: (userId: number) =>
-      apiRequest(`/api/admin/users/${userId}/reactivate`, {
-        method: 'POST'
-      }),
+      apiRequest('POST', `/api/admin/users/${userId}/reactivate`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       toast({
@@ -178,10 +173,7 @@ export default function AdminUsers() {
   // Update user mutation
   const updateMutation = useMutation({
     mutationFn: ({ userId, data }: { userId: number; data: { name?: string; email?: string; role?: string } }) =>
-      apiRequest(`/api/admin/users/${userId}`, {
-        method: 'PUT',
-        body: data
-      }),
+      apiRequest('PUT', `/api/admin/users/${userId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       toast({

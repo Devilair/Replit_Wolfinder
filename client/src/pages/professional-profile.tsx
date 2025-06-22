@@ -11,48 +11,81 @@ import { motion } from "framer-motion";
 import { ReviewModal } from "@/components/reviews/ReviewModal";
 import { ReviewsList } from "@/components/reviews/ReviewsList";
 import InteractiveMap from "@/components/InteractiveMap";
+import type { ProfessionalWithDetails, ReviewWithDetails, ProfessionalBadge, User as UserType, ProfessionalCertification, ProfessionalSpecialization } from "@shared/schema";
+
+// Define a specific type for Ranking data, as it's a custom object
+interface Ranking {
+  cityRank: number;
+  cityTotal: number;
+  categoryRank: number;
+  categoryTotal: number;
+}
+
+// Define a more specific type for the badges data we expect
+interface BadgeWithDetails extends ProfessionalBadge {
+  badge: {
+    name: string;
+    description: string;
+    icon: string;
+  }
+}
+
 export default function ProfessionalProfile() {
   const { id } = useParams();
   const [showReviewModal, setShowReviewModal] = useState(false);
-  
-  const { data: professional, isLoading: loadingProfessional } = useQuery({
-    queryKey: [`/api/professionals/${id}`],
+  const professionalIdNum = parseInt(id || "0", 10);
+
+  // --- DATA FETCHING ---
+  const { data: professional, isLoading: loadingProfessional } = useQuery<ProfessionalWithDetails | undefined>({
+    queryKey: ['professional', id],
+    queryFn: () => fetch(`/api/professionals/${id}`).then(res => res.json()),
+    enabled: !!id,
   });
 
-  const { data: badges, isLoading: loadingBadges } = useQuery({
-    queryKey: [`/api/professionals/${id}/badges`],
+  const { data: badges, isLoading: loadingBadges } = useQuery<BadgeWithDetails[]>({
+    queryKey: ['professionalBadges', id],
+    queryFn: () => fetch(`/api/professionals/${id}/badges`).then(res => res.json()),
+    enabled: !!id,
   });
 
-  const { data: reviews, isLoading: loadingReviews } = useQuery({
-    queryKey: [`/api/professionals/${id}/reviews`],
+  const { data: reviews, isLoading: loadingReviews } = useQuery<ReviewWithDetails[]>({
+    queryKey: ['professionalReviews', id],
+    queryFn: () => fetch(`/api/professionals/${id}/reviews`).then(res => res.json()),
+    enabled: !!id,
   });
 
-  const { data: ranking, isLoading: loadingRanking } = useQuery({
-    queryKey: [`/api/professionals/${id}/ranking`],
+  const { data: ranking, isLoading: loadingRanking } = useQuery<Ranking>({
+    queryKey: ['professionalRanking', id],
+    queryFn: () => fetch(`/api/professionals/${id}/ranking`).then(res => res.json()),
+    initialData: { cityRank: 0, cityTotal: 0, categoryRank: 0, categoryTotal: 0 },
+    enabled: !!id,
   });
 
-  const { data: specializations } = useQuery({
-    queryKey: [`/api/professionals/${id}/specializations`],
+  const { data: specializations } = useQuery<ProfessionalSpecialization[]>({
+    queryKey: ['professionalSpecializations', id],
+    queryFn: () => fetch(`/api/professionals/${id}/specializations`).then(res => res.json()),
+    enabled: !!id,
   });
 
-  const { data: certifications } = useQuery({
-    queryKey: [`/api/professionals/${id}/certifications`],
+  const { data: certifications } = useQuery<ProfessionalCertification[]>({
+    queryKey: ['professionalCertifications', id],
+    queryFn: () => fetch(`/api/professionals/${id}/certifications`).then(res => res.json()),
+    enabled: !!id,
   });
 
-  // Get current user info from auth
-  const { data: currentUser } = useQuery({
-    queryKey: ['/api/auth/me'],
+  const { data: currentUser } = useQuery<UserType>({
+    queryKey: ['currentUser'],
     queryFn: () => {
       const token = localStorage.getItem('authToken');
-      if (!token) return null;
-      return fetch('/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      }).then(res => res.ok ? res.json() : null);
+      if (!token) return Promise.resolve(null);
+      return fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => res.ok ? res.json() : null);
     }
   });
 
-  // Determina se l'utente corrente è il proprietario del profilo
-  const isProfessionalOwner = currentUser && currentUser.role === 'professional' && professional?.userId === currentUser.id;
+  const isProfessionalOwner = currentUser && currentUser.role === 'professional' && professional && professional.userId === currentUser.id;
+
+  // --- RENDER LOGIC ---
 
   if (loadingProfessional || loadingBadges || loadingReviews || loadingRanking) {
     return (
@@ -108,726 +141,241 @@ export default function ProfessionalProfile() {
     return stars;
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
+  const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+  const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Hero Header Section */}
-      <motion.div 
-        className="relative overflow-hidden"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-      >
-        {/* Background Pattern */}
+      <motion.div className="relative overflow-hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800">
           <div className="absolute inset-0 bg-black/20" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20" />
         </div>
         
-        {/* Content */}
         <div className="relative max-w-7xl mx-auto px-4 py-16">
-          <motion.div 
-            className="flex flex-col lg:flex-row items-center gap-8 text-white"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Avatar */}
-            <motion.div 
-              className="flex-shrink-0"
-              variants={itemVariants}
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
+          <motion.div className="flex flex-col lg:flex-row items-center gap-8 text-white" variants={containerVariants} initial="hidden" animate="visible">
+            <motion.div className="flex-shrink-0" variants={itemVariants} whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300 }}>
               <div className="relative">
                 <div className="w-40 h-40 bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-sm rounded-3xl flex items-center justify-center text-5xl font-bold shadow-2xl border border-white/20">
-                  {professional?.businessName?.substring(0, 2).toUpperCase() || "PR"}
+                  {professional.businessName?.substring(0, 2).toUpperCase() || "PR"}
                 </div>
-                {professional?.isVerified && (
-                  <motion.div 
-                    className="absolute -top-2 -right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.5, type: "spring", stiffness: 500 }}
-                  >
+                {professional.isVerified && (
+                  <motion.div className="absolute -top-2 -right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5, type: "spring", stiffness: 500 }}>
                     <Shield className="w-6 h-6 text-white" />
                   </motion.div>
                 )}
               </div>
             </motion.div>
             
-            {/* Info */}
             <motion.div className="flex-1 text-center lg:text-left" variants={itemVariants}>
               <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
                 <h2 className="text-lg text-blue-100 font-medium">
-                  {professional?.user?.name || "Professionista"}
+                  {professional.user?.name || "Professionista"}
                 </h2>
-                {!professional?.isClaimed && (
-                  <Button 
-                    size="sm" 
-                    className="bg-orange-500 hover:bg-orange-600 text-white text-xs px-3 py-1"
-                  >
+                {!professional.isClaimed && (
+                  <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white text-xs px-3 py-1">
                     Reclama Profilo
                   </Button>
                 )}
               </div>
               <h1 className="text-5xl lg:text-6xl font-bold mb-4 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                {professional?.businessName || "Studio Professionale"}
+                {professional.businessName || "Studio Professionale"}
               </h1>
               <div className="flex items-center justify-center lg:justify-start gap-3 mb-4">
                 <Badge className="bg-white/20 text-white border-white/30 text-lg px-4 py-2 backdrop-blur-sm">
-                  {professional?.category?.name || "Categoria"}
+                  {professional.category?.name ?? "Categoria"}
                 </Badge>
-                {professional?.isVerified && (
+                {professional.isVerified ? (
                   <Badge className="bg-green-500/90 text-white border-green-400/50 text-lg px-4 py-2">
                     <Award className="w-4 h-4 mr-2" />
                     Verificato
                   </Badge>
-                )}
+                ) : null}
               </div>
               
               <div className="flex items-center justify-center lg:justify-start gap-3 mb-6 text-blue-100">
                 <MapPin className="w-5 h-5" />
-                <span className="text-lg">{professional?.city || "Città"}, {professional?.province || "Provincia"}</span>
+                <span className="text-lg">{professional.city ?? "Città"}, {professional.province ?? "Provincia"}</span>
               </div>
 
-              {/* Rating */}
               <div className="flex items-center justify-center lg:justify-start gap-4 mb-8">
                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
-                  <div className="flex">{renderStars(parseFloat(professional?.rating || "0"))}</div>
-                  <span className="font-bold text-lg">{parseFloat(professional?.rating || "0").toFixed(1)}</span>
+                  <div className="flex">{renderStars(Number(professional.rating ?? 0))}</div>
+                  <span className="font-bold text-lg">{Number(professional.rating ?? 0).toFixed(1)}</span>
                 </div>
                 <span className="text-blue-100">
-                  {professional?.reviewCount || 0} recensioni • {professional?.profileViews || 0} visualizzazioni
+                  {professional.reviewCount ?? 0} recensioni • {professional.profileViews ?? 0} visualizzazioni
                 </span>
               </div>
 
-              {/* Contact Actions */}
               <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-                {professional?.phoneFixed && (
+                {professional.phoneMobile ? (
                   <Button size="lg" className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm">
                     <Phone className="w-4 h-4 mr-2" />
                     Chiama ora
                   </Button>
-                )}
-                {professional?.email && (
+                ) : null}
+                {professional.email ? (
                   <Button variant="outline" size="lg" className="bg-transparent border-white/50 text-white hover:bg-white/10">
                     <Mail className="w-4 h-4 mr-2" />
                     Invia email
                   </Button>
-                )}
-                {professional?.website && (
+                ) : null}
+                {professional.website ? (
                   <Button variant="outline" size="lg" className="bg-transparent border-white/50 text-white hover:bg-white/10">
                     <Globe className="w-4 h-4 mr-2" />
                     Sito web
                     <ExternalLink className="w-3 h-3 ml-1" />
                   </Button>
-                )}
+                ) : null}
               </div>
             </motion.div>
           </motion.div>
         </div>
       </motion.div>
 
-      {/* Main Content */}
-      <motion.div 
-        className="max-w-7xl mx-auto px-4 py-12"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Column */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* About Section */}
-            {professional?.description && (
-              <motion.div variants={itemVariants}>
-                <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-white to-blue-50/30">
-                  <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                    <CardTitle className="text-2xl flex items-center gap-3">
-                      <Users className="w-6 h-6" />
-                      Chi siamo
-                    </CardTitle>
+      <motion.div className="max-w-7xl mx-auto px-4 py-12" variants={containerVariants} initial="hidden" animate="visible">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 bg-gray-200/80 backdrop-blur-sm">
+                <TabsTrigger value="overview">Panoramica</TabsTrigger>
+                <TabsTrigger value="reviews">Recensioni ({reviews?.length || 0})</TabsTrigger>
+                <TabsTrigger value="badges">Badge ({badges?.length || 0})</TabsTrigger>
+                <TabsTrigger value="map">Mappa</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="overview">
+                <Card className="mt-4">
+                  <CardHeader>
+                    <CardTitle>Descrizione</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-8">
-                    <p className="text-gray-700 text-lg leading-relaxed">{professional.description}</p>
+                  <CardContent className="prose max-w-none">
+                    <p>{professional.description ?? ""}</p>
                   </CardContent>
                 </Card>
-              </motion.div>
-            )}
+                
+                <div className="grid md:grid-cols-2 gap-4 mt-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Specializzazioni</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-2">
+                        {specializations?.map(spec => <li key={spec.id} className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-green-500" />{spec.name}</li>)}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Certificazioni</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-2">
+                        {certifications?.map(cert => <li key={cert.id} className="flex items-center"><Award className="w-4 h-4 mr-2 text-blue-500" />{cert.name}</li>)}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
 
-            {/* Sistema Badge Completo */}
-            <motion.div variants={itemVariants}>
-              <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-white to-purple-50/30">
-                <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-                  <CardTitle className="text-2xl flex items-center gap-3">
-                    <Award className="w-6 h-6" />
-                    Medaglie e Riconoscimenti
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-8">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    
-                    {/* Badge Standard */}
-                    {(professional?.verificationStatus === 'approved' || professional?.verificationStatus === 'verified') && (
-                      <div className="group relative bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200 hover:shadow-lg transition-all duration-300">
-                        <div className="text-center">
-                          <div className="text-3xl mb-2">✅</div>
-                          <h4 className="font-bold text-sm text-green-800">Verificato</h4>
-                          <p className="text-xs text-green-600">Identità confermata</p>
+              <TabsContent value="reviews">
+                <ReviewsList
+                  professionalId={professionalIdNum}
+                  currentUserId={currentUser?.id}
+                  isProfessionalOwner={isProfessionalOwner}
+                />
+              </TabsContent>
+
+              <TabsContent value="badges">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                  {badges?.map(badge => (
+                    <Card key={badge.id}>
+                      <CardContent className="pt-6 flex flex-col items-center text-center">
+                        <div className="w-16 h-16 mb-4 flex items-center justify-center">
+                          {/* Assuming badge.badge.icon is a component or URL */}
+                          <Award className="w-12 h-12 text-yellow-500" />
                         </div>
-                      </div>
-                    )}
+                        <h3 className="font-bold">{badge.badge.name}</h3>
+                        <p className="text-sm text-gray-500">{badge.badge.description}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
 
-                    {professional?.lastActivityAt && new Date(professional.lastActivityAt) > new Date(Date.now() - 30*24*60*60*1000) && (
-                      <div className="group relative bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200 hover:shadow-lg transition-all duration-300">
-                        <div className="text-center">
-                          <div className="text-3xl mb-2">📅</div>
-                          <h4 className="font-bold text-sm text-blue-800">Attivo</h4>
-                          <p className="text-xs text-blue-600">Profilo aggiornato</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {professional?.reviewCount > 0 && (
-                      <div className="group relative bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-xl border border-orange-200 hover:shadow-lg transition-all duration-300">
-                        <div className="text-center">
-                          <div className="text-3xl mb-2">🧾</div>
-                          <h4 className="font-bold text-sm text-orange-800">Recensito</h4>
-                          <p className="text-xs text-orange-600">{professional.reviewCount} recensioni</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Badge Meritocratici */}
-                    {ranking?.cityRank <= 3 && ranking?.cityTotal > 5 && (
-                      <div className="group relative bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 rounded-xl border border-yellow-200 hover:shadow-lg transition-all duration-300">
-                        <div className="text-center">
-                          <div className="text-3xl mb-2">🥇</div>
-                          <h4 className="font-bold text-sm text-yellow-800">Top 3 Città</h4>
-                          <p className="text-xs text-yellow-600">#{ranking.cityRank} a {professional?.city}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {parseFloat(professional?.rating || "0") >= 4.8 && professional?.reviewCount >= 10 && (
-                      <div className="group relative bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200 hover:shadow-lg transition-all duration-300">
-                        <div className="text-center">
-                          <div className="text-3xl mb-2">🏅</div>
-                          <h4 className="font-bold text-sm text-purple-800">Alta Soddisfazione</h4>
-                          <p className="text-xs text-purple-600">Rating {professional?.rating}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {!professional?.isProblematic && (
-                      <div className="group relative bg-gradient-to-br from-cyan-50 to-cyan-100 p-4 rounded-xl border border-cyan-200 hover:shadow-lg transition-all duration-300">
-                        <div className="text-center">
-                          <div className="text-3xl mb-2">🛡️</div>
-                          <h4 className="font-bold text-sm text-cyan-800">Zero Segnalazioni</h4>
-                          <p className="text-xs text-cyan-600">Profilo pulito</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Badge dinamici dal database */}
-                    {badges?.map((badgeData: any, index: number) => (
-                      <div 
-                        key={badgeData?.badge?.id || index}
-                        className="group relative bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300"
-                      >
-                        <div className="text-center">
-                          <div className="text-3xl mb-2">{badgeData?.badge?.icon || "🏆"}</div>
-                          <h4 className="font-bold text-sm text-gray-800">{badgeData?.badge?.name}</h4>
-                          <p className="text-xs text-gray-600">{badgeData?.badge?.description}</p>
-                        </div>
-                      </div>
-                    ))}
-
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Bio e Presentazione Professionale */}
-            <motion.div variants={itemVariants}>
-              <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-white to-indigo-50/30">
-                <CardHeader className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
-                  <CardTitle className="text-2xl flex items-center gap-3">
-                    <User className="w-6 h-6" />
-                    Chi sono e cosa faccio
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-8">
-                  {/* Bio professionale */}
-                  <div className="mb-8">
-                    <p className="text-lg leading-relaxed text-gray-700 mb-6">
-                      {professional?.description || "Descrizione professionale non disponibile."}
-                    </p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                        <Calendar className="w-5 h-5 text-indigo-600" />
-                        <div>
-                          <span className="text-sm text-gray-600">In attività dal</span>
-                          <p className="font-semibold text-gray-800">
-                            {professional?.createdAt ? new Date(professional.createdAt).getFullYear() : "Non specificato"}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {professional?.verificationStatus === "verified" && (
-                        <div className="flex items-center gap-3 p-4 bg-green-50 rounded-xl">
-                          <Shield className="w-5 h-5 text-green-600" />
-                          <div>
-                            <span className="text-sm text-gray-600">Stato verifica</span>
-                            <p className="font-semibold text-green-800">Professionista verificato</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Specializzazioni */}
-                  {specializations && Array.isArray(specializations) && specializations.length > 0 && (
-                    <div className="mb-8">
-                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <Target className="w-5 h-5 text-indigo-600" />
-                        Specializzazioni
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {specializations.map((spec: any, index: number) => (
-                          <div key={spec.id || index} className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl border border-indigo-100">
-                            <h4 className="font-semibold text-indigo-800 mb-2">{spec.specialization?.name || spec.name}</h4>
-                            {spec.experienceYears && (
-                              <p className="text-sm text-indigo-600">{spec.experienceYears} anni di esperienza</p>
-                            )}
-                            {spec.specialization?.description && (
-                              <p className="text-sm text-gray-600 mt-1">{spec.specialization.description}</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Certificazioni */}
-                  {certifications && Array.isArray(certifications) && certifications.length > 0 && (
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <Award className="w-5 h-5 text-indigo-600" />
-                        Certificazioni e Albo
-                      </h3>
-                      <div className="space-y-4">
-                        {certifications.map((cert: any, index: number) => (
-                          <div key={cert.id || index} className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-gray-800 mb-1">{cert.name}</h4>
-                                <p className="text-indigo-600 font-medium mb-2">{cert.issuingOrganization}</p>
-                                <div className="flex items-center gap-4 text-sm text-gray-600">
-                                  {cert.issueDate && (
-                                    <span>Rilasciato: {new Date(cert.issueDate).toLocaleDateString('it-IT')}</span>
-                                  )}
-                                  {cert.certificationNumber && (
-                                    <span>N. {cert.certificationNumber}</span>
-                                  )}
-                                </div>
-                              </div>
-                              {cert.verificationStatus === "verified" && (
-                                <Badge className="bg-green-100 text-green-800 border-green-200">
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                  Verificato
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Contatti e Studio Completi */}
-            <motion.div variants={itemVariants}>
-              <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-white to-green-50/30">
-                <CardHeader className="bg-gradient-to-r from-green-600 to-teal-600 text-white">
-                  <CardTitle className="text-2xl flex items-center gap-3">
-                    <Building className="w-6 h-6" />
-                    Contatti e Studio
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-8">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    
-                    {/* Informazioni di contatto */}
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-800 mb-6">Come contattarmi</h3>
-                      <div className="space-y-4">
-                        
-                        {professional?.email && (
-                          <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow">
-                            <Mail className="w-5 h-5 text-green-600" />
-                            <div>
-                              <span className="text-sm text-gray-600">Email</span>
-                              <p className="font-semibold text-gray-800">{professional.email}</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {professional?.phoneFixed && (
-                          <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow">
-                            <Phone className="w-5 h-5 text-green-600" />
-                            <div>
-                              <span className="text-sm text-gray-600">Telefono fisso</span>
-                              <p className="font-semibold text-gray-800">{professional.phoneFixed}</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {professional?.phoneMobile && (
-                          <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow">
-                            <Smartphone className="w-5 h-5 text-green-600" />
-                            <div>
-                              <span className="text-sm text-gray-600">Cellulare</span>
-                              <p className="font-semibold text-gray-800">{professional.phoneMobile}</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {professional?.whatsappNumber && (
-                          <div className="flex items-center gap-3 p-4 bg-green-50 rounded-xl border border-green-200 hover:shadow-md transition-shadow">
-                            <MessageCircle className="w-5 h-5 text-green-600" />
-                            <div>
-                              <span className="text-sm text-gray-600">WhatsApp</span>
-                              <p className="font-semibold text-gray-800">{professional.whatsappNumber}</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {professional?.website && (
-                          <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow">
-                            <Globe className="w-5 h-5 text-green-600" />
-                            <div>
-                              <span className="text-sm text-gray-600">Sito web</span>
-                              <p className="font-semibold text-blue-600 hover:underline cursor-pointer">{professional.website}</p>
-                            </div>
-                          </div>
-                        )}
-
-                      </div>
-
-                      {/* Social Media */}
-                      <div className="mt-6">
-                        <h4 className="font-semibold text-gray-800 mb-3">Seguimi sui social</h4>
-                        <div className="flex gap-3">
-                          {professional?.facebookUrl && (
-                            <Button size="sm" variant="outline" className="p-2">
-                              <span className="sr-only">Facebook</span>
-                              📘
-                            </Button>
-                          )}
-                          {professional?.instagramUrl && (
-                            <Button size="sm" variant="outline" className="p-2">
-                              <span className="sr-only">Instagram</span>
-                              📷
-                            </Button>
-                          )}
-                          {professional?.linkedinUrl && (
-                            <Button size="sm" variant="outline" className="p-2">
-                              <span className="sr-only">LinkedIn</span>
-                              💼
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Indirizzo e mappa */}
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-800 mb-6">Dove trovarmi</h3>
-                      
-                      <div className="mb-6">
-                        <div className="p-4 bg-white rounded-xl border border-gray-200">
-                          <div className="flex items-start gap-3">
-                            <MapPin className="w-5 h-5 text-green-600 mt-1" />
-                            <div>
-                              <p className="font-semibold text-gray-800 mb-1">{professional?.businessName}</p>
-                              <p className="text-gray-600">
-                                {professional?.address}<br />
-                                {professional?.city}, {professional?.province} {professional?.postalCode}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Mappa interattiva */}
-                      {professional?.latitude && professional?.longitude ? (
-                        <InteractiveMap
-                          latitude={parseFloat(professional.latitude)}
-                          longitude={parseFloat(professional.longitude)}
-                          professionalName={`${professional?.firstName || ""} ${professional?.lastName || ""}`.trim() || professional?.businessName || "Professionista"}
-                          address={professional.address || ""}
-                          city={professional.city || ""}
-                          height="320px"
-                        />
-                      ) : (
-                        <div className="bg-gray-100 rounded-xl h-64 flex items-center justify-center border border-gray-200">
-                          <div className="text-center text-gray-500">
-                            <MapPin className="w-8 h-8 mx-auto mb-2" />
-                            <p>Posizione non disponibile</p>
-                            <p className="text-sm">Coordinate non geocodificate</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Città aggiuntive */}
-                      {professional?.additionalCities && professional.additionalCities.length > 0 && (
-                        <div className="mt-4">
-                          <h4 className="font-semibold text-gray-800 mb-2">Opera anche in:</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {professional.additionalCities.map((city: string, index: number) => (
-                              <Badge key={index} variant="secondary" className="bg-green-100 text-green-800">
-                                {city}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Sistema Recensioni Completo */}
-            <motion.div variants={itemVariants}>
-              <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-white to-yellow-50/30">
-                <CardHeader className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-2xl flex items-center gap-3">
-                      <Star className="w-6 h-6" />
-                      Recensioni ({professional?.reviewCount || 0})
-                    </CardTitle>
-                    <ReviewModal 
-                      professionalId={parseInt(id || "0")}
-                      professionalName={`${professional?.firstName || ""} ${professional?.lastName || ""}`.trim() || professional?.businessName || "Professionista"}
-                      trigger={
-                        <Button className="bg-white text-yellow-600 hover:bg-yellow-50 border border-yellow-200">
-                          Scrivi recensione
-                        </Button>
-                      }
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Tabs defaultValue="recensioni" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 bg-yellow-50">
-                      <TabsTrigger value="recensioni" className="data-[state=active]:bg-white">
-                        Tutte le recensioni
-                      </TabsTrigger>
-                      <TabsTrigger value="statistiche" className="data-[state=active]:bg-white">
-                        Statistiche
-                      </TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="recensioni" className="p-6">
-                      <ReviewsList 
-                        professionalId={parseInt(id || "0")}
-                        currentUserId={currentUser?.id}
-                        isProfessionalOwner={isProfessionalOwner}
-                      />
-                    </TabsContent>
-                    
-                    <TabsContent value="statistiche" className="p-6">
-                      <div className="space-y-6">
-                        {/* Overview statistiche */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="text-center p-4 bg-white rounded-lg border">
-                            <div className="text-2xl font-bold text-yellow-600">
-                              {professional?.rating || "0.0"}
-                            </div>
-                            <div className="text-sm text-gray-600">Valutazione media</div>
-                            <div className="flex items-center justify-center mt-1">
-                              {renderStars(parseFloat(professional?.rating || "0"))}
-                            </div>
-                          </div>
-                          
-                          <div className="text-center p-4 bg-white rounded-lg border">
-                            <div className="text-2xl font-bold text-blue-600">
-                              {professional?.reviewCount || 0}
-                            </div>
-                            <div className="text-sm text-gray-600">Recensioni totali</div>
-                          </div>
-                          
-                          <div className="text-center p-4 bg-white rounded-lg border">
-                            <div className="text-2xl font-bold text-green-600">
-                              {professional?.responseRate || "0"}%
-                            </div>
-                            <div className="text-sm text-gray-600">Tasso di risposta</div>
-                          </div>
-                          
-                          <div className="text-center p-4 bg-white rounded-lg border">
-                            <div className="text-2xl font-bold text-purple-600">
-                              {professional?.averageResponseTime || "N/A"}
-                            </div>
-                            <div className="text-sm text-gray-600">Tempo medio risposta</div>
-                          </div>
-                        </div>
-
-                        {/* Distribuzione voti */}
-                        <div className="bg-white p-6 rounded-lg border">
-                          <h4 className="font-semibold text-gray-800 mb-4">Distribuzione valutazioni</h4>
-                          <div className="space-y-2">
-                            {[5, 4, 3, 2, 1].map((star) => (
-                              <div key={star} className="flex items-center gap-3">
-                                <span className="w-8 text-sm">{star} ★</span>
-                                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                  <div 
-                                    className="bg-yellow-400 h-2 rounded-full" 
-                                    style={{ width: '0%' }}
-                                  ></div>
-                                </div>
-                                <span className="w-8 text-sm text-gray-600">0</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Trend nel tempo */}
-                        <div className="bg-white p-6 rounded-lg border">
-                          <h4 className="font-semibold text-gray-800 mb-4">Andamento recensioni</h4>
-                          <div className="text-center text-gray-500 py-8">
-                            <TrendingUp className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                            <p>Grafici disponibili con più recensioni</p>
-                          </div>
-                        </div>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </CardContent>
-              </Card>
-            </motion.div>
+              <TabsContent value="map">
+                {professional.latitude != null && professional.longitude != null && (
+                  <InteractiveMap
+                    latitude={Number(professional.latitude)}
+                    longitude={Number(professional.longitude)}
+                    professionalName={professional.businessName ?? "Professionista"}
+                    address={professional.address}
+                    city={professional.city}
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-8">
-            {/* Ranking Card */}
-            {ranking && (
-              <motion.div variants={itemVariants}>
-                <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-white to-green-50/30">
-                  <CardHeader className="bg-gradient-to-r from-green-600 to-teal-600 text-white">
-                    <CardTitle className="text-xl flex items-center gap-3">
-                      <TrendingUp className="w-5 h-5" />
-                      Posizionamento
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6 space-y-4">
-                    <div className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl">
-                      <span className="font-medium text-gray-700">Nella città</span>
-                      <Badge className="bg-blue-600 text-white text-lg px-3 py-1">
-                        #{ranking?.cityRank || 0} di {ranking?.cityTotal || 0}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between items-center p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl">
-                      <span className="font-medium text-gray-700">Nella categoria</span>
-                      <Badge className="bg-purple-600 text-white text-lg px-3 py-1">
-                        #{ranking?.categoryRank || 0} di {ranking?.categoryTotal || 0}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
+            <Card>
+              <CardHeader>
+                <CardTitle>Statistiche</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Posizione in {professional.city ?? "Città"}</span>
+                  <span className="font-bold">#{ranking.cityRank ?? 0} di {ranking.cityTotal ?? 0}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Posizione in {professional.category?.name ?? "Categoria"}</span>
+                  <span className="font-bold">#{ranking.categoryRank ?? 0} di {ranking.categoryTotal ?? 0}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Visualizzazioni Profilo</span>
+                  <span className="font-bold">{professional.profileViews ?? 0}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Recensioni Ricevute</span>
+                  <span className="font-bold">{professional.reviewCount ?? 0}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Iscritto dal</span>
+                  <span className="font-bold">{professional.createdAt ? new Date(professional.createdAt).getFullYear() : ""}</span>
+                </div>
+              </CardContent>
+            </Card>
 
-            {/* Stats Card */}
-            <motion.div variants={itemVariants}>
-              <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-white to-indigo-50/30">
-                <CardHeader className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
-                  <CardTitle className="text-xl flex items-center gap-3">
-                    <Users className="w-5 h-5" />
-                    Statistiche
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
-                      <div className="text-2xl font-bold text-blue-600 mb-1">{professional?.profileViews || 0}</div>
-                      <div className="text-xs text-gray-600">Visualizzazioni</div>
-                    </div>
-                    <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
-                      <div className="text-2xl font-bold text-green-600 mb-1">{professional?.reviewCount || 0}</div>
-                      <div className="text-xs text-gray-600">Recensioni</div>
-                    </div>
-                    <div className="text-center p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl">
-                      <div className="text-2xl font-bold text-yellow-600 mb-1">{professional?.rating ? parseFloat(professional.rating).toFixed(1) : '0.0'}</div>
-                      <div className="text-xs text-gray-600">Rating medio</div>
-                    </div>
-                    <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
-                      <div className="text-2xl font-bold text-purple-600 mb-1">
-                        {professional?.createdAt ? new Date(professional.createdAt).getFullYear() : 'N/A'}
-                      </div>
-                      <div className="text-xs text-gray-600">Anno iscrizione</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* CTA Card */}
-            <motion.div 
-              variants={itemVariants}
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 text-white">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Heart className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-3">Hai lavorato con questo professionista?</h3>
-                  <p className="text-pink-100 mb-6 leading-relaxed">
-                    La tua recensione aiuta altri utenti a fare la scelta giusta
-                  </p>
-                  <Button 
-                    size="lg" 
-                    className="w-full bg-white text-pink-600 hover:bg-pink-50 font-bold text-lg py-3 shadow-lg"
-                  >
-                    Scrivi recensione
-                    <ChevronRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
+            <ReviewModal
+              professionalId={professionalIdNum}
+              professionalName={professional.businessName ?? "Professionista"}
+              trigger={
+                <Button className="w-full" size="lg">
+                  <MessageCircle className="w-5 h-5 mr-2" /> Lascia una recensione
+                </Button>
+              }
+            />
           </div>
         </div>
       </motion.div>
-
-      {/* Review Modal */}
-      <ReviewModal
-        open={showReviewModal}
-        onClose={() => setShowReviewModal(false)}
-        professionalId={id || ""}
-        professionalName={`${professional?.firstName || ""} ${professional?.lastName || ""}`.trim() || professional?.businessName || "Professionista"}
-      />
+      
+      {!isProfessionalOwner && (
+        <motion.div className="bg-white" variants={itemVariants}>
+          <div className="max-w-4xl mx-auto text-center py-12 px-4">
+            <p className="text-xl font-semibold mb-2 text-gray-800">Sei il proprietario di questo profilo?</p>
+            <p className="text-gray-600 mb-4">Reclama questo profilo per aggiornare le tue informazioni, rispondere alle recensioni e molto altro.</p>
+            <Button size="lg" className="bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg">
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Reclama il tuo Profilo Ora
+            </Button>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

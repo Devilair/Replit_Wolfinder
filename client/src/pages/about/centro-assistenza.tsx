@@ -282,7 +282,7 @@ export default function CentroAssistenza() {
           <div className="space-y-8 mb-16">
             {faqCategorie.map((categoria, index) => {
               const IconComponent = categoria.icon;
-              const colorClasses = {
+              const colorClasses: Record<string, string> = {
                 blue: "border-blue-200 bg-blue-50 text-blue-900",
                 green: "border-green-200 bg-green-50 text-green-900",
                 purple: "border-purple-200 bg-purple-50 text-purple-900",
@@ -291,8 +291,8 @@ export default function CentroAssistenza() {
               };
 
               return (
-                <Card key={index} className={`shadow-lg ${colorClasses[categoria.color].split(' ')[0]}`}>
-                  <CardHeader className={`${colorClasses[categoria.color]}`}>
+                <Card key={index} className={`shadow-lg ${colorClasses[categoria.color as keyof typeof colorClasses]?.split(' ')[0] || ''}`}>
+                  <CardHeader className={`${colorClasses[categoria.color as keyof typeof colorClasses] || ''}`}>
                     <CardTitle className="flex items-center text-2xl">
                       <IconComponent className="h-6 w-6 mr-3" />
                       {categoria.categoria}

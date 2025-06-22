@@ -60,6 +60,20 @@ interface Professional {
   };
 }
 
+interface Category {
+  id: number;
+  name: string;
+}
+
+interface Document {
+  id: number;
+  professionalId: number;
+  type: string;
+  status: string;
+  fileUrl: string;
+  uploadedAt: string;
+}
+
 export default function AdminProfessionals() {
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
@@ -73,7 +87,7 @@ export default function AdminProfessionals() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: professionals, isLoading: professionalsLoading } = useQuery({
+  const { data: professionals, isLoading: professionalsLoading } = useQuery<{ data: Professional[]; total: number; pages: number }>({
     queryKey: ['/api/admin/professionals', { 
       search: searchTerm, 
       status: filterStatus, 
@@ -84,17 +98,17 @@ export default function AdminProfessionals() {
     refetchInterval: 30000
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories']
   });
 
-  // Query for pending verification documents with notification count
-  const { data: pendingDocuments } = useQuery({
+  // Query for pending verification documents
+  const { data: pendingDocuments, isLoading } = useQuery<Document[]>({
     queryKey: ['/api/admin/verification-documents/pending'],
-    refetchInterval: 30000
+    refetchInterval: 30000 // Auto-refresh every 30 seconds
   });
 
-  const pendingCount = pendingDocuments?.length || 0;
+  const pendingCount = Array.isArray(pendingDocuments) ? pendingDocuments.length : 0;
 
   const deleteProfessionalMutation = useMutation({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/admin/professionals/${id}`),
@@ -264,7 +278,7 @@ export default function AdminProfessionals() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tutte le categorie</SelectItem>
-                {categories?.map((category: any) => (
+                {Array.isArray(categories) && categories.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}
                   </SelectItem>
@@ -529,7 +543,7 @@ function PendingDocumentsVerification() {
   const queryClient = useQueryClient();
 
   // Query for pending verification documents
-  const { data: pendingDocuments, isLoading } = useQuery({
+  const { data: pendingDocuments, isLoading } = useQuery<Document[]>({
     queryKey: ['/api/admin/verification-documents/pending'],
     refetchInterval: 30000 // Auto-refresh every 30 seconds
   });

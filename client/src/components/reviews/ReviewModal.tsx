@@ -83,11 +83,7 @@ export function ReviewModal({ professionalId, professionalName, trigger }: Revie
         formData.append('proofFile', selectedFile);
       }
 
-      return apiRequest(`/api/professionals/${professionalId}/reviews`, {
-        method: 'POST',
-        body: formData,
-        headers: {} // Let browser set Content-Type for FormData
-      });
+      return apiRequest('POST', `/api/professionals/${professionalId}/reviews`, formData);
     },
     onSuccess: () => {
       toast({

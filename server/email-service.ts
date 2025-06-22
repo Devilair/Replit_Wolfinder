@@ -3,11 +3,15 @@ import { ProfessionalNotification, InsertProfessionalNotification } from '@share
 import { db } from './db';
 import { professionalNotifications } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import { DatabaseStorage } from './storage/database-storage';
 
 export class EmailService {
   private mailService: MailService | null = null;
+  private storage: DatabaseStorage;
   
   constructor() {
+    this.storage = new DatabaseStorage();
+    
     if (!process.env.SENDGRID_API_KEY) {
       console.warn("SENDGRID_API_KEY non configurato - le email non saranno inviate");
       return;
@@ -22,6 +26,11 @@ export class EmailService {
       .insert(professionalNotifications)
       .values(notificationData)
       .returning();
+    
+    if (!notification) {
+      throw new Error('Failed to create notification');
+    }
+    
     return notification;
   }
 
@@ -55,7 +64,7 @@ export class EmailService {
     const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5000'}/verify-email?token=${verificationToken}`;
     
     const notificationData: InsertProfessionalNotification = {
-      professionalId: professionalId || null,
+      professionalId: professionalId || 0,
       notificationType: 'email_verification',
       recipientEmail: email,
       subject: 'Verifica il tuo indirizzo email - Wolfinder',
@@ -87,12 +96,13 @@ export class EmailService {
       return true;
     } catch (error) {
       console.error('Errore invio email verifica dettagliato:', {
-        message: error.message,
-        code: error.code,
-        response: error.response?.body
+        message: error instanceof Error ? error.message : 'Unknown error',
+        code: (error as any)?.code,
+        response: (error as any)?.response?.body
       });
       
-      await this.updateNotificationStatus(notification.id, 'failed', error.message);
+      const notification = await this.logNotification(notificationData);
+      await this.updateNotificationStatus(notification.id, 'failed', error instanceof Error ? error.message : 'Unknown error');
       return false;
     }
   }
@@ -395,23 +405,24 @@ export class EmailService {
     }
   ): Promise<boolean> {
     try {
-      const professional = await storage.getProfessional(professionalId);
+      const professional = await this.storage.getProfessional(professionalId);
       if (!professional) {
         console.error(`Professional not found: ${professionalId}`);
         return false;
       }
 
       const { subject, html, text } = this.generatePaymentSuccessEmailContent(
-        professional.businessName || `${professional.firstName} ${professional.lastName}`,
+        professional.businessName || 'Professionista',
         paymentData
       );
 
       const notificationData: InsertProfessionalNotification = {
         professionalId,
-        type: 'payment_success',
-        recipient: professional.email,
+        notificationType: 'payment_success',
+        recipientEmail: professional.email,
         subject,
         content: html,
+        status: 'pending',
         metadata: {
           planName: paymentData.planName,
           amount: paymentData.amount,
@@ -456,23 +467,24 @@ export class EmailService {
     }
   ): Promise<boolean> {
     try {
-      const professional = await storage.getProfessional(professionalId);
+      const professional = await this.storage.getProfessional(professionalId);
       if (!professional) {
         console.error(`Professional not found: ${professionalId}`);
         return false;
       }
 
       const { subject, html, text } = this.generatePaymentFailedEmailContent(
-        professional.businessName || `${professional.firstName} ${professional.lastName}`,
+        professional.businessName || 'Professionista',
         failureData
       );
 
       const notificationData: InsertProfessionalNotification = {
         professionalId,
-        type: 'payment_failed',
-        recipient: professional.email,
+        notificationType: 'payment_failed',
+        recipientEmail: professional.email,
         subject,
         content: html,
+        status: 'pending',
         metadata: {
           planName: failureData.planName,
           amount: failureData.amount,

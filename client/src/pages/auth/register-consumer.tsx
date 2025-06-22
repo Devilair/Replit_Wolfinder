@@ -48,7 +48,7 @@ export default function RegisterConsumer() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: ConsumerRegistrationFormData) => {
-      return apiRequest("POST", "/api/auth/register-consumer", {
+      return apiRequest("POST", "/api/auth/register", {
         name: data.name,
         email: data.email,
         password: data.password,

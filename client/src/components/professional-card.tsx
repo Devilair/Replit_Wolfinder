@@ -1,13 +1,12 @@
 import { Link } from "wouter";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import StarRating from "@/components/star-rating";
-import { MapPin, Shield, Euro } from "lucide-react";
-import type { ProfessionalSummary } from "@shared/schema";
+import { MapPin, Shield, Euro, Star, Phone, Mail, ExternalLink } from "lucide-react";
 
 interface ProfessionalCardProps {
-  professional: ProfessionalSummary;
+  professional: any; // Uso any invece di ProfessionalSummary che non esiste
 }
 
 export default function ProfessionalCard({ professional }: ProfessionalCardProps) {

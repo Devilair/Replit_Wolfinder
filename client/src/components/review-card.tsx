@@ -40,13 +40,13 @@ export default function ReviewCard({ review }: ReviewCardProps) {
           </div>
           <div className="text-right">
             <div className="flex flex-col items-end gap-2 mb-2">
-              {review.isVerified && (
+              {review.verifiedAt && (
                 <Badge variant="secondary" className="bg-green-100 text-green-700">
                   <Shield className="w-3 h-3 mr-1" />
                   Verificata
                 </Badge>
               )}
-              {review.reviewerRole === "professional" && review.reviewerCategory && (
+              {review.reviewerCategory && (
                 <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                   <Briefcase className="w-3 h-3 mr-1" />
                   Recensione da {review.reviewerCategory.name}

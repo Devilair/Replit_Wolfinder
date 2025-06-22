@@ -12,11 +12,13 @@ import type { Subscription, SubscriptionPlan } from "@shared/schema";
 // No demo data - all subscriptions from real database
 const DEMO_SUBSCRIPTIONS = {
   essentials: undefined, // Piano gratuito
-  // All other subscription plans removed - no fake data
+  professional: undefined, // Piano professional
+  expert: undefined, // Piano expert
+  enterprise: undefined, // Piano enterprise
 };
 
 export default function ProfessionalSubscriptionDemo() {
-  const [selectedPlan, setSelectedPlan] = useState<'essentials'>('essentials');
+  const [selectedPlan, setSelectedPlan] = useState<'essentials' | 'professional' | 'expert' | 'enterprise'>('essentials');
   const [currentUsage, setCurrentUsage] = useState({
     photosUploaded: 0,
     servicesListed: 0

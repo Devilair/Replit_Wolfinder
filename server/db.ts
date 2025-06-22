@@ -1,25 +1,13 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import "dotenv/config";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import Database from "better-sqlite3";
 import * as schema from "@shared/schema";
+import { env } from "./env";
 
-// Configure Neon for serverless environment
-neonConfig.webSocketConstructor = ws;
-neonConfig.poolQueryViaFetch = true;
-neonConfig.useSecureWebSocket = true;
-
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+if (!env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is not set");
 }
 
-// Create pool with optimized settings for serverless
-export const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
-  max: 1, // Limit connections in serverless environment
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000
-});
-
-export const db = drizzle({ client: pool, schema });
+const sqlite = new Database(env.DATABASE_URL.replace("file:", ""));
+console.log(`[DB] Connessione a SQLite: ${env.DATABASE_URL.replace("file:", "")}`);
+export const db = drizzle(sqlite, { schema, logger: false });

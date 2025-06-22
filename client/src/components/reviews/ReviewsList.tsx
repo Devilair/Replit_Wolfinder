@@ -60,26 +60,25 @@ export function ReviewsList({ professionalId, currentUserId, isProfessionalOwner
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: reviewsData, isLoading } = useQuery({
+  const { data: reviews, isLoading, refetch } = useQuery({
     queryKey: [`/api/professionals/${professionalId}/reviews`],
-    queryFn: () => apiRequest(`/api/professionals/${professionalId}/reviews`)
+    queryFn: () => apiRequest('GET', `/api/professionals/${professionalId}/reviews`)
   });
 
-  const reviews = reviewsData?.reviews || [];
-
-  const helpfulVoteMutation = useMutation({
+  const helpfulMutation = useMutation({
     mutationFn: ({ reviewId, isHelpful }: { reviewId: number; isHelpful: boolean }) =>
-      apiRequest(`/api/reviews/${reviewId}/helpful`, {
-        method: 'POST',
-        body: { isHelpful }
-      }),
+      apiRequest('POST', `/api/reviews/${reviewId}/helpful`, { isHelpful }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/professionals/${professionalId}/reviews`] });
+      refetch();
+      toast({
+        title: "Voto registrato",
+        description: "Il tuo voto è stato registrato con successo"
+      });
     },
-    onError: (error: any) => {
+    onError: () => {
       toast({
         title: "Errore",
-        description: error.message || "Errore nel voto",
+        description: "Impossibile registrare il voto",
         variant: "destructive"
       });
     }
@@ -87,21 +86,17 @@ export function ReviewsList({ professionalId, currentUserId, isProfessionalOwner
 
   const reportMutation = useMutation({
     mutationFn: ({ reviewId, reason, description }: { reviewId: number; reason: string; description?: string }) =>
-      apiRequest(`/api/reviews/${reviewId}/report`, {
-        method: 'POST',
-        body: { reason, description }
-      }),
+      apiRequest('POST', `/api/reviews/${reviewId}/report`, { reason, description }),
     onSuccess: () => {
       toast({
         title: "Segnalazione inviata",
-        description: "Grazie per aver segnalato il contenuto inappropriato."
+        description: "La segnalazione è stata inviata agli amministratori"
       });
-      setReportDialogOpen(false);
     },
-    onError: (error: any) => {
+    onError: () => {
       toast({
         title: "Errore",
-        description: error.message || "Errore nella segnalazione",
+        description: "Impossibile inviare la segnalazione",
         variant: "destructive"
       });
     }
@@ -109,22 +104,18 @@ export function ReviewsList({ professionalId, currentUserId, isProfessionalOwner
 
   const responseMutation = useMutation({
     mutationFn: ({ reviewId, response }: { reviewId: number; response: string }) =>
-      apiRequest(`/api/reviews/${reviewId}/response`, {
-        method: 'POST',
-        body: { response }
-      }),
+      apiRequest('POST', `/api/reviews/${reviewId}/response`, { response }),
     onSuccess: () => {
+      refetch();
       toast({
-        title: "Risposta pubblicata",
-        description: "La tua risposta è stata pubblicata con successo."
+        title: "Risposta inviata",
+        description: "La tua risposta è stata pubblicata"
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/professionals/${professionalId}/reviews`] });
-      setResponseDialogOpen(false);
     },
-    onError: (error: any) => {
+    onError: () => {
       toast({
         title: "Errore",
-        description: error.message || "Errore nella pubblicazione della risposta",
+        description: "Impossibile pubblicare la risposta",
         variant: "destructive"
       });
     }
@@ -149,7 +140,7 @@ export function ReviewsList({ professionalId, currentUserId, isProfessionalOwner
       });
       return;
     }
-    helpfulVoteMutation.mutate({ reviewId, isHelpful });
+    helpfulMutation.mutate({ reviewId, isHelpful });
   };
 
   const handleReport = (reviewId: number) => {
@@ -434,7 +425,7 @@ export function ReviewsList({ professionalId, currentUserId, isProfessionalOwner
                     variant="ghost"
                     size="sm"
                     onClick={() => handleHelpfulVote(review.id, true)}
-                    disabled={helpfulVoteMutation.isPending}
+                    disabled={helpfulMutation.isPending}
                     className="text-gray-600 hover:text-green-600"
                   >
                     <ThumbsUp className="w-4 h-4 mr-1" />

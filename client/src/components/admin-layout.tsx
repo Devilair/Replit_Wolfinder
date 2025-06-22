@@ -17,6 +17,11 @@ import {
   FileText
 } from "lucide-react";
 
+interface NotificationCounts {
+  pendingReviews: number;
+  pendingDocuments: number;
+}
+
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
@@ -26,7 +31,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const { toast } = useToast();
 
   // Query per i conteggi delle notifiche
-  const { data: notificationCounts } = useQuery({
+  const { data: notificationCounts } = useQuery<NotificationCounts>({
     queryKey: ['/api/admin/notification-counts'],
     refetchInterval: 30000, // Aggiorna ogni 30 secondi
   });
@@ -39,14 +44,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       href: "/admin/professionals", 
       icon: UserCheck, 
       current: location === "/admin/professionals" || location.startsWith("/admin/professionals/"),
-      badge: notificationCounts?.pendingDocuments > 0 ? notificationCounts.pendingDocuments : null
+      badge: notificationCounts?.pendingDocuments && notificationCounts.pendingDocuments > 0 ? notificationCounts.pendingDocuments : null
     },
     { 
       name: "Recensioni", 
       href: "/admin/reviews", 
       icon: MessageSquare, 
       current: location === "/admin/reviews",
-      badge: notificationCounts?.pendingReviews > 0 ? notificationCounts.pendingReviews : null
+      badge: notificationCounts?.pendingReviews && notificationCounts.pendingReviews > 0 ? notificationCounts.pendingReviews : null
     },
     { name: "Categorie", href: "/admin/categories", icon: Building2, current: location === "/admin/categories" },
     { name: "Abbonamenti", href: "/admin/subscriptions", icon: CreditCard, current: location === "/admin/subscriptions" },

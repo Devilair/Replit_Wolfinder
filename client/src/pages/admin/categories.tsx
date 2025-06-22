@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,24 +9,33 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import AdminLayout from "@/components/admin-layout";
+import { Badge } from "@/components/ui/badge";
+
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  icon: string;
+  count: number;
+}
 
 export default function AdminCategories() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [newCategory, setNewCategory] = useState({ name: "", slug: "" });
 
-  const { data: categories = [] as any[], isLoading } = useQuery({
+  const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
 
   const createMutation = useMutation({
     mutationFn: async (categoryData: any) => {
-      await apiRequest("/api/categories", {
-        method: "POST",
-        body: JSON.stringify(categoryData),
-        headers: { "Content-Type": "application/json" },
-      });
+      await apiRequest("POST", "/api/categories", categoryData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -48,11 +57,7 @@ export default function AdminCategories() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      await apiRequest(`/api/admin/categories/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-      });
+      await apiRequest("PATCH", `/api/admin/categories/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -73,9 +78,7 @@ export default function AdminCategories() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest(`/api/admin/categories/${id}`, {
-        method: "DELETE",
-      });
+      await apiRequest("DELETE", `/api/admin/categories/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -84,10 +87,10 @@ export default function AdminCategories() {
         description: "Categoria eliminata con successo",
       });
     },
-    onError: (error: any) => {
+    onError: () => {
       toast({
         title: "Errore",
-        description: error.message || "Errore nell'eliminazione della categoria",
+        description: "Errore nell'eliminazione della categoria",
         variant: "destructive",
       });
     },
@@ -134,17 +137,6 @@ export default function AdminCategories() {
       .replace(/-+/g, "-")
       .replace(/^-|-$/g, "");
   };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestione Categorie</h1>
-          <p className="text-gray-600 mt-2">Caricamento...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

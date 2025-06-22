@@ -55,7 +55,7 @@ export default function ClaimProfile() {
   }, []);
 
   // Get professional details
-  const { data: professional, isLoading: isLoadingProfessional } = useQuery({
+  const { data: professional, isLoading: isLoadingProfessional } = useQuery<Professional>({
     queryKey: [`/api/professionals/${professionalId}`],
     enabled: !!professionalId && professionalId > 0,
   });
@@ -153,7 +153,7 @@ export default function ClaimProfile() {
     );
   }
 
-  if (!professional) {
+  if (!professional || typeof professional !== 'object') {
     return (
       <div className="container max-w-4xl mx-auto px-4 py-8">
         <Alert variant="destructive">
@@ -166,7 +166,7 @@ export default function ClaimProfile() {
     );
   }
 
-  if (professional.isClaimed) {
+  if (professional.isClaimed === true) {
     return (
       <div className="container max-w-4xl mx-auto px-4 py-8">
         <Alert>
@@ -199,18 +199,18 @@ export default function ClaimProfile() {
                 <Building className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-xl">{professional.businessName}</CardTitle>
+                <CardTitle className="text-xl">{professional.businessName || 'Nome non disponibile'}</CardTitle>
                 <CardDescription className="flex items-center gap-2">
-                  <Badge variant="outline">{professional.category.name}</Badge>
+                  <Badge variant="outline">{professional.category?.name || 'Categoria non disponibile'}</Badge>
                   <span>•</span>
-                  <span>{professional.city}, {professional.province}</span>
+                  <span>{professional.city || 'Città'}, {professional.province || 'Provincia'}</span>
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground line-clamp-3">
-              {professional.description}
+              {professional.description || 'Descrizione non disponibile'}
             </p>
             
             <Separator />
@@ -218,10 +218,10 @@ export default function ClaimProfile() {
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-sm">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <span>{professional.email}</span>
+                <span>{professional.email || 'Email non disponibile'}</span>
               </div>
               
-              {professional.phone && (
+              {professional.phone && professional.phone.trim() !== '' && (
                 <div className="flex items-center gap-3 text-sm">
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <span>{professional.phone}</span>
@@ -230,7 +230,7 @@ export default function ClaimProfile() {
               
               <div className="flex items-center gap-3 text-sm">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span>{professional.address}</span>
+                <span>{professional.address || 'Indirizzo non disponibile'}</span>
               </div>
             </div>
             
@@ -239,8 +239,8 @@ export default function ClaimProfile() {
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Valutazione media</span>
               <div className="flex items-center gap-2">
-                <span className="font-medium">{professional.rating.toFixed(1)}/5</span>
-                <span className="text-muted-foreground">({professional.reviewCount} recensioni)</span>
+                <span className="font-medium">{(professional.rating || 0).toFixed(1)}/5</span>
+                <span className="text-muted-foreground">({professional.reviewCount || 0} recensioni)</span>
               </div>
             </div>
           </CardContent>

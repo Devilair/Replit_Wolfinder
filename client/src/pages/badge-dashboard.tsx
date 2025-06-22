@@ -7,8 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Award, Star, TrendingUp, Shield, Clock, Users, Target, BarChart3 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface BadgeData {
   id: number;
@@ -33,6 +34,20 @@ interface ProfessionalBadge {
   badge: BadgeData;
 }
 
+interface ProfessionalData {
+  rating: string;
+  profileViews: number;
+  isVerified: boolean;
+  profileCompleteness: number;
+}
+
+interface Review {
+  id: number;
+  rating: number;
+  content: string;
+  createdAt: string;
+}
+
 const FAMILY_ICONS = {
   esperienza: Award,
   qualita: Star,
@@ -52,29 +67,33 @@ export default function BadgeDashboard() {
   const queryClient = useQueryClient();
   const [selectedFamily, setSelectedFamily] = useState<string>("all");
 
-  const { data: allBadges, isLoading: badgesLoading } = useQuery({
+  const { data: allBadges, isLoading: badgesLoading } = useQuery<BadgeData[]>({
     queryKey: ["/api/badges"],
   });
 
-  const { data: professionalBadges, isLoading: profBadgesLoading } = useQuery({
-    queryKey: ["/api/auth/user", "badges"],
-    queryFn: async () => {
-      const user = await apiRequest("GET", "/api/auth/user");
-      if (user.professional?.id) {
-        return await apiRequest("GET", `/api/professionals/${user.professional.id}/badges`);
-      }
-      return [];
-    }
+  const { data: professionalBadges, isLoading: profBadgesLoading } = useQuery<ProfessionalBadge[]>({
+    queryKey: ["/api/professional/badges"],
+  });
+
+  const { data: professionalData } = useQuery<ProfessionalData>({
+    queryKey: ["/api/professional/data"],
+  });
+
+  const { data: reviews = [] } = useQuery<Review[]>({
+    queryKey: ["/api/professional/reviews"],
   });
 
   const initializeBadgesMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/badges/initialize"),
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/badges/initialize");
+    },
     onSuccess: () => {
       toast({
         title: "Successo",
         description: "Sistema badge inizializzato correttamente"
       });
       queryClient.invalidateQueries({ queryKey: ["/api/badges"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/badges"] });
     },
     onError: () => {
       toast({
@@ -93,25 +112,15 @@ export default function BadgeDashboard() {
         title: "Valutazione completata",
         description: `${result.awarded?.length || 0} nuovi badge assegnati`
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user", "badges"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/badges"] });
     }
   });
 
-  // Fetch professional data for progress calculation
-  const { data: professionalData } = useQuery({
-    queryKey: ["/api/professional/profile-complete"],
-  });
-
-  const { data: reviews = [] } = useQuery({
-    queryKey: ["/api/professional/reviews-complete"],
-  });
-
-  // Calculate badge progress based on actual professional data
   const calculateBadgeProgress = (badge: BadgeData): number => {
-    if (!professionalData) return 0;
+    if (!professionalData || typeof professionalData !== 'object') return 0;
 
     const slug = badge.slug;
-    const reviewCount = reviews.length || 0;
+    const reviewCount = Array.isArray(reviews) ? reviews.length : 0;
     const rating = parseFloat(professionalData.rating || "0");
     const profileViews = professionalData.profileViews || 0;
     const isVerified = professionalData.isVerified || false;
@@ -182,13 +191,12 @@ export default function BadgeDashboard() {
     }
   };
 
-  // Get progress message with specific missing requirements
   const getProgressMessage = (badge: BadgeData): string => {
-    if (!professionalData) return "Caricamento dati...";
+    if (!professionalData || typeof professionalData !== 'object') return "Caricamento dati...";
 
     const progress = calculateBadgeProgress(badge);
     const slug = badge.slug;
-    const reviewCount = reviews.length || 0;
+    const reviewCount = Array.isArray(reviews) ? reviews.length : 0;
     const rating = parseFloat(professionalData.rating || "0");
     const profileViews = professionalData.profileViews || 0;
     const isVerified = professionalData.isVerified || false;
@@ -235,28 +243,27 @@ export default function BadgeDashboard() {
     }
   };
 
-  const filteredBadges = allBadges?.filter((badge: BadgeData) => 
+  const filteredBadges = Array.isArray(allBadges) ? allBadges.filter((badge: BadgeData) => 
     selectedFamily === "all" || badge.family === selectedFamily
-  ) || [];
+  ) : [];
 
-  const earnedBadgeIds = professionalBadges?.map((pb: ProfessionalBadge) => pb.badgeId) || [];
+  const earnedBadgeIds = Array.isArray(professionalBadges) ? professionalBadges.map((pb: ProfessionalBadge) => pb.badgeId) : [];
 
   const badgeStats = {
-    total: allBadges?.length || 0,
-    earned: professionalBadges?.length || 0,
+    total: Array.isArray(allBadges) ? allBadges.length : 0,
+    earned: Array.isArray(professionalBadges) ? professionalBadges.length : 0,
     byFamily: {
-      esperienza: professionalBadges?.filter((pb: ProfessionalBadge) => 
-        pb.badge.family === "esperienza").length || 0,
-      qualita: professionalBadges?.filter((pb: ProfessionalBadge) => 
-        pb.badge.family === "qualita").length || 0,
-      engagement: professionalBadges?.filter((pb: ProfessionalBadge) => 
-        pb.badge.family === "engagement").length || 0,
-      eccellenza: professionalBadges?.filter((pb: ProfessionalBadge) => 
-        pb.badge.family === "eccellenza").length || 0,
+      esperienza: Array.isArray(professionalBadges) ? professionalBadges.filter((pb: ProfessionalBadge) => 
+        pb.badge.family === "esperienza").length : 0,
+      qualita: Array.isArray(professionalBadges) ? professionalBadges.filter((pb: ProfessionalBadge) => 
+        pb.badge.family === "qualita").length : 0,
+      engagement: Array.isArray(professionalBadges) ? professionalBadges.filter((pb: ProfessionalBadge) => 
+        pb.badge.family === "engagement").length : 0,
+      eccellenza: Array.isArray(professionalBadges) ? professionalBadges.filter((pb: ProfessionalBadge) => 
+        pb.badge.family === "eccellenza").length : 0,
     }
   };
 
-  // Data for progress charts
   const progressData = [
     { name: 'Esperienza', earned: badgeStats.byFamily.esperienza, total: 4, color: '#3B82F6' },
     { name: 'Qualità', earned: badgeStats.byFamily.qualita, total: 4, color: '#F59E0B' },
@@ -295,7 +302,6 @@ export default function BadgeDashboard() {
         </div>
       </div>
 
-      {/* Badge Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4">
@@ -339,7 +345,6 @@ export default function BadgeDashboard() {
         })}
       </div>
 
-      {/* Progress Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>

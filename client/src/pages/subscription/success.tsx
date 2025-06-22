@@ -7,6 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, ArrowRight, CreditCard, Calendar } from "lucide-react";
 import { Link } from "wouter";
 
+interface UserSubscription {
+  plan: {
+    name: string;
+  };
+  status: string;
+  currentPeriodEnd: string;
+}
+
 export default function SubscriptionSuccess() {
   const [location] = useLocation();
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
@@ -21,7 +29,7 @@ export default function SubscriptionSuccess() {
     if (subId) setSubscriptionId(subId);
   }, [location]);
 
-  const { data: userSubscription, isLoading } = useQuery({
+  const { data: userSubscription, isLoading } = useQuery<UserSubscription>({
     queryKey: ['/api/professional/subscription'],
     enabled: !!subscriptionId,
   });
@@ -91,12 +99,12 @@ export default function SubscriptionSuccess() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {userSubscription ? (
+              {userSubscription && typeof userSubscription === 'object' ? (
                 <>
                   <div className="flex justify-between">
                     <span>Piano:</span>
                     <span className="font-semibold">
-                      {userSubscription.plan?.name || 'Piano Attivo'}
+                      {userSubscription.plan?.name ?? 'Piano Attivo'}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -108,7 +116,7 @@ export default function SubscriptionSuccess() {
                   <div className="flex justify-between">
                     <span>Prossimo Rinnovo:</span>
                     <span>
-                      {new Date(userSubscription.currentPeriodEnd).toLocaleDateString('it-IT')}
+                      {userSubscription.currentPeriodEnd ? new Date(userSubscription.currentPeriodEnd).toLocaleDateString('it-IT') : 'N/A'}
                     </span>
                   </div>
                 </>

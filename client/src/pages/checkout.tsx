@@ -14,8 +14,8 @@ import { CheckCircle, ArrowLeft, CreditCard } from "lucide-react";
 let stripePromise: Promise<any> | null = null;
 
 function getStripePromise() {
-  if (!stripePromise && import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-    stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+  if (!stripePromise && (import.meta as any).env?.VITE_STRIPE_PUBLIC_KEY) {
+    stripePromise = loadStripe((import.meta as any).env.VITE_STRIPE_PUBLIC_KEY);
   }
   return stripePromise;
 }
