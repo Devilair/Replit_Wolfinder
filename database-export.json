@@ -1,0 +1,30 @@
+{
+  "users": [],
+  "professionals": [],
+  "categories": [
+    {
+      "id": 1,
+      "name": "Idraulico",
+      "description": "Servizi di idraulica"
+    },
+    {
+      "id": 2,
+      "name": "Elettricista",
+      "description": "Servizi di elettricità"
+    },
+    {
+      "id": 3,
+      "name": "Fabbro",
+      "description": "Servizi di carpenteria metallica"
+    }
+  ],
+  "reviews": [],
+  "userSessions": [],
+  "badges": [],
+  "professionalBadges": [],
+  "specializations": [],
+  "professionalSpecializations": [],
+  "certifications": [],
+  "professionalCertifications": [],
+  "exportedAt": "2025-06-22T22:55:29.708Z"
+}

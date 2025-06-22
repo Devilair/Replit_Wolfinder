@@ -7,6 +7,8 @@
     "dev": "cross-env NODE_ENV=development tsx server/index.ts",
     "dev:client": "vite",
     "db:setup": "tsx setup-database.ts",
+    "db:export": "tsx export-database.ts",
+    "db:import": "tsx import-database.ts",
     "db:generate": "drizzle-kit generate",
     "build": "run-s clean build:client build:server",
     "build:client": "vite build",
