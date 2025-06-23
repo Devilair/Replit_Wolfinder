@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { badges, professionalBadges, professionals, reviews } from "@shared/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, gte, count, avg } from "drizzle-orm";
 
 interface BadgeCalculationResult {
   badgeId: number;
@@ -20,33 +20,48 @@ export class BadgeCalculator {
     const cached = this.getCached(cacheKey);
     if (cached) return cached;
     
-    // Calcoliamo il timestamp di 30 giorni fa in JS, compatibile con SQLite
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).getTime();
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    const [professional, allBadges, reviewStats, existingBadges] = await Promise.all([
-      db.select().from(professionals).where(eq(professionals.id, professionalId)).limit(1),
-      db.select().from(badges),
+    const [
+        professional, 
+        allBadges, 
+        baseStatsResult, 
+        fiveStarStatsResult,
+        recentStatsResult,
+        existingBadges
+    ] = await Promise.all([
+      db.query.professionals.findFirst({ where: eq(professionals.id, professionalId) }),
+      db.query.badges.findMany(),
       db.select({
-        count: sql<number>`count(*)`.mapWith(Number),
-        avgRating: sql<number>`avg(cast(rating as decimal))`.mapWith(Number),
-        fiveStarCount: sql<number>`count(CASE WHEN rating = 5 THEN 1 END)`.mapWith(Number),
-        // Usiamo il timestamp calcolato nella query - CORRETTO NOME COLONNA
-        recentCount: sql<number>`count(CASE WHEN createdAt >= ${thirtyDaysAgo} THEN 1 END)`.mapWith(Number)
-      }).from(reviews)
-        .where(and(eq(reviews.professionalId, professionalId), eq(reviews.status, 'approved'))),
-      db.select().from(professionalBadges).where(eq(professionalBadges.professionalId, professionalId))
+        count: count(reviews.id),
+        avgRating: avg(reviews.rating),
+      }).from(reviews).where(and(eq(reviews.professionalId, professionalId), eq(reviews.status, 'approved'))),
+      
+      db.select({ value: count(reviews.id) }).from(reviews).where(and(
+          eq(reviews.professionalId, professionalId), 
+          eq(reviews.status, 'approved'),
+          eq(reviews.rating, 5)
+      )),
+
+      db.select({ value: count(reviews.id) }).from(reviews).where(and(
+          eq(reviews.professionalId, professionalId), 
+          eq(reviews.status, 'approved'),
+          gte(reviews.createdAt, thirtyDaysAgo)
+      )),
+
+      db.query.professionalBadges.findMany({ where: eq(professionalBadges.professionalId, professionalId) })
     ]);
 
-    const prof = professional[0];
+    const prof = professional;
     if (!prof) {
       return [];
     }
 
-    const stats = reviewStats[0] || { count: 0, avgRating: 0, fiveStarCount: 0, recentCount: 0 };
-    const reviewCount = stats.count || 0;
-    const avgRating = Number(stats.avgRating) || 0;
-    const fiveStarCount = stats.fiveStarCount || 0;
-    const recentCount = stats.recentCount || 0;
+    const baseStats = baseStatsResult[0] || { count: 0, avgRating: '0' };
+    const reviewCount = baseStats.count || 0;
+    const avgRating = Number(baseStats.avgRating) || 0;
+    const fiveStarCount = fiveStarStatsResult[0]?.value || 0;
+    const recentCount = recentStatsResult[0]?.value || 0;
 
     const results: BadgeCalculationResult[] = [];
     

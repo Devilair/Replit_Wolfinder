@@ -1,20 +1,20 @@
-import { integer, sqliteTable, text, primaryKey, real } from 'drizzle-orm/sqlite-core';
+import { integer, text, timestamp, pgTable, serial, boolean, real, primaryKey } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
 // import type { AdapterAccount } from '@auth/drizzle-adapter';
 
 // ----- TABELLA UTENTI -----
-export const users = sqliteTable('users', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
   name: text('name'),
   email: text('email').notNull().unique(),
-  emailVerified: integer('emailVerified', { mode: 'timestamp_ms' }),
+  emailVerified: timestamp('emailVerified', { mode: 'date' }),
   image: text('image'),
   role: text('role', { enum: ['consumer', 'professional', 'admin'] }).notNull().default('consumer'),
   passwordHash: text('passwordHash'),
-  createdAt: text('createdAt').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
-  updatedAt: text('updatedAt').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
   githubId: text('github_id').unique(),
 });
 
@@ -29,8 +29,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 
 
 // ----- TABELLA PROFESSIONISTI -----
-export const professionals = sqliteTable('professionals', {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+export const professionals = pgTable('professionals', {
+    id: serial('id').primaryKey(),
     userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
     businessName: text('business_name').notNull(),
     description: text('description'),
@@ -45,13 +45,13 @@ export const professionals = sqliteTable('professionals', {
     zipCode: text('zip_code'),
     latitude: real('latitude'),
     longitude: real('longitude'),
-    isVerified: integer('is_verified', { mode: 'boolean' }).default(false),
-    isClaimed: integer('is_claimed', { mode: 'boolean' }).default(false),
+    isVerified: boolean('is_verified').default(false),
+    isClaimed: boolean('is_claimed').default(false),
     profileViews: integer('profile_views').default(0),
     rating: real('rating').default(0),
     reviewCount: integer('review_count').default(0),
-    createdAt: text('createdAt').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
-    updatedAt: text('updatedAt').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+    createdAt: timestamp('createdAt').defaultNow().notNull(),
+    updatedAt: timestamp('updatedAt').defaultNow().notNull(),
     subscriptionPlanId: text('subscription_plan_id'),
     stripeCustomerId: text('stripe_customer_id'),
 });
@@ -73,8 +73,8 @@ export const professionalsRelations = relations(professionals, ({ one, many }) =
 
 
 // ----- TABELLA CATEGORIE -----
-export const categories = sqliteTable('categories', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const categories = pgTable('categories', {
+  id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),
   description: text('description'),
 });
@@ -87,18 +87,19 @@ export const insertCategorySchema = createInsertSchema(categories);
 
 
 // ----- TABELLA RECENSIONI -----
-export const reviews = sqliteTable('reviews', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const reviews = pgTable('reviews', {
+  id: serial('id').primaryKey(),
   professionalId: integer('professional_id').notNull().references(() => professionals.id, { onDelete: 'cascade' }),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   rating: integer('rating').notNull(),
   comment: text('comment'),
-  isVerifiedPurchase: integer('is_verified_purchase', { mode: 'boolean' }).default(false),
+  isVerifiedPurchase: boolean('is_verified_purchase').default(false),
   status: text('status', { enum: ['pending', 'approved', 'rejected'] }).default('pending'),
-  createdAt: text('createdAt').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
-export const insertReviewSchema = createInsertSchema(reviews, {
+export const insertReviewSchema = createInsertSchema(reviews);
+export const reviewValidationSchema = z.object({
   rating: z.number().min(1).max(5),
   comment: z.string().min(10).optional(),
 });
@@ -116,19 +117,19 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
 
 
 // ----- TABELLA BADGE -----
-export const badges = sqliteTable('badges', {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+export const badges = pgTable('badges', {
+    id: serial('id').primaryKey(),
     name: text('name').notNull().unique(),
     description: text('description').notNull(),
     icon: text('icon'),
     criteria: text('criteria').notNull(), // es. '{"reviews": 10, "rating": 4.5}'
 });
 
-export const professionalBadges = sqliteTable('professional_badges', {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+export const professionalBadges = pgTable('professional_badges', {
+    id: serial('id').primaryKey(),
     professionalId: integer('professional_id').notNull().references(() => professionals.id, { onDelete: 'cascade' }),
     badgeId: integer('badge_id').notNull().references(() => badges.id, { onDelete: 'cascade' }),
-    awardedAt: text('awardedAt').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+    awardedAt: timestamp('awardedAt').defaultNow().notNull(),
 });
 
 export const professionalBadgesRelations = relations(professionalBadges, ({ one }) => ({
@@ -144,29 +145,29 @@ export const professionalBadgesRelations = relations(professionalBadges, ({ one 
 
 
 // ----- ALTRE TABELLE (Specializzazioni, Certificazioni, Auth, etc.) -----
-export const specializations = sqliteTable('specializations', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const specializations = pgTable('specializations', {
+  id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),
   categoryId: integer('category_id').references(() => categories.id),
 });
 
-export const professionalSpecializations = sqliteTable('professional_specializations', {
+export const professionalSpecializations = pgTable('professional_specializations', {
     professionalId: integer('professional_id').notNull().references(() => professionals.id, { onDelete: 'cascade' }),
     specializationId: integer('specialization_id').notNull().references(() => specializations.id, { onDelete: 'cascade' }),
 }, (t) => ({
     pk: primaryKey({ columns: [t.professionalId, t.specializationId] }),
 }));
 
-export const certifications = sqliteTable('certifications', {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+export const certifications = pgTable('certifications', {
+    id: serial('id').primaryKey(),
     name: text('name').notNull(),
     issuingBody: text('issuing_body'),
 });
 
-export const professionalCertifications = sqliteTable('professional_certifications', {
+export const professionalCertifications = pgTable('professional_certifications', {
     professionalId: integer('professional_id').notNull().references(() => professionals.id, { onDelete: 'cascade' }),
     certificationId: integer('certification_id').notNull().references(() => certifications.id, { onDelete: 'cascade' }),
-    obtainedAt: text('obtainedAt').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+    obtainedAt: timestamp('obtainedAt').defaultNow().notNull(),
 }, (t) => ({
     pk: primaryKey({ columns: [t.professionalId, t.certificationId] }),
 }));
@@ -208,14 +209,16 @@ export const sessions = pgTable("sessions", {
 });
 */
 
-export const userSessions = sqliteTable("user_sessions", {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  token: text('token').notNull().unique(),
-  expiresAt: integer('expires_at').notNull(),
+export const userSessions = pgTable("user_sessions", {
+  id: text("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  expiresAt: timestamp("expires_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
 });
 
-export const verificationTokens = sqliteTable(
+export const verificationTokens = pgTable(
   "verificationToken",
   {
     identifier: text("identifier").notNull(),

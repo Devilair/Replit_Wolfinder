@@ -39,6 +39,28 @@ export function setupProfessionalRoutes(app: Express, storage: AppStorage) {
     }
   });
 
+  // GET search professionals
+  app.get("/api/professionals/search", async (req, res) => {
+    try {
+      const { query, categoryId } = req.query;
+      
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ message: "Query parameter is required" });
+      }
+
+      const categoryIdNum = categoryId ? parseInt(categoryId as string) : undefined;
+      if (categoryId && isNaN(categoryIdNum!)) {
+        return res.status(400).json({ message: "Invalid category ID" });
+      }
+
+      const professionals = await storage.searchProfessionals(query, categoryIdNum);
+      res.json(professionals);
+    } catch (error) {
+      console.error("Error searching professionals:", error);
+      res.status(500).json({ message: "Failed to search professionals" });
+    }
+  });
+
   // GET singolo professional
   app.get("/api/professionals/:id", async (req, res) => {
     try {

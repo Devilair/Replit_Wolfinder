@@ -1,27 +1,27 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import Database from 'better-sqlite3';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import postgres from 'postgres';
 import * as schema from './shared/schema';
 import { categories as seedCategories } from './shared/seed-data';
-import path from 'path';
-
-const DB_PATH = 'dev.db';
+import 'dotenv/config';
 
 async function setupDatabase() {
-    console.log("🚀 Inizializzazione del database SQLite...");
-    
-    // Non è necessario eliminare il DB, il migratore gestisce lo stato.
-    const sqlite = new Database(DB_PATH);
-    const db = drizzle(sqlite, { schema });
+    console.log("🚀 Inizializzazione del database Supabase (PostgreSQL)...");
 
-    console.log("🔍 Esecuzione delle migrazioni in corso...");
+    if (!process.env.DATABASE_URL) {
+        throw new Error("DATABASE_URL non è definita nel file .env");
+    }
+
+    const migrationClient = postgres(process.env.DATABASE_URL, { max: 1 });
+    const db = drizzle(migrationClient, { schema });
+
     try {
-        const migrationsFolder = path.join(process.cwd(), 'migrations');
-        migrate(db, { migrationsFolder });
+        console.log("🔍 Esecuzione delle migrazioni in corso...");
+        await migrate(db, { migrationsFolder: './migrations' });
         console.log("✅ Migrazioni applicate con successo!");
     } catch (error) {
         console.error("❌ ERRORE durante l'applicazione delle migrazioni:", error);
-        sqlite.close();
+        await migrationClient.end();
         process.exit(1);
     }
     
@@ -35,7 +35,7 @@ async function setupDatabase() {
     }
     
     console.log("\n🎉 Setup del database completato con successo!");
-    sqlite.close();
+    await migrationClient.end();
 }
 
 setupDatabase().catch(error => {
