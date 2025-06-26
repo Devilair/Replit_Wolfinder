@@ -7,7 +7,7 @@ import { authMiddleware } from './auth';
 
 export function setupStripeRoutes(app: express.Express, storage: AppStorage) {
   const router = express.Router();
-  const stripe = new Stripe(env.STRIPE_SECRET_KEY);
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY || 'sk_test_dummy');
 
   // Endpoint per recuperare i piani di abbonamento
   router.get("/plans", async (req: Request, res: Response) => {

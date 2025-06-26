@@ -1,9 +1,9 @@
 import { db } from './db';
-import { professionals } from '@shared/schema';
+import { professionals } from '@wolfinder/shared';
 import { eq } from 'drizzle-orm';
 
 export interface ProfessionalStateUpdate {
-  verificationStatus: 'pending' | 'pending_plus' | 'approved' | 'rejected';
+  verificationStatus?: 'pending' | 'pending_plus' | 'approved' | 'rejected';
   isVerified?: boolean;
   isPremium?: boolean;
   isClaimed?: boolean;
@@ -34,8 +34,9 @@ export class ProfessionalStateManager {
       await tx
         .update(professionals)
         .set({
-          ...updates,
-          ...derivedUpdates,
+          isVerified: updates.isVerified,
+          isClaimed: updates.isClaimed,
+          verifiedBy: updates.verifiedBy,
           updatedAt: new Date()
         })
         .where(eq(professionals.id, professionalId));
@@ -136,11 +137,8 @@ export class ProfessionalStateManager {
     const [professional] = await db
       .select({
         id: professionals.id,
-        verificationStatus: professionals.verificationStatus,
         isVerified: professionals.isVerified,
-        isPremium: professionals.isPremium,
         isClaimed: professionals.isClaimed,
-        verificationDate: professionals.verificationDate,
         verifiedBy: professionals.verifiedBy
       })
       .from(professionals)

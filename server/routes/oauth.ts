@@ -4,7 +4,7 @@ import { Strategy as GitHubStrategy } from 'passport-github2';
 import jwt from 'jsonwebtoken';
 import { env } from '../env';
 import { AppStorage } from '../storage';
-import { User, NewUser } from '../../shared/schema';
+import { User, NewUser } from '@wolfinder/shared';
 
 export function setupOAuthRoutes(app: express.Express, storage: AppStorage) {
   const router = express.Router();
@@ -18,7 +18,7 @@ export function setupOAuthRoutes(app: express.Express, storage: AppStorage) {
           clientSecret: env.GITHUB_CLIENT_SECRET,
           callbackURL: `${env.API_BASE_URL}/api/auth/github/callback`,
         },
-        async (accessToken, refreshToken, profile, done) => {
+        async (accessToken: any, refreshToken: any, profile: any, done: any) => {
           console.log(profile);
           return done(null, profile);
         }

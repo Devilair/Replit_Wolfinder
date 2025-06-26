@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Filter, MapPin } from "lucide-react";
-import type { Category, ProfessionalWithDetails } from "@shared/schema";
+import type { Category, ProfessionalWithDetails } from "@wolfinder/shared";
 
 export default function Professionals() {
   const [search, setSearch] = useState('');

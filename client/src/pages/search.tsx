@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Link } from "wouter";
 import { MapView } from "@/components/MapView";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
-import { type Category } from "@shared/schema";
+import { type Category } from "@wolfinder/shared";
 
 interface Professional {
   id: number;
@@ -221,7 +221,7 @@ export default function SearchPage() {
       <CardHeader className={`${compact ? 'pb-2 p-3 sm:p-4' : 'p-4 sm:p-6'}`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <Badge variant="outline" className="text-xs w-fit">
-            {professional.category.icon} {professional.category.name}
+            {professional.category?.icon || '🏢'} {professional.category?.name || 'Categoria sconosciuta'}
           </Badge>
           <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 w-fit">
             <Shield className="h-3 w-3 mr-1" />
@@ -381,7 +381,7 @@ export default function SearchPage() {
                   <SelectItem value="all">Tutte le categorie</SelectItem>
                   {categories.map((category: Category) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
-                      {category.icon} {category.name}
+                      {category.icon || '🏢'} {category.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -464,7 +464,7 @@ export default function SearchPage() {
                 )}
                 {selectedCategory && selectedCategory !== 'all' && (
                   <Badge variant="secondary" className="text-xs">
-                    {(categories as any[]).find((c: any) => c.id.toString() === selectedCategory)?.icon}{' '}
+                    {(categories as any[]).find((c: any) => c.id.toString() === selectedCategory)?.icon || '🏢'}
                     {(categories as any[]).find((c: any) => c.id.toString() === selectedCategory)?.name}
                   </Badge>
                 )}

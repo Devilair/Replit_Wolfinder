@@ -94,7 +94,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link href="/" className="flex items-center">
-                <span className="text-2xl font-bold text-blue-600">Wolfinder</span>
+                <img src="/logo.png" alt="Wolfinder" className="h-10 w-auto" />
                 <span className="ml-2 text-sm text-gray-500">Admin</span>
               </Link>
             </div>

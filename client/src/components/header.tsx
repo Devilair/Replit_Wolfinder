@@ -26,7 +26,7 @@ export default function Header() {
           <div className="flex items-center space-x-8">
             <Link href="/" className="flex items-center">
               <img 
-                src="/attached_assets/logo_1749382291587.png" 
+                src="/logo.png" 
                 alt="Wolfinder" 
                 className="h-12 w-auto" 
               />

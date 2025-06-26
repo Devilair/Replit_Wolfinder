@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 import { ReviewModal } from "@/components/reviews/ReviewModal";
 import { ReviewsList } from "@/components/reviews/ReviewsList";
 import InteractiveMap from "@/components/InteractiveMap";
-import type { ProfessionalWithDetails, ReviewWithDetails, ProfessionalBadge, User as UserType, ProfessionalCertification, ProfessionalSpecialization } from "@shared/schema";
+import { Professional, ProfessionalWithDetails, ProfessionalSpecialization, ReviewWithDetails, ProfessionalBadge, User as UserType, ProfessionalCertification } from "@wolfinder/shared";
 
 // Define a specific type for Ranking data, as it's a custom object
 interface Ranking {
@@ -262,7 +262,7 @@ export default function ProfessionalProfile() {
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-2">
-                        {specializations?.map(spec => <li key={spec.id} className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-green-500" />{spec.name}</li>)}
+                        {specializations?.map(spec => <li key={spec.specializationId} className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-green-500" />Specializzazione #{spec.specializationId}</li>)}
                       </ul>
                     </CardContent>
                   </Card>
@@ -272,7 +272,7 @@ export default function ProfessionalProfile() {
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-2">
-                        {certifications?.map(cert => <li key={cert.id} className="flex items-center"><Award className="w-4 h-4 mr-2 text-blue-500" />{cert.name}</li>)}
+                        {certifications?.map(cert => <li key={cert.certificationId} className="flex items-center"><Award className="w-4 h-4 mr-2 text-blue-500" />Certificazione #{cert.certificationId}</li>)}
                       </ul>
                     </CardContent>
                   </Card>
@@ -310,8 +310,8 @@ export default function ProfessionalProfile() {
                     latitude={Number(professional.latitude)}
                     longitude={Number(professional.longitude)}
                     professionalName={professional.businessName ?? "Professionista"}
-                    address={professional.address}
-                    city={professional.city}
+                    address={professional.address || ''}
+                    city={professional.city || ''}
                   />
                 )}
               </TabsContent>

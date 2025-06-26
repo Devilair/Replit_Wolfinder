@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { badges, professionalBadges, professionals, reviews } from "@shared/schema";
+import { badges, professionalBadges, professionals, reviews } from "@wolfinder/shared";
 import { eq, and, sql, gte, count, avg } from "drizzle-orm";
 
 interface BadgeCalculationResult {

@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { z } from "zod";
 import type { AppStorage } from "../storage";
-import { NewCategory } from "../../shared/schema";
+import { NewCategory } from "@wolfinder/shared";
 
 const createCategorySchema = z.object({
   name: z.string().min(3, "Il nome deve essere di almeno 3 caratteri"),

@@ -34,7 +34,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 
-interface User {
+interface UserProfile {
   id: number;
   name: string;
   email: string;
@@ -92,7 +92,7 @@ export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState("profile");
 
   // Fetch user data
-  const { data: user } = useQuery<User>({
+  const { data: user } = useQuery<UserProfile>({
     queryKey: ['/api/auth/user'],
   });
 
@@ -113,7 +113,7 @@ export default function UserDashboard() {
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: Partial<User>) => {
+    mutationFn: async (data: Partial<UserProfile>) => {
       return apiRequest("PATCH", "/api/users/profile", data);
     },
     onSuccess: () => {

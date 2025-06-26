@@ -4,7 +4,7 @@ import { authMiddleware } from "../auth";
 import { geocodingService } from "../geocoding-service";
 import { badgeCalculator } from "../badge-calculator";
 import { fileUploadManager } from "../file-upload-manager";
-import { insertProfessionalSchema, insertReviewSchema } from "../../shared/schema";
+import { insertProfessionalSchema, insertReviewSchema } from "@wolfinder/shared";
 import multer from "multer";
 
 const upload = multer({
@@ -42,18 +42,17 @@ export function setupProfessionalRoutes(app: Express, storage: AppStorage) {
   // GET search professionals
   app.get("/api/professionals/search", async (req, res) => {
     try {
-      const { query, categoryId } = req.query;
+      const { search, categoryId } = req.query;
       
-      if (!query || typeof query !== 'string') {
-        return res.status(400).json({ message: "Query parameter is required" });
-      }
+      // Permetti ricerche vuote per mostrare tutti i professionisti
+      const searchTerm = search && typeof search === 'string' ? search : '';
 
       const categoryIdNum = categoryId ? parseInt(categoryId as string) : undefined;
       if (categoryId && isNaN(categoryIdNum!)) {
         return res.status(400).json({ message: "Invalid category ID" });
       }
 
-      const professionals = await storage.searchProfessionals(query, categoryIdNum);
+      const professionals = await storage.searchProfessionals(searchTerm, categoryIdNum);
       res.json(professionals);
     } catch (error) {
       console.error("Error searching professionals:", error);

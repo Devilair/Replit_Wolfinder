@@ -95,7 +95,6 @@ export default function AdminProfessionals() {
       sort: sortBy, 
       page: currentPage 
     }],
-    refetchInterval: 30000
   });
 
   const { data: categories = [] } = useQuery<Category[]>({
@@ -105,7 +104,6 @@ export default function AdminProfessionals() {
   // Query for pending verification documents
   const { data: pendingDocuments, isLoading } = useQuery<Document[]>({
     queryKey: ['/api/admin/verification-documents/pending'],
-    refetchInterval: 30000 // Auto-refresh every 30 seconds
   });
 
   const pendingCount = Array.isArray(pendingDocuments) ? pendingDocuments.length : 0;
@@ -545,7 +543,6 @@ function PendingDocumentsVerification() {
   // Query for pending verification documents
   const { data: pendingDocuments, isLoading } = useQuery<Document[]>({
     queryKey: ['/api/admin/verification-documents/pending'],
-    refetchInterval: 30000 // Auto-refresh every 30 seconds
   });
 
   // Mutation for approving/rejecting documents

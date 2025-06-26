@@ -1,8 +1,20 @@
 import axios from 'axios';
 import { useAuthStore } from '@/hooks/useAuthStore'; // Assumendo che lo store sia esportato
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+// @ts-expect-error: import.meta.env è disponibile solo in ambiente Vite
+const API_URL = typeof import.meta.env !== 'undefined' ? import.meta.env.VITE_API_URL : undefined;
+console.log("API_URL:", API_URL);
+
+fetch(API_URL + "/health")
+  .then(res => res.json())
+  .then(data => console.log("API health:", data))
+  .catch(err => console.error("API health error:", err));
+
+export const api = axios.create({
+  baseURL: API_URL || '/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 api.interceptors.request.use(
@@ -16,6 +28,4 @@ api.interceptors.request.use(
   (error) => {
     return Promise.reject(error);
   }
-);
-
-export { api }; 
+); 

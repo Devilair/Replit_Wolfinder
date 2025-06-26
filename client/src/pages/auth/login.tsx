@@ -12,6 +12,7 @@ import { AlertCircle, LogIn } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 
 const loginSchema = z.object({
   email: z.string().email("Email non valida"),
@@ -24,6 +25,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function Login() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { setAuthTokens, setUser } = useAuth();
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -39,13 +41,12 @@ export default function Login() {
       return apiRequest("POST", "/api/auth/login", data);
     },
     onSuccess: (response: any) => {
-      // La risposta contiene message, user, token
-      if (response?.token && response?.user) {
-        localStorage.setItem("authToken", response.token);
-        localStorage.setItem("user", JSON.stringify(response.user));
-        
+      if (response?.accessToken && response?.user) {
+        setAuthTokens(response.accessToken, response.refreshToken);
+        setUser(response.user);
+
         toast({
-          title: "Login effettuato",
+          title: "Accesso effettuato",
           description: `Benvenuto ${response.user.name}!`,
         });
 
@@ -65,10 +66,11 @@ export default function Login() {
         });
       }
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || error.message || "Si è verificato un errore";
       toast({
         title: "Errore login",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },

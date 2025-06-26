@@ -116,10 +116,10 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {stats?.activeUsers.today || 0}
+                {stats?.activeUsers?.today || 0}
               </div>
               <p className="text-xs text-muted-foreground">
-                {stats?.activeUsers.changePercent && stats.activeUsers.changePercent > 0 ? '+' : ''}{stats?.activeUsers.changePercent || 0}% vs ieri
+                {stats?.activeUsers?.changePercent && stats?.activeUsers?.changePercent > 0 ? '+' : ''}{stats?.activeUsers?.changePercent || 0}% vs ieri
               </p>
             </CardContent>
           </Card>
@@ -161,7 +161,7 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">
-                {stats?.revenue.subscriptionConversion || 0}%
+                {stats?.revenue?.subscriptionConversion || 0}%
               </div>
               <p className="text-xs text-muted-foreground">
                 Abbonamenti attivati
@@ -285,7 +285,7 @@ export default function AdminDashboard() {
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Conversione abbonamenti</span>
                     <span className="text-sm font-semibold text-purple-600">
-                      {stats?.revenue.subscriptionConversion || 0}% conversion
+                      {stats?.revenue?.subscriptionConversion || 0}% conversion
                     </span>
                   </div>
                 </div>

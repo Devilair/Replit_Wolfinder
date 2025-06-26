@@ -6,8 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import SubscriptionLimitsCard from "@/components/subscription-limits-card";
 import { Crown, Camera, MessageSquare, Building, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
-import { getProfessionalFeatures, canAccessFeature, getFeatureLimit } from "@shared/subscription-features";
-import type { Subscription, SubscriptionPlan } from "@shared/schema";
+import { getProfessionalFeatures, canAccessFeature, getFeatureLimit } from "@wolfinder/shared";
+import type { Subscription, SubscriptionPlan } from "@wolfinder/shared";
 
 // No demo data - all subscriptions from real database
 const DEMO_SUBSCRIPTIONS = {

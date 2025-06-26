@@ -7,8 +7,8 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center mb-6">
-              <Search className="text-amber-400 text-2xl mr-2" />
+            <div className="flex items-center gap-2 mb-6">
+              <img src="/logo.png" alt="Wolfinder" className="h-8 w-auto" />
               <span className="text-2xl font-bold">Wolfinder</span>
             </div>
             <p className="text-gray-200 mb-6 max-w-md">

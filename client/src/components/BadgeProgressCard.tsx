@@ -1,4 +1,4 @@
-import { Badge, ProfessionalBadge } from "@shared/schema";
+import { Badge, ProfessionalBadge } from "@wolfinder/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -72,7 +72,7 @@ export function BadgeProgressCard({ badgeProgress, onAction }: BadgeProgressCard
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            {getBadgeIcon(badge.type, isEarned)}
+            {getBadgeIcon(badge.type || 'automatic', isEarned)}
             <div>
               <CardTitle className="text-lg font-semibold flex items-center gap-2">
                 {badge.name}

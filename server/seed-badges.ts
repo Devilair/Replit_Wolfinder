@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { badges } from "@shared/schema";
+import { badges } from "@wolfinder/shared";
 import { BADGE_MASTER_DICTIONARY } from "./badge-master-dictionary";
 
 async function seedBadges() {
@@ -17,15 +17,11 @@ async function seedBadges() {
         .values({
           name: badgeDefinition.name,
           slug: badgeDefinition.slug,
-          family: badgeDefinition.family,
           icon: badgeDefinition.icon,
           color: badgeDefinition.color,
           description: badgeDefinition.description,
-          requirements: badgeDefinition.requirements,
-          calculationMethod: badgeDefinition.calculationMethod,
-          priority: badgeDefinition.priority,
-          type: badgeDefinition.calculationMethod === 'automatic' ? 'automatic' : 'manual',
-          isActive: true,
+          criteria: JSON.stringify(badgeDefinition.requirements),
+          type: badgeDefinition.calculationMethod === 'automatic' ? 'automatic' : 'achievement',
         })
         .returning();
 

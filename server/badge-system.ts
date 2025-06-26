@@ -2,13 +2,12 @@ import { db } from "./db";
 import { 
   badges, 
   professionalBadges, 
-  badgeMetrics,
   professionals,
   reviews,
   type Badge,
   type ProfessionalBadge,
-  type BadgeMetric
-} from "@shared/schema";
+  badgeMetrics
+} from "@wolfinder/shared";
 import { eq, and, sql, desc, count, avg } from "drizzle-orm";
 
 // Badge Master Dictionary - 20+ badge in 4 famiglie
@@ -345,18 +344,13 @@ export class BadgeSystem {
 
     return {
       professionalId,
-      reviewsCount: stats?.count ? Number(stats.count) : 0,
-      avgRating: stats?.avgRating ? Number(stats.avgRating) : 0,
-      photosCount: 0, // Placeholder, implementare conteggio reale se disponibile
-      profileCompleteness,
-      tenureDays,
-      noLowReviewsRecent: recentReviews.every(r => r.rating >= 4),
-      fiveStarPercentage: recentReviews.length > 0 
-        ? (recentReviews.filter(r => r.rating === 5).length / recentReviews.length) * 100 
-        : 0,
-      isVerified: professional.verificationStatus === 'approved' || professional.verificationStatus === 'verified',
-      isClaimed: professional.isClaimed || false,
-      subscriptionActive: true, // Will be calculated from subscription table
+      isVerified: professional.isVerified,
+      isClaimed: professional.isClaimed,
+      profileCompleteness: profileCompleteness,
+      platformTenure: tenureDays,
+      reviewCount: stats?.count || 0,
+      averageRating: stats?.avgRating || 0,
+      recentReviewCount: recentReviews.length,
       calculatedAt: new Date()
     };
   }
@@ -371,37 +365,37 @@ export class BadgeSystem {
           satisfied = metrics.profileCompleteness >= 60;
           break;
         case 'first_review_received':
-          satisfied = metrics.reviewsCount >= 1;
+          satisfied = metrics.reviewCount >= 1;
           break;
         case 'profile_verified_and_claimed':
           satisfied = metrics.isVerified && metrics.isClaimed;
           break;
         case 'positive_reviews_gte_10':
-          satisfied = metrics.reviewsCount >= 10 && metrics.avgRating >= 4;
+          satisfied = metrics.reviewCount >= 10 && metrics.averageRating >= 4;
           break;
         case 'reviews_count_gte_25':
-          satisfied = metrics.reviewsCount >= 25;
+          satisfied = metrics.reviewCount >= 25;
           break;
         case 'reviews_count_gte_100':
-          satisfied = metrics.reviewsCount >= 100;
+          satisfied = metrics.reviewCount >= 100;
           break;
         case 'avg_rating_gte_4_8':
-          satisfied = metrics.avgRating >= 4.8 && metrics.reviewsCount >= 5;
+          satisfied = metrics.averageRating >= 4.8 && metrics.reviewCount >= 5;
           break;
         case 'min_reviews_5':
-          satisfied = metrics.reviewsCount >= 5;
+          satisfied = metrics.reviewCount >= 5;
           break;
         case 'no_low_reviews_6m':
-          satisfied = metrics.noLowReviewsRecent;
+          satisfied = metrics.recentReviewCount === 0;
           break;
         case 'five_star_percentage_gte_95':
-          satisfied = metrics.fiveStarPercentage >= 95 && metrics.reviewsCount >= 10;
+          satisfied = metrics.recentReviewCount > 0 && metrics.recentReviewCount / metrics.reviewCount * 100 >= 95;
           break;
         case 'photos_count_gte_5':
           satisfied = metrics.photosCount >= 5;
           break;
         case 'platform_tenure_gte_1y':
-          satisfied = metrics.tenureDays >= 365;
+          satisfied = metrics.platformTenure >= 365;
           break;
         case 'profile_completeness_100':
           satisfied = metrics.profileCompleteness >= 95;
@@ -468,9 +462,7 @@ export class BadgeSystem {
       await db.insert(professionalBadges).values({
         professionalId,
         badgeId: badge.id,
-        awardedBy,
-        metadata: metadata,
-        isVisible: true
+        awardedAt: new Date(),
       });
 
       return true;
@@ -484,8 +476,7 @@ export class BadgeSystem {
   async revokeBadge(
     professionalId: number,
     badgeSlug: string,
-    revokedBy: number,
-    reason: string
+    revokeReason: string
   ): Promise<boolean> {
     try {
       const [badge] = await db
@@ -495,20 +486,15 @@ export class BadgeSystem {
 
       if (!badge) return false;
 
-      await db
-        .update(professionalBadges)
+      await db.update(professionalBadges)
         .set({
           revokedAt: new Date(),
-          revokedBy,
-          revokeReason: reason
+          revokeReason,
         })
-        .where(
-          and(
-            eq(professionalBadges.professionalId, professionalId),
-            eq(professionalBadges.badgeId, badge.id),
-            sql`${professionalBadges.revokedAt} IS NULL`
-          )
-        );
+        .where(and(
+          eq(professionalBadges.professionalId, professionalId),
+          eq(professionalBadges.badgeId, badge.id)
+        ));
 
       return true;
     } catch (error) {
@@ -548,15 +534,10 @@ export class BadgeSystem {
   async saveProfessionalMetrics(professionalId: number, metrics: any) {
     await db.insert(badgeMetrics).values({
       professionalId,
-      reviewsCount: metrics.reviewsCount || 0,
-      avgRating: (metrics.avgRating || 0).toString(),
-      photosCount: metrics.photosCount || 0,
-      responseRate: "0", // Placeholder
-      profileCompleteness: (metrics.profileCompleteness || 0).toString(),
-      daysSinceRegistration: metrics.tenureDays || 0,
-      totalEarnings: "0", // Placeholder
-      verifiedDocuments: 0, // Placeholder
-      calculatedAt: new Date()
+      badgeId: 1, // Default badge ID
+      metricType: 'overall',
+      currentValue: metrics.reviewCount || 0,
+      targetValue: 100,
     });
   }
 }
