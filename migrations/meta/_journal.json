@@ -8,6 +8,20 @@
       "when": 1750635139809,
       "tag": "0000_mysterious_leo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1750753728509,
+      "tag": "0001_stiff_rictor",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1750754169599,
+      "tag": "0002_damp_jimmy_woo",
+      "breakpoints": true
     }
   ]
 }

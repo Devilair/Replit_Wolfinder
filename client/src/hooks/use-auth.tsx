@@ -1,6 +1,6 @@
 import { useAuthStore } from './useAuthStore';
 import { api } from '@/lib/api';
-import type { User } from '@shared/schema';
+import type { User } from '@wolfinder/shared';
 
 export const useAuth = () => {
   const { 

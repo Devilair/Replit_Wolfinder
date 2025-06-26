@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import StarRating from "@/components/star-rating";
 import { CalendarDays, Shield, Briefcase } from "lucide-react";
-import type { Review, User, Category } from "@shared/schema";
+import type { Review, User, Category } from "@wolfinder/shared";
 
 interface ReviewCardProps {
   review: Review & { 
@@ -27,7 +27,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
           <div className="flex items-center">
             <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mr-4">
               <span className="text-lg font-semibold text-gray-600">
-                {review.user.name.charAt(0)}
+                {review.user.name?.charAt(0) || 'U'}
               </span>
             </div>
             <div>

@@ -1,4 +1,4 @@
-import { Badge, ProfessionalBadge } from "@shared/schema";
+import { Badge, ProfessionalBadge } from "@wolfinder/shared";
 import { BadgeCard } from "@/components/ui/badge-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

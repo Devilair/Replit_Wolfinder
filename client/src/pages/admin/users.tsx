@@ -27,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { User } from "shared/schema";
+import type { User } from "@wolfinder/shared";
 
 // Types per la dashboard utenti
 interface UserStats {
@@ -437,7 +437,6 @@ export default function UsersPage() {
                 <SelectItem value="active">Attivo</SelectItem>
                 <SelectItem value="suspended">Sospeso</SelectItem>
                 <SelectItem value="pending">In Attesa</SelectItem>
-                <SelectItem value="deleted">Eliminato</SelectItem>
               </SelectContent>
             </Select>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
@@ -536,8 +535,8 @@ export default function UsersPage() {
                   <TableCell>
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`} />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name || user.email}`} />
+                        <AvatarFallback>{(user.name || user.email).charAt(0).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="font-medium">{user.name}</div>
@@ -554,7 +553,7 @@ export default function UsersPage() {
                       <span className="capitalize">{user.role}</span>
                     </div>
                   </TableCell>
-                  <TableCell>{getStatusBadge(user.accountStatus)}</TableCell>
+                  <TableCell>{getStatusBadge(user.accountStatus || 'active')}</TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       <div className="flex items-center space-x-1">
@@ -718,10 +717,10 @@ function UserDetailsModal({
 }) {
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState({
-    name: user.name,
+    name: user.name || '',
     email: user.email,
-    role: user.role,
-    accountStatus: user.accountStatus
+    role: user.role as 'consumer' | 'professional' | 'admin',
+    accountStatus: user.accountStatus || 'active'
   });
 
   const getRoleIcon = (role: string) => {
@@ -786,7 +785,7 @@ function UserDetailsModal({
             <div>
               <Label>Ruolo</Label>
               {editMode ? (
-                <Select value={editData.role} onValueChange={(value) => setEditData(prev => ({ ...prev, role: value }))}>
+                <Select value={editData.role} onValueChange={(value) => setEditData(prev => ({ ...prev, role: value as 'consumer' | 'professional' | 'admin' }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -809,7 +808,7 @@ function UserDetailsModal({
             <div>
               <Label>Stato Account</Label>
               {editMode ? (
-                <Select value={editData.accountStatus} onValueChange={(value) => setEditData(prev => ({ ...prev, accountStatus: value }))}>
+                <Select value={editData.accountStatus} onValueChange={(value) => setEditData(prev => ({ ...prev, accountStatus: value as 'active' | 'suspended' | 'pending' }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -817,11 +816,10 @@ function UserDetailsModal({
                     <SelectItem value="active">Attivo</SelectItem>
                     <SelectItem value="suspended">Sospeso</SelectItem>
                     <SelectItem value="pending">In Attesa</SelectItem>
-                    <SelectItem value="deleted">Eliminato</SelectItem>
                   </SelectContent>
                 </Select>
               ) : (
-                <div>{getStatusBadge(user.accountStatus)}</div>
+                <div>{getStatusBadge(user.accountStatus || 'active')}</div>
               )}
             </div>
             <div>

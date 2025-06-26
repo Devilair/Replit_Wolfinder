@@ -1,4 +1,4 @@
-import { Badge, ProfessionalBadge } from "@shared/schema";
+import { Badge, ProfessionalBadge } from "@wolfinder/shared";
 import { cn } from "@/lib/utils";
 import { 
   CheckCircle, 

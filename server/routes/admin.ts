@@ -33,6 +33,20 @@ export function setupAdminRoutes(app: express.Express, storage: AppStorage) {
     }
   });
 
+  router.get('/professionals', async (_req: Request, res: Response) => {
+    try {
+      const professionals = await storage.getProfessionals();
+      res.status(200).json({
+        data: professionals,
+        total: professionals.length,
+        pages: 1
+      });
+    } catch (error) {
+      console.error("Errore nel recuperare i professionisti admin:", error);
+      res.status(500).json({ message: "Errore interno del server" });
+    }
+  });
+
   // Qui possono essere aggiunte altre rotte admin in futuro
   
   app.use('/api/admin', router);

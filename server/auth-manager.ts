@@ -103,7 +103,7 @@ export class AuthManager {
   public async generateTokens(
     payload: { id: number; email: string; role: 'user' | 'admin' | 'professional' },
     family?: string
-  ): Promise<{ accessToken: string; refreshToken: string; refreshTokenExpiresAt: Date }> {
+  ): Promise<AuthTokens> {
     const now = new Date();
     const tokenFamily = family || randomBytes(16).toString('hex');
     this.tokenFamilies.set(tokenFamily, new Date(now.getTime() + this.REFRESH_TOKEN_EXPIRY_SECONDS * 1000));
@@ -123,9 +123,15 @@ export class AuthManager {
     const accessToken = jwt.sign(accessTokenPayload, env.JWT_SECRET, { expiresIn: this.ACCESS_TOKEN_EXPIRY_SECONDS });
     const refreshToken = jwt.sign(refreshTokenPayload, env.JWT_SECRET, { expiresIn: this.REFRESH_TOKEN_EXPIRY_SECONDS });
 
+    const accessTokenExpiresAt = new Date(now.getTime() + this.ACCESS_TOKEN_EXPIRY_SECONDS * 1000);
     const refreshTokenExpiresAt = new Date(now.getTime() + this.REFRESH_TOKEN_EXPIRY_SECONDS * 1000);
 
-    return { accessToken, refreshToken, refreshTokenExpiresAt };
+    return {
+      accessToken,
+      refreshToken,
+      accessTokenExpiresAt,
+      refreshTokenExpiresAt,
+    };
   }
 
   verifyToken(token: string): TokenPayload | null {

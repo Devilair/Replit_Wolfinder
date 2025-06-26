@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';
 import * as schema from './shared/schema';
-import { categories as seedCategories } from './shared/seed-data';
+import { categories as seedCategories, subcategories as seedSubcategories } from './shared/seed-data';
 import 'dotenv/config';
 
 async function setupDatabase() {
@@ -32,6 +32,15 @@ async function setupDatabase() {
         console.log("🌿 Categorie inserite con successo.");
     } catch (error) {
         console.error("❌ ERRORE durante il seeding delle categorie:", error);
+    }
+    
+    // Seeding delle sottocategorie
+    try {
+        console.log("\n🌱 Seeding delle sottocategorie...");
+        await db.insert(schema.subcategories).values(seedSubcategories).onConflictDoNothing();
+        console.log("🌿 Sottocategorie inserite con successo.");
+    } catch (error) {
+        console.error("❌ ERRORE durante il seeding delle sottocategorie:", error);
     }
     
     console.log("\n🎉 Setup del database completato con successo!");

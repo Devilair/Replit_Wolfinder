@@ -10,47 +10,40 @@ import {
   transactions,
   professionalUsage,
   type User,
-  type InsertUser,
+  type NewUser,
   type Professional,
-  type InsertProfessional,
+  type NewProfessional,
   type ProfessionalWithDetails,
-  type ProfessionalSummary,
   type Category,
-  type InsertCategory,
+  type NewCategory,
   type Review,
-  type InsertReview,
+  type NewReview,
   type ReviewHelpfulVote,
-  type InsertReviewHelpfulVote,
   type ReviewFlag,
-  type InsertReviewFlag,
   type SubscriptionPlan,
-  type InsertSubscriptionPlan,
   type Subscription,
-  type InsertSubscription,
   type Transaction,
-  type InsertTransaction,
   type ProfessionalUsage,
-  type InsertProfessionalUsage,
-} from "@shared/schema";
+} from "@wolfinder/shared";
 import { db } from "./db";
 import { eq, desc, asc, and, or, ilike, count, avg, sql } from "drizzle-orm";
 
 // Interface aggiornata per il sistema di recensioni avanzato
 export interface IAdvancedReviewStorage {
   // Gestione recensioni avanzate
-  createReview(review: InsertReview): Promise<Review>;
+  createReview(review: NewReview): Promise<Review>;
   getReviewsByProfessional(professionalId: number): Promise<(Review & { user: User })[]>;
-  updateReviewStatus(reviewId: number, status: string): Promise<void>;
+  updateReviewStatus(reviewId: number, status: 'pending' | 'approved' | 'rejected'): Promise<void>;
   
   // Gestione voti utili
-  addHelpfulVote(vote: InsertReviewHelpfulVote): Promise<ReviewHelpfulVote>;
+  addHelpfulVote(vote: ReviewHelpfulVote): Promise<ReviewHelpfulVote>;
   removeHelpfulVote(reviewId: number, userId: number): Promise<void>;
   getHelpfulVotesByUser(userId: number): Promise<ReviewHelpfulVote[]>;
   
   // Gestione segnalazioni
-  flagReview(flag: InsertReviewFlag): Promise<ReviewFlag>;
+  flagReview(flag: ReviewFlag): Promise<ReviewFlag>;
   getFlaggedReviews(): Promise<(ReviewFlag & { review: Review & { user: User; professional: Professional } })[]>;
-  updateFlagStatus(flagId: number, status: string): Promise<void>;
+  updateFlagStatus(flagId: number, status: 'pending' | 'resolved' | 'dismissed'): Promise<void>;
   
   // Sistema di ranking meritocratico
   calculateProfessionalRanking(professionalId: number): Promise<{
@@ -76,7 +69,7 @@ export interface IAdvancedReviewStorage {
   }>;
   
   // Amministrazione
-  getAdminReviews(status?: string): Promise<(Review & { user: User; professional: Professional })[]>;
+  getAdminReviews(status?: 'pending' | 'approved' | 'rejected'): Promise<(Review & { user: User; professional: Professional })[]>;
   getPendingVerificationReviews(): Promise<(Review & { user: User; professional: Professional })[]>;
   getReviewAnalytics(): Promise<{
     totalReviews: number;
@@ -90,12 +83,12 @@ export interface IAdvancedReviewStorage {
 
 // Implementazione dello storage per recensioni avanzate
 export class AdvancedReviewStorage implements IAdvancedReviewStorage {
-  async createReview(reviewData: InsertReview): Promise<Review> {
+  async createReview(reviewData: NewReview): Promise<Review> {
     const [review] = await db
       .insert(reviews)
       .values({
         ...reviewData,
-        status: 'unverified',
+        status: 'pending',
         ipAddress: reviewData.ipAddress || null,
         userAgent: reviewData.userAgent || null,
       })
@@ -115,17 +108,16 @@ export class AdvancedReviewStorage implements IAdvancedReviewStorage {
     return results.map(r => ({ ...r.reviews, user: r.users }));
   }
 
-  async updateReviewStatus(reviewId: number, status: string): Promise<void> {
+  async updateReviewStatus(reviewId: number, status: 'pending' | 'approved' | 'rejected'): Promise<void> {
     await db
       .update(reviews)
       .set({
         status,
-        updatedAt: new Date(),
       })
       .where(eq(reviews.id, reviewId));
   }
 
-  async addHelpfulVote(voteData: InsertReviewHelpfulVote): Promise<ReviewHelpfulVote> {
+  async addHelpfulVote(voteData: ReviewHelpfulVote): Promise<ReviewHelpfulVote> {
     // Verifica se l'utente ha già votato
     const existingVote = await db
       .select()
@@ -181,7 +173,7 @@ export class AdvancedReviewStorage implements IAdvancedReviewStorage {
       .where(eq(reviewHelpfulVotes.userId, userId));
   }
 
-  async flagReview(flagData: InsertReviewFlag): Promise<ReviewFlag> {
+  async flagReview(flagData: ReviewFlag): Promise<ReviewFlag> {
     const [flag] = await db
       .insert(reviewFlags)
       .values(flagData)
@@ -213,7 +205,7 @@ export class AdvancedReviewStorage implements IAdvancedReviewStorage {
     }));
   }
 
-  async updateFlagStatus(flagId: number, status: string): Promise<void> {
+  async updateFlagStatus(flagId: number, status: 'pending' | 'resolved' | 'dismissed'): Promise<void> {
     await db
       .update(reviewFlags)
       .set({ status })
@@ -285,8 +277,8 @@ export class AdvancedReviewStorage implements IAdvancedReviewStorage {
     if (professionalReviews.length === 0) return;
 
     // Calcola media pesata delle recensioni
-    const verifiedReviews = professionalReviews.filter(r => r.status === "verified");
-    const unverifiedReviews = professionalReviews.filter(r => r.status === "unverified");
+    const verifiedReviews = professionalReviews.filter(r => r.status === "approved");
+    const unverifiedReviews = professionalReviews.filter(r => r.status === "pending");
     
     const verifiedWeight = verifiedReviews.reduce((sum, r) => sum + r.rating, 0);
     const unverifiedWeight = unverifiedReviews.reduce((sum, r) => sum + r.rating * 0.4, 0);
@@ -294,11 +286,11 @@ export class AdvancedReviewStorage implements IAdvancedReviewStorage {
     const totalWeight = verifiedReviews.length + unverifiedReviews.length * 0.4;
     const averageRating = totalWeight > 0 ? (verifiedWeight + unverifiedWeight) / totalWeight : 0;
 
-    await db
-      .update(professionals)
-      .set({
-        rating: (Math.round(averageRating * 100) / 100).toString(),
-        reviewCount: professionalReviews.length,
+    // Aggiorna il rating del professionista
+    await db.update(professionals)
+      .set({ 
+        rating: Math.round(averageRating * 100) / 100,
+        reviewCount: professionalReviews.length
       })
       .where(eq(professionals.id, professionalId));
   }
@@ -306,11 +298,7 @@ export class AdvancedReviewStorage implements IAdvancedReviewStorage {
   async addProfessionalResponse(reviewId: number, response: string): Promise<void> {
     await db
       .update(reviews)
-      .set({
-        professionalResponse: response,
-        responseTime: new Date().toISOString(),
-        updatedAt: new Date(),
-      })
+      .set({ professionalResponse: response })
       .where(eq(reviews.id, reviewId));
   }
 
@@ -367,14 +355,14 @@ export class AdvancedReviewStorage implements IAdvancedReviewStorage {
     };
   }
 
-  async getAdminReviews(status?: string): Promise<(Review & { user: User; professional: Professional })[]> {
+  async getAdminReviews(status?: 'pending' | 'approved' | 'rejected'): Promise<(Review & { user: User; professional: Professional })[]> {
     const query = db
       .select()
       .from(reviews)
       .innerJoin(users, eq(reviews.userId, users.id))
       .innerJoin(professionals, eq(reviews.professionalId, professionals.id));
 
-    const results = status 
+    const results = status
       ? await query.where(eq(reviews.status, status)).orderBy(desc(reviews.createdAt))
       : await query.orderBy(desc(reviews.createdAt));
     
@@ -386,7 +374,7 @@ export class AdvancedReviewStorage implements IAdvancedReviewStorage {
   }
 
   async getPendingVerificationReviews(): Promise<(Review & { user: User; professional: Professional })[]> {
-    return await this.getAdminReviews("pending_verification");
+    return this.getAdminReviews('pending');
   }
 
   async getReviewAnalytics(): Promise<{
@@ -398,25 +386,23 @@ export class AdvancedReviewStorage implements IAdvancedReviewStorage {
     averageVerificationTime: number;
   }> {
     const allReviews = await db.select().from(reviews);
-    
-    const totalReviews = allReviews.length;
-    const verifiedReviews = allReviews.filter(r => r.status === "verified").length;
-    const pendingReviews = allReviews.filter(r => r.status === "pending_verification").length;
+    const verifiedReviews = allReviews.filter(r => r.status === "approved").length;
+    const pendingReviews = allReviews.filter(r => r.status === "pending").length;
     
     const flaggedReviewsResult = await db
       .select({ count: count() })
       .from(reviewFlags)
       .where(eq(reviewFlags.status, "pending"));
     
-    const averageRating = totalReviews > 0 
-      ? allReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews 
+    const averageRating = allReviews.length > 0 
+      ? allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length 
       : 0;
 
     // Calcola tempo medio di verifica (stub per ora)
     const averageVerificationTime = 2.5; // giorni
 
     return {
-      totalReviews,
+      totalReviews: allReviews.length,
       verifiedReviews,
       pendingReviews,
       flaggedReviews: flaggedReviewsResult[0]?.count || 0,

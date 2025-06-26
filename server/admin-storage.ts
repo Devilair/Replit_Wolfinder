@@ -7,7 +7,7 @@ import {
   reviews,
   User,
   Professional
-} from '../shared/schema';
+} from '@wolfinder/shared';
 
 /**
  * Questo file è stato drasticamente semplificato per rimuovere tutte le funzionalità

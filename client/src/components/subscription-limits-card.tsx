@@ -3,8 +3,41 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Crown, AlertTriangle, CheckCircle, XCircle, Zap } from "lucide-react";
+<<<<<<< HEAD
 import { getProfessionalFeatures, getUsageStatus } from "@wolfinder/shared-types";
 import type { Subscription, SubscriptionPlan } from "@shared/schema";
+=======
+
+// Tipi locali per evitare import problematici
+interface SubscriptionPlan {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  price: number;
+  currency: string;
+  interval: 'month' | 'year';
+  features: Record<string, any>;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface Subscription {
+  id: number;
+  userId: number;
+  planId: number;
+  status: 'active' | 'canceled' | 'past_due' | 'unpaid';
+  stripeSubscriptionId: string | null;
+  stripeCustomerId: string | null;
+  currentPeriodStart: Date | null;
+  currentPeriodEnd: Date | null;
+  canceledAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  plan: SubscriptionPlan;
+}
+>>>>>>> c674766a33746b3a9795c1c81da0821d46cadf00
 
 interface SubscriptionLimitsCardProps {
   subscription?: Subscription & { plan: SubscriptionPlan };
@@ -13,6 +46,56 @@ interface SubscriptionLimitsCardProps {
     servicesListed: number;
   };
   onUpgrade?: () => void;
+}
+
+// Funzioni locali per evitare import problematici
+function getProfessionalFeatures(subscription?: Subscription & { plan: SubscriptionPlan }) {
+  if (!subscription) {
+    return {
+      portfolioSection: false,
+      certificationsSection: false,
+      reviewResponseEnabled: false,
+      reviewHighlights: false,
+      analyticsAccess: false,
+      detailedStats: false,
+      competitorAnalysis: false,
+      apiAccess: false,
+      bulkOperations: false,
+      advancedReporting: false,
+    };
+  }
+  
+  return subscription.plan.features || {};
+}
+
+function getUsageStatus(current: number, feature: string, subscription?: Subscription & { plan: SubscriptionPlan }) {
+  if (!subscription) {
+    return {
+      isUnlimited: false,
+      canUse: current < 5,
+      percentage: (current / 5) * 100,
+      remaining: Math.max(0, 5 - current),
+    };
+  }
+  
+  const limit = subscription.plan.features?.[feature] || 5;
+  const isUnlimited = limit === -1;
+  
+  if (isUnlimited) {
+    return {
+      isUnlimited: true,
+      canUse: true,
+      percentage: 0,
+      remaining: -1,
+    };
+  }
+  
+  return {
+    isUnlimited: false,
+    canUse: current < limit,
+    percentage: (current / limit) * 100,
+    remaining: Math.max(0, limit - current),
+  };
 }
 
 export default function SubscriptionLimitsCard({ 
@@ -24,8 +107,8 @@ export default function SubscriptionLimitsCard({
   const planName = subscription?.plan.name || 'Essentials';
   const isActive = subscription?.status === 'active';
 
-  const photosStatus = getUsageStatus(currentUsage.photosUploaded, subscription, 'maxPhotos');
-  const servicesStatus = getUsageStatus(currentUsage.servicesListed, subscription, 'maxServices');
+  const photosStatus = getUsageStatus(currentUsage.photosUploaded, 'maxPhotos', subscription);
+  const servicesStatus = getUsageStatus(currentUsage.servicesListed, 'maxServices', subscription);
 
   const getPlanBadgeVariant = () => {
     if (!isActive) return "secondary";
@@ -204,86 +287,16 @@ export default function SubscriptionLimitsCard({
                 </div>
               </>
             )}
-            
-            {/* Funzionalità esclusive Enterprise */}
-            {planName === 'Enterprise' && (
-              <>
-                <div className="flex items-center justify-between">
-                  <span>White-label Branding</span>
-                  {features.whitelabelBranding ? (
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <XCircle className="h-4 w-4 text-gray-400" />
-                  )}
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span>Integrazioni Custom</span>
-                  {features.customIntegrations ? (
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <XCircle className="h-4 w-4 text-gray-400" />
-                  )}
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span>Account Manager Dedicato</span>
-                  {features.dedicatedAccountManager ? (
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <XCircle className="h-4 w-4 text-gray-400" />
-                  )}
-                </div>
-              </>
-            )}
-
-            <div className="flex items-center justify-between">
-              <span>Badge Identità Verificata</span>
-              {features.verifiedBadge ? (
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              ) : (
-                <XCircle className="h-4 w-4 text-gray-400" />
-              )}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span>Badge Piano Premium</span>
-              {features.premiumBadge ? (
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              ) : (
-                <XCircle className="h-4 w-4 text-gray-400" />
-              )}
-            </div>
           </div>
         </div>
 
-        {/* Call to action per upgrade */}
-        {planName === 'Essentials' && onUpgrade && (
+        {/* Call to action */}
+        {onUpgrade && (
           <div className="pt-4 border-t">
-            <Button onClick={onUpgrade} className="w-full" size="sm">
+            <Button onClick={onUpgrade} className="w-full" variant="outline">
               <Zap className="h-4 w-4 mr-2" />
               Aggiorna Piano
             </Button>
-            <p className="text-xs text-center text-gray-500 mt-2">
-              Sblocca tutte le funzionalità con un piano a pagamento
-            </p>
-          </div>
-        )}
-
-        {/* Avviso limiti raggiunti */}
-        {(!photosStatus.canUse || !servicesStatus.canUse) && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <div className="flex items-start space-x-2">
-              <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-red-800">
-                  Limiti raggiunti
-                </p>
-                <p className="text-xs text-red-600 mt-1">
-                  Hai raggiunto i limiti del tuo piano. Aggiorna per continuare ad usare tutte le funzionalità.
-                </p>
-              </div>
-            </div>
           </div>
         )}
       </CardContent>

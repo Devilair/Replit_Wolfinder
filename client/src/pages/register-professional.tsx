@@ -10,8 +10,13 @@ import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import type { AddressSuggestion } from "@/hooks/useAddressSearch";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+<<<<<<< HEAD
 import { professionalRegistrationSchema } from "@wolfinder/shared-types";
 import type { Category } from "@wolfinder/shared-types";
+=======
+import { professionalRegistrationSchema } from "@wolfinder/shared";
+import type { Category } from "@wolfinder/shared";
+>>>>>>> c674766a33746b3a9795c1c81da0821d46cadf00
 import { z } from "zod";
 type ProfessionalRegistrationData = z.infer<typeof professionalRegistrationSchema>;
 import { Button } from "@/components/ui/button";

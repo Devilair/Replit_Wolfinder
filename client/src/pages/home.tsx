@@ -19,7 +19,7 @@ import {
   Users,
   TrendingUp
 } from "lucide-react";
-import type { Category, ProfessionalWithDetails } from "@shared/schema";
+import type { Category, ProfessionalWithDetails } from "@wolfinder/shared";
 
 interface PlatformStats {
   professionalsCount: number;
@@ -169,7 +169,7 @@ export default function Home() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {categories?.map((category) => {
-              const IconComponent = getCategoryIcon(category.slug);
+              const IconComponent = getCategoryIcon(category.slug || 'default');
               return (
                 <Card 
                   key={category.id} 
@@ -186,7 +186,7 @@ export default function Home() {
                       {category.description}
                     </p>
                     <div className="text-blue-600 font-medium text-sm">
-                      {category.count} professionisti
+                      {category.count || 0} professionisti
                     </div>
                   </CardContent>
                 </Card>

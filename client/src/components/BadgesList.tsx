@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Badge, ProfessionalBadge } from "@shared/schema";
+import { Badge, ProfessionalBadge } from "@wolfinder/shared";
 import { BadgeCard } from "@/components/ui/badge-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

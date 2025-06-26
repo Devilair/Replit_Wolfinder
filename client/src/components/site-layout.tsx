@@ -36,7 +36,7 @@ export default function SiteLayout({ children }: SiteLayoutProps) {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
-              <Zap className="h-8 w-8 text-amber-600" />
+              <img src="/logo.png" alt="Wolfinder" className="h-10 w-auto" />
               <span className="text-2xl font-bold text-gray-900">Wolfinder</span>
             </Link>
             

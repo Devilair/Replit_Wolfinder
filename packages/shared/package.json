@@ -1,0 +1,32 @@
+{
+  "name": "@wolfinder/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./subscription-features": {
+      "types": "./dist/subscription-features.d.ts",
+      "import": "./dist/subscription-features.js",
+      "require": "./dist/subscription-features.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.4",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3"
+  }
+}

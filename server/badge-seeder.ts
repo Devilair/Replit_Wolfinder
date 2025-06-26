@@ -1,6 +1,6 @@
 // Badge Seeder - Populates database with Master Dictionary badges
 import { db } from "./db";
-import { badges } from "@shared/schema";
+import { badges } from "@wolfinder/shared";
 import { BADGE_MASTER_DICTIONARY } from "./badge-master-dictionary";
 import { eq } from "drizzle-orm";
 
@@ -25,9 +25,8 @@ export async function seedBadges() {
           icon: badgeDefinition.icon,
           color: badgeDefinition.color,
           family: badgeDefinition.family,
-          requirements: badgeDefinition.requirements,
-          type: badgeDefinition.calculationMethod === 'automatic' ? 'automatic' : 'manual',
-          isActive: true
+          criteria: JSON.stringify(badgeDefinition.requirements),
+          type: badgeDefinition.calculationMethod === 'automatic' ? 'automatic' : 'verified',
         });
         console.log(`✅ Created badge: ${badgeDefinition.name}`);
       } else {
@@ -40,9 +39,8 @@ export async function seedBadges() {
             icon: badgeDefinition.icon,
             color: badgeDefinition.color,
             family: badgeDefinition.family,
-            requirements: badgeDefinition.requirements,
-            type: badgeDefinition.calculationMethod === 'automatic' ? 'automatic' : 'manual',
-            updatedAt: new Date()
+            criteria: JSON.stringify(badgeDefinition.requirements),
+            type: badgeDefinition.calculationMethod === 'automatic' ? 'automatic' : 'verified',
           })
           .where(eq(badges.slug, badgeDefinition.slug));
         console.log(`🔄 Updated badge: ${badgeDefinition.name}`);

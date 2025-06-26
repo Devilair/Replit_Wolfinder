@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { subscriptionPlans } from "@shared/schema";
+import { subscriptionPlans } from "@wolfinder/shared";
 
 export async function seedSubscriptionPlans() {
   console.log("🌱 Seeding subscription plans...");
@@ -8,33 +8,23 @@ export async function seedSubscriptionPlans() {
     {
       name: "Gratuito",
       description: "Piano base per iniziare su Wolfinder",
-      priceMonthly: "0",
-      priceYearly: null,
+      price: 0,
+      currency: "eur",
+      interval: "month" as const,
       features: JSON.stringify([
         "Profilo modificabile",
         "Recensioni illimitate visibili",
         "Risposte illimitate",
         "Badge base"
       ]),
-      limits: null,
-      maxProfiles: 1,
-      maxPhotos: 3,
-      maxResponses: null, // unlimited
-      maxBadges: 5,
-      maxAccounts: 1,
-      canReceiveReviews: true,
-      canRespondToReviews: true,
-      prioritySupport: false,
-      analyticsAccess: false,
-      isActive: true,
-      stripePriceId: null, // Free plan has no Stripe price
-      sortOrder: 1
+      isActive: true
     },
     {
       name: "Essenziale",
       description: "Per professionisti che vogliono crescere",
-      priceMonthly: "29",
-      priceYearly: "290", // 2 mesi gratis
+      price: 2900, // in centesimi
+      currency: "eur",
+      interval: "month" as const,
       features: JSON.stringify([
         "Tutte le funzionalità del piano Gratuito",
         "Risposta illimitata alle recensioni",
@@ -43,25 +33,14 @@ export async function seedSubscriptionPlans() {
         "Analytics di base",
         "Supporto email prioritario"
       ]),
-      limits: null,
-      maxProfiles: 1,
-      maxPhotos: 10,
-      maxResponses: null, // unlimited
-      maxBadges: 15,
-      maxAccounts: 1,
-      canReceiveReviews: true,
-      canRespondToReviews: true,
-      prioritySupport: true,
-      analyticsAccess: true,
-      isActive: true,
-      stripePriceId: null, // To be set after creating Stripe prices
-      sortOrder: 2
+      isActive: true
     },
     {
       name: "Professionale",
       description: "Per studi e professionisti affermati",
-      priceMonthly: "59",
-      priceYearly: "590", // 2 mesi gratis
+      price: 5900, // in centesimi
+      currency: "eur",
+      interval: "month" as const,
       features: JSON.stringify([
         "Tutte le funzionalità del piano Essenziale",
         "Recensioni illimitate",
@@ -71,25 +50,14 @@ export async function seedSubscriptionPlans() {
         "Supporto telefonico",
         "Personalizzazione profilo avanzata"
       ]),
-      limits: null,
-      maxProfiles: 1,
-      maxPhotos: 25,
-      maxResponses: null,
-      maxBadges: null, // unlimited
-      maxAccounts: 3,
-      canReceiveReviews: true,
-      canRespondToReviews: true,
-      prioritySupport: true,
-      analyticsAccess: true,
-      isActive: true,
-      stripePriceId: null,
-      sortOrder: 3
+      isActive: true
     },
     {
       name: "Studio",
       description: "Per grandi studi e team multipli",
-      priceMonthly: "99",
-      priceYearly: "990", // 2 mesi gratis
+      price: 9900, // in centesimi
+      currency: "eur",
+      interval: "month" as const,
       features: JSON.stringify([
         "Tutte le funzionalità del piano Professionale",
         "Gestione team multipli",
@@ -102,19 +70,7 @@ export async function seedSubscriptionPlans() {
         "Badge di team",
         "White-label options"
       ]),
-      limits: null,
-      maxProfiles: 5,
-      maxPhotos: 50,
-      maxResponses: null,
-      maxBadges: null,
-      maxAccounts: 10,
-      canReceiveReviews: true,
-      canRespondToReviews: true,
-      prioritySupport: true,
-      analyticsAccess: true,
-      isActive: true,
-      stripePriceId: null,
-      sortOrder: 4
+      isActive: true
     }
   ];
 
@@ -132,7 +88,7 @@ export async function seedSubscriptionPlans() {
 
     console.log(`✅ Successfully created ${insertedPlans.length} subscription plans:`);
     insertedPlans.forEach(plan => {
-      console.log(`   - ${plan.name}: €${plan.priceMonthly}/mese`);
+      console.log(`   - ${plan.name}: €${plan.price / 100}/mese`);
     });
 
     return insertedPlans;

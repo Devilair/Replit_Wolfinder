@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge, ProfessionalBadge } from "@shared/schema";
+import { Badge, ProfessionalBadge } from "@wolfinder/shared";
 import { Award, TrendingUp, Clock, RefreshCw } from "lucide-react";
 
 interface BadgeProgress {

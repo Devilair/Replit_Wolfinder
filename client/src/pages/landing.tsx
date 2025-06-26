@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Link, useLocation } from "wouter";
-import type { Category, ProfessionalWithDetails } from "@shared/schema";
+import type { Category, ProfessionalWithDetails } from "@wolfinder/shared";
 
 interface Professional {
   id: number;
@@ -208,7 +208,7 @@ export default function Landing() {
                   <SelectContent>
                     {Array.isArray(categories) && categories.map((category: Category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.icon} {category.name}
+                        {category.icon || '🏢'} {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -387,7 +387,7 @@ export default function Landing() {
                 className="group"
               >
                 <Card className="text-center p-6 hover:shadow-lg transition-all duration-200 hover:bg-blue-50 border-2 hover:border-blue-200">
-                  <div className="text-3xl mb-3">{category.icon}</div>
+                  <div className="text-3xl mb-3">{category.icon || '🏢'}</div>
                   <div className="text-sm font-medium text-gray-900 group-hover:text-blue-600">
                     {category.name}
                   </div>

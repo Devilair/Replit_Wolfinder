@@ -136,16 +136,18 @@ export default function BadgeDashboard() {
       case 'professionista-riconosciuto':
         return Math.min(100, (reviewCount / 10) * 100);
       
-      case 'eccellenza-servizio':
+      case 'eccellenza-servizio': {
         const ratingProgress = rating >= 4.5 ? 50 : (rating / 4.5) * 50;
         const reviewProgress = Math.min(50, (reviewCount / 20) * 50);
         return Math.min(100, ratingProgress + reviewProgress);
+      }
       
-      case 'maestro-categoria':
+      case 'maestro-categoria': {
         const masterRatingProgress = rating >= 4.8 ? 33 : (rating / 4.8) * 33;
         const masterReviewProgress = Math.min(33, (reviewCount / 50) * 33);
         const masterViewProgress = Math.min(34, (profileViews / 1000) * 34);
         return Math.min(100, masterRatingProgress + masterReviewProgress + masterViewProgress);
+      }
       
       case 'veterano-piattaforma':
         return Math.min(100, profileCompleteness);
@@ -168,20 +170,22 @@ export default function BadgeDashboard() {
       case 'responsivo':
         return Math.min(100, profileCompleteness * 0.7);
       
-      case 'affidabile':
+      case 'affidabile': {
         const reliableRating = rating >= 4.0 ? 50 : (rating / 4.0) * 50;
         const reliableReviews = Math.min(50, (reviewCount / 15) * 50);
         return Math.min(100, reliableRating + reliableReviews);
+      }
       
       case 'innovatore':
         return Math.min(100, profileCompleteness * 0.9);
       
-      case 'leader-settore':
+      case 'leader-settore': {
         const leaderRating = rating >= 4.7 ? 25 : (rating / 4.7) * 25;
         const leaderReviews = Math.min(25, (reviewCount / 30) * 25);
         const leaderViews = Math.min(25, (profileViews / 1500) * 25);
         const leaderVerified = isVerified ? 25 : 0;
         return Math.min(100, leaderRating + leaderReviews + leaderViews + leaderVerified);
+      }
       
       case 'pioniere':
         return profileCompleteness > 80 ? 100 : 0;
@@ -214,7 +218,7 @@ export default function BadgeDashboard() {
       case 'professionista-riconosciuto':
         return `Mancano ${Math.max(0, 10 - reviewCount)} recensioni per ottenere questo badge`;
       
-      case 'eccellenza-servizio':
+      case 'eccellenza-servizio': {
         const needRating = rating < 4.5;
         const needReviews = reviewCount < 20;
         if (needRating && needReviews) {
@@ -225,6 +229,7 @@ export default function BadgeDashboard() {
           return `Mancano ${Math.max(0, 20 - reviewCount)} recensioni`;
         }
         return "Quasi completato!";
+      }
       
       case 'profilo-completo':
         return `Completa il profilo al 100% (attuale: ${profileCompleteness}%)`;

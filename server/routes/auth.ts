@@ -2,14 +2,14 @@ import express from 'express';
 import type { Request, Response, NextFunction, Express } from 'express';
 import bcrypt from 'bcryptjs';
 import { db } from '../db';
-import { users, userSessions } from '../../shared/schema';
+import { users, userSessions } from '@wolfinder/shared';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { env } from "../env";
 import { z } from 'zod';
 import { AppStorage } from '../storage';
-import { consumerRegistrationSchema } from '../../shared/schema';
+import { consumerRegistrationSchema } from '@wolfinder/shared';
 
 const router = express.Router();
 
@@ -96,9 +96,9 @@ router.post('/login', async (req: Request, res: Response) => {
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     await db.insert(userSessions).values({
+      id: sessionToken,
       userId: user.id,
-      token: sessionToken,
-      expiresAt: expiresAt.getTime(),
+      expiresAt: expiresAt,
     });
 
     const accessToken = jwt.sign({ userId: user.id, role: user.role, name: user.name }, env.JWT_SECRET, { expiresIn: '15m' });
