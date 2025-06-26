@@ -1,10 +1,9 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
-import * as schema from './shared/schema';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import { env } from './server/env';
+import * as schema from '@wolfinder/shared';
 import fs from 'fs';
 import path from 'path';
-
-const DB_PATH = 'dev.db';
 
 async function importDatabase() {
     console.log("📥 Importazione del database in corso...");
@@ -19,8 +18,8 @@ async function importDatabase() {
     
     const exportData = JSON.parse(fs.readFileSync(exportPath, 'utf-8'));
     
-    const sqlite = new Database(DB_PATH);
-    const db = drizzle(sqlite, { schema });
+    const client = postgres(env.DATABASE_URL);
+    const db = drizzle(client, { schema });
 
     try {
         console.log("🔄 Importazione dati in corso...");
@@ -87,7 +86,7 @@ async function importDatabase() {
     } catch (error) {
         console.error("❌ ERRORE durante l'importazione:", error);
     } finally {
-        sqlite.close();
+        await client.end();
     }
 }
 

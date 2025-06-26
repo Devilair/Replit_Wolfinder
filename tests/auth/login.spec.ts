@@ -2,9 +2,9 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import app from "../../server"; // Importa l'app configurata da server/index.ts
 import { db } from "../../server/db";
-import { users } from "../../shared/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
+import * as schema from '@wolfinder/shared';
 
 describe("POST /api/auth/login", () => {
   const testUser = {
@@ -16,8 +16,8 @@ describe("POST /api/auth/login", () => {
 
   beforeAll(async () => {
     passwordHash = await bcrypt.hash(testUser.password, 10);
-    await db.delete(users).where(eq(users.email, testUser.email));
-    await db.insert(users).values({
+    await db.delete(schema.users).where(eq(schema.users.email, testUser.email));
+    await db.insert(schema.users).values({
       name: testUser.name,
       email: testUser.email,
       passwordHash: passwordHash,
@@ -26,7 +26,7 @@ describe("POST /api/auth/login", () => {
   });
 
   afterAll(async () => {
-    await db.delete(users).where(eq(users.email, testUser.email));
+    await db.delete(schema.users).where(eq(schema.users.email, testUser.email));
   });
 
   it("should succeed with status 200 for valid credentials", async () => {

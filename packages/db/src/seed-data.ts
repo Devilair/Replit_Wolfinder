@@ -1,4 +1,4 @@
-export const categoriesSeed = [
+export const categories = [
   { id: 1, name: 'Avvocato', slug: 'avvocato', description: 'Servizi legali e consulenza giuridica', icon: 'scale', count: 0 },
   { id: 2, name: 'Commercialista', slug: 'commercialista', description: 'Servizi di contabilità e consulenza fiscale', icon: 'calculator', count: 0 },
   { id: 3, name: 'Notaio', slug: 'notaio', description: 'Servizi notarili e autenticazioni', icon: 'stamp', count: 0 },
@@ -7,7 +7,7 @@ export const categoriesSeed = [
   { id: 6, name: 'Consulente del Lavoro', slug: 'consulente-lavoro', description: 'Consulenza in materia di lavoro e previdenza', icon: 'users', count: 0 },
 ];
 
-export const subcategoriesSeed = [
+export const subcategories = [
   // Avvocato (category_id: 1)
   { id: 1, name: 'Diritto Civile', slug: 'diritto-civile', categoryId: 1 },
   { id: 2, name: 'Diritto Penale', slug: 'diritto-penale', categoryId: 1 },

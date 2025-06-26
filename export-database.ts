@@ -1,16 +1,15 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
-import * as schema from './shared/schema';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import { env } from './server/env';
+import * as schema from '@wolfinder/shared';
 import fs from 'fs';
 import path from 'path';
-
-const DB_PATH = 'dev.db';
 
 async function exportDatabase() {
     console.log("📤 Esportazione del database in corso...");
     
-    const sqlite = new Database(DB_PATH);
-    const db = drizzle(sqlite, { schema });
+    const client = postgres(env.DATABASE_URL);
+    const db = drizzle(client, { schema });
 
     try {
         // Esporta tutte le tabelle principali
@@ -48,7 +47,7 @@ async function exportDatabase() {
     } catch (error) {
         console.error("❌ ERRORE durante l'esportazione:", error);
     } finally {
-        sqlite.close();
+        await client.end();
     }
 }
 

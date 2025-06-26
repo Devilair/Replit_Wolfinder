@@ -155,8 +155,6 @@ export default function ProfessionalSubscriptionDemo() {
                     <CardTitle>Simula Azioni del Professionista</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-
-
                     {/* Carica foto */}
                     <div className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center space-x-3">
@@ -192,8 +190,6 @@ export default function ProfessionalSubscriptionDemo() {
                         {canAddService() ? '+1 Servizio' : 'Limite Raggiunto'}
                       </Button>
                     </div>
-
-
                   </CardContent>
                 </Card>
               </TabsContent>

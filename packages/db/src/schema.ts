@@ -1,4 +1,4 @@
-import { integer, text, timestamp, pgTable, serial, boolean, real, primaryKey, decimal } from 'drizzle-orm/pg-core';
+import { integer, text, timestamp, pgTable, serial, boolean, real, primaryKey } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
@@ -9,9 +9,9 @@ export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   name: text('name'),
   email: text('email').notNull().unique(),
-  emailVerified: timestamp('emailVerified'),
+  emailVerified: timestamp('emailVerified', { mode: 'date' }),
   image: text('image'),
-  role: text('role').default('consumer').notNull(), // 'consumer', 'professional', 'admin'
+  role: text('role', { enum: ['consumer', 'professional', 'admin'] }).notNull().default('consumer'),
   passwordHash: text('passwordHash'),
   accountStatus: text('account_status', { enum: ['active', 'suspended', 'pending'] }).default('active'),
   lastLoginAt: timestamp('lastLoginAt'),
@@ -34,34 +34,33 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 
 // ----- TABELLA PROFESSIONISTI -----
 export const professionals = pgTable('professionals', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  businessName: text('business_name').notNull(),
-  description: text('description'),
-  categoryId: integer('category_id').references(() => categories.id),
-  subcategoryId: integer('subcategory_id').references(() => subcategories.id),
-  phoneMobile: text('phone_mobile'),
-  phoneLandline: text('phone_landline'),
-  phoneFixed: text('phone_fixed'),
-  email: text('email'),
-  website: text('website'),
-  address: text('address'),
-  city: text('city'),
-  province: text('province'),
-  zipCode: text('zip_code'),
-  latitude: decimal('latitude', { precision: 10, scale: 8 }),
-  longitude: decimal('longitude', { precision: 11, scale: 8 }),
-  rating: decimal('rating', { precision: 3, scale: 2 }),
-  reviewCount: integer('review_count').default(0),
-  isActive: boolean('is_active').default(true),
-  verificationStatus: text('verification_status').default('pending'), // 'pending', 'verified', 'rejected'
-  isClaimed: boolean('is_claimed').default(false),
-  profileViews: integer('profile_views').default(0),
-  subscriptionPlanId: integer('subscription_plan_id').references(() => subscriptionPlans.id),
-  stripeCustomerId: text('stripe_customer_id'),
-  isPremium: boolean('is_premium'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    businessName: text('business_name').notNull(),
+    description: text('description'),
+    categoryId: integer('category_id').references(() => categories.id),
+    subcategoryId: integer('subcategory_id').references(() => subcategories.id),
+    phoneMobile: text('phone_mobile'),
+    phoneLandline: text('phone_landline'),
+    phoneFixed: text('phone_fixed'),
+    email: text('email').notNull(),
+    website: text('website'),
+    address: text('address'),
+    city: text('city'),
+    province: text('province'),
+    zipCode: text('zip_code'),
+    latitude: real('latitude'),
+    longitude: real('longitude'),
+    isVerified: boolean('is_verified').default(false),
+    verifiedBy: integer('verified_by').references(() => users.id),
+    isClaimed: boolean('is_claimed').default(false),
+    profileViews: integer('profile_views').default(0),
+    rating: real('rating').default(0),
+    reviewCount: integer('review_count').default(0),
+    createdAt: timestamp('createdAt').defaultNow().notNull(),
+    updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+    subscriptionPlanId: text('subscription_plan_id'),
+    stripeCustomerId: text('stripe_customer_id'),
 });
 
 export const professionalsRelations = relations(professionals, ({ one, many }) => ({
@@ -89,20 +88,9 @@ export const categories = pgTable('categories', {
   id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),
   description: text('description'),
-  slug: text('slug').unique(),
   icon: text('icon'),
-  count: integer('count').default(0),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
-
-export const subcategories = pgTable('subcategories', {
-  id: serial('id').primaryKey(),
-  name: text('name').notNull(),
   slug: text('slug').unique(),
-  categoryId: integer('category_id').notNull().references(() => categories.id, { onDelete: 'cascade' }),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  count: integer('count').default(0),
 });
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -111,6 +99,25 @@ export const categoriesRelations = relations(categories, ({ many }) => ({
 }));
 
 export const insertCategorySchema = createInsertSchema(categories);
+
+// ----- TABELLA SUBCATEGORIE -----
+export const subcategories = pgTable('subcategories', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  categoryId: integer('category_id').notNull().references(() => categories.id, { onDelete: 'cascade' }),
+});
+
+export const subcategoriesRelations = relations(subcategories, ({ one, many }) => ({
+  category: one(categories, {
+    fields: [subcategories.categoryId],
+    references: [categories.id],
+  }),
+  professionals: many(professionals),
+}));
+
+export const insertSubcategorySchema = createInsertSchema(subcategories);
+
 
 // ----- TABELLA RECENSIONI -----
 export const reviews = pgTable('reviews', {
@@ -155,13 +162,11 @@ export const badges = pgTable('badges', {
     description: text('description').notNull(),
     icon: text('icon'),
     criteria: text('criteria').notNull(), // es. '{"reviews": 10, "rating": 4.5}'
-    slug: text('slug').unique(),
     type: text('type', { enum: ['automatic', 'verified', 'achievement'] }).default('automatic'),
-    family: text('family'),
+    slug: text('slug').unique(),
     color: text('color'),
+    family: text('family'),
     priority: integer('priority').default(0),
-    isActive: boolean('is_active').default(true),
-    requirements: text('requirements'), // JSON string per requisiti aggiuntivi
 });
 
 export const professionalBadges = pgTable('professional_badges', {
@@ -257,6 +262,56 @@ export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
 }));
 
 
+// ----- TABELLE RECENSIONI AGGIUNTIVE -----
+export const reviewHelpfulVotes = pgTable('review_helpful_votes', {
+  id: serial('id').primaryKey(),
+  reviewId: integer('review_id').notNull().references(() => reviews.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  isHelpful: boolean('is_helpful').notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const reviewFlags = pgTable('review_flags', {
+  id: serial('id').primaryKey(),
+  reviewId: integer('review_id').notNull().references(() => reviews.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  reason: text('reason').notNull(),
+  status: text('status', { enum: ['pending', 'resolved', 'dismissed'] }).default('pending'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+// ----- TABELLE TRANSACTION E USAGE -----
+export const transactions = pgTable('transactions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  amount: integer('amount').notNull(), // in centesimi
+  currency: text('currency').default('eur'),
+  status: text('status', { enum: ['pending', 'completed', 'failed', 'refunded'] }).default('pending'),
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const professionalUsage = pgTable('professional_usage', {
+  id: serial('id').primaryKey(),
+  professionalId: integer('professional_id').notNull().references(() => professionals.id, { onDelete: 'cascade' }),
+  month: text('month').notNull(), // formato: 'YYYY-MM'
+  photosCount: integer('photos_count').default(0),
+  reviewsCount: integer('reviews_count').default(0),
+  responsesCount: integer('responses_count').default(0),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const badgeMetrics = pgTable('badge_metrics', {
+  id: serial('id').primaryKey(),
+  professionalId: integer('professional_id').notNull().references(() => professionals.id, { onDelete: 'cascade' }),
+  badgeId: integer('badge_id').notNull().references(() => badges.id, { onDelete: 'cascade' }),
+  metricType: text('metric_type').notNull(), // 'reviews', 'rating', 'response_time', etc.
+  currentValue: real('current_value').notNull(),
+  targetValue: real('target_value').notNull(),
+  lastCalculated: timestamp('lastCalculated').defaultNow().notNull(),
+});
+
+
 // ----- Auth.js Tables -----
 
 /*
@@ -293,10 +348,13 @@ export const sessions = pgTable("sessions", {
 });
 */
 
-export const userSessions = pgTable('user_sessions', {
-  id: text('id').primaryKey(),
-  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  expiresAt: timestamp('expires_at').notNull(),
+export const userSessions = pgTable("user_sessions", {
+  id: text("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  expiresAt: timestamp("expires_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
 });
 
 export const verificationTokens = pgTable(
@@ -318,25 +376,17 @@ export type Professional = typeof professionals.$inferSelect;
 export type NewProfessional = typeof professionals.$inferInsert;
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
-export type Subcategory = typeof subcategories.$inferSelect;
-export type NewSubcategory = typeof subcategories.$inferInsert;
 export type Review = typeof reviews.$inferSelect;
 export type NewReview = typeof reviews.$inferInsert;
 export type Badge = typeof badges.$inferSelect;
-export type NewBadge = typeof badges.$inferInsert;
 export type ProfessionalBadge = typeof professionalBadges.$inferSelect;
-export type NewProfessionalBadge = typeof professionalBadges.$inferInsert;
 export type Specialization = typeof specializations.$inferSelect;
 export type ProfessionalSpecialization = typeof professionalSpecializations.$inferSelect;
 export type Certification = typeof certifications.$inferSelect;
 export type ProfessionalCertification = typeof professionalCertifications.$inferSelect;
 export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
-export type NewSubscription = typeof subscriptions.$inferInsert;
-export type UserSession = typeof userSessions.$inferSelect;
-export type NewUserSession = typeof userSessions.$inferInsert;
-export type VerificationToken = typeof verificationTokens.$inferSelect;
-export type NewVerificationToken = typeof verificationTokens.$inferInsert;
+
 
 // Tipi per le join
 export type ProfessionalWithDetails = Professional & {
@@ -348,6 +398,12 @@ export type ProfessionalWithDetails = Professional & {
 export type ReviewWithDetails = Review & {
     user?: Pick<User, 'id' | 'name' | 'image'>;
 };
+
+export type ReviewHelpfulVote = typeof reviewHelpfulVotes.$inferSelect;
+export type ReviewFlag = typeof reviewFlags.$inferSelect;
+export type Transaction = typeof transactions.$inferSelect;
+export type ProfessionalUsage = typeof professionalUsage.$inferSelect;
+export type BadgeMetrics = typeof badgeMetrics.$inferSelect;
 
 // ----- SCHEMI DI VALIDAZIONE ZOD -----
 export const insertProfessionalSchema = createInsertSchema(professionals, {
@@ -397,3 +453,6 @@ export const consumerRegistrationSchema = z.object({
     message: "Devi accettare i termini e le condizioni.",
   }),
 });
+
+export type Subcategory = typeof subcategories.$inferSelect;
+export type NewSubcategory = typeof subcategories.$inferInsert;

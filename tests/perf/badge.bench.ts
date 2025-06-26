@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db } from '../../server/db';
-import { professionals, users, type NewProfessional, type NewUser } from '../../shared/schema';
 import { BadgeCalculator } from '../../server/badge-calculator';
 import { inArray, like } from 'drizzle-orm';
+import { BadgeSystem } from '../../server/badge-system';
+import * as schema from '@wolfinder/shared';
 
 describe('Badge Calculator Benchmark', () => {
     const NUM_PROFESSIONALS = 1000;
@@ -13,11 +14,11 @@ describe('Badge Calculator Benchmark', () => {
     // 1. GENERATE DATA
     beforeAll(async () => {
         // Pre-cleanup to ensure a clean slate from previous failed runs
-        await db.delete(users).where(like(users.email, 'perf.user.%@example.com'));
+        await db.delete(schema.users).where(like(schema.users.email, 'perf.user.%@example.com'));
         // Professionals are deleted via cascade constraint.
 
         // Creazione di utenti e professionisti fittizi
-        const fakeUsers: NewUser[] = [];
+        const fakeUsers: schema.NewUser[] = [];
         for (let i = 0; i < NUM_PROFESSIONALS; i++) {
             fakeUsers.push({
                 name: `Perf Test User ${i}`,
@@ -25,10 +26,10 @@ describe('Badge Calculator Benchmark', () => {
                 role: 'professional',
             });
         }
-        const createdUsers = await db.insert(users).values(fakeUsers).returning({ id: users.id });
+        const createdUsers = await db.insert(schema.users).values(fakeUsers).returning({ id: schema.users.id });
         userIds.push(...createdUsers.map(u => u.id));
 
-        const fakeProfessionals: NewProfessional[] = [];
+        const fakeProfessionals: schema.NewProfessional[] = [];
         for (let i = 0; i < NUM_PROFESSIONALS; i++) {
             const userId = createdUsers[i]?.id;
             if (userId) {
@@ -43,7 +44,7 @@ describe('Badge Calculator Benchmark', () => {
                 });
             }
         }
-        const createdProfessionals = await db.insert(professionals).values(fakeProfessionals).returning({ id: professionals.id });
+        const createdProfessionals = await db.insert(schema.professionals).values(fakeProfessionals).returning({ id: schema.professionals.id });
         professionalIds.push(...createdProfessionals.map(p => p.id));
 
     }, 60000); // Timeout lungo per il seeding del DB
@@ -80,10 +81,10 @@ describe('Badge Calculator Benchmark', () => {
     afterAll(async () => {
         // Pulizia del database usando gli ID
         if (professionalIds.length > 0) {
-            await db.delete(professionals).where(inArray(professionals.id, professionalIds));
+            await db.delete(schema.professionals).where(inArray(schema.professionals.id, professionalIds));
         }
         if (userIds.length > 0) {
-            await db.delete(users).where(inArray(users.id, userIds));
+            await db.delete(schema.users).where(inArray(schema.users.id, userIds));
         }
     });
 }); 

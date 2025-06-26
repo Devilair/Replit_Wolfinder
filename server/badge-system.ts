@@ -8,6 +8,7 @@ import {
   type ProfessionalBadge,
   badgeMetrics
 } from "@wolfinder/shared";
+import type { BadgeMetric } from '@wolfinder/shared-types';
 import { eq, and, sql, desc, count, avg } from "drizzle-orm";
 
 // Badge Master Dictionary - 20+ badge in 4 famiglie

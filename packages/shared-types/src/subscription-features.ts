@@ -1,32 +1,4 @@
-// Definizione locale dei tipi per evitare dipendenze circolari
-export interface SubscriptionPlan {
-  id: number;
-  name: string;
-  slug: string;
-  description: string | null;
-  price: number;
-  currency: string;
-  interval: 'month' | 'year';
-  features: Record<string, any>;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface Subscription {
-  id: number;
-  userId: number;
-  planId: number;
-  status: 'active' | 'canceled' | 'past_due' | 'unpaid';
-  stripeSubscriptionId: string | null;
-  stripeCustomerId: string | null;
-  currentPeriodStart: Date | null;
-  currentPeriodEnd: Date | null;
-  canceledAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-  plan: SubscriptionPlan;
-}
+import type { Subscription, SubscriptionPlan } from "./index";
 
 export interface SubscriptionFeatures {
   // Profilo e contenuti

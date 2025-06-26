@@ -1,5 +1,6 @@
+import { queryClient } from './queryClient';
+import { useAuthStore } from '@/hooks/useAuthStore';
 import axios from 'axios';
-import { useAuthStore } from '@/hooks/useAuthStore'; // Assumendo che lo store sia esportato
 
 // @ts-expect-error: import.meta.env è disponibile solo in ambiente Vite
 const API_URL = typeof import.meta.env !== 'undefined' ? import.meta.env.VITE_API_URL : undefined;
