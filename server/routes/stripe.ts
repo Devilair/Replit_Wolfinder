@@ -5,9 +5,14 @@ import { env } from '../env';
 import { AppStorage } from "../storage";
 import { authMiddleware } from './auth';
 
+if (!env.STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY is required');
+}
+
+const stripe = new Stripe(env.STRIPE_SECRET_KEY);
+
 export function setupStripeRoutes(app: express.Express, storage: AppStorage) {
   const router = express.Router();
-  const stripe = new Stripe(env.STRIPE_SECRET_KEY);
 
   // Endpoint per recuperare i piani di abbonamento
   router.get("/plans", async (req: Request, res: Response) => {

@@ -2,14 +2,13 @@ import { db } from "./db";
 import { 
   badges, 
   professionalBadges, 
-  professionalBadges,
   professionals,
   reviews,
   type Badge,
   type ProfessionalBadge,
   type BadgeMetric
 } from "@shared/schema";
-import type { BadgeMetric as SharedBadgeMetric } from '@wolfinder/shared-types';
+import type { BadgeMetric } from '@wolfinder/shared-types';
 import { eq, and, sql, desc, count, avg } from "drizzle-orm";
 
 // Badge Master Dictionary - 20+ badge in 4 famiglie

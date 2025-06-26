@@ -26,7 +26,7 @@ export type Professional = {
   userId: number;
   businessName: string;
   description: string | null;
-  categoryId: number;
+  categoryId: number | null;
   subcategoryId: number | null;
   phoneMobile: string | null;
   phoneLandline: string | null;
@@ -45,6 +45,11 @@ export type Professional = {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  stripeCustomerId: string | null;
+  verificationStatus: 'pending' | 'approved' | 'rejected' | 'verified';
+  verificationDate: Date | null;
+  verifiedBy: number | null;
+  isPremium: boolean;
 };
 
 export type Category = {
@@ -89,8 +94,12 @@ export type Badge = {
   name: string;
   slug: string;
   description: string;
-  icon: string;
+  icon: string | null;
   criteria: string;
+  type: string;
+  family: string | null;
+  color: string | null;
+  priority: number;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -105,6 +114,7 @@ export type ProfessionalBadge = {
   revokedAt: Date | null;
   revokeReason: string | null;
   isVisible: boolean;
+  awardedBy: number | null;
   badge: Badge;
 };
 
@@ -116,7 +126,7 @@ export type SubscriptionPlan = {
   price: number;
   currency: string;
   interval: 'month' | 'year';
-  features: Record<string, any>;
+  features: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -237,33 +247,68 @@ export type ProfessionalSummary = Pick<Professional, 'id' | 'businessName' | 'ra
 
 // Estratti da subscription-features.ts
 export interface SubscriptionFeatures {
+  maxProfiles: number;
   maxPhotos: number;
-  maxServices: number;
-  maxContactsPerMonth: number;
-  portfolioSection: boolean;
-  certificationsSection: boolean;
-  customDescription: boolean;
-  reviewResponseEnabled: boolean;
-  reviewHighlights: boolean;
-  analyticsAccess: boolean;
-  detailedStats: boolean;
-  competitorAnalysis: boolean;
-  apiAccess: boolean;
-  whitelabelBranding: boolean;
-  bulkOperations: boolean;
-  advancedReporting: boolean;
-  customIntegrations: boolean;
+  maxResponses: number;
+  maxBadges: number;
+  maxAccounts: number;
   prioritySupport: boolean;
-  dedicatedAccountManager: boolean;
-  verifiedBadge: boolean;
-  premiumBadge: boolean;
-  supportLevel: 'basic' | 'priority' | 'dedicated';
+  analytics: boolean;
+  customDomain: boolean;
+  apiAccess: boolean;
+  whiteLabel: boolean;
+  advancedBadges: boolean;
+  featuredListing: boolean;
+  reviewManagement: boolean;
+  bulkOperations: boolean;
+  customBranding: boolean;
+}
+
+export function getProfessionalFeatures(subscription: Subscription | null): SubscriptionFeatures {
+  if (!subscription || subscription.status !== 'active') {
+    return {
+      maxProfiles: 1,
+      maxPhotos: 5,
+      maxResponses: 10,
+      maxBadges: 3,
+      maxAccounts: 1,
+      prioritySupport: false,
+      analytics: false,
+      customDomain: false,
+      apiAccess: false,
+      whiteLabel: false,
+      advancedBadges: false,
+      featuredListing: false,
+      reviewManagement: false,
+      bulkOperations: false,
+      customBranding: false,
+    };
+  }
+
+  const planFeatures = subscription.plan.features ? JSON.parse(subscription.plan.features) : {};
+  return planFeatures;
+}
+
+export function getUsageStatus(currentUsage: number, limit: number): 'under' | 'at' | 'over' {
+  if (currentUsage < limit) return 'under';
+  if (currentUsage === limit) return 'at';
+  return 'over';
+}
+
+export function canAccessFeature(subscription: Subscription | null, feature: keyof SubscriptionFeatures): boolean {
+  const features = getProfessionalFeatures(subscription);
+  const value = features[feature];
+  return typeof value === 'boolean' ? value : (typeof value === 'number' && value > 0);
+}
+
+export function getFeatureLimit(subscription: Subscription | null, feature: keyof SubscriptionFeatures): number {
+  const features = getProfessionalFeatures(subscription);
+  const value = features[feature];
+  return typeof value === 'number' ? value : 0;
 }
 
 // Estratti da seed-data.ts (solo tipi, non dati)
 // (Nessun tipo puro aggiuntivo trovato in seed-data.ts) 
-
-export { getProfessionalFeatures, canAccessFeature, getFeatureLimit, hasUnlimitedFeature, getUsageStatus, PLAN_FEATURES } from './subscription-features';
 
 export { professionalRegistrationSchema } from './professional-registration-schema';
 export type { ProfessionalRegistration } from './professional-registration-schema';
