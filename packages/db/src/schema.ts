@@ -13,6 +13,10 @@ export const users = pgTable('users', {
   image: text('image'),
   role: text('role', { enum: ['consumer', 'professional', 'admin'] }).notNull().default('consumer'),
   passwordHash: text('passwordHash'),
+  accountStatus: text('account_status', { enum: ['active', 'suspended', 'pending'] }).default('active'),
+  lastLoginAt: timestamp('lastLoginAt'),
+  isEmailVerified: boolean('is_email_verified').default(false),
+  isVerified: boolean('is_verified').default(false),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
   githubId: text('github_id').unique(),
@@ -35,8 +39,10 @@ export const professionals = pgTable('professionals', {
     businessName: text('business_name').notNull(),
     description: text('description'),
     categoryId: integer('category_id').references(() => categories.id),
+    subcategoryId: integer('subcategory_id').references(() => subcategories.id),
     phoneMobile: text('phone_mobile'),
     phoneLandline: text('phone_landline'),
+    phoneFixed: text('phone_fixed'),
     email: text('email').notNull(),
     website: text('website'),
     address: text('address'),
@@ -46,6 +52,7 @@ export const professionals = pgTable('professionals', {
     latitude: real('latitude'),
     longitude: real('longitude'),
     isVerified: boolean('is_verified').default(false),
+    verifiedBy: integer('verified_by').references(() => users.id),
     isClaimed: boolean('is_claimed').default(false),
     profileViews: integer('profile_views').default(0),
     rating: real('rating').default(0),
@@ -65,6 +72,10 @@ export const professionalsRelations = relations(professionals, ({ one, many }) =
     fields: [professionals.categoryId],
     references: [categories.id],
   }),
+  subcategory: one(subcategories, {
+    fields: [professionals.subcategoryId],
+    references: [subcategories.id],
+  }),
   reviews: many(reviews),
   badges: many(professionalBadges),
   specializations: many(professionalSpecializations),
@@ -77,13 +88,35 @@ export const categories = pgTable('categories', {
   id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),
   description: text('description'),
+  icon: text('icon'),
+  slug: text('slug').unique(),
+  count: integer('count').default(0),
 });
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
   professionals: many(professionals),
+  subcategories: many(subcategories),
 }));
 
 export const insertCategorySchema = createInsertSchema(categories);
+
+// ----- TABELLA SUBCATEGORIE -----
+export const subcategories = pgTable('subcategories', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  categoryId: integer('category_id').notNull().references(() => categories.id, { onDelete: 'cascade' }),
+});
+
+export const subcategoriesRelations = relations(subcategories, ({ one, many }) => ({
+  category: one(categories, {
+    fields: [subcategories.categoryId],
+    references: [categories.id],
+  }),
+  professionals: many(professionals),
+}));
+
+export const insertSubcategorySchema = createInsertSchema(subcategories);
 
 
 // ----- TABELLA RECENSIONI -----
@@ -93,8 +126,14 @@ export const reviews = pgTable('reviews', {
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   rating: integer('rating').notNull(),
   comment: text('comment'),
+  title: text('title'),
+  content: text('content'),
   isVerifiedPurchase: boolean('is_verified_purchase').default(false),
   status: text('status', { enum: ['pending', 'approved', 'rejected'] }).default('pending'),
+  verifiedAt: timestamp('verifiedAt'),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  professionalResponse: text('professional_response'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
@@ -123,6 +162,11 @@ export const badges = pgTable('badges', {
     description: text('description').notNull(),
     icon: text('icon'),
     criteria: text('criteria').notNull(), // es. '{"reviews": 10, "rating": 4.5}'
+    type: text('type', { enum: ['automatic', 'verified', 'achievement'] }).default('automatic'),
+    slug: text('slug').unique(),
+    color: text('color'),
+    family: text('family'),
+    priority: integer('priority').default(0),
 });
 
 export const professionalBadges = pgTable('professional_badges', {
@@ -130,6 +174,10 @@ export const professionalBadges = pgTable('professional_badges', {
     professionalId: integer('professional_id').notNull().references(() => professionals.id, { onDelete: 'cascade' }),
     badgeId: integer('badge_id').notNull().references(() => badges.id, { onDelete: 'cascade' }),
     awardedAt: timestamp('awardedAt').defaultNow().notNull(),
+    expiresAt: timestamp('expiresAt'),
+    revokedAt: timestamp('revokedAt'),
+    revokeReason: text('revoke_reason'),
+    isVisible: boolean('is_visible').default(true),
 });
 
 export const professionalBadgesRelations = relations(professionalBadges, ({ one }) => ({
@@ -171,6 +219,97 @@ export const professionalCertifications = pgTable('professional_certifications',
 }, (t) => ({
     pk: primaryKey({ columns: [t.professionalId, t.certificationId] }),
 }));
+
+
+// ----- TABELLE SUBSCRIPTION -----
+export const subscriptionPlans = pgTable('subscription_plans', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  price: integer('price').notNull(), // in centesimi
+  currency: text('currency').default('eur'),
+  interval: text('interval', { enum: ['month', 'year'] }).default('month'),
+  features: text('features'), // JSON string
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const subscriptions = pgTable('subscriptions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  planId: integer('plan_id').notNull().references(() => subscriptionPlans.id),
+  stripeSubscriptionId: text('stripe_subscription_id'),
+  status: text('status', { enum: ['active', 'canceled', 'past_due', 'unpaid'] }).default('active'),
+  currentPeriodStart: timestamp('current_period_start'),
+  currentPeriodEnd: timestamp('current_period_end'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+});
+
+export const subscriptionPlansRelations = relations(subscriptionPlans, ({ many }) => ({
+  subscriptions: many(subscriptions),
+}));
+
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [subscriptions.userId],
+    references: [users.id],
+  }),
+  plan: one(subscriptionPlans, {
+    fields: [subscriptions.planId],
+    references: [subscriptionPlans.id],
+  }),
+}));
+
+
+// ----- TABELLE RECENSIONI AGGIUNTIVE -----
+export const reviewHelpfulVotes = pgTable('review_helpful_votes', {
+  id: serial('id').primaryKey(),
+  reviewId: integer('review_id').notNull().references(() => reviews.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  isHelpful: boolean('is_helpful').notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const reviewFlags = pgTable('review_flags', {
+  id: serial('id').primaryKey(),
+  reviewId: integer('review_id').notNull().references(() => reviews.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  reason: text('reason').notNull(),
+  status: text('status', { enum: ['pending', 'resolved', 'dismissed'] }).default('pending'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+// ----- TABELLE TRANSACTION E USAGE -----
+export const transactions = pgTable('transactions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  amount: integer('amount').notNull(), // in centesimi
+  currency: text('currency').default('eur'),
+  status: text('status', { enum: ['pending', 'completed', 'failed', 'refunded'] }).default('pending'),
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const professionalUsage = pgTable('professional_usage', {
+  id: serial('id').primaryKey(),
+  professionalId: integer('professional_id').notNull().references(() => professionals.id, { onDelete: 'cascade' }),
+  month: text('month').notNull(), // formato: 'YYYY-MM'
+  photosCount: integer('photos_count').default(0),
+  reviewsCount: integer('reviews_count').default(0),
+  responsesCount: integer('responses_count').default(0),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const badgeMetrics = pgTable('badge_metrics', {
+  id: serial('id').primaryKey(),
+  professionalId: integer('professional_id').notNull().references(() => professionals.id, { onDelete: 'cascade' }),
+  badgeId: integer('badge_id').notNull().references(() => badges.id, { onDelete: 'cascade' }),
+  metricType: text('metric_type').notNull(), // 'reviews', 'rating', 'response_time', etc.
+  currentValue: real('current_value').notNull(),
+  targetValue: real('target_value').notNull(),
+  lastCalculated: timestamp('lastCalculated').defaultNow().notNull(),
+});
 
 
 // ----- Auth.js Tables -----
@@ -245,17 +384,26 @@ export type Specialization = typeof specializations.$inferSelect;
 export type ProfessionalSpecialization = typeof professionalSpecializations.$inferSelect;
 export type Certification = typeof certifications.$inferSelect;
 export type ProfessionalCertification = typeof professionalCertifications.$inferSelect;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type Subscription = typeof subscriptions.$inferSelect;
 
 
 // Tipi per le join
 export type ProfessionalWithDetails = Professional & {
   user?: User | null;
   category?: Category | null;
+  subcategory?: Subcategory | null;
 };
 
 export type ReviewWithDetails = Review & {
     user?: Pick<User, 'id' | 'name' | 'image'>;
 };
+
+export type ReviewHelpfulVote = typeof reviewHelpfulVotes.$inferSelect;
+export type ReviewFlag = typeof reviewFlags.$inferSelect;
+export type Transaction = typeof transactions.$inferSelect;
+export type ProfessionalUsage = typeof professionalUsage.$inferSelect;
+export type BadgeMetrics = typeof badgeMetrics.$inferSelect;
 
 // ----- SCHEMI DI VALIDAZIONE ZOD -----
 export const insertProfessionalSchema = createInsertSchema(professionals, {
@@ -305,3 +453,6 @@ export const consumerRegistrationSchema = z.object({
     message: "Devi accettare i termini e le condizioni.",
   }),
 });
+
+export type Subcategory = typeof subcategories.$inferSelect;
+export type NewSubcategory = typeof subcategories.$inferInsert;

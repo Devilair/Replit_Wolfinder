@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Crown, AlertTriangle, CheckCircle, XCircle, Zap } from "lucide-react";
-import { getProfessionalFeatures, getUsageStatus } from "@shared/subscription-features";
+import { getProfessionalFeatures, getUsageStatus } from "@wolfinder/shared-types";
 import type { Subscription, SubscriptionPlan } from "@shared/schema";
 
 interface SubscriptionLimitsCardProps {

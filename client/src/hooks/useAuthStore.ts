@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { User } from '@shared/schema';
+import type { User } from '@wolfinder/shared-types';
 
 interface AuthState {
   user: User | null;
