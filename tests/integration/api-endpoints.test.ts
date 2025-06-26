@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import app from '../../server'; // Importa l'app condivisa
 import { db } from '../../server/db';
-import { categories } from '../../shared/schema';
+import * as schema from '@wolfinder/shared';
 import { eq } from 'drizzle-orm';
 
 describe('API Endpoints Integration Tests', () => {
@@ -32,7 +32,7 @@ describe('API Endpoints Integration Tests', () => {
         expect(createRes.body.name).toBe(newCategoryName);
 
         // Pulizia
-        await db.delete(categories).where(eq(categories.name, newCategoryName));
+        await db.delete(schema.categories).where(eq(schema.categories.name, newCategoryName));
         
         const invalidRes = await request(app)
             .post('/api/categories')

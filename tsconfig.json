@@ -16,13 +16,17 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "baseUrl": "./client",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@assets/*": ["../attached_assets/*"]
+      "@/*": ["client/src/*"],
+      "@assets/*": ["attached_assets/*"],
+      "@wolfinder/shared": ["packages/shared"],
+      "@wolfinder/shared-types": ["packages/shared-types"],
+      "@wolfinder/db": ["packages/db"]
     },
     "types": ["node"],
     "typeRoots": ["./node_modules/@types", "./server"]
   },
-  "include": ["**/*.ts", "**/*.tsx"]
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "dist", "build"]
 }
