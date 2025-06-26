@@ -6,13 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import SubscriptionLimitsCard from "@/components/subscription-limits-card";
 import { Crown, Camera, MessageSquare, Building, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
-<<<<<<< HEAD
-import { getProfessionalFeatures, canAccessFeature, getFeatureLimit } from "@wolfinder/shared-types";
-import type { Subscription, SubscriptionPlan } from "@shared/schema";
-=======
 import { getProfessionalFeatures, canAccessFeature, getFeatureLimit } from "@wolfinder/shared";
 import type { Subscription, SubscriptionPlan } from "@wolfinder/shared";
->>>>>>> c674766a33746b3a9795c1c81da0821d46cadf00
 
 // No demo data - all subscriptions from real database
 const DEMO_SUBSCRIPTIONS = {
@@ -160,8 +155,6 @@ export default function ProfessionalSubscriptionDemo() {
                     <CardTitle>Simula Azioni del Professionista</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-
-
                     {/* Carica foto */}
                     <div className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center space-x-3">
@@ -197,8 +190,6 @@ export default function ProfessionalSubscriptionDemo() {
                         {canAddService() ? '+1 Servizio' : 'Limite Raggiunto'}
                       </Button>
                     </div>
-
-
                   </CardContent>
                 </Card>
               </TabsContent>

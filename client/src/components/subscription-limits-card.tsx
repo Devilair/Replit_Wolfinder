@@ -3,10 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Crown, AlertTriangle, CheckCircle, XCircle, Zap } from "lucide-react";
-<<<<<<< HEAD
-import { getProfessionalFeatures, getUsageStatus } from "@wolfinder/shared-types";
-import type { Subscription, SubscriptionPlan } from "@shared/schema";
-=======
 
 // Tipi locali per evitare import problematici
 interface SubscriptionPlan {
@@ -37,7 +33,6 @@ interface Subscription {
   updatedAt: Date;
   plan: SubscriptionPlan;
 }
->>>>>>> c674766a33746b3a9795c1c81da0821d46cadf00
 
 interface SubscriptionLimitsCardProps {
   subscription?: Subscription & { plan: SubscriptionPlan };
@@ -198,7 +193,7 @@ export default function SubscriptionLimitsCard({
               {features.portfolioSection ? (
                 <CheckCircle className="h-4 w-4 text-green-500" />
               ) : (
-                <XCircle className="h-4 w-4 text-gray-400" />
+                <XCircle className="h-4 w-4 text-red-500" />
               )}
             </div>
             
