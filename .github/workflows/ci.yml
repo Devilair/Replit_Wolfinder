@@ -11,14 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - uses: pnpm/action-setup@v2
         with:
           version: 9
           run_install: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm tsc --noEmit
       - run: pnpm run build:shared
@@ -28,14 +27,13 @@ jobs:
     needs: type-check
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - uses: pnpm/action-setup@v2
         with:
           version: 9
           run_install: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm eslint src --max-warnings 0
 
@@ -44,14 +42,13 @@ jobs:
     needs: type-check
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - uses: pnpm/action-setup@v2
         with:
           version: 9
           run_install: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
       - run: pnpm run build
@@ -61,14 +58,13 @@ jobs:
     needs: type-check
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - uses: pnpm/action-setup@v2
         with:
           version: 9
           run_install: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit --audit-level=moderate
 
@@ -76,14 +72,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - uses: pnpm/action-setup@v2
         with:
           version: 9
           run_install: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: npx prettier --check . || true
       - run: npx eslint . --ext .ts,.tsx || true
