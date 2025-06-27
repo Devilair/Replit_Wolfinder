@@ -10,6 +10,8 @@ import {
   notFoundHandler, 
   healthCheck 
 } from './security-middleware.js';
+import { requestLogger } from './middleware/requestLogger';
+import { errorHandler as zodErrorHandler } from './middleware/errorHandler';
 
 const app: Express = express();
 const port = env.PORT || 8080;
@@ -22,7 +24,7 @@ const port = env.PORT || 8080;
 app.use(securityMiddleware);
 
 // Logging middleware personalizzato
-app.use(requestLoggingMiddleware);
+app.use(requestLogger);
 
 // ============================================================================
 // ROUTES
@@ -48,7 +50,7 @@ app.use(notFoundHandler);
 app.use(errorLoggingMiddleware);
 
 // Global error handler
-app.use(errorHandler);
+app.use(zodErrorHandler);
 
 // ============================================================================
 // SERVER STARTUP

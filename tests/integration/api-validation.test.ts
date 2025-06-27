@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import request from 'supertest';
+import app from '../../server/index';
 
 describe('API Validation Tests', () => {
   const BASE_URL = 'http://localhost:5000';
@@ -152,6 +154,29 @@ describe('API Validation Tests', () => {
           console.log(`Server not available for testing ${benchmark.endpoint}`);
         }
       }
+    });
+  });
+
+  describe('POST /api/professionals/:id/reviews', () => {
+    const validToken = 'Bearer testtoken'; // Sostituire con token valido se necessario
+    const professionalId = 1; // Assicurarsi che esista nel DB test
+
+    it('should return 400 if payload is invalid (Zod)', async () => {
+      const res = await request(app)
+        .post(`/api/professionals/${professionalId}/reviews`)
+        .set('Authorization', validToken)
+        .send({ rating: 10, comment: 'short', professionalId: 'not-a-uuid' });
+      expect(res.status).toBe(400);
+      expect(res.body.error || res.body.errors).toBeDefined();
+    });
+
+    it('should return 201 if payload is valid', async () => {
+      const res = await request(app)
+        .post(`/api/professionals/${professionalId}/reviews`)
+        .set('Authorization', validToken)
+        .send({ rating: 5, comment: 'Recensione valida e lunga abbastanza', professionalId: '00000000-0000-0000-0000-000000000001' });
+      expect(res.status).toBe(201);
+      expect(res.body).toHaveProperty('id');
     });
   });
 });
