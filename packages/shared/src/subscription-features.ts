@@ -37,15 +37,15 @@ export interface SubscriptionFeatures {
 
 export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
   'Essentials': {
-    maxPhotos: 3, // 1 profilo + 2 studio/attività
+    maxPhotos: 3,
     maxServices: 3,
     maxContactsPerMonth: 10,
     portfolioSection: false,
     certificationsSection: false,
     customDescription: true,
-    reviewResponseEnabled: true, // Rispondere a tutte le recensioni
+    reviewResponseEnabled: true,
     reviewHighlights: false,
-    analyticsAccess: true, // Analytics di base
+    analyticsAccess: true,
     detailedStats: false,
     competitorAnalysis: false,
     apiAccess: false,
@@ -55,21 +55,21 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
     customIntegrations: false,
     prioritySupport: false,
     dedicatedAccountManager: false,
-    verifiedBadge: true, // Badge "Identità Verificata"
+    verifiedBadge: true,
     premiumBadge: false,
     supportLevel: 'basic',
   },
   'Professional': {
-    maxPhotos: 10, // Galleria fino a 10 immagini
-    maxServices: 8, // Fino a 8 specializzazioni
+    maxPhotos: 10,
+    maxServices: 8,
     maxContactsPerMonth: 500,
-    portfolioSection: true, // Video + strumenti avanzati
+    portfolioSection: true,
     certificationsSection: true,
     customDescription: true,
     reviewResponseEnabled: true,
-    reviewHighlights: true, // Alert per recensioni negative
+    reviewHighlights: true,
     analyticsAccess: true,
-    detailedStats: true, // Dashboard interattiva, export dati
+    detailedStats: true,
     competitorAnalysis: false,
     apiAccess: false,
     whitelabelBranding: false,
@@ -79,12 +79,12 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
     prioritySupport: true,
     dedicatedAccountManager: false,
     verifiedBadge: true,
-    premiumBadge: true, // Badge "Professional"
+    premiumBadge: true,
     supportLevel: 'priority',
   },
   'Expert': {
-    maxPhotos: -1, // Illimitati
-    maxServices: -1, // Specializzazioni illimitate
+    maxPhotos: -1,
+    maxServices: -1,
     maxContactsPerMonth: 1000,
     portfolioSection: true,
     certificationsSection: true,
@@ -93,21 +93,21 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
     reviewHighlights: true,
     analyticsAccess: true,
     detailedStats: true,
-    competitorAnalysis: true, // Analytics predittive, benchmark completo
-    apiAccess: true, // Accesso API per integrazioni esterne
+    competitorAnalysis: true,
+    apiAccess: true,
     whitelabelBranding: false,
-    bulkOperations: true, // Operazioni in massa per gestire più clienti
-    advancedReporting: true, // Report personalizzati e export avanzati
+    bulkOperations: true,
+    advancedReporting: true,
     customIntegrations: false,
     prioritySupport: true,
     dedicatedAccountManager: false,
     verifiedBadge: true,
-    premiumBadge: true, // Badge "Expert Verified"
+    premiumBadge: true,
     supportLevel: 'priority',
   },
   'Enterprise': {
-    maxPhotos: -1, // Illimitati
-    maxServices: -1, // Illimitati
+    maxPhotos: -1,
+    maxServices: -1,
     maxContactsPerMonth: -1,
     portfolioSection: true,
     certificationsSection: true,
@@ -116,26 +116,24 @@ export const PLAN_FEATURES: Record<string, SubscriptionFeatures> = {
     reviewHighlights: true,
     analyticsAccess: true,
     detailedStats: true,
-    competitorAnalysis: true, // Intelligence competitiva completa + AI insights
-    apiAccess: true, // API completa + webhooks
-    whitelabelBranding: true, // Branding personalizzato per studi legali/grandi aziende
-    bulkOperations: true, // Gestione multi-sede e team
-    advancedReporting: true, // Dashboard personalizzabile + BI integrata
-    customIntegrations: true, // Integrazioni custom con CRM/ERP aziendali
+    competitorAnalysis: true,
+    apiAccess: true,
+    whitelabelBranding: true,
+    bulkOperations: true,
+    advancedReporting: true,
+    customIntegrations: true,
     prioritySupport: true,
-    dedicatedAccountManager: true, // Account manager dedicato
+    dedicatedAccountManager: true,
     verifiedBadge: true,
-    premiumBadge: true, // Badge "Enterprise Partner"
+    premiumBadge: true,
     supportLevel: 'dedicated',
   },
 };
 
 export function getProfessionalFeatures(subscription?: Subscription & { plan: SubscriptionPlan }): SubscriptionFeatures {
-  // Se non ha abbonamento attivo, usa il piano gratuito
   if (!subscription || subscription.status !== 'active') {
     return PLAN_FEATURES['Essentials']!;
   }
-
   return PLAN_FEATURES[subscription.plan.name] || PLAN_FEATURES['Essentials']!;
 }
 
@@ -194,4 +192,4 @@ export function getUsageStatus(
     isUnlimited: false,
     percentage: Math.min(100, percentage),
   };
-}
+} 

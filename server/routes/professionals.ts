@@ -6,6 +6,8 @@ import { badgeCalculator } from "../badge-calculator";
 import { fileUploadManager } from "../file-upload-manager";
 import { insertProfessionalSchema, insertReviewSchema } from "@wolfinder/shared";
 import multer from "multer";
+import { ReviewInput } from '../validators/review';
+import { logger } from '../lib/logger';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -120,20 +122,24 @@ export function setupProfessionalRoutes(app: Express, storage: AppStorage) {
   app.post("/api/professionals/:id/reviews", authMiddleware, async (req: any, res) => {
     try {
       const professionalId = parseInt(req.params.id);
-      const result = insertReviewSchema.safeParse({
+      const payload = {
         ...req.body,
         professionalId,
         userId: req.user.userId,
-      });
-
-      if (!result.success) {
-        return res.status(400).json({ message: "Invalid review data", errors: result.error.errors });
+      };
+      const parsed = ReviewInput.safeParse(payload);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Invalid review data", errors: parsed.error.errors });
       }
-      
-      const review = await storage.createReview(result.data);
+      const reviewData = {
+        ...parsed.data,
+        userId: req.user.userId,
+        professionalId: professionalId,
+      };
+      const review = await storage.createReview(reviewData);
       res.status(201).json(review);
     } catch (error) {
-      console.error("Error creating review:", error);
+      logger.error(error);
       res.status(500).json({ message: "Failed to create review" });
     }
   });
