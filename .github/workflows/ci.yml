@@ -11,74 +11,92 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - uses: pnpm/action-setup@v2
+          node-version: '20'
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
         with:
-          version: 9
-          run_install: false
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm tsc --noEmit
-      - run: pnpm run build:shared
+          version: 8
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Type check
+        run: pnpm tsc --noEmit
+      - name: Build shared package
+        run: pnpm run build:shared
 
   lint:
     runs-on: ubuntu-latest
     needs: type-check
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - uses: pnpm/action-setup@v2
+          node-version: '20'
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
         with:
-          version: 9
-          run_install: false
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm eslint src --max-warnings 0
+          version: 8
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm eslint src --max-warnings 0
 
   test:
     runs-on: ubuntu-latest
     needs: type-check
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - uses: pnpm/action-setup@v2
+          node-version: '20'
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
         with:
-          version: 9
-          run_install: false
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm test
-      - run: pnpm run build
+          version: 8
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Unit & Integration tests
+        run: pnpm test
+      - name: Build project
+        run: pnpm run build
 
   security:
     runs-on: ubuntu-latest
     needs: type-check
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - uses: pnpm/action-setup@v2
+          node-version: '20'
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
         with:
-          version: 9
-          run_install: false
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm audit --audit-level=moderate
+          version: 8
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Security audit
+        run: pnpm audit --audit-level=moderate
 
   quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - uses: pnpm/action-setup@v2
+          node-version: 20.x
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
         with:
-          version: 9
-          run_install: false
-      - run: pnpm install --frozen-lockfile
-      - run: npx prettier --check . || true
-      - run: npx eslint . --ext .ts,.tsx || true
+          version: 8
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Check code style
+        run: npx prettier --check . || true
+      - name: Lint check
+        run: npx eslint . --ext .ts,.tsx || true
