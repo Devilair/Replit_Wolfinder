@@ -11,14 +11,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Type check
@@ -31,14 +31,14 @@ jobs:
     needs: type-check
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Lint
@@ -49,14 +49,14 @@ jobs:
     needs: type-check
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Unit & Integration tests
@@ -69,14 +69,14 @@ jobs:
     needs: type-check
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Security audit
@@ -86,14 +86,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Check code style
