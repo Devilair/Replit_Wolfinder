@@ -131,7 +131,12 @@ export function setupProfessionalRoutes(app: Express, storage: AppStorage) {
       if (!parsed.success) {
         return res.status(400).json({ message: "Invalid review data", errors: parsed.error.errors });
       }
-      const review = await storage.createReview(parsed.data);
+      const reviewData = {
+        ...parsed.data,
+        userId: req.user.userId,
+        professionalId: professionalId,
+      };
+      const review = await storage.createReview(reviewData);
       res.status(201).json(review);
     } catch (error) {
       logger.error(error);
