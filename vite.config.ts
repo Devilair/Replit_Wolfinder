@@ -38,6 +38,9 @@ export default defineConfig({
     },
   },
   root: "client",
+  esbuild: {
+    target: 'es2020',
+  },
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
@@ -124,7 +127,7 @@ export default defineConfig({
         drop_debugger: process.env.NODE_ENV === 'production'
       }
     },
-    target: 'es2015',
+    target: 'es2020',
     sourcemap: process.env.NODE_ENV !== 'production',
     chunkSizeWarningLimit: 1000
   },

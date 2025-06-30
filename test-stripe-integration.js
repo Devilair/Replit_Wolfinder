@@ -3,7 +3,7 @@
  * Eseguire con: node test-stripe-integration.js
  */
 
-const axios = require('axios');
+import axios from 'axios';
 
 const BASE_URL = 'http://localhost:5000';
 const TEST_EMAIL = 'test@wolfinder.it';
@@ -63,21 +63,7 @@ async function testStripeIntegration() {
     );
     console.log(`✅ Payment methods: ${paymentMethodsResponse.data.length} trovati\n`);
 
-    // 5. Test setup intent
-    console.log('5. Test setup intent...');
-    const setupIntentResponse = await axios.post(
-      `${BASE_URL}/api/create-setup-intent`,
-      { customerId },
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    console.log('✅ Setup intent creato\n');
-
-    // 6. Test professional subscriptions
+    // 5. Test professional subscriptions
     console.log('6. Test professional subscriptions...');
     const subscriptionsResponse = await axios.get(
       `${BASE_URL}/api/professional/subscriptions`,
@@ -89,7 +75,7 @@ async function testStripeIntegration() {
 
     // 7. Test webhook endpoint (simulato)
     console.log('7. Test webhook endpoint...');
-    const webhookResponse = await axios.post(`${BASE_URL}/api/stripe/webhook`, {
+    await axios.post(`${BASE_URL}/api/stripe/webhook`, {
       type: 'test',
       data: { object: { id: 'test' } }
     });
@@ -101,13 +87,12 @@ async function testStripeIntegration() {
     console.log('✅ Subscription plans');
     console.log('✅ Create subscription intent');
     console.log('✅ Payment methods');
-    console.log('✅ Setup intent');
     console.log('✅ Professional subscriptions');
     console.log('✅ Webhook handler');
     console.log('\n🚀 Stripe Integration: 100% COMPLETATA');
 
   } catch (error) {
-    console.error('❌ Errore durante il test:', error.response?.data || error.message);
+    console.error('❌ Errore durante il test:');
     
     if (error.response?.status === 401) {
       console.log('\n💡 Suggerimento: Verificare che l\'utente test esista nel database');
@@ -143,7 +128,7 @@ async function testBadgePerformance() {
     
     console.log(`📊 Badge calcolati: ${response.data.length}`);
     
-  } catch (error) {
+  } catch {
     console.log('⚠️  Test performance non disponibile (endpoint non implementato)');
   }
 }

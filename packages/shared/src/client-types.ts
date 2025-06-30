@@ -130,7 +130,7 @@ export interface SubscriptionPlan {
   price: number;
   currency: string;
   interval: 'month' | 'year';
-  features: Record<string, any>;
+  features: Record<string, unknown>;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -181,7 +181,7 @@ export const professionalRegistrationSchema = {
   businessName: { required: true, minLength: 2, maxLength: 100 },
   description: { required: false, maxLength: 1000 },
   categoryId: { required: true, type: 'number' },
-  phoneMobile: { required: false, pattern: /^\+?[\d\s\-\(\)]+$/ },
+  phoneMobile: { required: false, pattern: /^\+?[\d\s\-()]+$/ },
   email: { required: false, type: 'email' },
   website: { required: false, type: 'url' },
   address: { required: false, maxLength: 200 },
