@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import app from "../../server"; // Importa l'app configurata da server/index.ts
 import { db } from "../../server/db";
-import { users } from "../../shared/schema";
+import { users } from "../../packages/shared/src/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 

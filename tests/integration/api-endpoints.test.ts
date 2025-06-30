@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import app from '../../server'; // Importa l'app condivisa
 import { db } from '../../server/db';
-import { categories } from '../../shared/schema';
+import { categories } from "../../packages/shared/src/schema";
 import { eq } from 'drizzle-orm';
 
 describe('API Endpoints Integration Tests', () => {
