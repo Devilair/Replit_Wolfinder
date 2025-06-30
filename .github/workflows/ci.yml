@@ -24,6 +24,8 @@ jobs:
           version: 10.12.3
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Build shared package
+        run: pnpm run build:shared
       - name: Type check
         run: pnpm tsc --noEmit
       - name: Build shared package
