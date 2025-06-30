@@ -102,7 +102,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Security audit
-        run: pnpm audit --audit-level=moderate
+        run: pnpm audit --audit-level=high
 
   quality:
     runs-on: ubuntu-latest
