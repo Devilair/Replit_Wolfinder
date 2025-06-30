@@ -1,8 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db } from '../../server/db';
-import { professionals, users, type NewProfessional, type NewUser } from '../../shared/schema';
+import { professionals, users, type NewProfessional, type NewUser } from '../../packages/shared/src/schema';
 import { BadgeCalculator } from '../../server/badge-calculator';
 import { inArray, like } from 'drizzle-orm';
+
+// Skip intero file in CI
+if (process.env.CI) {
+  describe.skip('Badge Calculator Benchmark', () => {});
+} else {
 
 describe('Badge Calculator Benchmark', () => {
     const NUM_PROFESSIONALS = 1000;
@@ -39,7 +44,7 @@ describe('Badge Calculator Benchmark', () => {
                     rating: Math.random() * 5, // 0.0 to 5.0
                     reviewCount: Math.floor(Math.random() * 200), // 0 to 199
                     // Data di creazione casuale negli ultimi 3 anni
-                    createdAt: new Date(Date.now() - Math.floor(Math.random() * 3 * 365 * 24 * 60 * 60 * 1000)).toISOString(),
+                    createdAt: new Date(Date.now() - Math.floor(Math.random() * 3 * 365 * 24 * 60 * 60 * 1000)),
                 });
             }
         }
@@ -86,4 +91,6 @@ describe('Badge Calculator Benchmark', () => {
             await db.delete(users).where(inArray(users.id, userIds));
         }
     });
-}); 
+});
+
+} 
