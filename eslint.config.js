@@ -1,64 +1,157 @@
 import js from '@eslint/js';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default [
   js.configs.recommended,
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['**/*.{ts,tsx,js,jsx}'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        ecmaFeatures: {
-          jsx: true
-        }
+        jsx: true,
       },
       globals: {
         console: 'readonly',
         process: 'readonly',
         Buffer: 'readonly',
+        setTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearTimeout: 'readonly',
+        clearInterval: 'readonly',
+        global: 'readonly',
+        __dirname: 'readonly',
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
         fetch: 'readonly',
         FormData: 'readonly',
         Blob: 'readonly',
         AbortSignal: 'readonly',
-        setTimeout: 'readonly',
-        setInterval: 'readonly',
+        // DOM globals
+        window: 'readonly',
+        document: 'readonly',
+        localStorage: 'readonly',
+        sessionStorage: 'readonly',
+        navigator: 'readonly',
+        alert: 'readonly',
+        prompt: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        location: 'readonly',
+        history: 'readonly',
+        File: 'readonly',
+        FileReader: 'readonly',
+        HTMLInputElement: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLButtonElement: 'readonly',
+        HTMLParagraphElement: 'readonly',
+        HTMLHeadingElement: 'readonly',
+        HTMLSpanElement: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLOListElement: 'readonly',
+        HTMLLIElement: 'readonly',
+        HTMLAnchorElement: 'readonly',
+        HTMLTableElement: 'readonly',
+        HTMLTableSectionElement: 'readonly',
+        HTMLTableRowElement: 'readonly',
+        HTMLTableCellElement: 'readonly',
+        HTMLTableCaptionElement: 'readonly',
+        HTMLTextAreaElement: 'readonly',
+        HTMLUListElement: 'readonly',
+        MouseEvent: 'readonly',
+        KeyboardEvent: 'readonly',
+        Node: 'readonly',
+        Response: 'readonly',
+        StorageEvent: 'readonly',
+        NodeJS: 'readonly',
+        React: 'readonly',
+        confirm: 'readonly',
         performance: 'readonly',
-        Express: 'readonly'
-      }
+        Express: 'readonly',
+      },
     },
     plugins: {
-      '@typescript-eslint': tseslint
+      '@typescript-eslint': tseslint,
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
     },
     rules: {
-      ...tseslint.configs.recommended.rules,
-      '@typescript-eslint/no-unused-vars': 'warn',
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-inferrable-types': 'off',
-      '@typescript-eslint/no-empty-object-type': 'off',
-      '@typescript-eslint/no-namespace': 'off',
-      'no-console': 'off',
+      // TypeScript specific rules
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-explicit-any': 'off', // Temporaneamente disabilitato per MVP
+      '@typescript-eslint/no-var-requires': 'error',
+      
+      // React specific rules
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+      
+      // General rules
+      'no-console': 'warn',
+      'no-debugger': 'error',
+      'no-unused-vars': 'off', // Use TypeScript version instead
       'prefer-const': 'error',
       'no-var': 'error',
-      'no-undef': 'off'
-    }
+      'no-useless-escape': 'error',
+      'no-undef': 'error',
+    },
+  },
+  {
+    files: [
+      'client/src/pages/**/*.{ts,tsx,js,jsx}',
+      'client/src/components/**/*.{ts,tsx,js,jsx}',
+      'client/src/hooks/**/*.{ts,tsx,js,jsx}',
+      'client/src/lib/**/*.{ts,tsx,js,jsx}',
+    ],
+    languageOptions: {
+      globals: {
+        window: 'readonly',
+        document: 'readonly',
+        localStorage: 'readonly',
+        sessionStorage: 'readonly',
+        navigator: 'readonly',
+        alert: 'readonly',
+        prompt: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        location: 'readonly',
+        history: 'readonly',
+        File: 'readonly',
+        HTMLInputElement: 'readonly',
+        React: 'readonly',
+      },
+    },
   },
   {
     ignores: [
-      'dist/',
-      'node_modules/',
-      '*.config.js',
-      '*.config.ts',
-      'build/',
-      'coverage/',
-      'scripts/',
-      'test-*.js',
-      '*.test.js',
-      'packages/*/dist/**'
-    ]
-  }
+      'dist/**/*',
+      'build/**/*',
+      'node_modules/**/*',
+      '*.min.js',
+      'coverage/**/*',
+      'public/**/*',
+      'server/dist/**/*',
+      'client/dist/**/*',
+      'packages/shared/dist/**/*',
+      'packages/shared/build/**/*',
+      'packages/*/dist/**/*',
+      'packages/*/build/**/*',
+      '**/dist/**/*',
+      '**/build/**/*',
+      '**/*.min.js',
+      '**/*.min.ts',
+      '**/*.min.tsx',
+      '**/*.bundle.js',
+      '**/*.bundle.ts',
+      '**/*.bundle.tsx',
+    ],
+  },
 ]; 
