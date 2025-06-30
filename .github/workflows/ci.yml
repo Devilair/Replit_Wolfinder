@@ -70,6 +70,14 @@ jobs:
           version: 10.12.3
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Setup test env
+        run: |
+          echo "DATABASE_URL=postgres://user:pass@localhost:5432/db" >> .env
+          echo "JWT_SECRET=testsecret" >> .env
+          echo "API_BASE_URL=http://localhost:3000" >> .env
+          echo "FRONTEND_BASE_URL=http://localhost:5173" >> .env
+      - name: Build shared package
+        run: pnpm run build:shared
       - name: Unit & Integration tests
         run: pnpm test
       - name: Build project
