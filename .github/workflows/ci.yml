@@ -50,7 +50,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Lint
-        run: pnpm eslint src --max-warnings 0
+        run: pnpm eslint . --ext .ts,.tsx --max-warnings 0
 
   test:
     runs-on: ubuntu-latest
